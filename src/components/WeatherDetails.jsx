@@ -9,7 +9,7 @@ function WeatherDetails({ airQuality = {}, current = {} }) {
         borderRadius: '16px',
         padding: '24px',
         boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
-        height: '100%',
+        height: 'fit-content', /* 💡 범인 검거! 100%를 fit-content로 수정해서 내용물 크기에 딱 맞게 변경했습니다 */
         boxSizing: 'border-box'
       }}
     >
