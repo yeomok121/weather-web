@@ -13,7 +13,6 @@ import { FiSun, FiSearch, FiBell, FiSettings, FiClock, FiCheckCircle } from 'rea
 const API = 'https://weather-backend-api-goor.onrender.com';
 const iconUrl = (code) => `https://openweathermap.org/img/wn/${code}@2x.png`;
 
-// 💡 1. 접속한 날짜를 실시간으로 가져오는 함수
 const getTodayDateString = () => {
   const now = new Date();
   const month = now.getMonth() + 1;
@@ -44,16 +43,15 @@ function App() {
   const [forecastError, setForecastError] = useState('');
   const [bgTheme, setBgTheme] = useState('clear');
 
-  // 💡 2. 로그인한 유저 정보를 기억하는 상태 추가
   const [loggedInUser, setLoggedInUser] = useState(null);
   const [favorites, setFavorites] = useState([]);
 
-  // 💡 3. 초기 가짜 데이터 대신, 진짜 날짜와 로딩 상태로 세팅
   const [weatherData, setWeatherData] = useState({
     region: '불러오는 중...', date: getTodayDateString(), temp: 0,
     condition: '대기 중...', highLow: '최고 -° / 최저 -°',
     icon: <FiSun style={{ color: '#fbbf24' }} />, uv: '높음',
-    humidity: 0, dust: '확인 중...', wind: '0 m/s',
+    humidity: 0, dust: '확인 중...', wind_speed: 0, 
+    sunrise: '06:00', sunset: '18:00'
   });
 
   const showToast = (message) => {
@@ -61,13 +59,11 @@ function App() {
     setTimeout(() => { setToast({ visible: false, message: '' }); }, 3000);
   };
 
-  // 최근 검색어 로드
   useEffect(() => {
     const storedSearches = JSON.parse(localStorage.getItem('recentSearches')) || [];
     setRecentSearches(storedSearches);
   }, []);
 
-  // 💡 4. 로그인/로그아웃 할 때마다 그 유저의 관심 지역 DB를 불러오기
   useEffect(() => {
     const userKey = loggedInUser ? `favorites_${loggedInUser.id}` : 'favorites_guest';
     const savedFavs = JSON.parse(localStorage.getItem(userKey));
@@ -82,7 +78,6 @@ function App() {
     }
   }, [loggedInUser]);
 
-  // 💡 5. 관심 지역을 추가/삭제할 때 현재 유저의 DB에 영구 저장하는 함수
   const saveFavorites = (newFavs) => {
     setFavorites(newFavs);
     const userKey = loggedInUser ? `favorites_${loggedInUser.id}` : 'favorites_guest';
@@ -104,17 +99,20 @@ function App() {
       else if (iconCode.includes('03') || iconCode.includes('04')) setBgTheme('cloud');
       else setBgTheme('clear');
 
+      // 💡 여기서 일출, 일몰, 정확한 풍속 이름을 매칭해서 덮어씌웁니다.
       setWeatherData((prev) => ({
         ...prev,
         region: regionName ?? c.city ?? '위치 알 수 없음',
-        date: getTodayDateString(), // 실시간 날짜 업데이트!
+        date: getTodayDateString(),
         temp: Math.round(c.temp),
         icon: c.icon ? <img src={iconUrl(c.icon)} width={60} height={60} alt="아이콘" /> : <span>정보 없음</span>,
         condition: `${c.description} (체감 ${Math.round(c.feels_like)}°C)`,
-        // 실제 백엔드에서 가져온 진짜 최고/최저 기온 세팅!
         highLow: `최고 ${Math.round(c.temp_max)}° / 최저 ${Math.round(c.temp_min)}°`,
-        humidity: c.humidity, wind: `${c.wind_speed} m/s`,
+        humidity: c.humidity, 
+        wind_speed: c.wind_speed, // 실제 풍속 연결
         dust: aqi ? `${aqi.level} (${aqi.pm25})` : prev.dust,
+        sunrise: c.sunrise || '06:00', // 실제 일출 연결
+        sunset: c.sunset || '18:00'    // 실제 일몰 연결
       }));
       
       setHourlyData(Array.isArray(data.hourly) ? data.hourly : []);
@@ -161,7 +159,6 @@ function App() {
         setIsAiLoading(false); return;
       }
       
-      // 방금 만든 DB 저장 함수 사용
       const newFavs = [...favorites, { name: loc.name, lat: loc.lat, lon: loc.lon }];
       saveFavorites(newFavs);
       
@@ -308,7 +305,6 @@ function App() {
           <HourlyForecast hourlyData={hourlyData} isLoading={isAiLoading} error={forecastError} />
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', minWidth: 0 }}>
-          {/* 💡 로그인 정보를 자식 컴포넌트와 공유 */}
           <LoginCard 
             onSignUpClick={() => setIsSignUpOpen(true)} 
             onFindPasswordClick={() => setIsFindPasswordOpen(true)} 
