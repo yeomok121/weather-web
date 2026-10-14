@@ -167,7 +167,7 @@ function HourlyForecast({
             fontSize: '14px',
           }}
         >
-          시간대별 예보 (3시간 간격)
+          시간대별 예보
         </h4>
 
         <div
