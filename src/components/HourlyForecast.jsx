@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import { LineChart, Line, YAxis, ResponsiveContainer } from 'recharts';
-import { getEmojiIcon } from './WeeklyForecast'; // 💡 이모지 함수 가져오기
+import { getEmojiIcon } from './WeeklyForecast';
 
 const ITEMS_TO_SHOW = 6;
 const EMPTY_HOURLY = [];
@@ -12,8 +12,9 @@ function toNumber(value) {
   return Number.isFinite(number) ? number : null;
 }
 
+// 💡 숫자가 선에 딱 붙지 않도록 간격을 위로(y-15) 더 띄웠습니다!
 const CustomLabel = ({ x, y, value }) => (
-  <text x={x} y={y - 12} fill="#334155" fontSize="14" fontWeight="bold" textAnchor="middle">
+  <text x={x} y={y - 15} fill="#334155" fontSize="14" fontWeight="bold" textAnchor="middle">
     {value}°
   </text>
 );
@@ -82,8 +83,10 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
             width: `${(forecastData.length / ITEMS_TO_SHOW) * 100}%`,
             position: 'relative'
           }}>
+            
+            {/* 💡 차트가 시작되는 위치(top)를 70px -> 95px로 대폭 내려서 아이콘과 겹치지 않게 수정했습니다! */}
             <div style={{ 
-              position: 'absolute', top: '70px', left: 0, right: 0, height: '80px', zIndex: 1,
+              position: 'absolute', top: '95px', left: 0, right: 0, height: '70px', zIndex: 1,
               padding: `0 ${100 / (2 * forecastData.length)}%`, boxSizing: 'border-box'
             }}>
               <ResponsiveContainer width="100%" height="100%">
@@ -98,11 +101,13 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
               {forecastData.map((item) => (
                 <div key={item.id} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                   <span style={{ fontSize: '13px', color: '#64748b', marginBottom: '8px' }}>{item.time}</span>
-                  {/* 💡 까만 원 <img> 태그 대신 맑고 투명한 이모지 삽입! */}
-                  <div style={{ height: '45px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '26px' }}>
+                  <div style={{ height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '26px' }}>
                     {getEmojiIcon(item.icon)}
                   </div>
-                  <div style={{ height: '80px' }}></div>
+                  
+                  {/* 💡 차트가 들어갈 여백 공간도 80px -> 100px로 늘려주었습니다. */}
+                  <div style={{ height: '100px' }}></div>
+                  
                   <span style={{ fontSize: '12px', color: '#38bdf8', fontWeight: 'bold', minHeight: '18px' }}>
                     {item.pop > 0 ? `💧 ${item.pop}%` : ''}
                   </span>
