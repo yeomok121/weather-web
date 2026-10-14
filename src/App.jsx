@@ -13,6 +13,16 @@ import { FiSun, FiSearch, FiBell, FiSettings, FiClock, FiCheckCircle } from 'rea
 const API = 'https://weather-backend-api-goor.onrender.com';
 const iconUrl = (code) => `https://openweathermap.org/img/wn/${code}@2x.png`;
 
+// 💡 1. 접속한 날짜를 실시간으로 가져오는 함수
+const getTodayDateString = () => {
+  const now = new Date();
+  const month = now.getMonth() + 1;
+  const date = now.getDate();
+  const days = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'];
+  const day = days[now.getDay()];
+  return `${month}월 ${date}일 ${day}`;
+};
+
 function App() {
   const [searchInput, setSearchInput] = useState('');
   const [recentSearches, setRecentSearches] = useState([]);
@@ -23,7 +33,6 @@ function App() {
   const [isFindPasswordOpen, setIsFindPasswordOpen] = useState(false);
   const [isAddRegionOpen, setIsAddRegionOpen] = useState(false);
   
-  // 관리자 페이지 관련 상태
   const [isAdminAuthOpen, setIsAdminAuthOpen] = useState(false); 
   const [adminPasswordInput, setAdminPasswordInput] = useState('');
   const [isAdminPageOpen, setIsAdminPageOpen] = useState(false);
@@ -35,15 +44,16 @@ function App() {
   const [forecastError, setForecastError] = useState('');
   const [bgTheme, setBgTheme] = useState('clear');
 
-  const [favorites, setFavorites] = useState([
-    { name: '부천시', lat: 37.5034, lon: 126.7660 }
-  ]);
+  // 💡 2. 로그인한 유저 정보를 기억하는 상태 추가
+  const [loggedInUser, setLoggedInUser] = useState(null);
+  const [favorites, setFavorites] = useState([]);
 
+  // 💡 3. 초기 가짜 데이터 대신, 진짜 날짜와 로딩 상태로 세팅
   const [weatherData, setWeatherData] = useState({
-    region: '경기도 부천시', date: '10월 7일 수요일', temp: 24,
-    condition: '맑음 (체감 25°C)', highLow: '최고 26° / 최저 17°',
+    region: '불러오는 중...', date: getTodayDateString(), temp: 0,
+    condition: '대기 중...', highLow: '최고 -° / 최저 -°',
     icon: <FiSun style={{ color: '#fbbf24' }} />, uv: '높음',
-    humidity: 55, dust: '좋음 (22)', wind: '10 m/s',
+    humidity: 0, dust: '확인 중...', wind: '0 m/s',
   });
 
   const showToast = (message) => {
@@ -51,11 +61,33 @@ function App() {
     setTimeout(() => { setToast({ visible: false, message: '' }); }, 3000);
   };
 
+  // 최근 검색어 로드
   useEffect(() => {
-    loadWeather(37.5034, 126.7660, '경기도 부천시');
     const storedSearches = JSON.parse(localStorage.getItem('recentSearches')) || [];
     setRecentSearches(storedSearches);
   }, []);
+
+  // 💡 4. 로그인/로그아웃 할 때마다 그 유저의 관심 지역 DB를 불러오기
+  useEffect(() => {
+    const userKey = loggedInUser ? `favorites_${loggedInUser.id}` : 'favorites_guest';
+    const savedFavs = JSON.parse(localStorage.getItem(userKey));
+    
+    if (savedFavs && savedFavs.length > 0) {
+      setFavorites(savedFavs);
+      loadWeather(savedFavs[0].lat, savedFavs[0].lon, savedFavs[0].name);
+    } else {
+      const defaultFav = [{ name: '부천시', lat: 37.5034, lon: 126.7660 }];
+      setFavorites(defaultFav);
+      loadWeather(defaultFav[0].lat, defaultFav[0].lon, defaultFav[0].name);
+    }
+  }, [loggedInUser]);
+
+  // 💡 5. 관심 지역을 추가/삭제할 때 현재 유저의 DB에 영구 저장하는 함수
+  const saveFavorites = (newFavs) => {
+    setFavorites(newFavs);
+    const userKey = loggedInUser ? `favorites_${loggedInUser.id}` : 'favorites_guest';
+    localStorage.setItem(userKey, JSON.stringify(newFavs));
+  };
 
   const loadWeather = async (lat, lon, regionName) => {
     setIsAiLoading(true); setForecastError(''); setHourlyData([]);
@@ -64,7 +96,7 @@ function App() {
       if (!res.ok) throw new Error(`요청 실패`);
       const data = await res.json();
       const c = data.current;
-      const aqi = data.air_quality; // 💡 백엔드에서 넘겨준 실제 미세먼지 데이터
+      const aqi = data.air_quality;
 
       const iconCode = c.icon || '';
       if (iconCode.includes('n')) setBgTheme('night');
@@ -75,12 +107,13 @@ function App() {
       setWeatherData((prev) => ({
         ...prev,
         region: regionName ?? c.city ?? '위치 알 수 없음',
+        date: getTodayDateString(), // 실시간 날짜 업데이트!
         temp: Math.round(c.temp),
         icon: c.icon ? <img src={iconUrl(c.icon)} width={60} height={60} alt="아이콘" /> : <span>정보 없음</span>,
         condition: `${c.description} (체감 ${Math.round(c.feels_like)}°C)`,
+        // 실제 백엔드에서 가져온 진짜 최고/최저 기온 세팅!
         highLow: `최고 ${Math.round(c.temp_max)}° / 최저 ${Math.round(c.temp_min)}°`,
         humidity: c.humidity, wind: `${c.wind_speed} m/s`,
-        // 💡 고정되어 있던 미세먼지 값을 실제 데이터로 덮어씌웁니다! (예: "좋음 (12)")
         dust: aqi ? `${aqi.level} (${aqi.pm25})` : prev.dust,
       }));
       
@@ -128,7 +161,10 @@ function App() {
         setIsAiLoading(false); return;
       }
       
-      setFavorites(prev => [...prev, { name: loc.name, lat: loc.lat, lon: loc.lon }]);
+      // 방금 만든 DB 저장 함수 사용
+      const newFavs = [...favorites, { name: loc.name, lat: loc.lat, lon: loc.lon }];
+      saveFavorites(newFavs);
+      
       setIsAddRegionOpen(false);
       showToast(`'${loc.name}' 지역이 성공적으로 추가되었습니다!`);
       await loadWeather(loc.lat, loc.lon, loc.name);
@@ -139,7 +175,8 @@ function App() {
   };
 
   const handleRemoveFavorite = (nameToRemove) => {
-    setFavorites(prev => prev.filter(fav => fav.name !== nameToRemove));
+    const newFavs = favorites.filter(fav => fav.name !== nameToRemove);
+    saveFavorites(newFavs);
     showToast('관심 지역이 삭제되었습니다.');
   };
 
@@ -271,8 +308,18 @@ function App() {
           <HourlyForecast hourlyData={hourlyData} isLoading={isAiLoading} error={forecastError} />
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', minWidth: 0 }}>
-          <LoginCard onSignUpClick={() => setIsSignUpOpen(true)} onFindPasswordClick={() => setIsFindPasswordOpen(true)} />
-          <WeatherDetails weatherData={weatherData} isAiLoading={isAiLoading} />
+          {/* 💡 로그인 정보를 자식 컴포넌트와 공유 */}
+          <LoginCard 
+            onSignUpClick={() => setIsSignUpOpen(true)} 
+            onFindPasswordClick={() => setIsFindPasswordOpen(true)} 
+            loggedInUser={loggedInUser}
+            onLogin={(user) => setLoggedInUser(user)}
+            onLogout={() => {
+              setLoggedInUser(null);
+              showToast('로그아웃 되었습니다.');
+            }}
+          />
+          <WeatherDetails current={weatherData} airQuality={{ level: weatherData.dust.split(' ')[0], pm25: weatherData.dust.match(/\d+/) ? weatherData.dust.match(/\d+/)[0] : 15 }} />
         </div>
       </main>
 

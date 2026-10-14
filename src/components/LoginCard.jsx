@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 
-function LoginCard({ onSignUpClick, onFindPasswordClick }) {
+function LoginCard({ onSignUpClick, onFindPasswordClick, loggedInUser, onLogin, onLogout }) {
   const [id, setId] = useState('');
   const [pw, setPw] = useState('');
-  const [loggedInUserName, setLoggedInUserName] = useState(null);
 
   const handleLogin = () => {
     if (!id || !pw) {
@@ -14,19 +13,15 @@ function LoginCard({ onSignUpClick, onFindPasswordClick }) {
     const user = existingUsers.find(u => u.id === id && u.pw === pw);
 
     if (user) {
-      setLoggedInUserName(user.name);
+      // 💡 부모(App.jsx)에게 어떤 유저가 로그인했는지 알려줌!
+      onLogin(user);
+      setId('');
+      setPw('');
     } else {
       alert('아이디 또는 비밀번호가 일치하지 않습니다.');
     }
   };
 
-  const handleLogout = () => {
-    setLoggedInUserName(null);
-    setId('');
-    setPw('');
-  };
-
-  // 💡 높이가 억지로 늘어나지 않도록 height: '100%' 속성을 제거했습니다!
   const cardStyle = {
     backgroundColor: '#ffffff', borderRadius: '12px', padding: '30px 20px',
     boxShadow: '0 4px 6px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', alignItems: 'center'
@@ -37,16 +32,16 @@ function LoginCard({ onSignUpClick, onFindPasswordClick }) {
     border: '1px solid #e2e8f0', borderRadius: '6px', backgroundColor: '#f1f5f9', color: '#333'
   };
 
-  if (loggedInUserName) {
+  if (loggedInUser) {
     return (
       <div style={{ ...cardStyle, justifyContent: 'center' }}>
         <div style={{ fontSize: '40px', marginBottom: '10px' }}>👋</div>
         <h2 style={{ margin: '0 0 10px 0', color: '#333', fontSize: '18px' }}>
-          <span style={{ color: '#3182ce' }}>{loggedInUserName}</span>님, 환영합니다!
+          <span style={{ color: '#3182ce' }}>{loggedInUser.name}</span>님, 환영합니다!
         </h2>
         <p style={{ fontSize: '14px', color: '#666', marginBottom: '20px' }}>오늘도 기분 좋은 하루 보내세요.</p>
         <button 
-          onClick={handleLogout} 
+          onClick={onLogout} 
           style={{ width: '85%', padding: '12px', backgroundColor: '#e2e8f0', color: '#4a5568', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}
         >
           로그아웃
