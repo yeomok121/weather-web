@@ -8,10 +8,10 @@ import SignUpModal from './components/SignUpModal';
 import FindPasswordModal from './components/FindPasswordModal';
 import AddRegionModal from './components/AddRegionModal';
 import AdminPage from './components/AdminPage';
-import { FiSun, FiSearch, FiBell, FiSettings, FiClock, FiCheckCircle } from 'react-icons/fi';
+import WeeklyForecast, { getEmojiIcon } from './components/WeeklyForecast'; // 💡 주간 예보와 이모지 함수 가져오기!
+import { FiSearch, FiBell, FiSettings, FiClock, FiCheckCircle } from 'react-icons/fi';
 
 const API = 'https://weather-backend-api-goor.onrender.com';
-const iconUrl = (code) => `https://openweathermap.org/img/wn/${code}@2x.png`;
 
 const getTodayDateString = () => {
   const now = new Date();
@@ -40,6 +40,7 @@ function App() {
   const [aiMessage, setAiMessage] = useState('✨ 날씨 정보를 불러오는 중입니다...');
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [hourlyData, setHourlyData] = useState([]);
+  const [weeklyData, setWeeklyData] = useState([]); // 💡 주간 예보 데이터 상태 추가
   const [forecastError, setForecastError] = useState('');
   const [bgTheme, setBgTheme] = useState('clear');
 
@@ -49,7 +50,7 @@ function App() {
   const [weatherData, setWeatherData] = useState({
     region: '불러오는 중...', date: getTodayDateString(), temp: 0,
     condition: '대기 중...', highLow: '최고 -° / 최저 -°',
-    icon: <FiSun style={{ color: '#fbbf24' }} />, uv: '높음',
+    icon: <span style={{ fontSize: '60px' }}>☀️</span>, uv: '높음',
     humidity: 0, dust: '확인 중...', wind_speed: 0, 
     sunrise: '06:00', sunset: '18:00'
   });
@@ -85,7 +86,7 @@ function App() {
   };
 
   const loadWeather = async (lat, lon, regionName) => {
-    setIsAiLoading(true); setForecastError(''); setHourlyData([]);
+    setIsAiLoading(true); setForecastError(''); setHourlyData([]); setWeeklyData([]);
     try {
       const res = await fetch(`${API}/api/weather/summary?lat=${lat}&lon=${lon}`);
       if (!res.ok) throw new Error(`요청 실패`);
@@ -99,23 +100,25 @@ function App() {
       else if (iconCode.includes('03') || iconCode.includes('04')) setBgTheme('cloud');
       else setBgTheme('clear');
 
-      // 💡 여기서 일출, 일몰, 정확한 풍속 이름을 매칭해서 덮어씌웁니다.
       setWeatherData((prev) => ({
         ...prev,
         region: regionName ?? c.city ?? '위치 알 수 없음',
         date: getTodayDateString(),
         temp: Math.round(c.temp),
-        icon: c.icon ? <img src={iconUrl(c.icon)} width={60} height={60} alt="아이콘" /> : <span>정보 없음</span>,
+        // 💡 메인 날씨 카드에도 흐린 이미지 대신 선명하고 예쁜 이모지 적용!
+        icon: <span style={{ fontSize: '70px', filter: 'drop-shadow(0px 4px 6px rgba(0,0,0,0.1))' }}>{getEmojiIcon(c.icon)}</span>,
         condition: `${c.description} (체감 ${Math.round(c.feels_like)}°C)`,
         highLow: `최고 ${Math.round(c.temp_max)}° / 최저 ${Math.round(c.temp_min)}°`,
         humidity: c.humidity, 
-        wind_speed: c.wind_speed, // 실제 풍속 연결
+        wind_speed: c.wind_speed,
         dust: aqi ? `${aqi.level} (${aqi.pm25})` : prev.dust,
-        sunrise: c.sunrise || '06:00', // 실제 일출 연결
-        sunset: c.sunset || '18:00'    // 실제 일몰 연결
+        sunrise: c.sunrise || '06:00',
+        sunset: c.sunset || '18:00'
       }));
       
       setHourlyData(Array.isArray(data.hourly) ? data.hourly : []);
+      setWeeklyData(Array.isArray(data.weekly) ? data.weekly : []); // 💡 주간 데이터 저장
+      
       const advice = Array.isArray(data.advice) ? data.advice.join(' ') : (typeof data.advice === 'string' ? data.advice : '');
       setAiMessage(advice || '오늘도 좋은 하루 보내세요!');
     } catch (error) {
@@ -310,12 +313,10 @@ function App() {
             onFindPasswordClick={() => setIsFindPasswordOpen(true)} 
             loggedInUser={loggedInUser}
             onLogin={(user) => setLoggedInUser(user)}
-            onLogout={() => {
-              setLoggedInUser(null);
-              showToast('로그아웃 되었습니다.');
-            }}
+            onLogout={() => { setLoggedInUser(null); showToast('로그아웃 되었습니다.'); }}
           />
           <WeatherDetails current={weatherData} airQuality={{ level: weatherData.dust.split(' ')[0], pm25: weatherData.dust.match(/\d+/) ? weatherData.dust.match(/\d+/)[0] : 15 }} />
+          <WeeklyForecast weeklyData={weeklyData} isLoading={isAiLoading} />
         </div>
       </main>
 
@@ -335,14 +336,7 @@ function App() {
           <div style={{ backgroundColor: 'white', padding: '30px', borderRadius: '12px', width: '350px', boxShadow: '0 10px 25px rgba(0,0,0,0.2)', textAlign: 'center' }}>
             <h3 style={{ margin: '0 0 20px 0', color: '#333' }}>🔒 관리자 인증</h3>
             <p style={{ margin: '0 0 20px 0', fontSize: '13px', color: '#666' }}>관리자 권한 확인을 위해 비밀번호를 입력해 주세요.</p>
-            <input 
-              type="password" 
-              placeholder="비밀번호 입력" 
-              value={adminPasswordInput}
-              onChange={(e) => setAdminPasswordInput(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleAdminAuth()}
-              style={{ width: '100%', padding: '12px', marginBottom: '20px', border: '1px solid #ccc', borderRadius: '6px', boxSizing: 'border-box' }}
-            />
+            <input type="password" placeholder="비밀번호 입력" value={adminPasswordInput} onChange={(e) => setAdminPasswordInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleAdminAuth()} style={{ width: '100%', padding: '12px', marginBottom: '20px', border: '1px solid #ccc', borderRadius: '6px', boxSizing: 'border-box' }} />
             <div style={{ display: 'flex', gap: '10px' }}>
               <button onClick={() => setIsAdminAuthOpen(false)} style={{ flex: 1, padding: '12px', backgroundColor: '#e2e8f0', color: '#4a5568', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>취소</button>
               <button onClick={handleAdminAuth} style={{ flex: 1, padding: '12px', backgroundColor: '#e53e3e', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>확인</button>
