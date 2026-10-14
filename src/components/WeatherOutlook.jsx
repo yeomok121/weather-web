@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
 
 function WeatherOutlook({ weeklyData = [] }) {
-  const [activeTab, setActiveTab] = useState('weekly'); // weekly or ai
+  const [activeTab, setActiveTab] = useState('weekly');
 
   if (!weeklyData || weeklyData.length === 0) {
-    return null; // 데이터가 없으면 렌더링하지 않음
+    return null; 
   }
 
-  // 💡 주간 데이터를 바탕으로 동적 텍스트 생성
   const startDate = weeklyData[0].date.replace('/', '.');
   const endDate = weeklyData[weeklyData.length - 1].date.replace('/', '.');
   
@@ -18,7 +17,6 @@ function WeatherOutlook({ weeklyData = [] }) {
   
   const rainyDays = weeklyData.filter(d => d.pop > 30).length;
   
-  // 기상청 스타일의 동적 브리핑 텍스트 생성
   let briefingText = `이번 주는 평년과 비슷하거나 조금 높은 기온(최저 ${Math.min(...allMinTemps)}℃ ~ 최고 ${Math.max(...allMaxTemps)}℃) 분포를 보이겠습니다. `;
   if (rainyDays > 2) {
     briefingText += `저기압의 영향을 자주 받아 흐리거나 비(☔)가 오는 날이 많겠습니다. 우산을 꼭 챙기시길 바랍니다.`;
@@ -29,10 +27,10 @@ function WeatherOutlook({ weeklyData = [] }) {
   }
 
   return (
-    <div style={{ backgroundColor: '#ffffff', borderRadius: '16px', padding: '24px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', color: '#333', width: '100%', boxSizing: 'border-box' }}>
+    // 💡 height: '100%', display: 'flex', flexDirection: 'column' 추가!
+    <div style={{ backgroundColor: '#ffffff', borderRadius: '16px', padding: '24px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', color: '#333', width: '100%', boxSizing: 'border-box', height: '100%', display: 'flex', flexDirection: 'column' }}>
       <h3 style={{ margin: '0 0 16px 0', fontSize: '16px', fontWeight: 'bold' }}>날씨 전망</h3>
       
-      {/* 탭 메뉴 */}
       <div style={{ display: 'flex', border: '1px solid #e2e8f0', borderRadius: '8px', overflow: 'hidden', marginBottom: '16px' }}>
         <button 
           onClick={() => setActiveTab('weekly')}
@@ -48,28 +46,30 @@ function WeatherOutlook({ weeklyData = [] }) {
         </button>
       </div>
 
-      {activeTab === 'weekly' ? (
-        <>
-          <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
-            <span style={{ border: '1px solid #3182ce', color: '#3182ce', padding: '4px 12px', borderRadius: '16px', fontSize: '13px', fontWeight: 'bold' }}>이번 주</span>
-          </div>
+      <div style={{ flexGrow: 1 }}>
+        {activeTab === 'weekly' ? (
+          <>
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+              <span style={{ border: '1px solid #3182ce', color: '#3182ce', padding: '4px 12px', borderRadius: '16px', fontSize: '13px', fontWeight: 'bold' }}>이번 주</span>
+            </div>
 
-          <div style={{ borderLeft: '3px solid #cbd5e1', paddingLeft: '12px', marginBottom: '16px', fontSize: '14px', lineHeight: '1.8' }}>
-            <div style={{ display: 'flex' }}><span style={{ color: '#64748b', width: '60px' }}>기간</span> <span>{startDate}. ~ {endDate}.</span></div>
-            <div style={{ display: 'flex' }}><span style={{ color: '#64748b', width: '60px' }}>예상기온</span> <span>최저 {avgMin}℃ / 최고 {avgMax}℃</span></div>
-            <div style={{ display: 'flex' }}><span style={{ color: '#64748b', width: '60px' }}>강수경향</span> <span>{rainyDays > 0 ? '비 오는 날 있음' : '대체로 맑음'}</span></div>
-          </div>
+            <div style={{ borderLeft: '3px solid #cbd5e1', paddingLeft: '12px', marginBottom: '16px', fontSize: '14px', lineHeight: '1.8' }}>
+              <div style={{ display: 'flex' }}><span style={{ color: '#64748b', width: '60px' }}>기간</span> <span>{startDate}. ~ {endDate}.</span></div>
+              <div style={{ display: 'flex' }}><span style={{ color: '#64748b', width: '60px' }}>예상기온</span> <span>최저 {avgMin}℃ / 최고 {avgMax}℃</span></div>
+              <div style={{ display: 'flex' }}><span style={{ color: '#64748b', width: '60px' }}>강수경향</span> <span>{rainyDays > 0 ? '비 오는 날 있음' : '대체로 맑음'}</span></div>
+            </div>
 
-          <p style={{ margin: 0, fontSize: '14px', lineHeight: '1.6', color: '#334155', wordBreak: 'keep-all' }}>
-            {briefingText}
-          </p>
-        </>
-      ) : (
-        <div style={{ padding: '20px 10px', textAlign: 'center', color: '#64748b', fontSize: '14px' }}>
-          <span style={{ fontSize: '30px', display: 'block', marginBottom: '10px' }}>✨</span>
-          Gemini AI API를 연동하여<br/>나만의 맞춤형 날씨 리포트를 받아볼 수 있습니다.<br/>(다음 단계에서 구현 예정!)
-        </div>
-      )}
+            <p style={{ margin: 0, fontSize: '14px', lineHeight: '1.6', color: '#334155', wordBreak: 'keep-all' }}>
+              {briefingText}
+            </p>
+          </>
+        ) : (
+          <div style={{ padding: '20px 10px', textAlign: 'center', color: '#64748b', fontSize: '14px' }}>
+            <span style={{ fontSize: '30px', display: 'block', marginBottom: '10px' }}>✨</span>
+            Gemini AI API를 연동하여<br/>나만의 맞춤형 날씨 리포트를 받아볼 수 있습니다.<br/>(다음 단계에서 구현 예정!)
+          </div>
+        )}
+      </div>
     </div>
   );
 }

@@ -9,7 +9,7 @@ import FindPasswordModal from './components/FindPasswordModal';
 import AddRegionModal from './components/AddRegionModal';
 import AdminPage from './components/AdminPage';
 import WeeklyForecast, { getEmojiIcon } from './components/WeeklyForecast'; 
-import WeatherOutlook from './components/WeatherOutlook'; // 💡 날씨 전망 컴포넌트 추가됨
+import WeatherOutlook from './components/WeatherOutlook';
 import { FiSearch, FiBell, FiSettings, FiClock, FiCheckCircle } from 'react-icons/fi';
 
 const API = 'https://weather-backend-api-goor.onrender.com';
@@ -298,7 +298,9 @@ function App() {
       </nav>
 
       <main className="main-container" style={{ flexGrow: 1, maxWidth: '1000px', margin: '0 auto', width: '100%' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', minWidth: 0 }}>
+        
+        {/* 💡 좌측 단: height: 100% 적용 */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', minWidth: 0, height: '100%' }}>
           <WeatherMain
             weatherData={weatherData} isAiLoading={isAiLoading} aiMessage={aiMessage}
             favorites={favorites} onAddClick={() => setIsAddRegionOpen(true)} 
@@ -307,11 +309,14 @@ function App() {
           />
           <HourlyForecast hourlyData={hourlyData} isLoading={isAiLoading} error={forecastError} />
           
-          {/* 💡 날씨 전망 카드가 왼쪽 세 번째 블록으로 들어갑니다 */}
-          <WeatherOutlook weeklyData={weeklyData} />
+          {/* 💡 flexGrow: 1 로 빈 공간을 밀어내어 맨 밑바닥에 딱 붙게 만듭니다! */}
+          <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
+            <WeatherOutlook weeklyData={weeklyData} />
+          </div>
         </div>
         
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', minWidth: 0 }}>
+        {/* 💡 우측 단: height: 100% 적용 */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', minWidth: 0, height: '100%' }}>
           <LoginCard 
             onSignUpClick={() => setIsSignUpOpen(true)} 
             onFindPasswordClick={() => setIsFindPasswordOpen(true)} 
@@ -320,7 +325,11 @@ function App() {
             onLogout={() => { setLoggedInUser(null); showToast('로그아웃 되었습니다.'); }}
           />
           <WeatherDetails current={weatherData} airQuality={{ level: weatherData.dust.split(' ')[0], pm25: weatherData.dust.match(/\d+/) ? weatherData.dust.match(/\d+/)[0] : 15 }} />
-          <WeeklyForecast weeklyData={weeklyData} isLoading={isAiLoading} />
+          
+          {/* 💡 flexGrow: 1 적용으로 좌측과 정확히 밑변이 일치하게 됩니다! */}
+          <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
+            <WeeklyForecast weeklyData={weeklyData} isLoading={isAiLoading} />
+          </div>
         </div>
       </main>
 
@@ -335,6 +344,7 @@ function App() {
         </button>
       </footer>
 
+      {/* 모달창들 (생략 안함) */}
       {isAdminAuthOpen && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 9999 }}>
           <div style={{ backgroundColor: 'white', padding: '30px', borderRadius: '12px', width: '350px', boxShadow: '0 10px 25px rgba(0,0,0,0.2)', textAlign: 'center' }}>
