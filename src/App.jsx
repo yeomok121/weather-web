@@ -8,7 +8,8 @@ import SignUpModal from './components/SignUpModal';
 import FindPasswordModal from './components/FindPasswordModal';
 import AddRegionModal from './components/AddRegionModal';
 import AdminPage from './components/AdminPage';
-import WeeklyForecast, { getEmojiIcon } from './components/WeeklyForecast'; // 💡 주간 예보와 이모지 함수 가져오기!
+import WeeklyForecast, { getEmojiIcon } from './components/WeeklyForecast'; 
+import WeatherOutlook from './components/WeatherOutlook'; // 💡 날씨 전망 컴포넌트 추가됨
 import { FiSearch, FiBell, FiSettings, FiClock, FiCheckCircle } from 'react-icons/fi';
 
 const API = 'https://weather-backend-api-goor.onrender.com';
@@ -40,7 +41,7 @@ function App() {
   const [aiMessage, setAiMessage] = useState('✨ 날씨 정보를 불러오는 중입니다...');
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [hourlyData, setHourlyData] = useState([]);
-  const [weeklyData, setWeeklyData] = useState([]); // 💡 주간 예보 데이터 상태 추가
+  const [weeklyData, setWeeklyData] = useState([]);
   const [forecastError, setForecastError] = useState('');
   const [bgTheme, setBgTheme] = useState('clear');
 
@@ -105,7 +106,6 @@ function App() {
         region: regionName ?? c.city ?? '위치 알 수 없음',
         date: getTodayDateString(),
         temp: Math.round(c.temp),
-        // 💡 메인 날씨 카드에도 흐린 이미지 대신 선명하고 예쁜 이모지 적용!
         icon: <span style={{ fontSize: '70px', filter: 'drop-shadow(0px 4px 6px rgba(0,0,0,0.1))' }}>{getEmojiIcon(c.icon)}</span>,
         condition: `${c.description} (체감 ${Math.round(c.feels_like)}°C)`,
         highLow: `최고 ${Math.round(c.temp_max)}° / 최저 ${Math.round(c.temp_min)}°`,
@@ -117,7 +117,7 @@ function App() {
       }));
       
       setHourlyData(Array.isArray(data.hourly) ? data.hourly : []);
-      setWeeklyData(Array.isArray(data.weekly) ? data.weekly : []); // 💡 주간 데이터 저장
+      setWeeklyData(Array.isArray(data.weekly) ? data.weekly : []); 
       
       const advice = Array.isArray(data.advice) ? data.advice.join(' ') : (typeof data.advice === 'string' ? data.advice : '');
       setAiMessage(advice || '오늘도 좋은 하루 보내세요!');
@@ -306,7 +306,11 @@ function App() {
             onRemoveFavorite={handleRemoveFavorite} onCurrentLocationClick={handleCurrentLocation}
           />
           <HourlyForecast hourlyData={hourlyData} isLoading={isAiLoading} error={forecastError} />
+          
+          {/* 💡 날씨 전망 카드가 왼쪽 세 번째 블록으로 들어갑니다 */}
+          <WeatherOutlook weeklyData={weeklyData} />
         </div>
+        
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', minWidth: 0 }}>
           <LoginCard 
             onSignUpClick={() => setIsSignUpOpen(true)} 
