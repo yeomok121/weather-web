@@ -1,6 +1,10 @@
 import React from 'react';
 
 function WeatherDetails({ airQuality = {}, current = {} }) {
+  // 백엔드에서 받아온 실제 일출/일몰 시간 (없을 경우 기본값)
+  const sunrise = current.sunrise || '06:30';
+  const sunset = current.sunset || '18:00';
+
   return (
     <div
       className="detail-info-card"
@@ -9,15 +13,16 @@ function WeatherDetails({ airQuality = {}, current = {} }) {
         borderRadius: '16px',
         padding: '24px',
         boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
-        height: 'fit-content', /* 💡 범인 검거! 100%를 fit-content로 수정해서 내용물 크기에 딱 맞게 변경했습니다 */
-        boxSizing: 'border-box'
+        height: 'fit-content',
+        boxSizing: 'border-box',
       }}
     >
       <h3 style={{ margin: '0 0 16px 0', fontSize: '16px', fontWeight: 'bold', color: '#1e293b' }}>
         상세 날씨 정보
       </h3>
-      
-      <div style={{ marginBottom: '16px' }}>
+
+      {/* 미세먼지 영역 */}
+      <div style={{ marginBottom: '20px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: '6px' }}>
           <span style={{ color: '#64748b' }}>미세먼지 (PM2.5)</span>
           <span style={{ fontWeight: 'bold', color: '#334155' }}>
@@ -47,14 +52,60 @@ function WeatherDetails({ airQuality = {}, current = {} }) {
         </div>
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#64748b', marginTop: '20px' }}>
-        <span>일출 06:30</span>
-        <span>일몰 18:00</span>
+      {/* 실제 일출 / 일몰 시간 및 곡선 디자인 영역 */}
+      <div style={{ marginTop: '20px', marginBottom: '10px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#64748b' }}>
+          <span>일출 {sunrise}</span>
+          <span>일몰 {sunset}</span>
+        </div>
+
+        {/* 원래 디자인의 점선 곡선과 태양 아이콘 복원 */}
+        <div style={{ position: 'relative', height: '45px', marginTop: '4px', display: 'flex', justifyContent: 'center' }}>
+          <svg width="180" height="45" viewBox="0 0 180 45">
+            <path
+              d="M 10 5 Q 90 65 170 5"
+              fill="none"
+              stroke="#cbd5e1"
+              strokeWidth="1.5"
+              strokeDasharray="4 4"
+            />
+          </svg>
+          <span
+            style={{
+              position: 'absolute',
+              bottom: '6px',
+              left: '58%',
+              fontSize: '16px',
+              background: '#ffffff',
+              borderRadius: '50%',
+              padding: '2px',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.08)',
+              lineHeight: 1,
+            }}
+          >
+            ☀️
+          </span>
+        </div>
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#334155', marginTop: '24px', paddingTop: '16px', borderTop: '1px solid #f1f5f9' }}>
-        <span>습도: <strong>{current.humidity !== undefined ? current.humidity : 50}%</strong></span>
-        <span>풍속: <strong>{current.wind_speed !== undefined ? current.wind_speed : 2} m/s</strong></span>
+      {/* 습도 및 풍속 영역 */}
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          fontSize: '13px',
+          color: '#334155',
+          marginTop: '12px',
+          paddingTop: '16px',
+          borderTop: '1px solid #f1f5f9',
+        }}
+      >
+        <span>
+          습도: <strong>{current.humidity !== undefined ? current.humidity : 50}%</strong>
+        </span>
+        <span>
+          풍속: <strong>{current.wind_speed !== undefined ? current.wind_speed : 2} m/s</strong>
+        </span>
       </div>
     </div>
   );
