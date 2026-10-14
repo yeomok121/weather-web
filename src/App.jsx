@@ -9,7 +9,7 @@ import FindPasswordModal from './components/FindPasswordModal';
 import AddRegionModal from './components/AddRegionModal';
 import AdminPage from './components/AdminPage';
 import WeeklyForecast, { getEmojiIcon } from './components/WeeklyForecast'; 
-import WeatherOutlook from './components/WeatherOutlook';
+import WeatherOutlook from './components/WeatherOutlook'; 
 import { FiSearch, FiBell, FiSettings, FiClock, FiCheckCircle } from 'react-icons/fi';
 
 const API = 'https://weather-backend-api-goor.onrender.com';
@@ -39,7 +39,9 @@ function App() {
 
   const [toast, setToast] = useState({ visible: false, message: '' });
   const [aiMessage, setAiMessage] = useState('✨ 날씨 정보를 불러오는 중입니다...');
+  const [aiBriefing, setAiBriefing] = useState('데이터를 불러오는 중입니다...'); // 💡 AI 브리핑용 상태 추가
   const [isAiLoading, setIsAiLoading] = useState(false);
+  
   const [hourlyData, setHourlyData] = useState([]);
   const [weeklyData, setWeeklyData] = useState([]);
   const [forecastError, setForecastError] = useState('');
@@ -121,6 +123,10 @@ function App() {
       
       const advice = Array.isArray(data.advice) ? data.advice.join(' ') : (typeof data.advice === 'string' ? data.advice : '');
       setAiMessage(advice || '오늘도 좋은 하루 보내세요!');
+      
+      // 💡 백엔드에서 생성해준 상세 브리핑 저장
+      setAiBriefing(data.ai_briefing || 'AI 날씨 전망을 불러오지 못했습니다.');
+      
     } catch (error) {
       setForecastError('서버 상태를 확인해주세요.');
       setAiMessage('날씨 정보를 불러오지 못했어요.');
@@ -135,12 +141,10 @@ function App() {
     try {
       const res = await fetch(`${API}/api/location/search?q=${encodeURIComponent(query)}`);
       if (!res.ok) { showToast('해당 지역을 찾을 수 없습니다.'); return; }
-      
       const loc = await res.json();
       const updatedSearches = [loc.name, ...recentSearches.filter(t => t !== loc.name)].slice(0, 5);
       setRecentSearches(updatedSearches);
       localStorage.setItem('recentSearches', JSON.stringify(updatedSearches));
-
       await loadWeather(loc.lat, loc.lon, loc.name);
       setSearchInput('');
     } catch (error) {
@@ -155,16 +159,13 @@ function App() {
       setIsAiLoading(true);
       const res = await fetch(`${API}/api/location/search?q=${encodeURIComponent(query)}`);
       if (!res.ok) { showToast('지역을 찾을 수 없습니다.'); setIsAiLoading(false); return; }
-      
       const loc = await res.json();
       if (favorites.some(fav => fav.name === loc.name)) {
         showToast('이미 관심 지역에 등록되어 있습니다.');
         setIsAiLoading(false); return;
       }
-      
       const newFavs = [...favorites, { name: loc.name, lat: loc.lat, lon: loc.lon }];
       saveFavorites(newFavs);
-      
       setIsAddRegionOpen(false);
       showToast(`'${loc.name}' 지역이 성공적으로 추가되었습니다!`);
       await loadWeather(loc.lat, loc.lon, loc.name);
@@ -230,26 +231,12 @@ function App() {
 
   return (
     <div style={{ backgroundColor: getBgColor(), minHeight: '100vh', display: 'flex', flexDirection: 'column', transition: 'background-color 0.8s ease', position: 'relative' }}>
-      
       <style>{`
-        @keyframes skeleton-loading {
-          0% { background-color: #e2e8f0; }
-          50% { background-color: #cbd5e1; }
-          100% { background-color: #e2e8f0; }
-        }
-        .skeleton {
-          animation: skeleton-loading 1.5s infinite ease-in-out;
-        }
+        @keyframes skeleton-loading { 0% { background-color: #e2e8f0; } 50% { background-color: #cbd5e1; } 100% { background-color: #e2e8f0; } }
+        .skeleton { animation: skeleton-loading 1.5s infinite ease-in-out; }
       `}</style>
 
-      <div style={{ 
-        position: 'fixed', bottom: '30px', right: '30px', zIndex: 9999,
-        backgroundColor: '#3182ce', color: 'white', padding: '15px 25px', borderRadius: '8px',
-        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)', display: 'flex', alignItems: 'center', gap: '10px',
-        fontWeight: 'bold', fontSize: '14px',
-        transform: toast.visible ? 'translateY(0)' : 'translateY(100px)', 
-        opacity: toast.visible ? 1 : 0, transition: 'all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55)'
-      }}>
+      <div style={{ position: 'fixed', bottom: '30px', right: '30px', zIndex: 9999, backgroundColor: '#3182ce', color: 'white', padding: '15px 25px', borderRadius: '8px', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)', display: 'flex', alignItems: 'center', gap: '10px', fontWeight: 'bold', fontSize: '14px', transform: toast.visible ? 'translateY(0)' : 'translateY(100px)', opacity: toast.visible ? 1 : 0, transition: 'all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55)' }}>
         <FiCheckCircle size={18} /> {toast.message}
       </div>
 
@@ -258,39 +245,27 @@ function App() {
           
           <div style={{ position: 'relative', display: 'flex', width: '40%', maxWidth: '500px' }}>
             <div style={{ display: 'flex', width: '100%', backgroundColor: 'white', borderRadius: '30px', padding: '5px 20px', alignItems: 'center', zIndex: 10 }}>
-              <input
-                type="text" placeholder="검색할 지역을 입력하세요" value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                onFocus={() => setIsSearchFocused(true)} onBlur={() => setIsSearchFocused(false)}
-                style={{ border: 'none', outline: 'none', flex: 1, minWidth: 0, padding: '10px', fontSize: '16px', backgroundColor: 'transparent', color: '#333' }}
-              />
+              <input type="text" placeholder="검색할 지역을 입력하세요" value={searchInput} onChange={(e) => setSearchInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSearch()} onFocus={() => setIsSearchFocused(true)} onBlur={() => setIsSearchFocused(false)} style={{ border: 'none', outline: 'none', flex: 1, minWidth: 0, padding: '10px', fontSize: '16px', backgroundColor: 'transparent', color: '#333' }} />
               <button type="button" onClick={handleSearch} disabled={isAiLoading} style={{ background: 'transparent', border: 'none', cursor: isAiLoading ? 'default' : 'pointer', display: 'flex', alignItems: 'center', color: '#1a365d', opacity: isAiLoading ? 0.5 : 1 }}>
                 <FiSearch size={20} />
               </button>
             </div>
-
             {isSearchFocused && recentSearches.length > 0 && (
               <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, backgroundColor: 'white', borderRadius: '15px', boxShadow: '0 10px 25px rgba(0,0,0,0.15)', marginTop: '10px', zIndex: 50, padding: '15px', overflow: 'hidden' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', paddingBottom: '10px', borderBottom: '1px solid #f1f5f9' }}>
-                  <h4 style={{ margin: 0, fontSize: '13px', color: '#a0aec0', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                    <FiClock /> 최근 검색어
-                  </h4>
-                  <button onMouseDown={(e) => { e.preventDefault(); setRecentSearches([]); localStorage.setItem('recentSearches', '[]'); }} style={{ background: 'none', border: 'none', color: '#a0aec0', fontSize: '12px', cursor: 'pointer' }}>
-                    전체 삭제
-                  </button>
+                  <h4 style={{ margin: 0, fontSize: '13px', color: '#a0aec0', display: 'flex', alignItems: 'center', gap: '5px' }}><FiClock /> 최근 검색어</h4>
+                  <button onMouseDown={(e) => { e.preventDefault(); setRecentSearches([]); localStorage.setItem('recentSearches', '[]'); }} style={{ background: 'none', border: 'none', color: '#a0aec0', fontSize: '12px', cursor: 'pointer' }}>전체 삭제</button>
                 </div>
                 <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
                   {recentSearches.map((term, idx) => (
                     <li key={idx} onMouseDown={(e) => { e.preventDefault(); executeSearch(term); }} style={{ padding: '10px 5px', cursor: 'pointer', color: '#333', fontSize: '15px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span>{term}</span>
-                      <FiSearch color="#cbd5e1" size={14} />
+                      <span>{term}</span><FiSearch color="#cbd5e1" size={14} />
                     </li>
                   ))}
                 </ul>
               </div>
             )}
           </div>
-
           <button type="button" onClick={() => setIsNoticeOpen(true)} style={{ backgroundColor: 'transparent', color: 'white', border: '1px solid white', borderRadius: '20px', padding: '8px 16px', cursor: 'pointer', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px' }}>
             <FiBell size={16} /> 공지사항
           </button>
@@ -298,35 +273,19 @@ function App() {
       </nav>
 
       <main className="main-container" style={{ flexGrow: 1, maxWidth: '1000px', margin: '0 auto', width: '100%' }}>
-        
-        {/* 💡 좌측 단: height: 100% 적용 */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', minWidth: 0, height: '100%' }}>
-          <WeatherMain
-            weatherData={weatherData} isAiLoading={isAiLoading} aiMessage={aiMessage}
-            favorites={favorites} onAddClick={() => setIsAddRegionOpen(true)} 
-            onFavoriteClick={(fav) => loadWeather(fav.lat, fav.lon, fav.name)}
-            onRemoveFavorite={handleRemoveFavorite} onCurrentLocationClick={handleCurrentLocation}
-          />
+          <WeatherMain weatherData={weatherData} isAiLoading={isAiLoading} aiMessage={aiMessage} favorites={favorites} onAddClick={() => setIsAddRegionOpen(true)} onFavoriteClick={(fav) => loadWeather(fav.lat, fav.lon, fav.name)} onRemoveFavorite={handleRemoveFavorite} onCurrentLocationClick={handleCurrentLocation} />
           <HourlyForecast hourlyData={hourlyData} isLoading={isAiLoading} error={forecastError} />
           
-          {/* 💡 flexGrow: 1 로 빈 공간을 밀어내어 맨 밑바닥에 딱 붙게 만듭니다! */}
           <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
-            <WeatherOutlook weeklyData={weeklyData} />
+            {/* 💡 AI 브리핑 텍스트를 컴포넌트로 전달합니다! */}
+            <WeatherOutlook weeklyData={weeklyData} aiBriefing={aiBriefing} />
           </div>
         </div>
         
-        {/* 💡 우측 단: height: 100% 적용 */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', minWidth: 0, height: '100%' }}>
-          <LoginCard 
-            onSignUpClick={() => setIsSignUpOpen(true)} 
-            onFindPasswordClick={() => setIsFindPasswordOpen(true)} 
-            loggedInUser={loggedInUser}
-            onLogin={(user) => setLoggedInUser(user)}
-            onLogout={() => { setLoggedInUser(null); showToast('로그아웃 되었습니다.'); }}
-          />
+          <LoginCard onSignUpClick={() => setIsSignUpOpen(true)} onFindPasswordClick={() => setIsFindPasswordOpen(true)} loggedInUser={loggedInUser} onLogin={(user) => setLoggedInUser(user)} onLogout={() => { setLoggedInUser(null); showToast('로그아웃 되었습니다.'); }} />
           <WeatherDetails current={weatherData} airQuality={{ level: weatherData.dust.split(' ')[0], pm25: weatherData.dust.match(/\d+/) ? weatherData.dust.match(/\d+/)[0] : 15 }} />
-          
-          {/* 💡 flexGrow: 1 적용으로 좌측과 정확히 밑변이 일치하게 됩니다! */}
           <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
             <WeeklyForecast weeklyData={weeklyData} isLoading={isAiLoading} />
           </div>
@@ -335,16 +294,11 @@ function App() {
 
       <footer style={{ backgroundColor: bgTheme === 'night' ? '#111827' : '#e2e8f0', transition: 'background-color 0.8s ease', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 40px', color: '#718096', fontSize: '13px' }}>
         <div>
-          <span>© 2026 Weather Web Project.</span>
-          <span style={{ margin: '0 15px' }}>|</span><span style={{ cursor: 'pointer' }}>이용약관</span>
-          <span style={{ margin: '0 15px' }}>|</span><span style={{ cursor: 'pointer' }}>개인정보처리방침</span>
+          <span>© 2026 Weather Web Project.</span><span style={{ margin: '0 15px' }}>|</span><span style={{ cursor: 'pointer' }}>이용약관</span><span style={{ margin: '0 15px' }}>|</span><span style={{ cursor: 'pointer' }}>개인정보처리방침</span>
         </div>
-        <button onClick={() => setIsAdminAuthOpen(true)} style={{ background: 'none', border: 'none', color: '#718096', cursor: 'pointer', opacity: 0.1 }} title="Admin">
-          <FiSettings size={18} />
-        </button>
+        <button onClick={() => setIsAdminAuthOpen(true)} style={{ background: 'none', border: 'none', color: '#718096', cursor: 'pointer', opacity: 0.1 }} title="Admin"><FiSettings size={18} /></button>
       </footer>
 
-      {/* 모달창들 (생략 안함) */}
       {isAdminAuthOpen && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 9999 }}>
           <div style={{ backgroundColor: 'white', padding: '30px', borderRadius: '12px', width: '350px', boxShadow: '0 10px 25px rgba(0,0,0,0.2)', textAlign: 'center' }}>
@@ -358,13 +312,11 @@ function App() {
           </div>
         </div>
       )}
-
       {isNoticeOpen && <NoticeModal onClose={() => setIsNoticeOpen(false)} />}
       {isSignUpOpen && <SignUpModal onClose={() => setIsSignUpOpen(false)} />}
       {isFindPasswordOpen && <FindPasswordModal onClose={() => setIsFindPasswordOpen(false)} />}
       {isAddRegionOpen && <AddRegionModal onClose={() => setIsAddRegionOpen(false)} onAddRegion={handleAddFavorite} isAiLoading={isAiLoading} />}
       {isAdminPageOpen && <AdminPage onClose={() => setIsAdminPageOpen(false)} />}
-      
     </div>
   );
 }

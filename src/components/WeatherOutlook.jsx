@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 
-function WeatherOutlook({ weeklyData = [] }) {
+// 💡 파라미터에 aiBriefing 추가!
+function WeatherOutlook({ weeklyData = [], aiBriefing = '' }) {
   const [activeTab, setActiveTab] = useState('weekly');
 
   if (!weeklyData || weeklyData.length === 0) {
@@ -14,7 +15,6 @@ function WeatherOutlook({ weeklyData = [] }) {
   const allMinTemps = weeklyData.map(d => d.temp_min);
   const avgMax = Math.round(allMaxTemps.reduce((a, b) => a + b, 0) / allMaxTemps.length);
   const avgMin = Math.round(allMinTemps.reduce((a, b) => a + b, 0) / allMinTemps.length);
-  
   const rainyDays = weeklyData.filter(d => d.pop > 30).length;
   
   let briefingText = `이번 주는 평년과 비슷하거나 조금 높은 기온(최저 ${Math.min(...allMinTemps)}℃ ~ 최고 ${Math.max(...allMaxTemps)}℃) 분포를 보이겠습니다. `;
@@ -27,21 +27,14 @@ function WeatherOutlook({ weeklyData = [] }) {
   }
 
   return (
-    // 💡 height: '100%', display: 'flex', flexDirection: 'column' 추가!
     <div style={{ backgroundColor: '#ffffff', borderRadius: '16px', padding: '24px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', color: '#333', width: '100%', boxSizing: 'border-box', height: '100%', display: 'flex', flexDirection: 'column' }}>
       <h3 style={{ margin: '0 0 16px 0', fontSize: '16px', fontWeight: 'bold' }}>날씨 전망</h3>
       
       <div style={{ display: 'flex', border: '1px solid #e2e8f0', borderRadius: '8px', overflow: 'hidden', marginBottom: '16px' }}>
-        <button 
-          onClick={() => setActiveTab('weekly')}
-          style={{ flex: 1, padding: '10px 0', background: activeTab === 'weekly' ? '#ffffff' : '#f8fafc', border: 'none', borderRight: '1px solid #e2e8f0', fontWeight: activeTab === 'weekly' ? 'bold' : 'normal', cursor: 'pointer', color: activeTab === 'weekly' ? '#0f172a' : '#64748b' }}
-        >
+        <button onClick={() => setActiveTab('weekly')} style={{ flex: 1, padding: '10px 0', background: activeTab === 'weekly' ? '#ffffff' : '#f8fafc', border: 'none', borderRight: '1px solid #e2e8f0', fontWeight: activeTab === 'weekly' ? 'bold' : 'normal', cursor: 'pointer', color: activeTab === 'weekly' ? '#0f172a' : '#64748b' }}>
           주간 종합 전망
         </button>
-        <button 
-          onClick={() => setActiveTab('ai')}
-          style={{ flex: 1, padding: '10px 0', background: activeTab === 'ai' ? '#ffffff' : '#f8fafc', border: 'none', fontWeight: activeTab === 'ai' ? 'bold' : 'normal', cursor: 'pointer', color: activeTab === 'ai' ? '#0f172a' : '#64748b', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px' }}
-        >
+        <button onClick={() => setActiveTab('ai')} style={{ flex: 1, padding: '10px 0', background: activeTab === 'ai' ? '#ffffff' : '#f8fafc', border: 'none', fontWeight: activeTab === 'ai' ? 'bold' : 'normal', cursor: 'pointer', color: activeTab === 'ai' ? '#0f172a' : '#64748b', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px' }}>
           🤖 AI 브리핑
         </button>
       </div>
@@ -52,21 +45,28 @@ function WeatherOutlook({ weeklyData = [] }) {
             <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
               <span style={{ border: '1px solid #3182ce', color: '#3182ce', padding: '4px 12px', borderRadius: '16px', fontSize: '13px', fontWeight: 'bold' }}>이번 주</span>
             </div>
-
             <div style={{ borderLeft: '3px solid #cbd5e1', paddingLeft: '12px', marginBottom: '16px', fontSize: '14px', lineHeight: '1.8' }}>
               <div style={{ display: 'flex' }}><span style={{ color: '#64748b', width: '60px' }}>기간</span> <span>{startDate}. ~ {endDate}.</span></div>
               <div style={{ display: 'flex' }}><span style={{ color: '#64748b', width: '60px' }}>예상기온</span> <span>최저 {avgMin}℃ / 최고 {avgMax}℃</span></div>
               <div style={{ display: 'flex' }}><span style={{ color: '#64748b', width: '60px' }}>강수경향</span> <span>{rainyDays > 0 ? '비 오는 날 있음' : '대체로 맑음'}</span></div>
             </div>
-
             <p style={{ margin: 0, fontSize: '14px', lineHeight: '1.6', color: '#334155', wordBreak: 'keep-all' }}>
               {briefingText}
             </p>
           </>
         ) : (
-          <div style={{ padding: '20px 10px', textAlign: 'center', color: '#64748b', fontSize: '14px' }}>
-            <span style={{ fontSize: '30px', display: 'block', marginBottom: '10px' }}>✨</span>
-            Gemini AI API를 연동하여<br/>나만의 맞춤형 날씨 리포트를 받아볼 수 있습니다.<br/>(다음 단계에서 구현 예정!)
+          <div style={{ padding: '5px 0', color: '#334155', fontSize: '14px', lineHeight: '1.8', wordBreak: 'keep-all' }}>
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+              <span style={{ border: '1px solid #8b5cf6', color: '#8b5cf6', padding: '4px 12px', borderRadius: '16px', fontSize: '13px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                ✨ Gemini 2.5 AI
+              </span>
+            </div>
+            
+            {/* 💡 AI 멘트 출력 */}
+            <p style={{ margin: 0 }}>
+              {aiBriefing}
+            </p>
+            
           </div>
         )}
       </div>
