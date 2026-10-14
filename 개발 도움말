@@ -1,0 +1,8 @@
+깃허브 저장
+git add .
+git commit -m "수정사항"
+git push origin main
+
+npm 서버 구동 방법
+npm install
+npm run dev

@@ -1,0 +1,46 @@
+/* src/index.css */
+/* 1. 최고급 한글 폰트인 Pretendard를 웹에서 불러옵니다 */
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v3.2.1/dist/web/static/pretendard.css");
+
+/* 2. 프로젝트 전체 기본 폰트와 배경색을 지정합니다 */
+* {
+  font-family: "Pretendard", -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #f8f6f0;
+}
+
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v3.2.1/dist/web/static/pretendard.css");
+
+* {
+  font-family: "Pretendard", -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #f8f6f0;
+}
+
+/* 💡 새로 추가하는 레이아웃 클래스 */
+.main-container {
+  padding: 30px 40px;
+  display: grid;
+  grid-template-columns: 2fr 1fr; /* PC: 왼쪽 넓게, 오른쪽 좁게 */
+  gap: 20px;
+  max-width: 1200px; /* 화면이 아무리 커도 1200px 이상 늘어나지 않도록 방어 */
+  margin: 0 auto; /* 화면 중앙에 예쁘게 정렬 */
+}
+
+/* 모바일 화면(너비 900px 이하)일 때 작동하는 반응형 규칙 */
+@media (max-width: 900px) {
+  .main-container {
+    grid-template-columns: 1fr; /* 1줄로 세로 배치 */
+    padding: 20px;
+  }
+}
