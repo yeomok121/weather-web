@@ -39,7 +39,7 @@ function App() {
 
   const [toast, setToast] = useState({ visible: false, message: '' });
   const [aiMessage, setAiMessage] = useState('✨ 날씨 정보를 불러오는 중입니다...');
-  const [aiBriefing, setAiBriefing] = useState('데이터를 불러오는 중입니다...'); // 💡 AI 브리핑용 상태 추가
+  const [aiBriefing, setAiBriefing] = useState('데이터를 불러오는 중입니다...');
   const [isAiLoading, setIsAiLoading] = useState(false);
   
   const [hourlyData, setHourlyData] = useState([]);
@@ -68,23 +68,32 @@ function App() {
     setRecentSearches(storedSearches);
   }, []);
 
+  // 💡 로그인 여부에 따라 관심 지역 불러오기 (비회원은 기본 부천시만 표시)
   useEffect(() => {
-    const userKey = loggedInUser ? `favorites_${loggedInUser.id}` : 'favorites_guest';
-    const savedFavs = JSON.parse(localStorage.getItem(userKey));
-    
-    if (savedFavs && savedFavs.length > 0) {
-      setFavorites(savedFavs);
-      loadWeather(savedFavs[0].lat, savedFavs[0].lon, savedFavs[0].name);
+    const defaultFav = [{ name: '부천시', lat: 37.5034, lon: 126.7660 }];
+
+    if (loggedInUser) {
+      const userKey = `favorites_${loggedInUser.id}`;
+      const savedFavs = JSON.parse(localStorage.getItem(userKey));
+      if (savedFavs && savedFavs.length > 0) {
+        setFavorites(savedFavs);
+        loadWeather(savedFavs[0].lat, savedFavs[0].lon, savedFavs[0].name);
+      } else {
+        setFavorites(defaultFav);
+        localStorage.setItem(userKey, JSON.stringify(defaultFav));
+        loadWeather(defaultFav[0].lat, defaultFav[0].lon, defaultFav[0].name);
+      }
     } else {
-      const defaultFav = [{ name: '부천시', lat: 37.5034, lon: 126.7660 }];
       setFavorites(defaultFav);
       loadWeather(defaultFav[0].lat, defaultFav[0].lon, defaultFav[0].name);
     }
   }, [loggedInUser]);
 
+  // 💡 로그인한 회원만 로컬스토리지에 관심 지역 저장
   const saveFavorites = (newFavs) => {
+    if (!loggedInUser) return;
     setFavorites(newFavs);
-    const userKey = loggedInUser ? `favorites_${loggedInUser.id}` : 'favorites_guest';
+    const userKey = `favorites_${loggedInUser.id}`;
     localStorage.setItem(userKey, JSON.stringify(newFavs));
   };
 
@@ -123,8 +132,6 @@ function App() {
       
       const advice = Array.isArray(data.advice) ? data.advice.join(' ') : (typeof data.advice === 'string' ? data.advice : '');
       setAiMessage(advice || '오늘도 좋은 하루 보내세요!');
-      
-      // 💡 백엔드에서 생성해준 상세 브리핑 저장
       setAiBriefing(data.ai_briefing || 'AI 날씨 전망을 불러오지 못했습니다.');
       
     } catch (error) {
@@ -154,7 +161,20 @@ function App() {
 
   const handleSearch = () => executeSearch(searchInput.trim());
 
+  // 💡 새 지역 추가 버튼 클릭 시 로그인 여부 확인
+  const handleOpenAddRegion = () => {
+    if (!loggedInUser) {
+      showToast('로그인 후 관심 지역을 관리할 수 있습니다.');
+      return;
+    }
+    setIsAddRegionOpen(true);
+  };
+
   const handleAddFavorite = async (query) => {
+    if (!loggedInUser) {
+      showToast('로그인이 필요한 기능입니다.');
+      return;
+    }
     try {
       setIsAiLoading(true);
       const res = await fetch(`${API}/api/location/search?q=${encodeURIComponent(query)}`);
@@ -176,6 +196,10 @@ function App() {
   };
 
   const handleRemoveFavorite = (nameToRemove) => {
+    if (!loggedInUser) {
+      showToast('로그인 후 관심 지역을 관리할 수 있습니다.');
+      return;
+    }
     const newFavs = favorites.filter(fav => fav.name !== nameToRemove);
     saveFavorites(newFavs);
     showToast('관심 지역이 삭제되었습니다.');
@@ -274,11 +298,11 @@ function App() {
 
       <main className="main-container" style={{ flexGrow: 1, maxWidth: '1000px', margin: '0 auto', width: '100%' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', minWidth: 0, height: '100%' }}>
-          <WeatherMain weatherData={weatherData} isAiLoading={isAiLoading} aiMessage={aiMessage} favorites={favorites} onAddClick={() => setIsAddRegionOpen(true)} onFavoriteClick={(fav) => loadWeather(fav.lat, fav.lon, fav.name)} onRemoveFavorite={handleRemoveFavorite} onCurrentLocationClick={handleCurrentLocation} />
+          {/* 💡 onAddClick에 로그인 체크 함수(handleOpenAddRegion) 연결 */}
+          <WeatherMain weatherData={weatherData} isAiLoading={isAiLoading} aiMessage={aiMessage} favorites={favorites} onAddClick={handleOpenAddRegion} onFavoriteClick={(fav) => loadWeather(fav.lat, fav.lon, fav.name)} onRemoveFavorite={handleRemoveFavorite} onCurrentLocationClick={handleCurrentLocation} />
           <HourlyForecast hourlyData={hourlyData} isLoading={isAiLoading} error={forecastError} />
           
           <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
-            {/* 💡 AI 브리핑 텍스트를 컴포넌트로 전달합니다! */}
             <WeatherOutlook weeklyData={weeklyData} aiBriefing={aiBriefing} />
           </div>
         </div>
@@ -286,20 +310,19 @@ function App() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', minWidth: 0, height: '100%' }}>
           <LoginCard onSignUpClick={() => setIsSignUpOpen(true)} onFindPasswordClick={() => setIsFindPasswordOpen(true)} loggedInUser={loggedInUser} onLogin={(user) => setLoggedInUser(user)} onLogout={() => { setLoggedInUser(null); showToast('로그아웃 되었습니다.'); }} />
           <WeatherDetails 
-          current=
-          {{ 
-            temp: weatherData.temp, 
-            humidity: weatherData.humidity, 
-            wind_speed: weatherData.wind_speed, 
-            description: weatherData.condition,
-            sunrise: weatherData.sunrise,
-            sunset: weatherData.sunset
-          }} 
-          airQuality={{ 
-            level: weatherData.dust.split(' ')[0], 
-            pm25: weatherData.dust.match(/\d+/) ? parseInt(weatherData.dust.match(/\d+/)[0]) : 15 
-  }} 
-/>
+            current={{ 
+              temp: weatherData.temp, 
+              humidity: weatherData.humidity, 
+              wind_speed: weatherData.wind_speed, 
+              description: weatherData.condition,
+              sunrise: weatherData.sunrise,
+              sunset: weatherData.sunset
+            }} 
+            airQuality={{ 
+              level: weatherData.dust.split(' ')[0], 
+              pm25: weatherData.dust.match(/\d+/) ? parseInt(weatherData.dust.match(/\d+/)[0]) : 15 
+            }} 
+          />
           <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
             <WeeklyForecast weeklyData={weeklyData} isLoading={isAiLoading} />
           </div>
@@ -330,7 +353,19 @@ function App() {
       {isSignUpOpen && <SignUpModal onClose={() => setIsSignUpOpen(false)} />}
       {isFindPasswordOpen && <FindPasswordModal onClose={() => setIsFindPasswordOpen(false)} />}
       {isAddRegionOpen && <AddRegionModal onClose={() => setIsAddRegionOpen(false)} onAddRegion={handleAddFavorite} isAiLoading={isAiLoading} />}
-      {isAdminPageOpen && <AdminPage onClose={() => setIsAdminPageOpen(false)} />}
+      {isAdminPageOpen && (
+        <AdminPage 
+          onClose={() => {
+            setIsAdminPageOpen(false);
+            // 💡 관리자가 현재 로그인된 회원을 삭제하거나 수정했을 경우 즉시 동기화
+            if (loggedInUser) {
+              const currentUsers = JSON.parse(localStorage.getItem('users')) || [];
+              const updatedMe = currentUsers.find(u => u.id === loggedInUser.id);
+              setLoggedInUser(updatedMe || null);
+            }
+          }} 
+        />
+      )}
     </div>
   );
 }
