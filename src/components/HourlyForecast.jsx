@@ -88,8 +88,8 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
               padding: `0 ${100 / (2 * forecastData.length)}%`, boxSizing: 'border-box'
             }}>
               <ResponsiveContainer width="100%" height="100%">
-                {/* 💡 LineChart에 style={{ overflow: 'visible' }} 추가! 차트 영역을 벗어난 글씨도 완벽하게 보이게 해줍니다. */}
-                <LineChart data={forecastData} margin={{ top: 28, bottom: 16, left: 0, right: 0 }} style={{ overflow: 'visible' }}>
+                {/* 💡 margin 속성에 left: 20, right: 20 을 추가하여 양끝 글씨 잘림을 방지했습니다! */}
+                <LineChart data={forecastData} margin={{ top: 28, bottom: 16, left: 20, right: 20 }}>
                   <YAxis domain={['dataMin', 'dataMax']} hide />
                   <Line type="monotone" dataKey="tempNum" stroke="#fbbf24" strokeWidth={3} dot={{ r: 4, fill: '#ffffff', stroke: '#fbbf24', strokeWidth: 2 }} label={<CustomLabel />} isAnimationActive={false} />
                 </LineChart>

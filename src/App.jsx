@@ -285,7 +285,21 @@ function App() {
         
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', minWidth: 0, height: '100%' }}>
           <LoginCard onSignUpClick={() => setIsSignUpOpen(true)} onFindPasswordClick={() => setIsFindPasswordOpen(true)} loggedInUser={loggedInUser} onLogin={(user) => setLoggedInUser(user)} onLogout={() => { setLoggedInUser(null); showToast('로그아웃 되었습니다.'); }} />
-          <WeatherDetails current={weatherData} airQuality={{ level: weatherData.dust.split(' ')[0], pm25: weatherData.dust.match(/\d+/) ? weatherData.dust.match(/\d+/)[0] : 15 }} />
+          <WeatherDetails 
+          current=
+          {{ 
+            temp: weatherData.temp, 
+            humidity: weatherData.humidity, 
+            wind_speed: weatherData.wind_speed, 
+            description: weatherData.condition,
+            sunrise: weatherData.sunrise,
+            sunset: weatherData.sunset
+          }} 
+          airQuality={{ 
+            level: weatherData.dust.split(' ')[0], 
+            pm25: weatherData.dust.match(/\d+/) ? parseInt(weatherData.dust.match(/\d+/)[0]) : 15 
+  }} 
+/>
           <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
             <WeeklyForecast weeklyData={weeklyData} isLoading={isAiLoading} />
           </div>
