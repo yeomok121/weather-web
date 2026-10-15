@@ -38,9 +38,11 @@ function WeatherMain({ weatherData, isAiLoading, aiMessage, favorites, onAddClic
         <p style={{ margin: '10px 0 5px 0', fontWeight: 'bold' }}>{weatherData.condition}</p>
         <p style={{ margin: '0', color: '#666', fontSize: '14px' }}>{weatherData.highLow}</p>
         
-        <div style={{ marginTop: '20px', padding: '12px 20px', background: 'linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%)', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '12px', fontSize: '14px', border: '1px solid #e2e8f0', boxShadow: '0 2px 4px rgba(0,0,0,0.02)', textAlign: 'left', minHeight: '44px' }}>
-          <span style={{ fontSize: '18px' }}>🤖</span>
-          <span style={{ fontWeight: '500', color: '#333' }}>{aiMessage}</span>
+        {/* 💡 로봇 아이콘 제거 및 텍스트 가운데 정렬 적용 완료 */}
+        <div style={{ marginTop: '20px', padding: '12px 16px', background: 'linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%)', borderRadius: '12px', display: 'flex', justifyContent: 'center', alignItems: 'center', fontSize: '14px', border: '1px solid #e2e8f0', boxShadow: '0 2px 4px rgba(0,0,0,0.02)', textAlign: 'center', minHeight: '44px' }}>
+          <span style={{ fontWeight: '500', color: '#333', lineHeight: '1.4', wordBreak: 'keep-all' }}>
+            {aiMessage}
+          </span>
         </div>
       </div>
       
