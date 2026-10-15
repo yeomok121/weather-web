@@ -35,7 +35,7 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
           icon: item.icon,
           description: item.description,
           tempNum: temp,
-          pop: pop === null ? null : Math.round(Math.max(0, Math.min(1, pop)) * 100),
+          pop: pop === null ? 0 : Math.round(Math.max(0, Math.min(1, pop)) * 100),
         };
       })
     : [];
@@ -56,6 +56,13 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
 
   return (
     <div style={{ backgroundColor: '#ffffff', borderRadius: '16px', padding: '24px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', color: '#333', width: '100%', boxSizing: 'border-box' }}>
+      {/* 💡 Recharts 내부 SVG가 영역 밖의 글씨를 자르지 않도록 강제 설정 */}
+      <style>{`
+        .hourly-chart-wrapper .recharts-surface {
+          overflow: visible !important;
+        }
+      `}</style>
+
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
         <h4 style={{ margin: 0, fontSize: '16px', fontWeight: 'bold' }}>시간대별 예보 (기온 변화)</h4>
         <div style={{ display: 'flex', gap: '8px' }}>
@@ -75,7 +82,7 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
       ) : forecastData.length === 0 ? (
         <p style={{ margin: '10px 0', fontSize: '14px', color: '#666' }}>예보 데이터가 없습니다.</p>
       ) : (
-        <div style={{ overflow: 'hidden', width: '100%', position: 'relative' }}>
+        <div className="hourly-chart-wrapper" style={{ overflow: 'hidden', width: '100%', position: 'relative' }}>
           <div style={{
             transition: 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
             transform: `translateX(-${(visibleIndex / forecastData.length) * 100}%)`,
@@ -88,9 +95,9 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
               padding: `0 ${100 / (2 * forecastData.length)}%`, boxSizing: 'border-box'
             }}>
               <ResponsiveContainer width="100%" height="100%">
-                {/* 💡 margin 속성에 left: 20, right: 20 을 추가하여 양끝 글씨 잘림을 방지했습니다! */}
-                <LineChart data={forecastData} margin={{ top: 28, bottom: 16, left: 20, right: 20 }}>
-                  <YAxis domain={['dataMin', 'dataMax']} hide />
+                {/* 💡 left: 0, right: 0으로 설정하여 상단 시간/아이콘과 100% 수직 중앙 정렬 일치 */}
+                <LineChart data={forecastData} margin={{ top: 28, bottom: 16, left: 0, right: 0 }}>
+                  <YAxis domain={['dataMin - 1', 'dataMax + 1']} hide />
                   <Line type="monotone" dataKey="tempNum" stroke="#fbbf24" strokeWidth={3} dot={{ r: 4, fill: '#ffffff', stroke: '#fbbf24', strokeWidth: 2 }} label={<CustomLabel />} isAnimationActive={false} />
                 </LineChart>
               </ResponsiveContainer>
@@ -106,8 +113,14 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
                   
                   <div style={{ height: '100px', marginBottom: '8px' }}></div>
                   
-                  <span style={{ fontSize: '12px', color: '#38bdf8', fontWeight: 'bold', minHeight: '18px' }}>
-                    {item.pop > 0 ? `💧 ${item.pop}%` : ''}
+                  {/* 💡 강수확률이 0%일 때도 사라지지 않고 항상 표시되도록 개선 */}
+                  <span style={{ 
+                    fontSize: '12px', 
+                    color: item.pop > 0 ? '#38bdf8' : '#94a3b8', 
+                    fontWeight: item.pop > 0 ? 'bold' : 'normal', 
+                    minHeight: '18px' 
+                  }}>
+                    💧 {item.pop ?? 0}%
                   </span>
                 </div>
               ))}
