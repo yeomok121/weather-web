@@ -83,14 +83,13 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
             position: 'relative'
           }}>
             
-            {/* 💡 아이콘 바로 아래(68px)부터 정확히 100px 높이를 차지하도록 설정 */}
             <div style={{ 
               position: 'absolute', top: '68px', left: 0, right: 0, height: '100px', zIndex: 1,
               padding: `0 ${100 / (2 * forecastData.length)}%`, boxSizing: 'border-box'
             }}>
               <ResponsiveContainer width="100%" height="100%">
-                {/* 💡 상단 28px(글씨 공간), 하단 16px(점 공간) 여백을 강제하여 위아래 침범 완벽 차단 */}
-                <LineChart data={forecastData} margin={{ top: 28, bottom: 16, left: 0, right: 0 }}>
+                {/* 💡 LineChart에 style={{ overflow: 'visible' }} 추가! 차트 영역을 벗어난 글씨도 완벽하게 보이게 해줍니다. */}
+                <LineChart data={forecastData} margin={{ top: 28, bottom: 16, left: 0, right: 0 }} style={{ overflow: 'visible' }}>
                   <YAxis domain={['dataMin', 'dataMax']} hide />
                   <Line type="monotone" dataKey="tempNum" stroke="#fbbf24" strokeWidth={3} dot={{ r: 4, fill: '#ffffff', stroke: '#fbbf24', strokeWidth: 2 }} label={<CustomLabel />} isAnimationActive={false} />
                 </LineChart>
@@ -105,7 +104,6 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
                     {getEmojiIcon(item.icon)}
                   </div>
                   
-                  {/* 💡 차트 높이(100px)와 동일하게 빈 공간 확보 + 하단 강수확률과 8px 추가 간격 */}
                   <div style={{ height: '100px', marginBottom: '8px' }}></div>
                   
                   <span style={{ fontSize: '12px', color: '#38bdf8', fontWeight: 'bold', minHeight: '18px' }}>
