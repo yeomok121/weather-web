@@ -13,7 +13,7 @@ function toNumber(value) {
 }
 
 const CustomLabel = ({ x, y, value }) => (
-  <text x={x} y={y - 12} fill="#334155" fontSize="14" fontWeight="bold" textAnchor="middle">
+  <text x={x} y={y - 10} fill="#334155" fontSize="14" fontWeight="bold" textAnchor="middle">
     {value}°
   </text>
 );
@@ -83,14 +83,14 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
             position: 'relative'
           }}>
             
-            {/* 💡 차트 top 위치를 95px -> 75px로 올려서 빈 공간 제거! */}
+            {/* 💡 차트 top을 85px로 내리고, 높이를 90px로 확장 + 내부 상단 여백(margin.top: 24) 추가 */}
             <div style={{ 
-              position: 'absolute', top: '75px', left: 0, right: 0, height: '70px', zIndex: 1,
+              position: 'absolute', top: '85px', left: 0, right: 0, height: '90px', zIndex: 1,
               padding: `0 ${100 / (2 * forecastData.length)}%`, boxSizing: 'border-box'
             }}>
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={forecastData}>
-                  <YAxis domain={['dataMin - 2', 'dataMax + 2']} hide />
+                <LineChart data={forecastData} margin={{ top: 24, bottom: 8, left: 0, right: 0 }}>
+                  <YAxis domain={['dataMin - 1', 'dataMax + 1']} hide />
                   <Line type="monotone" dataKey="tempNum" stroke="#fbbf24" strokeWidth={3} dot={{ r: 4, fill: '#ffffff', stroke: '#fbbf24', strokeWidth: 2 }} label={<CustomLabel />} isAnimationActive={false} />
                 </LineChart>
               </ResponsiveContainer>
@@ -104,8 +104,8 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
                     {getEmojiIcon(item.icon)}
                   </div>
                   
-                  {/* 💡 차트 들어갈 빈 공간을 100px -> 75px로 콤팩트하게! */}
-                  <div style={{ height: '75px' }}></div>
+                  {/* 💡 차트가 들어갈 빈 공간을 75px -> 95px로 넉넉하게 확장하여 겹침 방지 */}
+                  <div style={{ height: '95px' }}></div>
                   
                   <span style={{ fontSize: '12px', color: '#38bdf8', fontWeight: 'bold', minHeight: '18px' }}>
                     {item.pop > 0 ? `💧 ${item.pop}%` : ''}
