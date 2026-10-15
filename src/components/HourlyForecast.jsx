@@ -83,14 +83,15 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
             position: 'relative'
           }}>
             
-            {/* 💡 차트 top을 85px로 내리고, 높이를 90px로 확장 + 내부 상단 여백(margin.top: 24) 추가 */}
+            {/* 💡 아이콘 바로 아래(68px)부터 정확히 100px 높이를 차지하도록 설정 */}
             <div style={{ 
-              position: 'absolute', top: '85px', left: 0, right: 0, height: '90px', zIndex: 1,
+              position: 'absolute', top: '68px', left: 0, right: 0, height: '100px', zIndex: 1,
               padding: `0 ${100 / (2 * forecastData.length)}%`, boxSizing: 'border-box'
             }}>
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={forecastData} margin={{ top: 24, bottom: 8, left: 0, right: 0 }}>
-                  <YAxis domain={['dataMin - 1', 'dataMax + 1']} hide />
+                {/* 💡 상단 28px(글씨 공간), 하단 16px(점 공간) 여백을 강제하여 위아래 침범 완벽 차단 */}
+                <LineChart data={forecastData} margin={{ top: 28, bottom: 16, left: 0, right: 0 }}>
+                  <YAxis domain={['dataMin', 'dataMax']} hide />
                   <Line type="monotone" dataKey="tempNum" stroke="#fbbf24" strokeWidth={3} dot={{ r: 4, fill: '#ffffff', stroke: '#fbbf24', strokeWidth: 2 }} label={<CustomLabel />} isAnimationActive={false} />
                 </LineChart>
               </ResponsiveContainer>
@@ -99,13 +100,13 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
             <div style={{ display: 'flex', width: '100%', position: 'relative', zIndex: 2 }}>
               {forecastData.map((item) => (
                 <div key={item.id} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                  <span style={{ fontSize: '13px', color: '#64748b', marginBottom: '8px' }}>{item.time}</span>
+                  <span style={{ fontSize: '13px', color: '#64748b', height: '20px', lineHeight: '20px', marginBottom: '8px' }}>{item.time}</span>
                   <div style={{ height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '26px' }}>
                     {getEmojiIcon(item.icon)}
                   </div>
                   
-                  {/* 💡 차트가 들어갈 빈 공간을 75px -> 95px로 넉넉하게 확장하여 겹침 방지 */}
-                  <div style={{ height: '95px' }}></div>
+                  {/* 💡 차트 높이(100px)와 동일하게 빈 공간 확보 + 하단 강수확률과 8px 추가 간격 */}
+                  <div style={{ height: '100px', marginBottom: '8px' }}></div>
                   
                   <span style={{ fontSize: '12px', color: '#38bdf8', fontWeight: 'bold', minHeight: '18px' }}>
                     {item.pop > 0 ? `💧 ${item.pop}%` : ''}
