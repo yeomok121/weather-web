@@ -7,6 +7,7 @@ git push origin main
 
 git clone 레파지토리 주소
 c드라이브->사용자->깃허브에서 다운 받은 파일
+git pull
 
 
 
@@ -14,4 +15,5 @@ npm 서버 구동 방법
 npm install
 npm run dev
 
-엄준식
+
+1
