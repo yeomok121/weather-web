@@ -3,6 +3,13 @@ git add .
 git commit -m "수정사항"
 git push origin main
 
+새로운 환경에서 작업할때
+
+git clone 레파지토리 주소
+c드라이브->사용자->깃허브에서 다운 받은 파일
+
+
+
 npm 서버 구동 방법
 npm install
 npm run dev
