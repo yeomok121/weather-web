@@ -14,6 +14,20 @@ import { FiSearch, FiBell, FiSettings, FiClock, FiCheckCircle } from 'react-icon
 
 const API = 'https://weather-backend-api-goor.onrender.com';
 
+// 💡 실시간 자동완성을 위한 전국 주요 시/군/구 160개 데이터
+const KOREA_REGIONS = [
+  '서울특별시', '부산광역시', '대구광역시', '인천광역시', '광주광역시', '대전광역시', '울산광역시', '세종특별자치시',
+  '수원시', '성남시', '고양시', '용인시', '부천시', '안산시', '안양시', '남양주시', '화성시', '평택시', '의정부시', '시흥시', '파주시', '광명시', '김포시', '군포시', '광주시', '이천시', '양주시', '오산시', '구리시', '안성시', '포천시', '의왕시', '하남시', '여주시', '양평군', '동두천시', '과천시', '가평군', '연천군',
+  '춘천시', '원주시', '강릉시', '동해시', '태백시', '속초시', '삼척시', '홍천군', '횡성군', '영월군', '평창군', '정선군', '철원군', '화천군', '양구군', '인제군', '고성군', '양양군',
+  '청주시', '충주시', '제천시', '보은군', '옥천군', '영동군', '증평군', '진천군', '괴산군', '음성군', '단양군',
+  '천안시', '공주시', '보령시', '아산시', '서산시', '논산시', '계룡시', '당진시', '금산군', '부여군', '서천군', '청양군', '홍성군', '예산군', '태안군',
+  '전주시', '군산시', '익산시', '정읍시', '남원시', '김제시', '완주군', '진안군', '무주군', '장수군', '임실군', '순창군', '고창군', '부안군',
+  '목포시', '여수시', '순천시', '나주시', '광양시', '담양군', '곡성군', '구례군', '고흥군', '보성군', '화순군', '장흥군', '강진군', '해남군', '영암군', '무안군', '함평군', '영광군', '장성군', '완도군', '진도군', '신안군',
+  '포항시', '경주시', '김천시', '안동시', '구미시', '영주시', '영천시', '상주시', '문경시', '경산시', '군위군', '의성군', '청송군', '영양군', '영덕군', '청도군', '고령군', '성주군', '칠곡군', '예천군', '봉화군', '울진군', '울릉군',
+  '창원시', '진주시', '통영시', '사천시', '김해시', '밀양시', '거제시', '양산시', '의령군', '함안군', '창녕군', '고성군', '남해군', '하동군', '산청군', '함양군', '거창군', '합천군',
+  '제주시', '서귀포시'
+];
+
 const getTodayDateString = () => {
   const now = new Date();
   const month = now.getMonth() + 1;
@@ -26,6 +40,7 @@ const getTodayDateString = () => {
 function App() {
   const [searchInput, setSearchInput] = useState('');
   const [recentSearches, setRecentSearches] = useState([]);
+  const [autoCompleteList, setAutoCompleteList] = useState([]); // 💡 자동완성 결과 리스트 상태 추가
   const [isSearchFocused, setIsSearchFocused] = useState(false);
 
   const [isNoticeOpen, setIsNoticeOpen] = useState(false);
@@ -67,7 +82,6 @@ function App() {
     const storedSearches = JSON.parse(localStorage.getItem('recentSearches')) || [];
     setRecentSearches(storedSearches);
 
-    // 새로고침 시 로그인 세션 복원
     const savedUser = JSON.parse(localStorage.getItem('loggedInUser'));
     if (savedUser) setLoggedInUser(savedUser);
   }, []);
@@ -83,7 +97,6 @@ function App() {
     showToast('로그아웃 되었습니다.');
   };
 
-  // 💡 일반 회원이 직접 내 정보(이름, 비밀번호)를 수정했을 때 저장하는 함수
   const handleUpdateUser = (updatedUser) => {
     const existingUsers = JSON.parse(localStorage.getItem('users')) || [];
     const newUsers = existingUsers.map(u => u.id === updatedUser.id ? updatedUser : u);
@@ -93,7 +106,6 @@ function App() {
     showToast('내 정보가 성공적으로 수정되었습니다.');
   };
 
-  // 💡 일반 회원이 회원 탈퇴를 눌렀을 때 처리하는 함수
   const handleDeleteAccount = () => {
     if (!loggedInUser) return;
     if (window.confirm('정말 회원 탈퇴하시겠습니까? 저장된 관심 지역 정보도 함께 삭제됩니다.')) {
@@ -211,6 +223,7 @@ function App() {
   const executeSearch = async (query) => {
     if (!query) return;
     setIsSearchFocused(false);
+    setSearchInput(''); // 검색 후 검색창 비우기
     try {
       setIsAiLoading(true);
       const res = await fetch(`${API}/api/location/search?q=${encodeURIComponent(query)}`);
@@ -220,7 +233,6 @@ function App() {
       setRecentSearches(updatedSearches);
       localStorage.setItem('recentSearches', JSON.stringify(updatedSearches));
       await loadWeather(loc.lat, loc.lon, loc.name);
-      setSearchInput('');
     } catch (error) {
       showToast('검색 중 오류가 발생했습니다.');
       setIsAiLoading(false);
@@ -228,6 +240,21 @@ function App() {
   };
 
   const handleSearch = () => executeSearch(searchInput.trim());
+
+  // 💡 검색어 입력 시 자동완성 리스트 필터링 함수
+  const handleInputChange = (e) => {
+    const value = e.target.value;
+    setSearchInput(value);
+
+    if (value.trim() === '') {
+      setAutoCompleteList([]);
+    } else {
+      const filtered = KOREA_REGIONS.filter(region => 
+        region.toLowerCase().includes(value.toLowerCase())
+      );
+      setAutoCompleteList(filtered);
+    }
+  };
 
   const handleOpenAddRegion = () => {
     if (!loggedInUser) {
@@ -325,6 +352,10 @@ function App() {
       <style>{`
         @keyframes skeleton-loading { 0% { background-color: #e2e8f0; } 50% { background-color: #cbd5e1; } 100% { background-color: #e2e8f0; } }
         .skeleton { animation: skeleton-loading 1.5s infinite ease-in-out; }
+        
+        /* 스크롤바 숨기기 (드롭다운 용) */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
 
       <div style={{ position: 'fixed', bottom: '30px', right: '30px', zIndex: 9999, backgroundColor: '#3182ce', color: 'white', padding: '15px 25px', borderRadius: '8px', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)', display: 'flex', alignItems: 'center', gap: '10px', fontWeight: 'bold', fontSize: '14px', transform: toast.visible ? 'translateY(0)' : 'translateY(100px)', opacity: toast.visible ? 1 : 0, transition: 'all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55)' }}>
@@ -336,27 +367,74 @@ function App() {
           
           <div style={{ position: 'relative', display: 'flex', width: '40%', maxWidth: '500px' }}>
             <div style={{ display: 'flex', width: '100%', backgroundColor: 'white', borderRadius: '30px', padding: '5px 20px', alignItems: 'center', zIndex: 10 }}>
-              <input type="text" placeholder="검색할 지역을 입력하세요" value={searchInput} onChange={(e) => setSearchInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSearch()} onFocus={() => setIsSearchFocused(true)} onBlur={() => setIsSearchFocused(false)} style={{ border: 'none', outline: 'none', flex: 1, minWidth: 0, padding: '10px', fontSize: '16px', backgroundColor: 'transparent', color: '#333' }} />
+              <input 
+                type="text" 
+                placeholder="검색할 지역을 입력하세요" 
+                value={searchInput} 
+                onChange={handleInputChange} 
+                onKeyDown={(e) => e.key === 'Enter' && handleSearch()} 
+                onFocus={() => setIsSearchFocused(true)} 
+                onBlur={() => setTimeout(() => setIsSearchFocused(false), 150)} 
+                style={{ border: 'none', outline: 'none', flex: 1, minWidth: 0, padding: '10px', fontSize: '16px', backgroundColor: 'transparent', color: '#333' }} 
+              />
               <button type="button" onClick={handleSearch} style={{ background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', color: '#1a365d' }}>
                 <FiSearch size={20} />
               </button>
             </div>
-            {isSearchFocused && recentSearches.length > 0 && (
-              <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, backgroundColor: 'white', borderRadius: '15px', boxShadow: '0 10px 25px rgba(0,0,0,0.15)', marginTop: '10px', zIndex: 50, padding: '15px', overflow: 'hidden' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', paddingBottom: '10px', borderBottom: '1px solid #f1f5f9' }}>
-                  <h4 style={{ margin: 0, fontSize: '13px', color: '#a0aec0', display: 'flex', alignItems: 'center', gap: '5px' }}><FiClock /> 최근 검색어</h4>
-                  <button onMouseDown={(e) => { e.preventDefault(); setRecentSearches([]); localStorage.setItem('recentSearches', '[]'); }} style={{ background: 'none', border: 'none', color: '#a0aec0', fontSize: '12px', cursor: 'pointer' }}>전체 삭제</button>
-                </div>
-                <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-                  {recentSearches.map((term, idx) => (
-                    <li key={idx} onMouseDown={(e) => { e.preventDefault(); executeSearch(term); }} style={{ padding: '10px 5px', cursor: 'pointer', color: '#333', fontSize: '15px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span>{term}</span><FiSearch color="#cbd5e1" size={14} />
-                    </li>
-                  ))}
-                </ul>
+
+            {/* 💡 검색어 유무에 따라 자동완성 / 최근 검색어 분기 처리 */}
+            {isSearchFocused && (
+              <div className="no-scrollbar" style={{ position: 'absolute', top: '100%', left: 0, right: 0, backgroundColor: 'white', borderRadius: '15px', boxShadow: '0 10px 25px rgba(0,0,0,0.15)', marginTop: '10px', zIndex: 50, padding: '15px', maxHeight: '300px', overflowY: 'auto' }}>
+                
+                {searchInput.trim() === '' ? (
+                  /* --- 1. 최근 검색어 --- */
+                  <>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', paddingBottom: '10px', borderBottom: '1px solid #f1f5f9' }}>
+                      <h4 style={{ margin: 0, fontSize: '13px', color: '#a0aec0', display: 'flex', alignItems: 'center', gap: '5px' }}><FiClock /> 최근 검색어</h4>
+                      {recentSearches.length > 0 && (
+                        <button onMouseDown={(e) => { e.preventDefault(); setRecentSearches([]); localStorage.setItem('recentSearches', '[]'); }} style={{ background: 'none', border: 'none', color: '#a0aec0', fontSize: '12px', cursor: 'pointer' }}>전체 삭제</button>
+                      )}
+                    </div>
+                    {recentSearches.length > 0 ? (
+                      <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                        {recentSearches.map((term, idx) => (
+                          <li key={idx} onMouseDown={(e) => { e.preventDefault(); executeSearch(term); }} style={{ padding: '10px 5px', cursor: 'pointer', color: '#333', fontSize: '15px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: idx !== recentSearches.length -1 ? '1px solid #f8fafc' : 'none' }}>
+                            <span>{term}</span><FiSearch color="#cbd5e1" size={14} />
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p style={{ margin: 0, fontSize: '13px', color: '#94a3b8', textAlign: 'center', padding: '10px 0' }}>최근 검색어가 없습니다.</p>
+                    )}
+                  </>
+                ) : (
+                  /* --- 2. 실시간 자동완성 --- */
+                  <>
+                    <div style={{ marginBottom: '10px', paddingBottom: '10px', borderBottom: '1px solid #f1f5f9' }}>
+                      <h4 style={{ margin: 0, fontSize: '13px', color: '#a0aec0', display: 'flex', alignItems: 'center', gap: '5px' }}><FiSearch size={12}/> 일치하는 지역명</h4>
+                    </div>
+                    {autoCompleteList.length > 0 ? (
+                      <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                        {autoCompleteList.map((region, idx) => (
+                          <li key={idx} onMouseDown={(e) => { e.preventDefault(); executeSearch(region); }} style={{ padding: '10px 5px', cursor: 'pointer', color: '#333', fontSize: '15px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f8fafc' }}>
+                            <span>
+                              {region.split(new RegExp(`(${searchInput})`, 'gi')).map((part, i) => 
+                                part.toLowerCase() === searchInput.toLowerCase() ? <span key={i} style={{ color: '#3182ce', fontWeight: 'bold' }}>{part}</span> : part
+                              )}
+                            </span>
+                            <FiSearch color="#cbd5e1" size={14} />
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p style={{ margin: 0, fontSize: '13px', color: '#94a3b8', textAlign: 'center', padding: '10px 0' }}>'{searchInput}' 지역을 찾을 수 없습니다.</p>
+                    )}
+                  </>
+                )}
               </div>
             )}
           </div>
+          
           <button type="button" onClick={() => setIsNoticeOpen(true)} style={{ backgroundColor: 'transparent', color: 'white', border: '1px solid white', borderRadius: '20px', padding: '8px 16px', cursor: 'pointer', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px' }}>
             <FiBell size={16} /> 공지사항
           </button>
@@ -373,7 +451,6 @@ function App() {
         </div>
         
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', minWidth: 0, height: '100%' }}>
-          {/* 💡 내 정보 수정(onUpdateUser) 및 회원 탈퇴(onDeleteAccount) 연결 */}
           <LoginCard 
             onSignUpClick={() => setIsSignUpOpen(true)} 
             onFindPasswordClick={() => setIsFindPasswordOpen(true)} 
