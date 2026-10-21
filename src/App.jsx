@@ -66,9 +66,23 @@ function App() {
   useEffect(() => {
     const storedSearches = JSON.parse(localStorage.getItem('recentSearches')) || [];
     setRecentSearches(storedSearches);
+
+    // 💡 1. 새로고침 시 로그인 세션 유지 복원!
+    const savedUser = JSON.parse(localStorage.getItem('loggedInUser'));
+    if (savedUser) setLoggedInUser(savedUser);
   }, []);
 
-  // 💡 로그인 여부에 따라 관심 지역 불러오기 (비회원은 기본 부천시만 표시)
+  const handleLogin = (user) => {
+    setLoggedInUser(user);
+    localStorage.setItem('loggedInUser', JSON.stringify(user)); // 세션 저장
+  };
+
+  const handleLogout = () => {
+    setLoggedInUser(null);
+    localStorage.removeItem('loggedInUser'); // 세션 삭제
+    showToast('로그아웃 되었습니다.');
+  };
+
   useEffect(() => {
     const defaultFav = [{ name: '부천시', lat: 37.5034, lon: 126.7660 }];
 
@@ -89,7 +103,6 @@ function App() {
     }
   }, [loggedInUser]);
 
-  // 💡 로그인한 회원만 로컬스토리지에 관심 지역 저장
   const saveFavorites = (newFavs) => {
     if (!loggedInUser) return;
     setFavorites(newFavs);
@@ -97,57 +110,92 @@ function App() {
     localStorage.setItem(userKey, JSON.stringify(newFavs));
   };
 
+  // 💡 상태를 업데이트하는 공통 함수
+  const updateWeatherState = (data, regionName) => {
+    const c = data.current;
+    const aqi = data.air_quality;
+
+    const iconCode = c.icon || '';
+    if (iconCode.includes('n')) setBgTheme('night');
+    else if (iconCode.includes('09') || iconCode.includes('10') || iconCode.includes('11')) setBgTheme('rain');
+    else if (iconCode.includes('03') || iconCode.includes('04')) setBgTheme('cloud');
+    else setBgTheme('clear');
+
+    setWeatherData((prev) => ({
+      ...prev,
+      region: regionName ?? c.city ?? '위치 알 수 없음',
+      date: getTodayDateString(),
+      temp: Math.round(c.temp),
+      icon: <span style={{ fontSize: '70px', filter: 'drop-shadow(0px 4px 6px rgba(0,0,0,0.1))' }}>{getEmojiIcon(c.icon)}</span>,
+      condition: `${c.description} (체감 ${Math.round(c.feels_like)}°C)`,
+      highLow: `최고 ${Math.round(c.temp_max)}° / 최저 ${Math.round(c.temp_min)}°`,
+      humidity: c.humidity, 
+      wind_speed: c.wind_speed,
+      dust: aqi ? `${aqi.level} (${aqi.pm25})` : prev.dust,
+      sunrise: c.sunrise || '06:00',
+      sunset: c.sunset || '18:00'
+    }));
+    
+    setHourlyData(Array.isArray(data.hourly) ? data.hourly : []);
+    setWeeklyData(Array.isArray(data.weekly) ? data.weekly : []); 
+  };
+
   const loadWeather = async (lat, lon, regionName) => {
-    setIsAiLoading(true); setForecastError(''); setHourlyData([]); setWeeklyData([]);
+    setForecastError('');
+    
+    // 💡 2. 로컬스토리지에 저장된 마지막 날씨가 있다면 0.01초 만에 화면에 즉시 렌더링
+    const cacheKey = `weather_cache_${lat}_${lon}`;
+    const cachedData = localStorage.getItem(cacheKey);
+    if (cachedData) {
+      updateWeatherState(JSON.parse(cachedData), regionName);
+      setAiMessage('✨ AI가 오늘 날씨를 분석하고 있어요...');
+      setIsAiLoading(false); // 기존 데이터가 있으니 스켈레톤 UI를 끔
+    } else {
+      setIsAiLoading(true); // 완전 처음 접속하는 지역만 스켈레톤 표시
+    }
+
     try {
+      // 💡 3. 병렬 처리된 빠른 날씨 데이터 먼저 가져오기 (0.5초 소요)
       const res = await fetch(`${API}/api/weather/summary?lat=${lat}&lon=${lon}`);
       if (!res.ok) throw new Error(`요청 실패`);
       const data = await res.json();
-      const c = data.current;
-      const aqi = data.air_quality;
-
-      const iconCode = c.icon || '';
-      if (iconCode.includes('n')) setBgTheme('night');
-      else if (iconCode.includes('09') || iconCode.includes('10') || iconCode.includes('11')) setBgTheme('rain');
-      else if (iconCode.includes('03') || iconCode.includes('04')) setBgTheme('cloud');
-      else setBgTheme('clear');
-
-      setWeatherData((prev) => ({
-        ...prev,
-        region: regionName ?? c.city ?? '위치 알 수 없음',
-        date: getTodayDateString(),
-        temp: Math.round(c.temp),
-        icon: <span style={{ fontSize: '70px', filter: 'drop-shadow(0px 4px 6px rgba(0,0,0,0.1))' }}>{getEmojiIcon(c.icon)}</span>,
-        condition: `${c.description} (체감 ${Math.round(c.feels_like)}°C)`,
-        highLow: `최고 ${Math.round(c.temp_max)}° / 최저 ${Math.round(c.temp_min)}°`,
-        humidity: c.humidity, 
-        wind_speed: c.wind_speed,
-        dust: aqi ? `${aqi.level} (${aqi.pm25})` : prev.dust,
-        sunrise: c.sunrise || '06:00',
-        sunset: c.sunset || '18:00'
-      }));
       
-      setHourlyData(Array.isArray(data.hourly) ? data.hourly : []);
-      setWeeklyData(Array.isArray(data.weekly) ? data.weekly : []); 
+      // 화면 업데이트 및 캐시 저장
+      updateWeatherState(data, regionName);
+      localStorage.setItem(cacheKey, JSON.stringify(data));
+      setIsAiLoading(false); // 확실히 스켈레톤 해제
       
-      const advice = Array.isArray(data.advice) ? data.advice.join(' ') : (typeof data.advice === 'string' ? data.advice : '');
-      setAiMessage(advice || '오늘도 좋은 하루 보내세요!');
-      setAiBriefing(data.ai_briefing || 'AI 날씨 전망을 불러오지 못했습니다.');
+      // 💡 4. AI 브리핑은 백그라운드에서 조용히 요청 (화면은 이미 켜져 있음)
+      setAiMessage('✨ AI가 실시간 날씨를 분석 중이에요...');
+      setAiBriefing('데이터를 불러오는 중입니다...');
+      
+      const aiRes = await fetch(`${API}/api/weather/ai`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ current: data.current, forecast: data.hourly, air_quality: data.air_quality })
+      });
+      
+      if (aiRes.ok) {
+        const aiData = await aiRes.json();
+        const advice = Array.isArray(aiData.advice) ? aiData.advice.join(' ') : (typeof aiData.advice === 'string' ? aiData.advice : '');
+        setAiMessage(advice || '오늘도 좋은 하루 보내세요!');
+        setAiBriefing(aiData.ai_briefing || 'AI 날씨 전망을 불러오지 못했습니다.');
+      }
       
     } catch (error) {
       setForecastError('서버 상태를 확인해주세요.');
       setAiMessage('날씨 정보를 불러오지 못했어요.');
-    } finally {
       setIsAiLoading(false);
     }
   };
 
   const executeSearch = async (query) => {
-    if (!query || isAiLoading) return;
+    if (!query) return;
     setIsSearchFocused(false);
     try {
+      setIsAiLoading(true); // 검색할 땐 로딩 켬
       const res = await fetch(`${API}/api/location/search?q=${encodeURIComponent(query)}`);
-      if (!res.ok) { showToast('해당 지역을 찾을 수 없습니다.'); return; }
+      if (!res.ok) { showToast('해당 지역을 찾을 수 없습니다.'); setIsAiLoading(false); return; }
       const loc = await res.json();
       const updatedSearches = [loc.name, ...recentSearches.filter(t => t !== loc.name)].slice(0, 5);
       setRecentSearches(updatedSearches);
@@ -156,12 +204,12 @@ function App() {
       setSearchInput('');
     } catch (error) {
       showToast('검색 중 오류가 발생했습니다.');
+      setIsAiLoading(false);
     }
   };
 
   const handleSearch = () => executeSearch(searchInput.trim());
 
-  // 💡 새 지역 추가 버튼 클릭 시 로그인 여부 확인
   const handleOpenAddRegion = () => {
     if (!loggedInUser) {
       showToast('로그인 후 관심 지역을 관리할 수 있습니다.');
@@ -270,7 +318,7 @@ function App() {
           <div style={{ position: 'relative', display: 'flex', width: '40%', maxWidth: '500px' }}>
             <div style={{ display: 'flex', width: '100%', backgroundColor: 'white', borderRadius: '30px', padding: '5px 20px', alignItems: 'center', zIndex: 10 }}>
               <input type="text" placeholder="검색할 지역을 입력하세요" value={searchInput} onChange={(e) => setSearchInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSearch()} onFocus={() => setIsSearchFocused(true)} onBlur={() => setIsSearchFocused(false)} style={{ border: 'none', outline: 'none', flex: 1, minWidth: 0, padding: '10px', fontSize: '16px', backgroundColor: 'transparent', color: '#333' }} />
-              <button type="button" onClick={handleSearch} disabled={isAiLoading} style={{ background: 'transparent', border: 'none', cursor: isAiLoading ? 'default' : 'pointer', display: 'flex', alignItems: 'center', color: '#1a365d', opacity: isAiLoading ? 0.5 : 1 }}>
+              <button type="button" onClick={handleSearch} style={{ background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', color: '#1a365d' }}>
                 <FiSearch size={20} />
               </button>
             </div>
@@ -298,17 +346,16 @@ function App() {
 
       <main className="main-container" style={{ flexGrow: 1, maxWidth: '1000px', margin: '0 auto', width: '100%' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', minWidth: 0, height: '100%' }}>
-          {/* 💡 onAddClick에 로그인 체크 함수(handleOpenAddRegion) 연결 */}
           <WeatherMain weatherData={weatherData} isAiLoading={isAiLoading} aiMessage={aiMessage} favorites={favorites} onAddClick={handleOpenAddRegion} onFavoriteClick={(fav) => loadWeather(fav.lat, fav.lon, fav.name)} onRemoveFavorite={handleRemoveFavorite} onCurrentLocationClick={handleCurrentLocation} />
           <HourlyForecast hourlyData={hourlyData} isLoading={isAiLoading} error={forecastError} />
-          
           <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
             <WeatherOutlook weeklyData={weeklyData} aiBriefing={aiBriefing} />
           </div>
         </div>
         
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', minWidth: 0, height: '100%' }}>
-          <LoginCard onSignUpClick={() => setIsSignUpOpen(true)} onFindPasswordClick={() => setIsFindPasswordOpen(true)} loggedInUser={loggedInUser} onLogin={(user) => setLoggedInUser(user)} onLogout={() => { setLoggedInUser(null); showToast('로그아웃 되었습니다.'); }} />
+          {/* 💡 5. 로그인 상태 연동 및 유지 적용 */}
+          <LoginCard onSignUpClick={() => setIsSignUpOpen(true)} onFindPasswordClick={() => setIsFindPasswordOpen(true)} loggedInUser={loggedInUser} onLogin={handleLogin} onLogout={handleLogout} />
           <WeatherDetails 
             current={{ 
               temp: weatherData.temp, 
@@ -331,7 +378,9 @@ function App() {
 
       <footer style={{ backgroundColor: bgTheme === 'night' ? '#111827' : '#e2e8f0', transition: 'background-color 0.8s ease', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 40px', color: '#718096', fontSize: '13px' }}>
         <div>
-          <span>© 2026 Weather Web Project.</span><span style={{ margin: '0 15px' }}>|</span><span style={{ cursor: 'pointer' }}>이용약관</span><span style={{ margin: '0 15px' }}>|</span><span style={{ cursor: 'pointer' }}>개인정보처리방침</span>
+          <span>© 2026 Weather Web Project.</span><span style={{ margin: '0 15px' }}>|</span>
+          <span style={{ cursor: 'pointer' }} onClick={() => showToast('이용약관 페이지는 준비 중입니다.')}>이용약관</span><span style={{ margin: '0 15px' }}>|</span>
+          <span style={{ cursor: 'pointer' }} onClick={() => showToast('개인정보처리방침 페이지는 준비 중입니다.')}>개인정보처리방침</span>
         </div>
         <button onClick={() => setIsAdminAuthOpen(true)} style={{ background: 'none', border: 'none', color: '#718096', cursor: 'pointer', opacity: 0.1 }} title="Admin"><FiSettings size={18} /></button>
       </footer>
@@ -357,11 +406,13 @@ function App() {
         <AdminPage 
           onClose={() => {
             setIsAdminPageOpen(false);
-            // 💡 관리자가 현재 로그인된 회원을 삭제하거나 수정했을 경우 즉시 동기화
             if (loggedInUser) {
               const currentUsers = JSON.parse(localStorage.getItem('users')) || [];
               const updatedMe = currentUsers.find(u => u.id === loggedInUser.id);
-              setLoggedInUser(updatedMe || null);
+              if (updatedMe) {
+                setLoggedInUser(updatedMe);
+                localStorage.setItem('loggedInUser', JSON.stringify(updatedMe));
+              }
             }
           }} 
         />
