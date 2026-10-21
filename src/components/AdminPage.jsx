@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { FiTrash2, FiEdit, FiCheck, FiX, FiSearch, FiUserPlus } from 'react-icons/fi';
+import { API } from '../config';
 
-function AdminPage({ onClose }) {
+function AdminPage({ onClose, adminPassword }) {
   // 상단 탭 상태 ('notices' | 'users')
   const [activeTab, setActiveTab] = useState('users');
 
@@ -27,8 +28,7 @@ function AdminPage({ onClose }) {
     const storedNotices = JSON.parse(localStorage.getItem('notices')) || defaultNotices;
     setNotices(storedNotices);
 
-    const storedUsers = JSON.parse(localStorage.getItem('users')) || [];
-    setUsers(storedUsers);
+    loadUsers();
   }, []);
 
   // ----------------- 공지사항 관련 함수 -----------------
@@ -68,9 +68,26 @@ function AdminPage({ onClose }) {
     setForm({ type: notice.type, title: notice.title, date: notice.date });
   };
 
-  // ----------------- 회원 관리 관련 함수 -----------------
+  // ----------------- 회원 관리 관련 함수 (MySQL 연동) -----------------
+  const authHeaders = { 'Content-Type': 'application/json', 'x-admin-password': adminPassword || '' };
+
+  // 회원 목록 불러오기
+  const loadUsers = async () => {
+    try {
+      const res = await fetch(`${API}/api/admin/users`, { headers: authHeaders });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.detail || '회원 목록을 불러오지 못했습니다.');
+        return;
+      }
+      setUsers(data.map(u => ({ dbId: u.id, id: u.username, name: u.name })));
+    } catch (e) {
+      alert('서버에 연결할 수 없습니다.');
+    }
+  };
+
   // 1) 관리자 직접 회원 추가
-  const handleAddUser = () => {
+  const handleAddUser = async () => {
     const id = newUserForm.id.trim();
     const pw = newUserForm.pw.trim();
     const name = newUserForm.name.trim();
@@ -79,72 +96,110 @@ function AdminPage({ onClose }) {
       alert('아이디, 비밀번호, 이름을 모두 입력해 주세요.');
       return;
     }
-    if (users.some(u => u.id === id)) {
-      alert('이미 존재하는 아이디입니다.');
+    if (id.length < 4 || pw.length < 4) {
+      alert('아이디와 비밀번호는 4자 이상 입력해 주세요.');
       return;
     }
 
-    const updatedUsers = [...users, { id, pw, name }];
-    setUsers(updatedUsers);
-    localStorage.setItem('users', JSON.stringify(updatedUsers));
+    try {
+      const res = await fetch(`${API}/api/admin/users`, {
+        method: 'POST',
+        headers: authHeaders,
+        body: JSON.stringify({ username: id, password: pw, name }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.detail || '회원 추가에 실패했습니다.');
+        return;
+      }
 
-    // 신규 회원의 기본 관심 지역(부천시) 세팅
-    if (!localStorage.getItem(`favorites_${id}`)) {
-      const defaultFav = [{ name: '부천시', lat: 37.5034, lon: 126.7660 }];
-      localStorage.setItem(`favorites_${id}`, JSON.stringify(defaultFav));
+      // 신규 회원의 기본 관심 지역(부천시) 세팅
+      if (!localStorage.getItem(`favorites_${id}`)) {
+        const defaultFav = [{ name: '부천시', lat: 37.5034, lon: 126.7660 }];
+        localStorage.setItem(`favorites_${id}`, JSON.stringify(defaultFav));
+      }
+
+      setNewUserForm({ id: '', pw: '', name: '' });
+      await loadUsers();
+      alert(`'${name}(${id})' 회원이 추가되었습니다.`);
+    } catch (e) {
+      alert('서버에 연결할 수 없습니다.');
     }
-
-    setNewUserForm({ id: '', pw: '', name: '' });
-    alert(`'${name}(${id})' 회원이 추가되었습니다.`);
   };
 
-  // 2) 회원 수정 모드 진입
+  // 2) 회원 수정 모드 진입 (비밀번호는 암호화되어 있어 비워둠, 입력할 때만 변경)
   const startEditUser = (user) => {
     setEditingUserId(user.id);
-    setEditUserForm({ id: user.id, pw: user.pw, name: user.name });
+    setEditUserForm({ id: user.id, pw: '', name: user.name });
   };
 
   // 3) 회원 정보 수정 저장
-  const handleSaveUserEdit = (originalId) => {
+  const handleSaveUserEdit = async (originalId) => {
     const newId = editUserForm.id.trim();
     const newPw = editUserForm.pw.trim();
     const newName = editUserForm.name.trim();
 
-    if (!newId || !newPw || !newName) {
-      alert('아이디, 비밀번호, 이름을 비워둘 수 없습니다.');
+    if (!newId || !newName) {
+      alert('아이디와 이름을 비워둘 수 없습니다.');
       return;
     }
-    if (newId !== originalId && users.some(u => u.id === newId)) {
-      alert('이미 존재하는 아이디로 변경할 수 없습니다.');
+    if (newPw && newPw.length < 4) {
+      alert('새 비밀번호는 4자 이상 입력해 주세요.');
       return;
     }
 
-    const updatedUsers = users.map(u => 
-      u.id === originalId ? { id: newId, pw: newPw, name: newName } : u
-    );
-    setUsers(updatedUsers);
-    localStorage.setItem('users', JSON.stringify(updatedUsers));
+    const target = users.find(u => u.id === originalId);
+    if (!target) return;
 
-    // 아이디가 변경된 경우 해당 유저의 관심 지역 데이터도 새 아이디로 이전
-    if (newId !== originalId) {
-      const oldFavs = localStorage.getItem(`favorites_${originalId}`);
-      if (oldFavs) {
-        localStorage.setItem(`favorites_${newId}`, oldFavs);
-        localStorage.removeItem(`favorites_${originalId}`);
+    try {
+      const res = await fetch(`${API}/api/admin/users/${target.dbId}`, {
+        method: 'PUT',
+        headers: authHeaders,
+        body: JSON.stringify({ username: newId, name: newName, password: newPw || null }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.detail || '회원 수정에 실패했습니다.');
+        return;
       }
-    }
 
-    setEditingUserId(null);
-    alert('회원 정보가 수정되었습니다.');
+      // 아이디가 변경된 경우 해당 유저의 관심 지역 데이터도 새 아이디로 이전
+      if (newId !== originalId) {
+        const oldFavs = localStorage.getItem(`favorites_${originalId}`);
+        if (oldFavs) {
+          localStorage.setItem(`favorites_${newId}`, oldFavs);
+          localStorage.removeItem(`favorites_${originalId}`);
+        }
+      }
+
+      setEditingUserId(null);
+      await loadUsers();
+      alert('회원 정보가 수정되었습니다.');
+    } catch (e) {
+      alert('서버에 연결할 수 없습니다.');
+    }
   };
 
   // 4) 회원 삭제 (강제 탈퇴)
-  const handleDeleteUser = (targetId, targetName) => {
-    if (window.confirm(`정말 '${targetName}(${targetId})' 회원을 삭제하시겠습니까?`)) {
-      const updatedUsers = users.filter(u => u.id !== targetId);
-      setUsers(updatedUsers);
-      localStorage.setItem('users', JSON.stringify(updatedUsers));
+  const handleDeleteUser = async (targetId, targetName) => {
+    if (!window.confirm(`정말 '${targetName}(${targetId})' 회원을 삭제하시겠습니까?`)) return;
+    const target = users.find(u => u.id === targetId);
+    if (!target) return;
+
+    try {
+      const res = await fetch(`${API}/api/admin/users/${target.dbId}`, {
+        method: 'DELETE',
+        headers: authHeaders,
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.detail || '회원 삭제에 실패했습니다.');
+        return;
+      }
       localStorage.removeItem(`favorites_${targetId}`);
+      await loadUsers();
+    } catch (e) {
+      alert('서버에 연결할 수 없습니다.');
     }
   };
 
@@ -195,7 +250,7 @@ function AdminPage({ onClose }) {
                   style={{ flex: 1, minWidth: '140px', padding: '10px 12px', borderRadius: '6px', border: '1px solid #cbd5e1' }} 
                 />
                 <input 
-                  type="text" placeholder="비밀번호" value={newUserForm.pw} 
+                  type="password" placeholder="비밀번호" value={newUserForm.pw} 
                   onChange={e => setNewUserForm({...newUserForm, pw: e.target.value})} 
                   style={{ flex: 1, minWidth: '140px', padding: '10px 12px', borderRadius: '6px', border: '1px solid #cbd5e1' }} 
                 />
@@ -261,11 +316,11 @@ function AdminPage({ onClose }) {
                           <td style={{ padding: '14px 10px', color: '#475569', fontFamily: 'monospace', fontSize: '14px' }}>
                             {isEditing ? (
                               <input 
-                                type="text" value={editUserForm.pw} 
+                                type="password" placeholder="변경 시에만 입력" value={editUserForm.pw} 
                                 onChange={e => setEditUserForm({...editUserForm, pw: e.target.value})}
                                 style={{ width: '90%', padding: '6px 8px', borderRadius: '4px', border: '1px solid #3182ce' }}
                               />
-                            ) : user.pw}
+                            ) : '●●●●●●●●'}
                           </td>
                           <td style={{ padding: '14px 10px', color: '#334155' }}>
                             {isEditing ? (
