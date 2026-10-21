@@ -67,20 +67,44 @@ function App() {
     const storedSearches = JSON.parse(localStorage.getItem('recentSearches')) || [];
     setRecentSearches(storedSearches);
 
-    // 💡 1. 새로고침 시 로그인 세션 유지 복원!
+    // 새로고침 시 로그인 세션 복원
     const savedUser = JSON.parse(localStorage.getItem('loggedInUser'));
     if (savedUser) setLoggedInUser(savedUser);
   }, []);
 
   const handleLogin = (user) => {
     setLoggedInUser(user);
-    localStorage.setItem('loggedInUser', JSON.stringify(user)); // 세션 저장
+    localStorage.setItem('loggedInUser', JSON.stringify(user));
   };
 
   const handleLogout = () => {
     setLoggedInUser(null);
-    localStorage.removeItem('loggedInUser'); // 세션 삭제
+    localStorage.removeItem('loggedInUser');
     showToast('로그아웃 되었습니다.');
+  };
+
+  // 💡 일반 회원이 직접 내 정보(이름, 비밀번호)를 수정했을 때 저장하는 함수
+  const handleUpdateUser = (updatedUser) => {
+    const existingUsers = JSON.parse(localStorage.getItem('users')) || [];
+    const newUsers = existingUsers.map(u => u.id === updatedUser.id ? updatedUser : u);
+    localStorage.setItem('users', JSON.stringify(newUsers));
+    localStorage.setItem('loggedInUser', JSON.stringify(updatedUser));
+    setLoggedInUser(updatedUser);
+    showToast('내 정보가 성공적으로 수정되었습니다.');
+  };
+
+  // 💡 일반 회원이 회원 탈퇴를 눌렀을 때 처리하는 함수
+  const handleDeleteAccount = () => {
+    if (!loggedInUser) return;
+    if (window.confirm('정말 회원 탈퇴하시겠습니까? 저장된 관심 지역 정보도 함께 삭제됩니다.')) {
+      const existingUsers = JSON.parse(localStorage.getItem('users')) || [];
+      const newUsers = existingUsers.filter(u => u.id !== loggedInUser.id);
+      localStorage.setItem('users', JSON.stringify(newUsers));
+      localStorage.removeItem(`favorites_${loggedInUser.id}`);
+      localStorage.removeItem('loggedInUser');
+      setLoggedInUser(null);
+      showToast('회원 탈퇴가 완료되었습니다.');
+    }
   };
 
   useEffect(() => {
@@ -101,7 +125,7 @@ function App() {
       setFavorites(defaultFav);
       loadWeather(defaultFav[0].lat, defaultFav[0].lon, defaultFav[0].name);
     }
-  }, [loggedInUser]);
+  }, [loggedInUser?.id]);
 
   const saveFavorites = (newFavs) => {
     if (!loggedInUser) return;
@@ -110,7 +134,6 @@ function App() {
     localStorage.setItem(userKey, JSON.stringify(newFavs));
   };
 
-  // 💡 상태를 업데이트하는 공통 함수
   const updateWeatherState = (data, regionName) => {
     const c = data.current;
     const aqi = data.air_quality;
@@ -143,29 +166,25 @@ function App() {
   const loadWeather = async (lat, lon, regionName) => {
     setForecastError('');
     
-    // 💡 2. 로컬스토리지에 저장된 마지막 날씨가 있다면 0.01초 만에 화면에 즉시 렌더링
     const cacheKey = `weather_cache_${lat}_${lon}`;
     const cachedData = localStorage.getItem(cacheKey);
     if (cachedData) {
       updateWeatherState(JSON.parse(cachedData), regionName);
       setAiMessage('✨ AI가 오늘 날씨를 분석하고 있어요...');
-      setIsAiLoading(false); // 기존 데이터가 있으니 스켈레톤 UI를 끔
+      setIsAiLoading(false);
     } else {
-      setIsAiLoading(true); // 완전 처음 접속하는 지역만 스켈레톤 표시
+      setIsAiLoading(true);
     }
 
     try {
-      // 💡 3. 병렬 처리된 빠른 날씨 데이터 먼저 가져오기 (0.5초 소요)
       const res = await fetch(`${API}/api/weather/summary?lat=${lat}&lon=${lon}`);
       if (!res.ok) throw new Error(`요청 실패`);
       const data = await res.json();
       
-      // 화면 업데이트 및 캐시 저장
       updateWeatherState(data, regionName);
       localStorage.setItem(cacheKey, JSON.stringify(data));
-      setIsAiLoading(false); // 확실히 스켈레톤 해제
+      setIsAiLoading(false);
       
-      // 💡 4. AI 브리핑은 백그라운드에서 조용히 요청 (화면은 이미 켜져 있음)
       setAiMessage('✨ AI가 실시간 날씨를 분석 중이에요...');
       setAiBriefing('데이터를 불러오는 중입니다...');
       
@@ -193,7 +212,7 @@ function App() {
     if (!query) return;
     setIsSearchFocused(false);
     try {
-      setIsAiLoading(true); // 검색할 땐 로딩 켬
+      setIsAiLoading(true);
       const res = await fetch(`${API}/api/location/search?q=${encodeURIComponent(query)}`);
       if (!res.ok) { showToast('해당 지역을 찾을 수 없습니다.'); setIsAiLoading(false); return; }
       const loc = await res.json();
@@ -354,8 +373,16 @@ function App() {
         </div>
         
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', minWidth: 0, height: '100%' }}>
-          {/* 💡 5. 로그인 상태 연동 및 유지 적용 */}
-          <LoginCard onSignUpClick={() => setIsSignUpOpen(true)} onFindPasswordClick={() => setIsFindPasswordOpen(true)} loggedInUser={loggedInUser} onLogin={handleLogin} onLogout={handleLogout} />
+          {/* 💡 내 정보 수정(onUpdateUser) 및 회원 탈퇴(onDeleteAccount) 연결 */}
+          <LoginCard 
+            onSignUpClick={() => setIsSignUpOpen(true)} 
+            onFindPasswordClick={() => setIsFindPasswordOpen(true)} 
+            loggedInUser={loggedInUser} 
+            onLogin={handleLogin} 
+            onLogout={handleLogout}
+            onUpdateUser={handleUpdateUser}
+            onDeleteAccount={handleDeleteAccount}
+          />
           <WeatherDetails 
             current={{ 
               temp: weatherData.temp, 
@@ -412,6 +439,9 @@ function App() {
               if (updatedMe) {
                 setLoggedInUser(updatedMe);
                 localStorage.setItem('loggedInUser', JSON.stringify(updatedMe));
+              } else {
+                setLoggedInUser(null);
+                localStorage.removeItem('loggedInUser');
               }
             }
           }} 
