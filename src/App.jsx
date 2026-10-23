@@ -11,10 +11,9 @@ import AdminPage from './components/AdminPage';
 import WeeklyForecast, { getEmojiIcon } from './components/WeeklyForecast'; 
 import WeatherOutlook from './components/WeatherOutlook'; 
 import { FiSearch, FiBell, FiSettings, FiClock, FiCheckCircle } from 'react-icons/fi';
-import { API } from './config';
 
+const API = 'https://weather-backend-api-goor.onrender.com';
 
-// 💡 실시간 자동완성을 위한 전국 주요 시/군/구 160개 데이터
 const KOREA_REGIONS = [
   '서울특별시', '부산광역시', '대구광역시', '인천광역시', '광주광역시', '대전광역시', '울산광역시', '세종특별자치시',
   '수원시', '성남시', '고양시', '용인시', '부천시', '안산시', '안양시', '남양주시', '화성시', '평택시', '의정부시', '시흥시', '파주시', '광명시', '김포시', '군포시', '광주시', '이천시', '양주시', '오산시', '구리시', '안성시', '포천시', '의왕시', '하남시', '여주시', '양평군', '동두천시', '과천시', '가평군', '연천군',
@@ -40,7 +39,7 @@ const getTodayDateString = () => {
 function App() {
   const [searchInput, setSearchInput] = useState('');
   const [recentSearches, setRecentSearches] = useState([]);
-  const [autoCompleteList, setAutoCompleteList] = useState([]); // 💡 자동완성 결과 리스트 상태 추가
+  const [autoCompleteList, setAutoCompleteList] = useState([]);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
 
   const [isNoticeOpen, setIsNoticeOpen] = useState(false);
@@ -51,7 +50,6 @@ function App() {
   const [isAdminAuthOpen, setIsAdminAuthOpen] = useState(false); 
   const [adminPasswordInput, setAdminPasswordInput] = useState('');
   const [isAdminPageOpen, setIsAdminPageOpen] = useState(false);
-  const [adminPw, setAdminPw] = useState('');
 
   const [toast, setToast] = useState({ visible: false, message: '' });
   const [aiMessage, setAiMessage] = useState('✨ 날씨 정보를 불러오는 중입니다...');
@@ -67,7 +65,7 @@ function App() {
   const [favorites, setFavorites] = useState([]);
 
   const [weatherData, setWeatherData] = useState({
-    region: '불러오는 중...', date: getTodayDateString(), temp: 0,
+    region: '불러오는 중...', date: getTodayDateString(), temp: 0, tempDiff: 0,
     condition: '대기 중...', highLow: '최고 -° / 최저 -°',
     icon: <span style={{ fontSize: '60px' }}>☀️</span>, uv: '높음',
     humidity: 0, dust: '확인 중...', wind_speed: 0, 
@@ -98,58 +96,25 @@ function App() {
     showToast('로그아웃 되었습니다.');
   };
 
-  const handleUpdateUser = async ({ name, currentPassword, newPassword }) => {
-    try {
-      const res = await fetch(`${API}/api/users/update`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          username: loggedInUser.id,
-          current_password: currentPassword,
-          name,
-          new_password: newPassword || null,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        alert(data.detail || '정보 수정에 실패했습니다.');
-        return false;
-      }
-      const updated = { ...loggedInUser, name: data.name };
-      localStorage.setItem('loggedInUser', JSON.stringify(updated));
-      setLoggedInUser(updated);
-      showToast('내 정보가 성공적으로 수정되었습니다.');
-      return true;
-    } catch (e) {
-      alert('서버에 연결할 수 없습니다.');
-      return false;
-    }
+  const handleUpdateUser = (updatedUser) => {
+    const existingUsers = JSON.parse(localStorage.getItem('users')) || [];
+    const newUsers = existingUsers.map(u => u.id === updatedUser.id ? updatedUser : u);
+    localStorage.setItem('users', JSON.stringify(newUsers));
+    localStorage.setItem('loggedInUser', JSON.stringify(updatedUser));
+    setLoggedInUser(updatedUser);
+    showToast('내 정보가 성공적으로 수정되었습니다.');
   };
 
-  const handleDeleteAccount = async () => {
+  const handleDeleteAccount = () => {
     if (!loggedInUser) return;
-    if (!window.confirm('정말 회원 탈퇴하시겠습니까? 저장된 관심 지역 정보도 함께 삭제됩니다.')) return;
-
-    const password = window.prompt('본인 확인을 위해 비밀번호를 입력해 주세요.');
-    if (!password) return;
-
-    try {
-      const res = await fetch(`${API}/api/users/delete`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: loggedInUser.id, password }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        alert(data.detail || '회원 탈퇴에 실패했습니다.');
-        return;
-      }
+    if (window.confirm('정말 회원 탈퇴하시겠습니까? 저장된 관심 지역 정보도 함께 삭제됩니다.')) {
+      const existingUsers = JSON.parse(localStorage.getItem('users')) || [];
+      const newUsers = existingUsers.filter(u => u.id !== loggedInUser.id);
+      localStorage.setItem('users', JSON.stringify(newUsers));
       localStorage.removeItem(`favorites_${loggedInUser.id}`);
       localStorage.removeItem('loggedInUser');
       setLoggedInUser(null);
       showToast('회원 탈퇴가 완료되었습니다.');
-    } catch (e) {
-      alert('서버에 연결할 수 없습니다.');
     }
   };
 
@@ -195,6 +160,7 @@ function App() {
       region: regionName ?? c.city ?? '위치 알 수 없음',
       date: getTodayDateString(),
       temp: Math.round(c.temp),
+      tempDiff: c.temp_diff ?? 0,
       icon: <span style={{ fontSize: '70px', filter: 'drop-shadow(0px 4px 6px rgba(0,0,0,0.1))' }}>{getEmojiIcon(c.icon)}</span>,
       condition: `${c.description} (체감 ${Math.round(c.feels_like)}°C)`,
       highLow: `최고 ${Math.round(c.temp_max)}° / 최저 ${Math.round(c.temp_min)}°`,
@@ -257,7 +223,7 @@ function App() {
   const executeSearch = async (query) => {
     if (!query) return;
     setIsSearchFocused(false);
-    setSearchInput(''); // 검색 후 검색창 비우기
+    setSearchInput('');
     try {
       setIsAiLoading(true);
       const res = await fetch(`${API}/api/location/search?q=${encodeURIComponent(query)}`);
@@ -275,7 +241,6 @@ function App() {
 
   const handleSearch = () => executeSearch(searchInput.trim());
 
-  // 💡 검색어 입력 시 자동완성 리스트 필터링 함수
   const handleInputChange = (e) => {
     const value = e.target.value;
     setSearchInput(value);
@@ -352,23 +317,14 @@ function App() {
     );
   };
 
-  const handleAdminAuth = async () => {
-    try {
-      const res = await fetch(`${API}/api/admin/verify`, {
-        method: 'POST',
-        headers: { 'x-admin-password': adminPasswordInput },
-      });
-      if (!res.ok) {
-        alert('비밀번호가 틀렸습니다. 접근 권한이 없습니다.');
-        setAdminPasswordInput('');
-        return;
-      }
-      setAdminPw(adminPasswordInput);
+  const handleAdminAuth = () => {
+    if (adminPasswordInput === 'rlaxotjd') {
       setIsAdminAuthOpen(false);
       setAdminPasswordInput('');
       setIsAdminPageOpen(true);
-    } catch (e) {
-      alert('서버에 연결할 수 없습니다.');
+    } else {
+      alert('비밀번호가 틀렸습니다. 접근 권한이 없습니다.');
+      setAdminPasswordInput('');
     }
   };
 
@@ -395,8 +351,6 @@ function App() {
       <style>{`
         @keyframes skeleton-loading { 0% { background-color: #e2e8f0; } 50% { background-color: #cbd5e1; } 100% { background-color: #e2e8f0; } }
         .skeleton { animation: skeleton-loading 1.5s infinite ease-in-out; }
-        
-        /* 스크롤바 숨기기 (드롭다운 용) */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
@@ -425,12 +379,9 @@ function App() {
               </button>
             </div>
 
-            {/* 💡 검색어 유무에 따라 자동완성 / 최근 검색어 분기 처리 */}
             {isSearchFocused && (
               <div className="no-scrollbar" style={{ position: 'absolute', top: '100%', left: 0, right: 0, backgroundColor: 'white', borderRadius: '15px', boxShadow: '0 10px 25px rgba(0,0,0,0.15)', marginTop: '10px', zIndex: 50, padding: '15px', maxHeight: '300px', overflowY: 'auto' }}>
-                
                 {searchInput.trim() === '' ? (
-                  /* --- 1. 최근 검색어 --- */
                   <>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', paddingBottom: '10px', borderBottom: '1px solid #f1f5f9' }}>
                       <h4 style={{ margin: 0, fontSize: '13px', color: '#a0aec0', display: 'flex', alignItems: 'center', gap: '5px' }}><FiClock /> 최근 검색어</h4>
@@ -441,7 +392,7 @@ function App() {
                     {recentSearches.length > 0 ? (
                       <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
                         {recentSearches.map((term, idx) => (
-                          <li key={idx} onMouseDown={(e) => { e.preventDefault(); executeSearch(term); }} style={{ padding: '10px 5px', cursor: 'pointer', color: '#333', fontSize: '15px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: idx !== recentSearches.length -1 ? '1px solid #f8fafc' : 'none' }}>
+                          <li key={idx} onMouseDown={(e) => { e.preventDefault(); executeSearch(term); }} style={{ padding: '10px 5px', cursor: 'pointer', color: '#333', fontSize: '15px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: idx !== recentSearches.length - 1 ? '1px solid #f8fafc' : 'none' }}>
                             <span>{term}</span><FiSearch color="#cbd5e1" size={14} />
                           </li>
                         ))}
@@ -451,7 +402,6 @@ function App() {
                     )}
                   </>
                 ) : (
-                  /* --- 2. 실시간 자동완성 --- */
                   <>
                     <div style={{ marginBottom: '10px', paddingBottom: '10px', borderBottom: '1px solid #f1f5f9' }}>
                       <h4 style={{ margin: 0, fontSize: '13px', color: '#a0aec0', display: 'flex', alignItems: 'center', gap: '5px' }}><FiSearch size={12}/> 일치하는 지역명</h4>
@@ -486,7 +436,17 @@ function App() {
 
       <main className="main-container" style={{ flexGrow: 1, maxWidth: '1000px', margin: '0 auto', width: '100%' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', minWidth: 0, height: '100%' }}>
-          <WeatherMain weatherData={weatherData} isAiLoading={isAiLoading} aiMessage={aiMessage} favorites={favorites} onAddClick={handleOpenAddRegion} onFavoriteClick={(fav) => loadWeather(fav.lat, fav.lon, fav.name)} onRemoveFavorite={handleRemoveFavorite} onCurrentLocationClick={handleCurrentLocation} />
+          <WeatherMain 
+            weatherData={weatherData} 
+            hourlyData={hourlyData}
+            isAiLoading={isAiLoading} 
+            aiMessage={aiMessage} 
+            favorites={favorites} 
+            onAddClick={handleOpenAddRegion} 
+            onFavoriteClick={(fav) => loadWeather(fav.lat, fav.lon, fav.name)} 
+            onRemoveFavorite={handleRemoveFavorite} 
+            onCurrentLocationClick={handleCurrentLocation} 
+          />
           <HourlyForecast hourlyData={hourlyData} isLoading={isAiLoading} error={forecastError} />
           <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
             <WeatherOutlook weeklyData={weeklyData} aiBriefing={aiBriefing} />
@@ -550,7 +510,22 @@ function App() {
       {isFindPasswordOpen && <FindPasswordModal onClose={() => setIsFindPasswordOpen(false)} />}
       {isAddRegionOpen && <AddRegionModal onClose={() => setIsAddRegionOpen(false)} onAddRegion={handleAddFavorite} isAiLoading={isAiLoading} />}
       {isAdminPageOpen && (
-        <AdminPage adminPassword={adminPw} onClose={() => { setIsAdminPageOpen(false); setAdminPw(''); }} />
+        <AdminPage 
+          onClose={() => {
+            setIsAdminPageOpen(false);
+            if (loggedInUser) {
+              const currentUsers = JSON.parse(localStorage.getItem('users')) || [];
+              const updatedMe = currentUsers.find(u => u.id === loggedInUser.id);
+              if (updatedMe) {
+                setLoggedInUser(updatedMe);
+                localStorage.setItem('loggedInUser', JSON.stringify(updatedMe));
+              } else {
+                setLoggedInUser(null);
+                localStorage.removeItem('loggedInUser');
+              }
+            }
+          }} 
+        />
       )}
     </div>
   );

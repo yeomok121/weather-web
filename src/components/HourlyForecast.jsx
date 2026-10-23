@@ -25,7 +25,7 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
     setCurrentIndex(0);
   }, [hourlyData]);
 
-  const forecastData = Array.isArray(hourlyData)
+  const rawForecastData = Array.isArray(hourlyData)
     ? hourlyData.filter(item => item && typeof item === 'object').map((item, index) => {
         const temp = toNumber(item.temp);
         const pop = toNumber(item.pop);
@@ -40,8 +40,24 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
       })
     : [];
 
-  const maxIndex = Math.max(0, forecastData.length - ITEMS_TO_SHOW);
+  const maxIndex = Math.max(0, rawForecastData.length - ITEMS_TO_SHOW);
   const visibleIndex = Math.min(currentIndex, maxIndex);
+
+  // 💡 현재 화면에 보이는 6개 시간대의 기온만으로 Y축 최소/최대 범위를 동적 계산!
+  const visibleSlice = rawForecastData.slice(visibleIndex, visibleIndex + ITEMS_TO_SHOW);
+  const visibleTemps = visibleSlice.map(d => d.tempNum).filter(v => v !== null);
+  const sliceMin = visibleTemps.length > 0 ? Math.min(...visibleTemps) : 10;
+  const sliceMax = visibleTemps.length > 0 ? Math.max(...visibleTemps) : 20;
+
+  // 기온 차이가 거의 없을 때도 선이 가운데에 예쁘게 위치하고, 1~2도 차이도 역동적으로 보이도록 설정
+  const yMin = sliceMax === sliceMin ? sliceMin - 2 : sliceMin - 0.8;
+  const yMax = sliceMax === sliceMin ? sliceMax + 2 : sliceMax + 1.2;
+
+  // 화면 밖의 시간대 데이터가 차트 위아래 영역을 뚫고 나가지 않도록 보정(Clamping)하되 실제 숫자 라벨은 그대로 유지
+  const forecastData = rawForecastData.map(item => ({
+    ...item,
+    plotTemp: item.tempNum === null ? null : Math.min(yMax - 0.2, Math.max(yMin + 0.2, item.tempNum))
+  }));
 
   const handlePrev = () => setCurrentIndex(Math.max(0, visibleIndex - ITEMS_TO_SHOW));
   const handleNext = () => setCurrentIndex(Math.min(maxIndex, visibleIndex + ITEMS_TO_SHOW));
@@ -56,7 +72,6 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
 
   return (
     <div style={{ backgroundColor: '#ffffff', borderRadius: '16px', padding: '24px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', color: '#333', width: '100%', boxSizing: 'border-box' }}>
-      {/* 💡 Recharts 내부 SVG가 영역 밖의 글씨를 자르지 않도록 강제 설정 */}
       <style>{`
         .hourly-chart-wrapper .recharts-surface {
           overflow: visible !important;
@@ -95,10 +110,17 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
               padding: `0 ${100 / (2 * forecastData.length)}%`, boxSizing: 'border-box'
             }}>
               <ResponsiveContainer width="100%" height="100%">
-                {/* 💡 left: 0, right: 0으로 설정하여 상단 시간/아이콘과 100% 수직 중앙 정렬 일치 */}
                 <LineChart data={forecastData} margin={{ top: 28, bottom: 16, left: 0, right: 0 }}>
-                  <YAxis domain={['dataMin - 1', 'dataMax + 1']} hide />
-                  <Line type="monotone" dataKey="tempNum" stroke="#fbbf24" strokeWidth={3} dot={{ r: 4, fill: '#ffffff', stroke: '#fbbf24', strokeWidth: 2 }} label={<CustomLabel />} isAnimationActive={false} />
+                  <YAxis domain={[yMin, yMax]} allowDataOverflow={true} hide />
+                  <Line 
+                    type="monotone" 
+                    dataKey="plotTemp" 
+                    stroke="#fbbf24" 
+                    strokeWidth={3} 
+                    dot={{ r: 4, fill: '#ffffff', stroke: '#fbbf24', strokeWidth: 2 }} 
+                    label={(props) => <CustomLabel {...props} value={forecastData[props.index]?.tempNum} />} 
+                    isAnimationActive={false} 
+                  />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -113,7 +135,6 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
                   
                   <div style={{ height: '100px', marginBottom: '8px' }}></div>
                   
-                  {/* 💡 강수확률이 0%일 때도 사라지지 않고 항상 표시되도록 개선 */}
                   <span style={{ 
                     fontSize: '12px', 
                     color: item.pop > 0 ? '#38bdf8' : '#94a3b8', 
