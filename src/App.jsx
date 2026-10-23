@@ -11,8 +11,8 @@ import AdminPage from './components/AdminPage';
 import WeeklyForecast, { getEmojiIcon } from './components/WeeklyForecast'; 
 import WeatherOutlook from './components/WeatherOutlook'; 
 import { FiSearch, FiBell, FiSettings, FiClock, FiCheckCircle } from 'react-icons/fi';
+import { API } from './config';
 
-const API = 'https://weather-backend-api-goor.onrender.com';
 
 const KOREA_REGIONS = [
   '서울특별시', '부산광역시', '대구광역시', '인천광역시', '광주광역시', '대전광역시', '울산광역시', '세종특별자치시',
@@ -50,6 +50,7 @@ function App() {
   const [isAdminAuthOpen, setIsAdminAuthOpen] = useState(false); 
   const [adminPasswordInput, setAdminPasswordInput] = useState('');
   const [isAdminPageOpen, setIsAdminPageOpen] = useState(false);
+  const [adminPw, setAdminPw] = useState('');
 
   const [toast, setToast] = useState({ visible: false, message: '' });
   const [aiMessage, setAiMessage] = useState('✨ 날씨 정보를 불러오는 중입니다...');
@@ -96,25 +97,58 @@ function App() {
     showToast('로그아웃 되었습니다.');
   };
 
-  const handleUpdateUser = (updatedUser) => {
-    const existingUsers = JSON.parse(localStorage.getItem('users')) || [];
-    const newUsers = existingUsers.map(u => u.id === updatedUser.id ? updatedUser : u);
-    localStorage.setItem('users', JSON.stringify(newUsers));
-    localStorage.setItem('loggedInUser', JSON.stringify(updatedUser));
-    setLoggedInUser(updatedUser);
-    showToast('내 정보가 성공적으로 수정되었습니다.');
+  const handleUpdateUser = async ({ name, currentPassword, newPassword }) => {
+    try {
+      const res = await fetch(`${API}/api/users/update`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: loggedInUser.id,
+          current_password: currentPassword,
+          name,
+          new_password: newPassword || null,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.detail || '정보 수정에 실패했습니다.');
+        return false;
+      }
+      const updated = { ...loggedInUser, name: data.name };
+      localStorage.setItem('loggedInUser', JSON.stringify(updated));
+      setLoggedInUser(updated);
+      showToast('내 정보가 성공적으로 수정되었습니다.');
+      return true;
+    } catch (e) {
+      alert('서버에 연결할 수 없습니다.');
+      return false;
+    }
   };
 
-  const handleDeleteAccount = () => {
+  const handleDeleteAccount = async () => {
     if (!loggedInUser) return;
-    if (window.confirm('정말 회원 탈퇴하시겠습니까? 저장된 관심 지역 정보도 함께 삭제됩니다.')) {
-      const existingUsers = JSON.parse(localStorage.getItem('users')) || [];
-      const newUsers = existingUsers.filter(u => u.id !== loggedInUser.id);
-      localStorage.setItem('users', JSON.stringify(newUsers));
+    if (!window.confirm('정말 회원 탈퇴하시겠습니까? 저장된 관심 지역 정보도 함께 삭제됩니다.')) return;
+
+    const password = window.prompt('본인 확인을 위해 비밀번호를 입력해 주세요.');
+    if (!password) return;
+
+    try {
+      const res = await fetch(`${API}/api/users/delete`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: loggedInUser.id, password }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.detail || '회원 탈퇴에 실패했습니다.');
+        return;
+      }
       localStorage.removeItem(`favorites_${loggedInUser.id}`);
       localStorage.removeItem('loggedInUser');
       setLoggedInUser(null);
       showToast('회원 탈퇴가 완료되었습니다.');
+    } catch (e) {
+      alert('서버에 연결할 수 없습니다.');
     }
   };
 
@@ -317,14 +351,23 @@ function App() {
     );
   };
 
-  const handleAdminAuth = () => {
-    if (adminPasswordInput === 'rlaxotjd') {
+  const handleAdminAuth = async () => {
+    try {
+      const res = await fetch(`${API}/api/admin/verify`, {
+        method: 'POST',
+        headers: { 'x-admin-password': adminPasswordInput },
+      });
+      if (!res.ok) {
+        alert('비밀번호가 틀렸습니다. 접근 권한이 없습니다.');
+        setAdminPasswordInput('');
+        return;
+      }
+      setAdminPw(adminPasswordInput);
       setIsAdminAuthOpen(false);
       setAdminPasswordInput('');
       setIsAdminPageOpen(true);
-    } else {
-      alert('비밀번호가 틀렸습니다. 접근 권한이 없습니다.');
-      setAdminPasswordInput('');
+    } catch (e) {
+      alert('서버에 연결할 수 없습니다.');
     }
   };
 
@@ -510,22 +553,7 @@ function App() {
       {isFindPasswordOpen && <FindPasswordModal onClose={() => setIsFindPasswordOpen(false)} />}
       {isAddRegionOpen && <AddRegionModal onClose={() => setIsAddRegionOpen(false)} onAddRegion={handleAddFavorite} isAiLoading={isAiLoading} />}
       {isAdminPageOpen && (
-        <AdminPage 
-          onClose={() => {
-            setIsAdminPageOpen(false);
-            if (loggedInUser) {
-              const currentUsers = JSON.parse(localStorage.getItem('users')) || [];
-              const updatedMe = currentUsers.find(u => u.id === loggedInUser.id);
-              if (updatedMe) {
-                setLoggedInUser(updatedMe);
-                localStorage.setItem('loggedInUser', JSON.stringify(updatedMe));
-              } else {
-                setLoggedInUser(null);
-                localStorage.removeItem('loggedInUser');
-              }
-            }
-          }} 
-        />
+        <AdminPage adminPassword={adminPw} onClose={() => { setIsAdminPageOpen(false); setAdminPw(''); }} />
       )}
     </div>
   );
