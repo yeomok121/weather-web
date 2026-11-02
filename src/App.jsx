@@ -26,7 +26,6 @@ const KOREA_REGIONS = [
   '제주시', '서귀포시'
 ];
 
-// 💡 20대 명산 + 코스(타임라인용) 상세 데이터 추가
 export const MOUNTAINS_LIST = [
   { 
     name: '북한산', elevation: 836, peak: '백운대', region: '서울/경기', terrain: '화강암 암릉', difficulty: '중상', 
@@ -656,7 +655,15 @@ function App() {
             mountainsList={MOUNTAINS_LIST}
             onSelectMountain={(mName) => loadMountainWeather(mName)}
           />
-          <HourlyForecast hourlyData={hourlyData} isLoading={isAiLoading} error={forecastError} />
+          {/* 💡 산악 모드 정보를 담아 넓은 화면의 HourlyForecast로 데이터 전송 */}
+          <HourlyForecast 
+            hourlyData={hourlyData} 
+            isLoading={isAiLoading} 
+            error={forecastError} 
+            isMountainMode={isMountainMode}
+            mountainInfo={mountainInfo}
+            weatherData={weatherData}
+          />
           <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
             <WeatherOutlook 
               weeklyData={weeklyData} 
@@ -677,8 +684,6 @@ function App() {
             onUpdateUser={handleUpdateUser}
             onDeleteAccount={handleDeleteAccount}
           />
-          
-          {/* 💡 완전히 새로고침된 등산 특화 인터랙티브 UI 컴포넌트 연결 */}
           <WeatherDetails 
             current={{ 
               temp: weatherData.temp, 
@@ -699,7 +704,6 @@ function App() {
             isMountainMode={isMountainMode}
             mountainInfo={mountainInfo}
           />
-          
           <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
             <WeeklyForecast weeklyData={weeklyData} isLoading={isAiLoading} />
           </div>
