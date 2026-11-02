@@ -9,7 +9,7 @@ function WeatherMain({
 }) {
   const [hoveredIndex, setHoveredIndex] = useState(null);
   
-  // 💡 드롭다운 상태 및 바깥 클릭 감지용 Ref
+  // 💡 날짜 선택 드롭다운 상태 및 바깥 클릭 감지
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -43,6 +43,7 @@ function WeatherMain({
 
   const tempDiff = Number(weatherData.tempDiff || 0);
   const getComparisonBadge = () => {
+    // 💡 미래 날짜를 선택했을 때는 어제 기온과 비교하지 않음
     if (weatherData.isFuture) return { text: `🗓️ 해당 일자의 예상 최고기온 기준입니다`, bg: '#f1f5f9', color: '#475569', border: '#e2e8f0' };
 
     if (isMountainMode) {
@@ -56,7 +57,7 @@ function WeatherMain({
   };
 
   const getWeatherAlert = () => {
-    if (weatherData.isFuture) return null; // 미래 날짜는 알림 배너 생략 (하단 지수에서 파악 가능)
+    if (weatherData.isFuture) return null;
 
     const cond = weatherData.condition || '';
     const wind = Number(weatherData.wind_speed || 0);
@@ -118,7 +119,7 @@ function WeatherMain({
           {isMountainMode && mountainInfo?.difficulty && <span style={{ fontSize: '11px', color: '#9a3412', backgroundColor: '#ffedd5', padding: '3px 8px', borderRadius: '12px', fontWeight: 'bold' }}>난이도 {mountainInfo.difficulty}</span>}
         </h3>
         
-        {/* 💡 날짜 선택 드롭다운 UI */}
+        {/* 💡 날짜 선택 드롭다운 UI (이 부분이 화면에 나타납니다!) */}
         <div style={{ display: 'flex', justifyContent: 'center', margin: '10px 0 14px 0' }}>
           <div ref={dropdownRef} style={{ position: 'relative', display: 'inline-block' }}>
             <button 

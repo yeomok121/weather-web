@@ -69,7 +69,7 @@ function App() {
   const [isMountainMode, setIsMountainMode] = useState(false);
   const [mountainInfo, setMountainInfo] = useState(null);
   
-  // 💡 선택된 미래 날짜 관리를 위한 State 추가
+  // 💡 선택된 미래 날짜 관리
   const [selectedDateIdx, setSelectedDateIdx] = useState(0); 
 
   const [isNoticeOpen, setIsNoticeOpen] = useState(false);
@@ -393,18 +393,16 @@ function App() {
     switch (bgTheme) { case 'night': return '#000000'; case 'rain': return '#334155'; case 'cloud': return '#475569'; default: return '#1a365d'; }
   };
 
-  // 💡 선택된 날짜에 따라 활성화할 날씨 데이터를 동적으로 계산(Mocking)하는 로직
+  // 💡 선택된 날짜에 따라 활성화할 날씨 데이터를 동적으로 계산
   const activeWeather = useMemo(() => {
     if (selectedDateIdx === 0 || !weeklyData[selectedDateIdx]) return weatherData;
     const target = weeklyData[selectedDateIdx];
-    
-    // 산악 모드일 경우 정상 기온과 산 입구(baseTemp) 기온 차이를 추정
     const tempDrop = isMountainMode ? (weatherData.summitDrop || 5) : 0;
     
     return {
       ...weatherData,
       date: `${target.date} (${target.day})`,
-      temp: target.temp_max, // 미래 계획 시 활동 시간대인 '최고기온'을 메인으로 설정
+      temp: target.temp_max,
       feelsLike: target.temp_max - (target.wind_speed >= 5 ? 3 : 0), 
       baseTemp: target.temp_max + tempDrop,
       condition: '주간 예보 기준',
@@ -413,7 +411,7 @@ function App() {
       wind_speed: target.wind_speed || weatherData.wind_speed,
       humidity: target.humidity || weatherData.humidity,
       targetPop: target.pop,
-      isFuture: true // 미래 날짜 여부 플래그
+      isFuture: true
     };
   }, [weatherData, weeklyData, selectedDateIdx, isMountainMode]);
 
@@ -518,7 +516,6 @@ function App() {
       <main className="main-container" style={{ flexGrow: 1, maxWidth: '1000px', margin: '0 auto', width: '100%' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', minWidth: 0, height: '100%' }}>
           
-          {/* 💡 계산된 activeWeather를 모든 하위 컴포넌트로 전달 (날짜 선택 기능 추가) */}
           <WeatherMain 
             weatherData={activeWeather} 
             hourlyData={hourlyData}
@@ -580,7 +577,7 @@ function App() {
               sunset: activeWeather.sunset,
               safeDescentTime: activeWeather.safeDescentTime,
               elevation: activeWeather.elevation,
-              targetPop: activeWeather.targetPop, // 💡 미래 강수 판단용으로 추가
+              targetPop: activeWeather.targetPop,
               isFuture: activeWeather.isFuture
             }} 
             airQuality={{ 
