@@ -50,19 +50,20 @@ function WeatherDetails({ airQuality = {}, current = {}, isMountainMode = false,
     return `${layering} (${gears.join(' · ')})`;
   };
 
+  // 💡 노란색 계열 색상 코드를 짙은 색(b45309, c2410c 등)으로 변경하여 가독성 개선
   const getLifeIndices = () => {
     const badges = [];
     if (isRainOrSnow) badges.push({ text: isSnow ? '🧘 눈길 조심·실내 운동' : '🧘 실내 스트레칭 추천', color: '#6366f1' });
     else if (pm25 >= 50) badges.push({ text: '😷 야외 러닝 자제 (먼지)', color: '#ef4444' });
-    else if (wind >= 8) badges.push({ text: '💨 강풍 주의·실내 운동', color: '#f97316' });
+    else if (wind >= 8) badges.push({ text: '💨 강풍 주의·실내 운동', color: '#c2410c' });
     else if (temp >= 31) badges.push({ text: '🥵 무더위 야외 운동 자제', color: '#ef4444' });
     else if (temp <= -3) badges.push({ text: '🥶 한파 주의·실내 운동', color: '#3b82f6' });
-    else if (temp >= 27 || temp <= 6) badges.push({ text: '👟 가벼운 산책·조깅 적합', color: '#eab308' });
+    else if (temp >= 27 || temp <= 6) badges.push({ text: '👟 가벼운 산책·조깅 적합', color: '#b45309' }); // 노란색 개선
     else badges.push({ text: '🏃 달리기 완벽한 날씨', color: '#22c55e' });
 
     if (isRainOrSnow) badges.push({ text: '🚫 세차 비추천 (비/눈)', color: '#ef4444' });
-    else if (pm25 >= 36) badges.push({ text: '🌫️ 세차 비추천 (미세먼지)', color: '#f97316' });
-    else if (temp <= -2) badges.push({ text: '🧊 세차 주의 (결빙 우려)', color: '#eab308' });
+    else if (pm25 >= 36) badges.push({ text: '🌫️ 세차 비추천 (미세먼지)', color: '#c2410c' });
+    else if (temp <= -2) badges.push({ text: '🧊 세차 주의 (결빙 우려)', color: '#b45309' }); // 노란색 개선
     else badges.push({ text: '✨ 세차하기 좋은 날', color: '#3b82f6' });
 
     if (isRainOrSnow || humidity >= 80) badges.push({ text: '👕 실내 건조·제습기 권장', color: '#64748b' });
@@ -71,7 +72,7 @@ function WeatherDetails({ airQuality = {}, current = {}, isMountainMode = false,
 
     if (isRainOrSnow) badges.push({ text: '☔ 외출 시 우산 필수!', color: '#2563eb' });
     else if (pm25 >= 36) badges.push({ text: '🪟 환기 자제·마스크 착용', color: '#ef4444' });
-    else if (!celestial.isNight && desc.includes('맑음') && temp >= 23) badges.push({ text: '🕶️ 자외선 차단제 권장', color: '#f59e0b' });
+    else if (!celestial.isNight && desc.includes('맑음') && temp >= 23) badges.push({ text: '🕶️ 자외선 차단제 권장', color: '#b45309' }); // 노란색 개선
     else if (humidity <= 35) badges.push({ text: '💧 건조 주의·수분 섭취', color: '#0284c7' });
     else badges.push({ text: '🍃 창문 열고 환기하기 좋음', color: '#14b8a6' });
 
@@ -84,14 +85,14 @@ function WeatherDetails({ airQuality = {}, current = {}, isMountainMode = false,
     if (isRainOrSnow) badges.push({ text: '🌫️ 시야 불량 (곰탕 주의)', color: '#64748b' });
     else if (temp <= -2 && humidity >= 75) badges.push({ text: '❄️ 눈꽃·상고대 절경 기대', color: '#0ea5e9' });
     else if (humidity >= 80 && wind <= 3.5) badges.push({ text: '🌊 운해(구름바다) 확률 높음', color: '#8b5cf6' });
-    else if (humidity >= 85) badges.push({ text: '🌫️ 산안개(곰탕) 시야 주의', color: '#f97316' });
+    else if (humidity >= 85) badges.push({ text: '🌫️ 산안개(곰탕) 시야 주의', color: '#c2410c' });
     else if (pm25 <= 25 && desc.includes('맑음')) badges.push({ text: '🔭 쾌청! 탁 트인 정상 뻥뷰', color: '#0ea5e9' });
     else badges.push({ text: '🏞️ 조망 양호·산행 무난', color: '#10b981' });
 
     if (temp <= 2 && (isRainOrSnow || humidity >= 70)) badges.push({ text: '🧊 결빙·블랙아이스 주의', color: '#dc2626' });
     else if (isRainOrSnow) badges.push({ text: '⚠️ 젖은 바위·진흙 미끄럼', color: '#ea580c' });
     else if (temp <= 0) badges.push({ text: '❄️ 그늘 구간 서리·결빙', color: '#2563eb' });
-    else if (terrain.includes('암릉') || terrain.includes('바위')) badges.push({ text: '🪨 암릉 구간 접지력 주의', color: '#d97706' });
+    else if (terrain.includes('암릉') || terrain.includes('바위')) badges.push({ text: '🪨 암릉 구간 접지력 주의', color: '#b45309' }); // 노란색 개선
     else badges.push({ text: '🥾 노면 건조·보행 쾌적', color: '#16a34a' });
 
     if (wind >= 10) badges.push({ text: '🌪️ 강풍 특보 (체류 자제)', color: '#dc2626' });
@@ -101,7 +102,7 @@ function WeatherDetails({ airQuality = {}, current = {}, isMountainMode = false,
 
     if (isRainOrSnow || wind >= 10) badges.push({ text: '🚫 악천후 입산 자제 권장', color: '#dc2626' });
     else if (celestial.isNight && !isFuture) badges.push({ text: '🔦 야간 산행 주의 (랜턴)', color: '#475569' });
-    else if (temp <= -5 || wind >= 7 || pm25 >= 55) badges.push({ text: '⚠️ 초보자 주의·방한 철저', color: '#d97706' });
+    else if (temp <= -5 || wind >= 7 || pm25 >= 55) badges.push({ text: '⚠️ 초보자 주의·방한 철저', color: '#b45309' }); // 노란색 개선
     else badges.push({ text: '🧗 등산 가기 완벽한 날씨!', color: '#15803d' });
 
     return badges;

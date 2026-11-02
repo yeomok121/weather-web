@@ -1,193 +1,148 @@
 import React, { useState } from 'react';
-import { API } from '../config';
+import { FiUser, FiLock, FiLogOut, FiSettings, FiTrash2 } from 'react-icons/fi';
 
 function LoginCard({ onSignUpClick, onFindPasswordClick, loggedInUser, onLogin, onLogout, onUpdateUser, onDeleteAccount }) {
-  const [id, setId] = useState('');
-  const [pw, setPw] = useState('');
-  const [loading, setLoading] = useState(false);
-
-  // 내 정보 수정 모드 상태
-  const [isEditing, setIsEditing] = useState(false);
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [isEditMode, setIsEditMode] = useState(false);
+  
   const [editName, setEditName] = useState('');
-  const [currentPw, setCurrentPw] = useState('');
-  const [editPw, setEditPw] = useState('');
-  const [editPwConfirm, setEditPwConfirm] = useState('');
+  const [editCurrentPassword, setEditCurrentPassword] = useState('');
+  const [editNewPassword, setEditNewPassword] = useState('');
 
-  // 시간대별 환영 인사말
-  const getTimeGreeting = () => {
-    const hour = new Date().getHours();
-    if (hour >= 6 && hour < 11) return '상쾌한 아침이에요! 활기찬 하루 시작하세요 ☀️';
-    if (hour >= 11 && hour < 17) return '오늘도 기분 좋은 오후 보내세요 🌤️';
-    if (hour >= 17 && hour < 21) return '오늘 하루도 고생 많으셨어요! 편안한 저녁 되세요 🌇';
-    return '포근하고 편안한 밤 보내세요 🌙';
-  };
-
-  const handleLogin = async () => {
-    if (!id || !pw) {
-      alert('아이디와 비밀번호를 입력해 주세요.');
+  const handleLoginSubmit = async (e) => {
+    e.preventDefault();
+    if (!username.trim() || !password.trim()) {
+      alert('아이디와 비밀번호를 입력해주세요.');
       return;
     }
-    setLoading(true);
+    
     try {
-      const res = await fetch(`${API}/api/login`, {
+      const res = await fetch('http://localhost:8000/api/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: id, password: pw }),
+        body: JSON.stringify({ username, password })
       });
       const data = await res.json();
-      if (!res.ok) {
-        alert(data.detail || '아이디 또는 비밀번호가 일치하지 않습니다.');
-        return;
+      if (res.ok) {
+        onLogin({ id: data.username, name: data.name });
+        setUsername('');
+        setPassword('');
+      } else {
+        alert(data.detail || '로그인 실패');
       }
-      // 비밀번호는 저장하지 않고 id, name만 부모(App.jsx)에 전달
-      onLogin({ id: data.username, name: data.name });
-      setId('');
-      setPw('');
-    } catch (e) {
-      alert('서버에 연결할 수 없습니다. 백엔드 서버가 켜져 있는지 확인해 주세요.');
-    } finally {
-      setLoading(false);
+    } catch (err) {
+      alert('서버에 연결할 수 없습니다.');
     }
   };
 
-  // 내 정보 수정 창 열기
-  const openEditMode = () => {
+  const handleUpdateSubmit = async (e) => {
+    e.preventDefault();
+    if (!editCurrentPassword.trim()) {
+      alert('현재 비밀번호를 입력해주세요.');
+      return;
+    }
+    const success = await onUpdateUser({
+      name: editName,
+      currentPassword: editCurrentPassword,
+      newPassword: editNewPassword
+    });
+    if (success) {
+      setIsEditMode(false);
+      setEditCurrentPassword('');
+      setEditNewPassword('');
+    }
+  };
+
+  const handleEditOpen = () => {
     setEditName(loggedInUser.name);
-    setCurrentPw('');
-    setEditPw('');
-    setEditPwConfirm('');
-    setIsEditing(true);
+    setEditCurrentPassword('');
+    setEditNewPassword('');
+    setIsEditMode(true);
   };
 
-  // 내 정보 수정 저장하기
-  const handleSaveProfile = async () => {
-    const trimmedName = editName.trim();
-
-    if (!trimmedName) {
-      alert('이름을 입력해 주세요.');
-      return;
-    }
-    if (!currentPw) {
-      alert('본인 확인을 위해 현재 비밀번호를 입력해 주세요.');
-      return;
-    }
-    if (editPw && editPw.length < 4) {
-      alert('새 비밀번호는 4자 이상 입력해 주세요.');
-      return;
-    }
-    if (editPw !== editPwConfirm) {
-      alert('새 비밀번호 확인이 일치하지 않습니다.');
-      return;
-    }
-
-    if (onUpdateUser) {
-      const ok = await onUpdateUser({ name: trimmedName, currentPassword: currentPw, newPassword: editPw });
-      if (ok) setIsEditing(false);
-    }
-  };
-
-  const cardStyle = {
-    backgroundColor: '#ffffff', borderRadius: '16px', padding: '26px 20px',
-    boxShadow: '0 4px 12px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', alignItems: 'center', boxSizing: 'border-box'
-  };
-
-  const inputStyle = {
-    width: '85%', padding: '11px 12px', marginBottom: '10px',
-    border: '1px solid #e2e8f0', borderRadius: '6px', backgroundColor: '#f1f5f9', color: '#333', boxSizing: 'border-box', fontSize: '13px'
-  };
-
-  const labelStyle = { width: '85%', fontSize: '12px', color: '#64748b', marginBottom: '4px' };
-
-  // 1) 로그인된 상태
+  // 💡 기존의 background: '#ffffff' 제거, transparent 적용
   if (loggedInUser) {
-    // 1-A) 내 정보 수정 화면
-    if (isEditing) {
-      return (
-        <div style={cardStyle}>
-          <h3 style={{ margin: '0 0 14px 0', color: '#1e293b', fontSize: '16px' }}>⚙️ 내 정보 수정</h3>
-
-          <div style={labelStyle}>아이디 (변경 불가)</div>
-          <input type="text" value={loggedInUser.id} disabled style={{ ...inputStyle, backgroundColor: '#e2e8f0', color: '#64748b', cursor: 'not-allowed' }} />
-
-          <div style={labelStyle}>이름</div>
-          <input type="text" placeholder="이름" value={editName} onChange={(e) => setEditName(e.target.value)} style={inputStyle} />
-
-          <div style={labelStyle}>현재 비밀번호 (필수)</div>
-          <input type="password" placeholder="현재 비밀번호" value={currentPw} onChange={(e) => setCurrentPw(e.target.value)} style={inputStyle} />
-
-          <div style={labelStyle}>새 비밀번호 (변경할 때만 입력)</div>
-          <input type="password" placeholder="새 비밀번호" value={editPw} onChange={(e) => setEditPw(e.target.value)} style={inputStyle} />
-
-          <div style={labelStyle}>새 비밀번호 확인</div>
-          <input type="password" placeholder="새 비밀번호 확인" value={editPwConfirm} onChange={(e) => setEditPwConfirm(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSaveProfile()} style={{ ...inputStyle, marginBottom: '16px' }} />
-
-          <div style={{ display: 'flex', gap: '8px', width: '85%' }}>
-            <button onClick={() => setIsEditing(false)} style={{ flex: 1, padding: '10px', backgroundColor: '#e2e8f0', color: '#475569', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px' }}>
-              취소
-            </button>
-            <button onClick={handleSaveProfile} style={{ flex: 1, padding: '10px', backgroundColor: '#3182ce', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px' }}>
-              저장하기
-            </button>
-          </div>
-
-          {onDeleteAccount && (
-            <button
-              onClick={onDeleteAccount}
-              style={{ marginTop: '14px', background: 'none', border: 'none', color: '#ef4444', fontSize: '12px', cursor: 'pointer', textDecoration: 'underline' }}
-            >
-              회원 탈퇴하기
-            </button>
-          )}
-        </div>
-      );
-    }
-
-    // 1-B) 기본 환영 화면
     return (
-      <div style={{ ...cardStyle, justifyContent: 'center' }}>
-        <div style={{ fontSize: '38px', marginBottom: '8px' }}>👋</div>
-        <h2 style={{ margin: '0 0 8px 0', color: '#333', fontSize: '18px' }}>
-          <span style={{ color: '#3182ce' }}>{loggedInUser.name}</span>님, 환영합니다!
-        </h2>
-        <p style={{ fontSize: '13px', color: '#64748b', marginBottom: '20px', textAlign: 'center', wordBreak: 'keep-all' }}>
-          {getTimeGreeting()}
-        </p>
-        <div style={{ display: 'flex', gap: '8px', width: '88%' }}>
-          <button
-            onClick={openEditMode}
-            style={{ flex: 1, padding: '11px 0', backgroundColor: '#f1f5f9', color: '#334155', border: '1px solid #cbd5e1', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px' }}
-          >
-            ⚙️ 정보 수정
-          </button>
-          <button
-            onClick={onLogout}
-            style={{ flex: 1, padding: '11px 0', backgroundColor: '#e2e8f0', color: '#4a5568', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px' }}
-          >
-            로그아웃
-          </button>
-        </div>
+      <div style={{ padding: '24px', boxSizing: 'border-box', height: '100%', background: 'transparent' }}>
+        {!isEditMode ? (
+          <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+            <h3 style={{ margin: '0 0 16px 0', fontSize: '17px', fontWeight: '800', color: '#1e293b' }}>내 정보</h3>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px', padding: '16px', backgroundColor: 'rgba(255,255,255,0.5)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.6)' }}>
+              <div style={{ width: '48px', height: '48px', borderRadius: '50%', backgroundColor: '#3182ce', color: 'white', display: 'flex', justifyContent: 'center', alignItems: 'center', fontSize: '20px', fontWeight: 'bold' }}>
+                {loggedInUser.name.charAt(0)}
+              </div>
+              <div>
+                <p style={{ margin: '0 0 4px 0', fontWeight: 'bold', fontSize: '15px', color: '#0f172a' }}>{loggedInUser.name} 님</p>
+                <p style={{ margin: 0, fontSize: '12.5px', color: '#475569' }}>환영합니다!</p>
+              </div>
+            </div>
+            
+            <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <button onClick={handleEditOpen} style={{ width: '100%', padding: '10px', backgroundColor: 'rgba(255,255,255,0.7)', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '8px', color: '#334155', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '13px' }}>
+                <FiSettings size={14} /> 정보 수정
+              </button>
+              <button onClick={onLogout} style={{ width: '100%', padding: '10px', backgroundColor: 'rgba(229,62,62,0.1)', border: '1px solid rgba(229,62,62,0.2)', borderRadius: '8px', color: '#e53e3e', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '13px' }}>
+                <FiLogOut size={14} /> 로그아웃
+              </button>
+            </div>
+          </div>
+        ) : (
+          <form onSubmit={handleUpdateSubmit} style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+            <h3 style={{ margin: '0 0 16px 0', fontSize: '16px', fontWeight: 'bold', color: '#1e293b' }}>정보 수정</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '16px' }}>
+              <input type="text" placeholder="이름 변경" value={editName} onChange={(e) => setEditName(e.target.value)} required style={{ width: '100%', padding: '10px', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '8px', boxSizing: 'border-box', fontSize: '13px', backgroundColor: 'rgba(255,255,255,0.7)' }} />
+              <input type="password" placeholder="현재 비밀번호 (필수)" value={editCurrentPassword} onChange={(e) => setEditCurrentPassword(e.target.value)} required style={{ width: '100%', padding: '10px', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '8px', boxSizing: 'border-box', fontSize: '13px', backgroundColor: 'rgba(255,255,255,0.7)' }} />
+              <input type="password" placeholder="새 비밀번호 (선택)" value={editNewPassword} onChange={(e) => setEditNewPassword(e.target.value)} style={{ width: '100%', padding: '10px', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '8px', boxSizing: 'border-box', fontSize: '13px', backgroundColor: 'rgba(255,255,255,0.7)' }} />
+            </div>
+            <div style={{ display: 'flex', gap: '8px', marginTop: 'auto' }}>
+              <button type="button" onClick={() => setIsEditMode(false)} style={{ flex: 1, padding: '10px', backgroundColor: 'rgba(0,0,0,0.05)', color: '#475569', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px' }}>취소</button>
+              <button type="submit" style={{ flex: 1, padding: '10px', backgroundColor: '#3182ce', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px' }}>저장</button>
+            </div>
+            <button type="button" onClick={onDeleteAccount} style={{ marginTop: '12px', background: 'none', border: 'none', color: '#e53e3e', fontSize: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+              <FiTrash2 size={12} /> 회원 탈퇴
+            </button>
+          </form>
+        )}
       </div>
     );
   }
 
-  // 2) 비로그인 상태
   return (
-    <div style={cardStyle}>
-      <h2 style={{ margin: '0 0 20px 0', color: '#333', fontSize: '20px' }}>로그인</h2>
-
-      <input type="text" placeholder="아이디" value={id} onChange={(e) => setId(e.target.value)} style={inputStyle} />
-      <input type="password" placeholder="비밀번호" value={pw} onChange={(e) => setPw(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleLogin()} style={{ ...inputStyle, marginBottom: '16px' }} />
-
-      <button
-        onClick={handleLogin}
-        disabled={loading}
-        style={{ width: '85%', padding: '12px', backgroundColor: loading ? '#718096' : '#1a365d', color: 'white', border: 'none', borderRadius: '6px', cursor: loading ? 'not-allowed' : 'pointer', fontWeight: 'bold', marginBottom: '15px' }}
-      >
-        {loading ? '로그인 중...' : '로그인'}
-      </button>
-
-      <p onClick={onFindPasswordClick} style={{ margin: '0', fontSize: '12px', color: '#666', cursor: 'pointer' }}>비밀번호 찾기</p>
-      <p onClick={onSignUpClick} style={{ margin: '10px 0 0 0', fontSize: '12px', color: '#3182ce', cursor: 'pointer', fontWeight: 'bold' }}>회원가입</p>
+    <div style={{ padding: '24px', boxSizing: 'border-box', background: 'transparent' }}>
+      <h3 style={{ margin: '0 0 16px 0', fontSize: '17px', fontWeight: '800', color: '#1e293b', textAlign: 'center' }}>로그인</h3>
+      <form onSubmit={handleLoginSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        <div style={{ position: 'relative' }}>
+          <FiUser style={{ position: 'absolute', left: '12px', top: '12px', color: '#94a3b8' }} />
+          <input 
+            type="text" 
+            placeholder="아이디" 
+            value={username} 
+            onChange={(e) => setUsername(e.target.value)} 
+            style={{ width: '100%', padding: '10px 10px 10px 36px', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '8px', boxSizing: 'border-box', fontSize: '13px', backgroundColor: 'rgba(255,255,255,0.7)', outline: 'none' }} 
+            required 
+          />
+        </div>
+        <div style={{ position: 'relative' }}>
+          <FiLock style={{ position: 'absolute', left: '12px', top: '12px', color: '#94a3b8' }} />
+          <input 
+            type="password" 
+            placeholder="비밀번호" 
+            value={password} 
+            onChange={(e) => setPassword(e.target.value)} 
+            style={{ width: '100%', padding: '10px 10px 10px 36px', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '8px', boxSizing: 'border-box', fontSize: '13px', backgroundColor: 'rgba(255,255,255,0.7)', outline: 'none' }} 
+            required 
+          />
+        </div>
+        <button type="submit" style={{ width: '100%', padding: '12px', backgroundColor: '#1e3a8a', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold', fontSize: '13px', cursor: 'pointer', marginTop: '4px', boxShadow: '0 2px 4px rgba(30,58,138,0.2)' }}>
+          로그인
+        </button>
+      </form>
+      <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', marginTop: '16px', fontSize: '12px', color: '#64748b' }}>
+        <span onClick={onFindPasswordClick} style={{ cursor: 'pointer', hover: { color: '#3182ce' } }}>비밀번호 찾기</span>
+        <span>|</span>
+        <span onClick={onSignUpClick} style={{ cursor: 'pointer', color: '#3182ce', fontWeight: 'bold' }}>회원가입</span>
+      </div>
     </div>
   );
 }
