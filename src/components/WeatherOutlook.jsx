@@ -16,7 +16,6 @@ function WeatherOutlook({ weeklyData = [], aiBriefing = '', isMountainMode = fal
   const maxTemp = Math.max(...allMaxTemps);
   const rainyDays = weeklyData.filter(d => d.pop > 30).length;
   
-  // 💡 산악 모드와 일반 모드에 따라 브리핑 멘트를 완벽하게 분리
   let briefingText = '';
   if (isMountainMode) {
     const mName = mountainInfo?.name || '산 정상';
@@ -40,16 +39,16 @@ function WeatherOutlook({ weeklyData = [], aiBriefing = '', isMountainMode = fal
   }
 
   return (
-    <div style={{ backgroundColor: '#ffffff', borderRadius: '16px', padding: '20px 24px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', color: '#333', width: '100%', boxSizing: 'border-box', height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <h3 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: 'bold', color: isMountainMode ? '#166534' : '#1e293b' }}>
+    <div className="glass-card" style={{ borderRadius: '16px', padding: '24px', color: '#1e293b', width: '100%', boxSizing: 'border-box', height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <h3 style={{ margin: '0 0 16px 0', fontSize: '17px', fontWeight: '800', color: isMountainMode ? '#166534' : '#1e293b' }}>
         {isMountainMode ? '⛰️ 산악 기상 주간 전망' : '날씨 전망'}
       </h3>
       
-      <div style={{ display: 'flex', border: '1px solid #e2e8f0', borderRadius: '8px', overflow: 'hidden', marginBottom: '12px' }}>
-        <button onClick={() => setActiveTab('weekly')} style={{ flex: 1, padding: '8px 0', background: activeTab === 'weekly' ? '#ffffff' : '#f8fafc', border: 'none', borderRight: '1px solid #e2e8f0', fontWeight: activeTab === 'weekly' ? 'bold' : 'normal', cursor: 'pointer', color: activeTab === 'weekly' ? (isMountainMode ? '#15803d' : '#0f172a') : '#64748b' }}>
+      <div style={{ display: 'flex', borderRadius: '8px', overflow: 'hidden', marginBottom: '16px', border: '1px solid rgba(0,0,0,0.08)', backgroundColor: 'rgba(255,255,255,0.4)' }}>
+        <button onClick={() => setActiveTab('weekly')} style={{ flex: 1, padding: '10px 0', background: activeTab === 'weekly' ? 'rgba(255,255,255,0.8)' : 'transparent', border: 'none', borderRight: '1px solid rgba(0,0,0,0.08)', fontWeight: activeTab === 'weekly' ? 'bold' : '600', cursor: 'pointer', color: activeTab === 'weekly' ? (isMountainMode ? '#15803d' : '#0f172a') : '#64748b', transition: 'all 0.2s ease' }}>
           {isMountainMode ? '산간 종합 전망' : '주간 종합 전망'}
         </button>
-        <button onClick={() => setActiveTab('ai')} style={{ flex: 1, padding: '8px 0', background: activeTab === 'ai' ? '#ffffff' : '#f8fafc', border: 'none', fontWeight: activeTab === 'ai' ? 'bold' : 'normal', cursor: 'pointer', color: activeTab === 'ai' ? (isMountainMode ? '#15803d' : '#0f172a') : '#64748b', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px' }}>
+        <button onClick={() => setActiveTab('ai')} style={{ flex: 1, padding: '10px 0', background: activeTab === 'ai' ? 'rgba(255,255,255,0.8)' : 'transparent', border: 'none', fontWeight: activeTab === 'ai' ? 'bold' : '600', cursor: 'pointer', color: activeTab === 'ai' ? (isMountainMode ? '#15803d' : '#0f172a') : '#64748b', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px', transition: 'all 0.2s ease' }}>
           {isMountainMode ? '🧗 AI 산악 가이드' : '🤖 AI 브리핑'}
         </button>
       </div>
@@ -57,22 +56,22 @@ function WeatherOutlook({ weeklyData = [], aiBriefing = '', isMountainMode = fal
       <div style={{ flexGrow: 1 }}>
         {activeTab === 'weekly' ? (
           <>
-            <div style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
-              <span style={{ border: isMountainMode ? '1px solid #16a34a' : '1px solid #3182ce', color: isMountainMode ? '#16a34a' : '#3182ce', padding: '3px 10px', borderRadius: '16px', fontSize: '12px', fontWeight: 'bold' }}>이번 주</span>
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+              <span style={{ border: isMountainMode ? '1px solid rgba(22,163,74,0.4)' : '1px solid rgba(37,99,235,0.4)', color: isMountainMode ? '#16a34a' : '#2563eb', padding: '4px 12px', borderRadius: '16px', fontSize: '12px', fontWeight: 'bold', backgroundColor: isMountainMode ? 'rgba(240,253,244,0.6)' : 'rgba(239,246,255,0.6)' }}>이번 주</span>
             </div>
-            <div style={{ borderLeft: isMountainMode ? '3px solid #bbf7d0' : '3px solid #cbd5e1', paddingLeft: '12px', marginBottom: '12px', fontSize: '13.5px', lineHeight: '1.6' }}>
-              <div style={{ display: 'flex' }}><span style={{ color: '#64748b', width: '60px' }}>기간</span> <span>{startDate}. ~ {endDate}.</span></div>
-              <div style={{ display: 'flex' }}><span style={{ color: '#64748b', width: '60px' }}>{isMountainMode ? '정상기온' : '예상기온'}</span> <span>최저 {minTemp}℃ / 최고 {maxTemp}℃</span></div>
-              <div style={{ display: 'flex' }}><span style={{ color: '#64748b', width: '60px' }}>강수경향</span> <span>{rainyDays > 0 ? '비/눈 오는 날 있음' : '대체로 맑음'}</span></div>
+            <div style={{ borderLeft: isMountainMode ? '3px solid #bbf7d0' : '3px solid #cbd5e1', paddingLeft: '14px', marginBottom: '14px', fontSize: '13.5px', lineHeight: '1.6', color: '#1e293b', fontWeight: '500' }}>
+              <div style={{ display: 'flex', marginBottom: '4px' }}><span style={{ color: '#64748b', width: '64px', fontWeight: '600' }}>기간</span> <span>{startDate}. ~ {endDate}.</span></div>
+              <div style={{ display: 'flex', marginBottom: '4px' }}><span style={{ color: '#64748b', width: '64px', fontWeight: '600' }}>{isMountainMode ? '정상기온' : '예상기온'}</span> <span>최저 {minTemp}℃ / 최고 {maxTemp}℃</span></div>
+              <div style={{ display: 'flex' }}><span style={{ color: '#64748b', width: '64px', fontWeight: '600' }}>강수경향</span> <span>{rainyDays > 0 ? '비/눈 오는 날 있음' : '대체로 맑음'}</span></div>
             </div>
-            <p style={{ margin: 0, fontSize: '13.5px', lineHeight: '1.5', color: '#334155', wordBreak: 'keep-all' }}>
+            <p style={{ margin: 0, fontSize: '13.5px', lineHeight: '1.55', color: '#334155', wordBreak: 'keep-all', fontWeight: '500' }}>
               {briefingText}
             </p>
           </>
         ) : (
-          <div style={{ padding: '2px 0', color: '#334155', fontSize: '13.5px', lineHeight: '1.65', wordBreak: 'keep-all' }}>
-            <div style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
-              <span style={{ border: isMountainMode ? '1px solid #059669' : '1px solid #8b5cf6', color: isMountainMode ? '#059669' : '#8b5cf6', padding: '3px 10px', borderRadius: '16px', fontSize: '12px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <div style={{ padding: '2px 0', color: '#334155', fontSize: '13.5px', lineHeight: '1.65', wordBreak: 'keep-all', fontWeight: '500' }}>
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+              <span style={{ border: isMountainMode ? '1px solid rgba(5,150,105,0.4)' : '1px solid rgba(139,92,246,0.4)', color: isMountainMode ? '#059669' : '#7c3aed', padding: '4px 12px', borderRadius: '16px', fontSize: '12px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px', backgroundColor: isMountainMode ? 'rgba(209,250,229,0.6)' : 'rgba(237,233,254,0.6)' }}>
                 ✨ Gemini AI {isMountainMode ? '산악 분석' : ''}
               </span>
             </div>

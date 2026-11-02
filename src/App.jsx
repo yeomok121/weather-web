@@ -56,8 +56,32 @@ const getTodayDateString = () => {
   const month = now.getMonth() + 1;
   const date = now.getDate();
   const days = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'];
-  const day = days[now.getDay()];
-  return `${month}월 ${date}일 ${day}`;
+  return `${month}월 ${date}일 ${days[now.getDay()]}`;
+};
+
+// 💡 날씨에 따라 다이나믹한 감성 애니메이션 배경을 렌더링하는 헬퍼 컴포넌트
+const WeatherBackground = ({ theme }) => {
+  const isRain = theme === 'rain';
+  const isSnow = theme === 'snow';
+
+  return (
+    <div className={`weather-bg ${theme}`} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: -1, transition: 'background 1.5s ease' }}>
+      {isRain && (
+        <div className="rain-container">
+          {[...Array(20)].map((_, i) => (
+            <div key={i} className="rain-drop" style={{ left: `${Math.random() * 100}%`, animationDuration: `${0.5 + Math.random() * 0.5}s`, animationDelay: `${Math.random()}s` }}></div>
+          ))}
+        </div>
+      )}
+      {isSnow && (
+        <div className="snow-container">
+          {[...Array(30)].map((_, i) => (
+            <div key={i} className="snow-flake" style={{ left: `${Math.random() * 100}%`, animationDuration: `${4 + Math.random() * 5}s`, animationDelay: `${Math.random() * 3}s` }}></div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 };
 
 function App() {
@@ -88,7 +112,7 @@ function App() {
   const [hourlyData, setHourlyData] = useState([]);
   const [weeklyData, setWeeklyData] = useState([]);
   const [forecastError, setForecastError] = useState('');
-  const [bgTheme, setBgTheme] = useState('clear');
+  const [bgTheme, setBgTheme] = useState('clear-day'); // 💡 테마 상태 확장
 
   const [loggedInUser, setLoggedInUser] = useState(null);
   const [favorites, setFavorites] = useState([]);
@@ -159,9 +183,7 @@ function App() {
       localStorage.removeItem('loggedInUser');
       setLoggedInUser(null);
       showToast('회원 탈퇴가 완료되었습니다.');
-    } catch (e) {
-      alert('서버에 연결할 수 없습니다.');
-    }
+    } catch (e) { alert('서버에 연결할 수 없습니다.'); }
   };
 
   useEffect(() => {
@@ -193,13 +215,19 @@ function App() {
     const c = data.current;
     const aqi = data.air_quality;
     const iconCode = c.icon || '';
-    if (iconCode.includes('n')) setBgTheme('night');
-    else if (iconCode.includes('09') || iconCode.includes('10') || iconCode.includes('11')) setBgTheme('rain');
-    else if (iconCode.includes('03') || iconCode.includes('04')) setBgTheme('cloud');
-    else setBgTheme('clear');
+    const desc = c.description || '';
+    
+    // 💡 날씨와 시간에 맞춘 다이나믹 배경 테마 세팅
+    const isNight = iconCode.includes('n');
+    let theme = 'clear-day';
+    if (desc.includes('눈')) theme = 'snow';
+    else if (desc.includes('비') || desc.includes('소나기')) theme = 'rain';
+    else if (desc.includes('구름') || desc.includes('흐림')) theme = isNight ? 'cloudy-night' : 'cloudy-day';
+    else theme = isNight ? 'clear-night' : 'clear-day';
+    setBgTheme(theme);
 
     setMountainInfo(mInfo);
-    setSelectedDateIdx(0);
+    setSelectedDateIdx(0); 
 
     setWeatherData((prev) => ({
       ...prev,
@@ -211,7 +239,7 @@ function App() {
       baseTemp: c.base_temp ?? Math.round(c.temp),
       summitDrop: c.summit_drop ?? 0,
       safeDescentTime: c.safe_descent_time || '15:30',
-      icon: <span style={{ fontSize: '70px', filter: 'drop-shadow(0px 4px 6px rgba(0,0,0,0.1))' }}>{getEmojiIcon(c.icon)}</span>,
+      icon: <span style={{ fontSize: '70px', filter: 'drop-shadow(0px 4px 6px rgba(0,0,0,0.15))' }}>{getEmojiIcon(c.icon)}</span>,
       condition: `${c.description} (체감 ${Math.round(c.feels_like)}°C)`,
       highLow: `최고 ${Math.round(c.temp_max)}° / 최저 ${Math.round(c.temp_min)}°`,
       humidity: c.humidity, 
@@ -247,10 +275,7 @@ function App() {
         setAiMessage(aiData.advice?.[0] || '오늘도 좋은 하루 보내세요!');
         setAiBriefing(aiData.ai_briefing || 'AI 날씨 전망을 불러오지 못했습니다.');
       }
-    } catch (error) {
-      setForecastError('서버 상태를 확인해주세요.');
-      setIsAiLoading(false);
-    }
+    } catch (error) { setForecastError('서버 상태를 확인해주세요.'); setIsAiLoading(false); }
   };
 
   const loadMountainWeather = async (mountainName) => {
@@ -276,10 +301,7 @@ function App() {
         setAiMessage(aiData.advice?.[0] || '안전한 산행 되세요!');
         setAiBriefing(aiData.ai_briefing || '산악 전망을 불러오지 못했습니다.');
       }
-    } catch (error) {
-      setForecastError('서버 상태를 확인해주세요.');
-      setIsAiLoading(false);
-    }
+    } catch (error) { setForecastError('서버 상태를 확인해주세요.'); setIsAiLoading(false); }
   };
 
   const handleToggleMountainMode = () => {
@@ -384,13 +406,6 @@ function App() {
     } catch (e) { alert('서버에 연결할 수 없습니다.'); }
   };
 
-  const getBgColor = () => {
-    switch (bgTheme) { case 'night': return '#1a202c'; case 'rain': return '#cbd5e1'; case 'cloud': return '#e2e8f0'; default: return '#f8f6f0'; }
-  };
-  const getNavColor = () => {
-    switch (bgTheme) { case 'night': return '#000000'; case 'rain': return '#334155'; case 'cloud': return '#475569'; default: return '#1a365d'; }
-  };
-
   const activeWeather = useMemo(() => {
     if (selectedDateIdx === 0 || !weeklyData[selectedDateIdx]) return weatherData;
     const target = weeklyData[selectedDateIdx];
@@ -404,7 +419,7 @@ function App() {
       baseTemp: target.temp_max + tempDrop,
       condition: '주간 예보 기준',
       highLow: `최고 ${target.temp_max}° / 최저 ${target.temp_min}°`,
-      icon: <span style={{ fontSize: '70px', filter: 'drop-shadow(0px 4px 6px rgba(0,0,0,0.1))' }}>{getEmojiIcon(target.icon)}</span>,
+      icon: <span style={{ fontSize: '70px', filter: 'drop-shadow(0px 4px 6px rgba(0,0,0,0.15))' }}>{getEmojiIcon(target.icon)}</span>,
       wind_speed: target.wind_speed || weatherData.wind_speed,
       humidity: target.humidity || weatherData.humidity,
       targetPop: target.pop,
@@ -413,58 +428,72 @@ function App() {
   }, [weatherData, weeklyData, selectedDateIdx, isMountainMode]);
 
   return (
-    <div style={{ backgroundColor: getBgColor(), minHeight: '100vh', display: 'flex', flexDirection: 'column', transition: 'background-color 0.8s ease', position: 'relative' }}>
-      {/* 💡 모바일·태블릿 완벽 대응 반응형 CSS 추가 */}
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', position: 'relative' }}>
+      
+      {/* 💡 감성 넘치는 애플 날씨 스타일 글로벌 CSS 정의 (글래스모피즘, 배경 애니메이션) */}
       <style>{`
-        @keyframes skeleton-loading { 0% { background-color: #e2e8f0; } 50% { background-color: #cbd5e1; } 100% { background-color: #e2e8f0; } }
-        .skeleton { animation: skeleton-loading 1.5s infinite ease-in-out; }
+        /* Dynamic Animated Backgrounds */
+        .weather-bg {
+          background-size: 400% 400%;
+          animation: gradientMove 15s ease infinite;
+        }
+        @keyframes gradientMove {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+        .clear-day { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+        .clear-night { background: linear-gradient(135deg, #141e30 0%, #243b55 100%); }
+        .cloudy-day { background: linear-gradient(135deg, #8e9eab 0%, #eef2f3 100%); }
+        .cloudy-night { background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%); }
+        .rain { background: linear-gradient(135deg, #3a7bd5 0%, #3a6073 100%); }
+        .snow { background: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%); }
+
+        /* Weather Particles */
+        .snow-flake { position: absolute; width: 6px; height: 6px; background: white; border-radius: 50%; top: -10px; animation: snowFall linear infinite; opacity: 0.8; }
+        .rain-drop { position: absolute; width: 2px; height: 15px; background: rgba(255,255,255,0.5); top: -20px; animation: rainFall linear infinite; }
+        @keyframes snowFall { to { transform: translateY(110vh) translateX(20px); opacity: 0; } }
+        @keyframes rainFall { to { transform: translateY(110vh) rotate(15deg); opacity: 0; } }
+
+        /* 💡 Glassmorphism Card Style (유리 질감 카드) */
+        .glass-card {
+          background: rgba(255, 255, 255, 0.75) !important;
+          backdrop-filter: blur(20px) saturate(180%);
+          -webkit-backdrop-filter: blur(20px) saturate(180%);
+          border: 1px solid rgba(255, 255, 255, 0.6) !important;
+          box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.05) !important;
+        }
+
+        /* 💡 모바일 및 태블릿 최적화 */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        @keyframes skeleton-loading { 0% { background-color: rgba(255,255,255,0.5); } 50% { background-color: rgba(255,255,255,0.2); } 100% { background-color: rgba(255,255,255,0.5); } }
+        .skeleton { animation: skeleton-loading 1.5s infinite ease-in-out; }
 
         @media (max-width: 900px) {
-          .main-container {
-            grid-template-columns: 1fr !important;
-            display: flex !important;
-            flex-direction: column !important;
-            padding: 16px !important;
-            gap: 16px !important;
-          }
-          .top-nav {
-            padding: 12px 16px !important;
-          }
-          .top-nav-inner {
-            flex-direction: column !important;
-            gap: 10px !important;
-          }
-          .search-wrapper {
-            width: 100% !important;
-            max-width: 100% !important;
-          }
-          .weather-main-card {
-            flex-direction: column !important;
-          }
-          .weather-main-right {
-            border-left: none !important;
-            border-top: 1px solid #e2e8f0 !important;
-          }
-          .app-footer {
-            flex-direction: column !important;
-            gap: 10px !important;
-            padding: 16px !important;
-            text-align: center !important;
-          }
+          .main-container { grid-template-columns: 1fr !important; display: flex !important; flex-direction: column !important; padding: 16px !important; gap: 16px !important; }
+          .top-nav { padding: 12px 16px !important; }
+          .top-nav-inner { flex-direction: column !important; gap: 10px !important; }
+          .search-wrapper { width: 100% !important; max-width: 100% !important; }
+          .weather-main-card { flex-direction: column !important; }
+          .weather-main-right { border-left: none !important; border-top: 1px solid rgba(255,255,255,0.5) !important; }
+          .app-footer { flex-direction: column !important; gap: 10px !important; padding: 16px !important; text-align: center !important; }
         }
       `}</style>
+
+      <WeatherBackground theme={bgTheme} />
 
       <div style={{ position: 'fixed', bottom: '30px', right: '30px', zIndex: 9999, backgroundColor: '#166534', color: 'white', padding: '15px 25px', borderRadius: '8px', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.15)', display: 'flex', alignItems: 'center', gap: '10px', fontWeight: 'bold', fontSize: '14px', transform: toast.visible ? 'translateY(0)' : 'translateY(100px)', opacity: toast.visible ? 1 : 0, transition: 'all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55)' }}>
         <FiCheckCircle size={18} /> {toast.message}
       </div>
 
-      <nav className="top-nav" style={{ backgroundColor: getNavColor(), padding: '15px 40px', display: 'flex', justifyContent: 'center', transition: 'background-color 0.8s ease' }}>
+      {/* 💡 상단 고정(Sticky) 유리질감 네비게이션 바 */}
+      <nav className="top-nav" style={{ position: 'sticky', top: 0, zIndex: 100, background: 'rgba(255, 255, 255, 0.25)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(255, 255, 255, 0.3)', padding: '15px 40px', display: 'flex', justifyContent: 'center' }}>
         <div className="top-nav-inner" style={{ display: 'flex', width: '100%', maxWidth: '1000px', justifyContent: 'space-between', alignItems: 'center' }}>
           
           <div className="search-wrapper" style={{ position: 'relative', display: 'flex', width: '44%', maxWidth: '520px' }}>
-            <div style={{ display: 'flex', width: '100%', backgroundColor: 'white', borderRadius: '30px', padding: '5px 20px', alignItems: 'center', zIndex: 10 }}>
+            {/* 검색창도 반투명한 세련된 느낌으로 변경 */}
+            <div style={{ display: 'flex', width: '100%', backgroundColor: 'rgba(255, 255, 255, 0.65)', backdropFilter: 'blur(10px)', borderRadius: '30px', padding: '6px 20px', alignItems: 'center', zIndex: 10, border: '1px solid rgba(255,255,255,0.8)', boxShadow: '0 2px 6px rgba(0,0,0,0.05)' }}>
               <input 
                 type="text" 
                 placeholder={isMountainMode ? "20대 명산 검색 (예: 북한산, 설악산, 한라산)" : "검색할 지역을 입력하세요"} 
@@ -473,41 +502,41 @@ function App() {
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()} 
                 onFocus={() => setIsSearchFocused(true)} 
                 onBlur={() => setTimeout(() => setIsSearchFocused(false), 180)} 
-                style={{ border: 'none', outline: 'none', flex: 1, minWidth: 0, padding: '10px', fontSize: '15px', backgroundColor: 'transparent', color: '#333' }} 
+                style={{ border: 'none', outline: 'none', flex: 1, minWidth: 0, padding: '8px', fontSize: '14.5px', backgroundColor: 'transparent', color: '#1e293b', fontWeight: '500' }} 
               />
-              <button type="button" onClick={handleSearch} style={{ background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', color: '#1a365d' }}>
+              <button type="button" onClick={handleSearch} style={{ background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', color: '#334155' }}>
                 <FiSearch size={20} />
               </button>
             </div>
 
             {isSearchFocused && (
-              <div className="no-scrollbar" style={{ position: 'absolute', top: '100%', left: 0, right: 0, backgroundColor: 'white', borderRadius: '15px', boxShadow: '0 10px 25px rgba(0,0,0,0.15)', marginTop: '10px', zIndex: 50, padding: '15px', maxHeight: '320px', overflowY: 'auto' }}>
+              <div className="no-scrollbar glass-card" style={{ position: 'absolute', top: '100%', left: 0, right: 0, borderRadius: '15px', marginTop: '10px', zIndex: 50, padding: '15px', maxHeight: '320px', overflowY: 'auto' }}>
                 {searchInput.trim() === '' && !isMountainMode ? (
                   <>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', paddingBottom: '10px', borderBottom: '1px solid #f1f5f9' }}>
-                      <h4 style={{ margin: 0, fontSize: '13px', color: '#a0aec0', display: 'flex', alignItems: 'center', gap: '5px' }}><FiClock /> 최근 검색어</h4>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', paddingBottom: '10px', borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
+                      <h4 style={{ margin: 0, fontSize: '13px', color: '#64748b', display: 'flex', alignItems: 'center', gap: '5px' }}><FiClock /> 최근 검색어</h4>
                       {recentSearches.length > 0 && (
-                        <button onMouseDown={(e) => { e.preventDefault(); setRecentSearches([]); localStorage.setItem('recentSearches', '[]'); }} style={{ background: 'none', border: 'none', color: '#a0aec0', fontSize: '12px', cursor: 'pointer' }}>전체 삭제</button>
+                        <button onMouseDown={(e) => { e.preventDefault(); setRecentSearches([]); localStorage.setItem('recentSearches', '[]'); }} style={{ background: 'none', border: 'none', color: '#64748b', fontSize: '12px', cursor: 'pointer' }}>전체 삭제</button>
                       )}
                     </div>
                     {recentSearches.length > 0 ? (
                       <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
                         {recentSearches.map((term, idx) => (
-                          <li key={idx} onMouseDown={(e) => { e.preventDefault(); executeSearch(term); }} style={{ padding: '10px 5px', cursor: 'pointer', color: '#333', fontSize: '15px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: idx !== recentSearches.length - 1 ? '1px solid #f8fafc' : 'none' }}>
-                            <span>{term}</span><FiSearch color="#cbd5e1" size={14} />
+                          <li key={idx} onMouseDown={(e) => { e.preventDefault(); executeSearch(term); }} style={{ padding: '10px 5px', cursor: 'pointer', color: '#333', fontSize: '15px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: idx !== recentSearches.length - 1 ? '1px solid rgba(0,0,0,0.03)' : 'none' }}>
+                            <span>{term}</span><FiSearch color="#94a3b8" size={14} />
                           </li>
                         ))}
                       </ul>
-                    ) : <p style={{ margin: 0, fontSize: '13px', color: '#94a3b8', textAlign: 'center', padding: '10px 0' }}>최근 검색어가 없습니다.</p>}
+                    ) : <p style={{ margin: 0, fontSize: '13px', color: '#64748b', textAlign: 'center', padding: '10px 0' }}>최근 검색어가 없습니다.</p>}
                   </>
                 ) : searchInput.trim() === '' && isMountainMode ? (
                   <>
-                    <div style={{ marginBottom: '10px', paddingBottom: '10px', borderBottom: '1px solid #f1f5f9' }}>
+                    <div style={{ marginBottom: '10px', paddingBottom: '10px', borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
                       <h4 style={{ margin: 0, fontSize: '13px', color: '#166534', display: 'flex', alignItems: 'center', gap: '5px' }}>⛰️ 한국의 20대 명산 전체 목록 (클릭 시 이동)</h4>
                     </div>
                     <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
                       {MOUNTAINS_LIST.map((m, idx) => (
-                        <li key={idx} onMouseDown={(e) => { e.preventDefault(); loadMountainWeather(m.name); setIsSearchFocused(false); }} style={{ padding: '9px 6px', cursor: 'pointer', color: '#333', fontSize: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f8fafc' }}>
+                        <li key={idx} onMouseDown={(e) => { e.preventDefault(); loadMountainWeather(m.name); setIsSearchFocused(false); }} style={{ padding: '9px 6px', cursor: 'pointer', color: '#333', fontSize: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(0,0,0,0.03)' }}>
                           <span><strong>{m.name}</strong> <span style={{ fontSize: '12px', color: '#64748b' }}>({m.peak} · {m.region})</span></span>
                           <span style={{ fontSize: '12px', color: '#15803d', fontWeight: 'bold' }}>해발 {m.elevation}m</span>
                         </li>
@@ -516,36 +545,36 @@ function App() {
                   </>
                 ) : (
                   <>
-                    <div style={{ marginBottom: '10px', paddingBottom: '10px', borderBottom: '1px solid #f1f5f9' }}>
-                      <h4 style={{ margin: '0', fontSize: '13px', color: '#a0aec0', display: 'flex', alignItems: 'center', gap: '5px' }}><FiSearch size={12}/> 일치하는 {isMountainMode ? '산 이름' : '지역명'}</h4>
+                    <div style={{ marginBottom: '10px', paddingBottom: '10px', borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
+                      <h4 style={{ margin: '0', fontSize: '13px', color: '#64748b', display: 'flex', alignItems: 'center', gap: '5px' }}><FiSearch size={12}/> 일치하는 {isMountainMode ? '산 이름' : '지역명'}</h4>
                     </div>
                     {autoCompleteList.length > 0 ? (
                       <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
                         {autoCompleteList.map((region, idx) => (
-                          <li key={idx} onMouseDown={(e) => { e.preventDefault(); executeSearch(region); }} style={{ padding: '10px 5px', cursor: 'pointer', color: '#333', fontSize: '15px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f8fafc' }}>
+                          <li key={idx} onMouseDown={(e) => { e.preventDefault(); executeSearch(region); }} style={{ padding: '10px 5px', cursor: 'pointer', color: '#333', fontSize: '15px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(0,0,0,0.03)' }}>
                             <span>
                               {region.split(new RegExp(`(${searchInput})`, 'gi')).map((part, i) => 
                                 part.toLowerCase() === searchInput.toLowerCase() ? <span key={i} style={{ color: '#3182ce', fontWeight: 'bold' }}>{part}</span> : part
                               )}
                             </span>
-                            <FiSearch color="#cbd5e1" size={14} />
+                            <FiSearch color="#94a3b8" size={14} />
                           </li>
                         ))}
                       </ul>
-                    ) : <p style={{ margin: 0, fontSize: '13px', color: '#94a3b8', textAlign: 'center', padding: '10px 0' }}>결과가 없습니다.</p>}
+                    ) : <p style={{ margin: 0, fontSize: '13px', color: '#64748b', textAlign: 'center', padding: '10px 0' }}>결과가 없습니다.</p>}
                   </>
                 )}
               </div>
             )}
           </div>
           
-          <button type="button" onClick={() => setIsNoticeOpen(true)} style={{ backgroundColor: 'transparent', color: 'white', border: '1px solid white', borderRadius: '20px', padding: '8px 16px', cursor: 'pointer', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <button type="button" onClick={() => setIsNoticeOpen(true)} style={{ backgroundColor: 'rgba(0,0,0,0.2)', backdropFilter: 'blur(10px)', color: 'white', border: '1px solid rgba(255,255,255,0.4)', borderRadius: '20px', padding: '8px 16px', cursor: 'pointer', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
             <FiBell size={16} /> 공지사항
           </button>
         </div>
       </nav>
 
-      <main className="main-container" style={{ flexGrow: 1, maxWidth: '1000px', margin: '0 auto', width: '100%' }}>
+      <main className="main-container" style={{ flexGrow: 1, maxWidth: '1000px', margin: '0 auto', width: '100%', zIndex: 1, padding: '30px 0' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', minWidth: 0, height: '100%' }}>
           
           <WeatherMain 
@@ -588,15 +617,18 @@ function App() {
         </div>
         
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', minWidth: 0, height: '100%' }}>
-          <LoginCard 
-            onSignUpClick={() => setIsSignUpOpen(true)} 
-            onFindPasswordClick={() => setIsFindPasswordOpen(true)} 
-            loggedInUser={loggedInUser} 
-            onLogin={handleLogin} 
-            onLogout={handleLogout}
-            onUpdateUser={handleUpdateUser}
-            onDeleteAccount={handleDeleteAccount}
-          />
+          {/* 우측 로그인 카드에도 글래스모피즘이 적용됩니다. */}
+          <div className="glass-card" style={{ borderRadius: '16px', overflow: 'hidden' }}>
+             <LoginCard 
+              onSignUpClick={() => setIsSignUpOpen(true)} 
+              onFindPasswordClick={() => setIsFindPasswordOpen(true)} 
+              loggedInUser={loggedInUser} 
+              onLogin={handleLogin} 
+              onLogout={handleLogout}
+              onUpdateUser={handleUpdateUser}
+              onDeleteAccount={handleDeleteAccount}
+            />
+          </div>
           
           <WeatherDetails 
             current={{ 
@@ -627,24 +659,25 @@ function App() {
         </div>
       </main>
 
-      <footer className="app-footer" style={{ backgroundColor: bgTheme === 'night' ? '#111827' : '#e2e8f0', transition: 'background-color 0.8s ease', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 40px', color: '#718096', fontSize: '13px' }}>
+      <footer className="app-footer glass-card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 40px', color: '#1e293b', fontSize: '13px', borderRadius: '0', border: 'none', borderTop: '1px solid rgba(255,255,255,0.4)', background: 'rgba(255,255,255,0.3) !important' }}>
         <div>
-          <span>© 2026 Weather Web Project.</span><span style={{ margin: '0 15px' }}>|</span>
-          <span style={{ cursor: 'pointer' }} onClick={() => showToast('이용약관 페이지는 준비 중입니다.')}>이용약관</span><span style={{ margin: '0 15px' }}>|</span>
+          <span style={{ fontWeight: '500' }}>© 2026 Weather Web Project.</span><span style={{ margin: '0 15px', color: '#94a3b8' }}>|</span>
+          <span style={{ cursor: 'pointer' }} onClick={() => showToast('이용약관 페이지는 준비 중입니다.')}>이용약관</span><span style={{ margin: '0 15px', color: '#94a3b8' }}>|</span>
           <span style={{ cursor: 'pointer' }} onClick={() => showToast('개인정보처리방침 페이지는 준비 중입니다.')}>개인정보처리방침</span>
         </div>
-        <button onClick={() => setIsAdminAuthOpen(true)} style={{ background: 'none', border: 'none', color: '#718096', cursor: 'pointer', opacity: 0.1 }} title="Admin"><FiSettings size={18} /></button>
+        <button onClick={() => setIsAdminAuthOpen(true)} style={{ background: 'none', border: 'none', color: '#1e293b', cursor: 'pointer', opacity: 0.3 }} title="Admin"><FiSettings size={18} /></button>
       </footer>
 
+      {/* 모달창들 (생략 없이 원본 유지) */}
       {isAdminAuthOpen && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 9999 }}>
-          <div style={{ backgroundColor: 'white', padding: '30px', borderRadius: '12px', width: '350px', boxShadow: '0 10px 25px rgba(0,0,0,0.2)', textAlign: 'center' }}>
+          <div className="glass-card" style={{ padding: '30px', borderRadius: '16px', width: '350px', textAlign: 'center' }}>
             <h3 style={{ margin: '0 0 20px 0', color: '#333' }}>🔒 관리자 인증</h3>
             <p style={{ margin: '0 0 20px 0', fontSize: '13px', color: '#666' }}>관리자 권한 확인을 위해 비밀번호를 입력해 주세요.</p>
             <input type="password" placeholder="비밀번호 입력" value={adminPasswordInput} onChange={(e) => setAdminPasswordInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleAdminAuth()} style={{ width: '100%', padding: '12px', marginBottom: '20px', border: '1px solid #ccc', borderRadius: '6px', boxSizing: 'border-box' }} />
             <div style={{ display: 'flex', gap: '10px' }}>
-              <button onClick={() => setIsAdminAuthOpen(false)} style={{ flex: 1, padding: '12px', backgroundColor: '#e2e8f0', color: '#4a5568', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>취소</button>
-              <button onClick={handleAdminAuth} style={{ flex: 1, padding: '12px', backgroundColor: '#e53e3e', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>확인</button>
+              <button onClick={() => setIsAdminAuthOpen(false)} style={{ flex: 1, padding: '12px', backgroundColor: 'rgba(0,0,0,0.05)', color: '#4a5568', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>취소</button>
+              <button onClick={handleAdminAuth} style={{ flex: 1, padding: '12px', backgroundColor: '#3182ce', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>확인</button>
             </div>
           </div>
         </div>

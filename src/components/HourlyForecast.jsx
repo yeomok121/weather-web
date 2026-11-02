@@ -13,7 +13,7 @@ function toNumber(value) {
 }
 
 const CustomLabel = ({ x, y, value }) => (
-  <text x={x} y={y - 10} fill="#334155" fontSize="14" fontWeight="bold" textAnchor="middle">
+  <text x={x} y={y - 10} fill="#1e293b" fontSize="14" fontWeight="bold" textAnchor="middle">
     {value}°
   </text>
 );
@@ -151,8 +151,8 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
   const nextDisabled = isLoading || visibleIndex >= maxIndex;
 
   const buttonStyle = {
-    background: '#f1f5f9', border: 'none', borderRadius: '50%', width: '32px', height: '32px',
-    display: 'flex', justifyContent: 'center', alignItems: 'center', color: '#333', transition: 'background-color 0.2s',
+    background: 'rgba(255,255,255,0.5)', border: 'none', borderRadius: '50%', width: '32px', height: '32px',
+    display: 'flex', justifyContent: 'center', alignItems: 'center', color: '#1e293b', transition: 'background-color 0.2s',
   };
 
   const getMountainScore = () => {
@@ -185,7 +185,7 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
     const deadlineStr = `${deadlineH}:${deadlineM}`;
     
     if (isFuture) {
-      return { status: 'safe', deadlineStr, msg: `🗓️ ${weatherData.date} 계획: 늦어도 ${deadlineStr} 전에는 등산을 시작해야 안전합니다.` };
+      return { status: 'safe', deadlineStr, msg: `🗓️ ${weatherData.date} 계획: 늦어도 ${deadlineStr} 전에는 산행을 시작해야 안전합니다.` };
     }
 
     const now = new Date();
@@ -212,7 +212,7 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
       `🥾 선택 코스: ${selectedCourse.name} (거리 ${selectedCourse.distance} · 약 ${Math.floor(selectedCourse.time / 60)}시간 ${selectedCourse.time % 60}분 소요)`,
       `🚨 안전 하산 마감: ${safeDescentTime} 이전 (일몰 ${sunset})`,
       `🎒 맞춤 배낭 체크리스트:\n  ${formattedGear}`,
-      `🔗 산악 기상 대시보드: ${window.location.href}`
+      `🔗 날씨 대시보드: ${window.location.href}`
     ].join('\n');
 
     try {
@@ -224,17 +224,10 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
   };
 
   return (
-    <div style={{ backgroundColor: '#ffffff', borderRadius: '16px', padding: '24px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', color: '#333', width: '100%', boxSizing: 'border-box' }}>
-      <style>{`
-        .hourly-chart-wrapper .recharts-surface { overflow: visible !important; }
-        @media (max-width: 640px) {
-          .mtn-score-altitude-box { flex-direction: column !important; }
-          .mtn-score-card { width: 100% !important; flex-direction: row !important; justify-content: space-around !important; padding: 12px !important; }
-        }
-      `}</style>
-
+    <div className="glass-card" style={{ borderRadius: '16px', padding: '24px', display: 'flex', flexDirection: 'column', color: '#1e293b', width: '100%', boxSizing: 'border-box' }}>
+      
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '16px' }}>
-        <h4 style={{ margin: 0, fontSize: '16px', fontWeight: 'bold', color: isMountainMode ? '#166534' : '#1e293b' }}>
+        <h4 style={{ margin: 0, fontSize: '17px', fontWeight: '800', color: isMountainMode ? '#166534' : '#1e293b' }}>
           {isMountainMode ? '⛰️ 산악 기상 & 등산 환경 대시보드' : '시간대별 예보 (기온 변화)'}
         </h4>
         {!isMountainMode && (
@@ -250,42 +243,42 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
           
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px' }}>
             
-            <div className="mtn-score-altitude-box" style={{ flex: '1 1 250px', display: 'flex', gap: '10px' }}>
-              <div className="mtn-score-card" style={{ width: '95px', flexShrink: 0, backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '12px', padding: '16px 8px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                <span style={{ fontSize: '11.5px', color: '#166534', fontWeight: 'bold', marginBottom: '8px', whiteSpace: 'nowrap' }}>{isFuture ? '예상 산행 지수' : '오늘 산행 지수'}</span>
-                <div style={{ position: 'relative', width: '56px', height: '56px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div className="mtn-score-altitude-box" style={{ flex: '1 1 250px', display: 'flex', gap: '12px' }}>
+              <div className="mtn-score-card" style={{ width: '105px', flexShrink: 0, backgroundColor: 'rgba(240,253,244,0.7)', borderRadius: '12px', padding: '16px 8px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                <span style={{ fontSize: '11.5px', color: '#166534', fontWeight: 'bold', marginBottom: '10px', whiteSpace: 'nowrap' }}>{isFuture ? '예상 산행 지수' : '오늘 산행 지수'}</span>
+                <div style={{ position: 'relative', width: '60px', height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <svg viewBox="0 0 36 36" style={{ width: '100%', height: '100%', transform: 'rotate(-90deg)' }}>
-                    <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#dcfce7" strokeWidth="4" />
+                    <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="rgba(22,163,74,0.2)" strokeWidth="4" />
                     <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke={score >= 70 ? "#16a34a" : score >= 40 ? "#eab308" : "#dc2626"} strokeWidth="4" strokeDasharray={`${score}, 100`} />
                   </svg>
-                  <span style={{ position: 'absolute', fontSize: '16px', fontWeight: 'bold', color: '#064e3b' }}>{score}</span>
+                  <span style={{ position: 'absolute', fontSize: '18px', fontWeight: 'bold', color: '#064e3b' }}>{score}</span>
                 </div>
-                <span style={{ fontSize: '11px', color: '#475569', marginTop: '10px', fontWeight: '500', whiteSpace: 'nowrap' }}>
+                <span style={{ fontSize: '11.5px', color: '#0f172a', marginTop: '12px', fontWeight: 'bold', whiteSpace: 'nowrap' }}>
                   {score >= 80 ? '아주 쾌적함' : score >= 60 ? '산행 무난함' : score >= 40 ? '주의 필요' : '입산 자제'}
                 </span>
               </div>
 
-              <div style={{ flex: 1, backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '14px', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '10px', fontSize: '12px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '4px', paddingBottom: '6px', borderBottom: '1px dashed #cbd5e1' }}>
-                  <span style={{ fontWeight: 'bold', color: '#334155', whiteSpace: 'nowrap' }}>⛰️ 정상 <span style={{fontSize:'10px', color:'#94a3b8', fontWeight:'normal'}}>({mountainInfo?.elevation}m)</span></span>
-                  <span style={{ color: '#0f172a', fontWeight: 'bold' }}>{temp}°C <span style={{fontSize:'10px', color:'#64748b', fontWeight:'normal'}}>(풍속 {wind}m/s)</span></span>
+              <div style={{ flex: 1, backgroundColor: 'rgba(255,255,255,0.5)', borderRadius: '12px', padding: '16px', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '12px', fontSize: '12.5px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '4px', paddingBottom: '6px', borderBottom: '1px dashed rgba(0,0,0,0.1)' }}>
+                  <span style={{ fontWeight: '800', color: '#1e293b', whiteSpace: 'nowrap' }}>⛰️ 정상 <span style={{fontSize:'10px', color:'#475569', fontWeight:'normal'}}>({mountainInfo?.elevation}m)</span></span>
+                  <span style={{ color: '#0f172a', fontWeight: '800' }}>{temp}°C <span style={{fontSize:'10.5px', color:'#475569', fontWeight:'normal'}}>(풍속 {wind}m/s)</span></span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '4px', padding: '6px 0', borderBottom: '1px dashed #cbd5e1' }}>
-                  <span style={{ color: '#64748b', whiteSpace: 'nowrap' }}>🌲 중턱 <span style={{fontSize:'10px', color:'#94a3b8'}}>({Math.round(mountainInfo?.elevation / 2)}m)</span></span>
-                  <span style={{ color: '#475569', fontWeight: '500' }}>{Math.round((temp + baseTemp) / 2)}°C</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '4px', padding: '6px 0', borderBottom: '1px dashed rgba(0,0,0,0.1)' }}>
+                  <span style={{ color: '#475569', whiteSpace: 'nowrap', fontWeight: 'bold' }}>🌲 중턱 <span style={{fontSize:'10px', color:'#64748b', fontWeight:'normal'}}>({Math.round(mountainInfo?.elevation / 2)}m)</span></span>
+                  <span style={{ color: '#334155', fontWeight: '600' }}>{Math.round((temp + baseTemp) / 2)}°C</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '4px', paddingTop: '6px' }}>
-                  <span style={{ color: '#64748b', whiteSpace: 'nowrap' }}>👟 들머리 <span style={{fontSize:'10px', color:'#94a3b8'}}>(입구)</span></span>
-                  <span style={{ color: '#475569', fontWeight: '500' }}>{baseTemp}°C</span>
+                  <span style={{ color: '#475569', whiteSpace: 'nowrap', fontWeight: 'bold' }}>👟 들머리 <span style={{fontSize:'10px', color:'#64748b', fontWeight:'normal'}}>(입구)</span></span>
+                  <span style={{ color: '#334155', fontWeight: '600' }}>{baseTemp}°C</span>
                 </div>
               </div>
             </div>
 
-            <div style={{ flex: '1 1 270px', backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '14px', boxShadow: '0 2px 4px rgba(0,0,0,0.02)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            <div style={{ flex: '1 1 270px', backgroundColor: 'rgba(255,255,255,0.6)', borderRadius: '12px', padding: '16px', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
               
-              <h4 style={{ margin: '0 0 10px 0', fontSize: '13px', color: '#1e293b', display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
-                <span style={{ whiteSpace: 'nowrap' }}>⏱️ 코스별 하산 타임라인</span>
-                <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 'normal', whiteSpace: 'nowrap' }}>일몰 {sunset} 기준</span>
+              <h4 style={{ margin: '0 0 12px 0', fontSize: '14px', color: '#1e293b', display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
+                <span style={{ whiteSpace: 'nowrap', fontWeight: '800' }}>⏱️ 코스별 하산 타임라인</span>
+                <span style={{ fontSize: '11px', color: '#475569', fontWeight: '600', whiteSpace: 'nowrap', backgroundColor: 'rgba(255,255,255,0.8)', padding: '2px 8px', borderRadius:'10px' }}>일몰 {sunset} 기준</span>
               </h4>
               
               <div 
@@ -294,7 +287,7 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
                 onMouseLeave={handleMouseLeave}
                 onMouseUp={handleMouseUp}
                 onMouseMove={handleMouseMove}
-                style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '8px', marginBottom: '8px', cursor: isDragging ? 'grabbing' : 'grab', userSelect: 'none', WebkitOverflowScrolling: 'touch' }} 
+                style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '8px', marginBottom: '8px', cursor: isDragging ? 'grabbing' : 'grab', userSelect: 'none', WebkitOverflowScrolling: 'touch' }} 
                 className="no-scrollbar"
               >
                 {courses.map((c, idx) => (
@@ -305,10 +298,10 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
                       setSelectedCourseIdx(idx);
                     }}
                     style={{
-                      flexShrink: 0, padding: '6px 10px', borderRadius: '6px', fontSize: '11.5px', fontWeight: 'bold', cursor: 'pointer',
-                      border: selectedCourseIdx === idx ? '1px solid #3182ce' : '1px solid #cbd5e1',
-                      background: selectedCourseIdx === idx ? '#ebf8ff' : '#f8fafc',
-                      color: selectedCourseIdx === idx ? '#2b6cb0' : '#64748b',
+                      flexShrink: 0, padding: '8px 12px', borderRadius: '8px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer',
+                      border: selectedCourseIdx === idx ? '1px solid #2563eb' : '1px solid rgba(0,0,0,0.1)',
+                      background: selectedCourseIdx === idx ? '#eff6ff' : 'rgba(255,255,255,0.8)',
+                      color: selectedCourseIdx === idx ? '#1d4ed8' : '#475569',
                       transition: 'all 0.2s', userSelect: 'none'
                     }}
                   >
@@ -317,61 +310,60 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
                 ))}
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', fontSize: '11.5px', color: '#334155', backgroundColor: '#f1f5f9', padding: '10px', borderRadius: '8px', marginBottom: '10px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', fontSize: '12px', color: '#1e293b', backgroundColor: 'rgba(255,255,255,0.7)', padding: '12px', borderRadius: '8px', marginBottom: '10px' }}>
                 <span>거리: <strong>{selectedCourse.distance}</strong></span>
                 <span>소요: <strong>{Math.floor(selectedCourse.time / 60)}시간 {selectedCourse.time % 60}분</strong></span>
                 <span style={{ gridColumn: 'span 2' }}>난이도: <strong style={{ color: selectedCourse.diff.includes('상') ? '#dc2626' : '#16a34a' }}>{selectedCourse.diff}</strong></span>
               </div>
 
-              <div style={{ fontSize: '11.5px', fontWeight: 'bold', textAlign: 'center', padding: '8px', borderRadius: '6px', marginTop: 'auto', wordBreak: 'keep-all', lineHeight: '1.4',
-                backgroundColor: timeline.status === 'safe' ? '#f0fdf4' : timeline.status === 'warning' ? '#fffbeb' : '#fef2f2',
-                color: timeline.status === 'safe' ? '#166534' : timeline.status === 'warning' ? '#b45309' : '#991b1b',
-                border: `1px solid ${timeline.status === 'safe' ? '#bbf7d0' : timeline.status === 'warning' ? '#fde68a' : '#fecaca'}`
+              <div style={{ fontSize: '12px', fontWeight: 'bold', textAlign: 'center', padding: '10px', borderRadius: '8px', marginTop: 'auto', wordBreak: 'keep-all', lineHeight: '1.4',
+                backgroundColor: timeline.status === 'safe' ? 'rgba(240,253,244,0.8)' : timeline.status === 'warning' ? 'rgba(254,252,232,0.8)' : 'rgba(254,242,242,0.8)',
+                color: timeline.status === 'safe' ? '#166534' : timeline.status === 'warning' ? '#a16207' : '#991b1b'
               }}>
                 {timeline.msg}
               </div>
             </div>
           </div>
 
-          <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '16px 20px', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '12px' }}>
+          <div style={{ backgroundColor: 'rgba(255,255,255,0.6)', borderRadius: '12px', padding: '20px', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: '16px' }}>
               <div>
-                <h4 style={{ margin: 0, fontSize: '14px', color: '#1e293b' }}>
+                <h4 style={{ margin: '0 0 4px 0', fontSize: '15px', color: '#1e293b', fontWeight: '800' }}>
                   🎒 {isFuture ? '예상 기상 맞춤 배낭 체크리스트' : '오늘 기상 맞춤 배낭 체크리스트'}
                 </h4>
-                <span style={{ fontSize: '11px', color: '#64748b' }}>
-                  기온({temp}°C)·바람({wind}m/s)·지형에 맞춰 자동 추천되며, 직접 추가·삭제하여 공유할 수 있습니다.
+                <span style={{ fontSize: '11px', color: '#475569', fontWeight: '500' }}>
+                  기온({temp}°C)·바람({wind}m/s)·지형에 맞춰 자동 추천되며, 직접 추가·삭제하여 일행에게 공유할 수 있습니다.
                 </span>
               </div>
-              <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                 <button
                   type="button"
                   onClick={handleResetGear}
                   title="기상 추천 기본값으로 초기화"
                   style={{
-                    padding: '6px 10px', borderRadius: '8px', border: '1px solid #cbd5e1',
-                    backgroundColor: '#f8fafc', color: '#475569', fontSize: '11.5px', fontWeight: 'bold',
-                    cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px'
+                    padding: '8px 12px', borderRadius: '8px', border: '1px solid rgba(0,0,0,0.1)',
+                    backgroundColor: 'rgba(255,255,255,0.8)', color: '#475569', fontSize: '12px', fontWeight: 'bold',
+                    cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', transition: 'all 0.2s'
                   }}
                 >
-                  <FiRotateCcw size={12} /> 기본값 복원
+                  <FiRotateCcw size={14} /> 복원
                 </button>
                 <button
                   type="button"
                   onClick={handleSharePlan}
                   style={{
-                    padding: '6px 12px', borderRadius: '8px', border: '1px solid #16a34a',
-                    backgroundColor: '#166534', color: '#ffffff', fontSize: '12px', fontWeight: 'bold',
+                    padding: '8px 14px', borderRadius: '8px', border: 'none',
+                    backgroundColor: '#166534', color: '#ffffff', fontSize: '12.5px', fontWeight: 'bold',
                     cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px',
-                    boxShadow: '0 2px 4px rgba(0,0,0,0.08)'
+                    boxShadow: '0 2px 6px rgba(22,101,52,0.4)', transition: 'all 0.2s'
                   }}
                 >
-                  <FiShare2 size={13} /> 📤 일행에게 산행 일정·날씨 공유하기
+                  <FiShare2 size={14} /> 공유하기
                 </button>
               </div>
             </div>
 
-            <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
               <input
                 type="text"
                 placeholder="추가할 준비물을 입력하세요 (예: 무릎보호대, 김밥, 보조배터리)"
@@ -379,40 +371,40 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
                 onChange={(e) => setNewGearInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleAddGear()}
                 style={{
-                  flex: 1, padding: '8px 12px', borderRadius: '8px', border: '1px solid #cbd5e1',
-                  fontSize: '12.5px', outline: 'none', color: '#334155', backgroundColor: '#f8fafc'
+                  flex: 1, padding: '10px 14px', borderRadius: '8px', border: '1px solid rgba(0,0,0,0.1)',
+                  fontSize: '13px', outline: 'none', color: '#1e293b', backgroundColor: 'rgba(255,255,255,0.8)', fontWeight: '500'
                 }}
               />
               <button
                 type="button"
                 onClick={handleAddGear}
                 style={{
-                  padding: '8px 14px', borderRadius: '8px', border: 'none',
-                  backgroundColor: '#15803d', color: '#ffffff', fontSize: '12.5px', fontWeight: 'bold',
+                  padding: '10px 16px', borderRadius: '8px', border: 'none',
+                  backgroundColor: '#15803d', color: '#ffffff', fontSize: '13px', fontWeight: 'bold',
                   cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap'
                 }}
               >
-                <FiPlus size={14} /> 추가
+                <FiPlus size={16} /> 추가
               </button>
             </div>
 
             {gearList.length === 0 ? (
-              <p style={{ margin: '8px 0', fontSize: '12.5px', color: '#94a3b8', textAlign: 'center' }}>
-                체크리스트가 비어 있습니다. 준비물을 추가하거나 [기본값 복원]을 눌러주세요.
+              <p style={{ margin: '16px 0', fontSize: '13px', color: '#64748b', textAlign: 'center', fontWeight: '500' }}>
+                체크리스트가 비어 있습니다. 준비물을 추가하거나 [복원]을 눌러주세요.
               </p>
             ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(175px, 1fr))', gap: '8px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '10px' }}>
                 {gearList.map((item, idx) => (
                   <div
                     key={idx}
                     style={{
                       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                      padding: '6px 10px', borderRadius: '8px', backgroundColor: '#f8fafc',
-                      border: '1px solid #f1f5f9'
+                      padding: '8px 12px', borderRadius: '8px', backgroundColor: 'rgba(255,255,255,0.8)',
+                      boxShadow: '0 1px 2px rgba(0,0,0,0.02)'
                     }}
                   >
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12.5px', color: checklist[item] ? '#94a3b8' : '#334155', cursor: 'pointer', textDecoration: checklist[item] ? 'line-through' : 'none', userSelect: 'none', flex: 1, minWidth: 0 }}>
-                      <input type="checkbox" checked={!!checklist[item]} onChange={() => toggleCheck(item)} style={{ cursor: 'pointer', accentColor: '#16a34a', width: '15px', height: '15px', flexShrink: 0 }} />
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px', color: checklist[item] ? '#94a3b8' : '#1e293b', fontWeight: '600', cursor: 'pointer', textDecoration: checklist[item] ? 'line-through' : 'none', userSelect: 'none', flex: 1, minWidth: 0 }}>
+                      <input type="checkbox" checked={!!checklist[item]} onChange={() => toggleCheck(item)} style={{ cursor: 'pointer', accentColor: '#16a34a', width: '16px', height: '16px', flexShrink: 0 }} />
                       <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item}</span>
                     </label>
                     <button
@@ -421,10 +413,10 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
                       title="준비물 삭제"
                       style={{
                         background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer',
-                        display: 'flex', alignItems: 'center', padding: '2px', marginLeft: '4px', flexShrink: 0
+                        display: 'flex', alignItems: 'center', padding: '4px', marginLeft: '4px', flexShrink: 0
                       }}
                     >
-                      <FiX size={14} />
+                      <FiX size={16} />
                     </button>
                   </div>
                 ))}
@@ -433,8 +425,8 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
           </div>
           
           {!isFuture && (
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', borderTop: '2px dashed #e2e8f0', paddingTop: '20px' }}>
-              <h4 style={{ margin: 0, fontSize: '14px', fontWeight: 'bold', color: '#475569' }}>시간대별 산 정상 기온 변화</h4>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', borderTop: '2px dashed rgba(0,0,0,0.1)', paddingTop: '20px' }}>
+              <h4 style={{ margin: 0, fontSize: '15px', fontWeight: '800', color: '#1e293b' }}>시간대별 산 정상 기온 변화</h4>
               <div style={{ display: 'flex', gap: '8px' }}>
                 <button type="button" onClick={handlePrev} disabled={prevDisabled} style={{ ...buttonStyle, opacity: prevDisabled ? 0.3 : 1, cursor: prevDisabled ? 'default' : 'pointer' }}><FiChevronLeft size={20} /></button>
                 <button type="button" onClick={handleNext} disabled={nextDisabled} style={{ ...buttonStyle, opacity: nextDisabled ? 0.3 : 1, cursor: nextDisabled ? 'default' : 'pointer' }}><FiChevronRight size={20} /></button>
@@ -445,15 +437,15 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
       )}
 
       {isMountainMode && isFuture ? (
-         <div style={{ textAlign: 'center', padding: '10px 0', color: '#94a3b8', fontSize: '13px' }}>
-            미래 예보일은 시간대별 상세 기온 변화 그래프가 제공되지 않습니다.
+         <div style={{ textAlign: 'center', padding: '16px 0', color: '#475569', fontSize: '13.5px', fontWeight: '600' }}>
+            미래 예보일은 시간대별 기온 변화 그래프가 제공되지 않습니다.
          </div>
       ) : isLoading ? (
-        <p style={{ margin: '10px 0', fontSize: '14px', color: '#666' }}>예보를 불러오는 중입니다...</p>
+        <p style={{ margin: '10px 0', fontSize: '14px', color: '#475569', fontWeight: '500' }}>예보를 불러오는 중입니다...</p>
       ) : error ? (
         <p style={{ margin: '10px 0', fontSize: '14px', color: '#dc2626' }}>{error}</p>
       ) : forecastData.length === 0 ? (
-        <p style={{ margin: '10px 0', fontSize: '14px', color: '#666' }}>예보 데이터가 없습니다.</p>
+        <p style={{ margin: '10px 0', fontSize: '14px', color: '#475569' }}>예보 데이터가 없습니다.</p>
       ) : (
         <div className="hourly-chart-wrapper" style={{ overflow: 'hidden', width: '100%', position: 'relative' }}>
           <div style={{ transition: 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)', transform: `translateX(-${(visibleIndex / forecastData.length) * 100}%)`, width: `${(forecastData.length / ITEMS_TO_SHOW) * 100}%`, position: 'relative' }}>
@@ -461,17 +453,17 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={forecastData} margin={{ top: 28, bottom: 16, left: 0, right: 0 }}>
                   <YAxis domain={[yMin, yMax]} allowDataOverflow={true} hide />
-                  <Line type="monotone" dataKey="plotTemp" stroke={isMountainMode ? "#16a34a" : "#fbbf24"} strokeWidth={3} dot={{ r: 4, fill: '#ffffff', stroke: isMountainMode ? "#16a34a" : "#fbbf24", strokeWidth: 2 }} label={(props) => <CustomLabel {...props} value={forecastData[props.index]?.tempNum} />} isAnimationActive={false} />
+                  <Line type="monotone" dataKey="plotTemp" stroke={isMountainMode ? "#16a34a" : "#0284c7"} strokeWidth={3} dot={{ r: 5, fill: '#ffffff', stroke: isMountainMode ? "#16a34a" : "#0284c7", strokeWidth: 2 }} label={(props) => <CustomLabel {...props} value={forecastData[props.index]?.tempNum} />} isAnimationActive={false} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
             <div style={{ display: 'flex', width: '100%', position: 'relative', zIndex: 2 }}>
               {forecastData.map((item) => (
                 <div key={item.id} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                  <span style={{ fontSize: '13px', color: '#64748b', height: '20px', lineHeight: '20px', marginBottom: '8px' }}>{item.time}</span>
-                  <div style={{ height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '26px' }}>{getEmojiIcon(item.icon)}</div>
+                  <span style={{ fontSize: '13px', color: '#475569', height: '20px', lineHeight: '20px', marginBottom: '8px', fontWeight: '600' }}>{item.time}</span>
+                  <div style={{ height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '30px', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))' }}>{getEmojiIcon(item.icon)}</div>
                   <div style={{ height: '100px', marginBottom: '8px' }}></div>
-                  <span style={{ fontSize: '12px', color: item.pop > 0 ? '#38bdf8' : '#94a3b8', fontWeight: item.pop > 0 ? 'bold' : 'normal', minHeight: '18px' }}>💧 {item.pop ?? 0}%</span>
+                  <span style={{ fontSize: '12.5px', color: item.pop > 0 ? '#2563eb' : '#94a3b8', fontWeight: item.pop > 0 ? '800' : '600', minHeight: '18px' }}>💧 {item.pop ?? 0}%</span>
                 </div>
               ))}
             </div>
