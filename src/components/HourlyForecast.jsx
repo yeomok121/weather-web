@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import { LineChart, Line, YAxis, ResponsiveContainer } from 'recharts';
 import { getEmojiIcon } from './WeeklyForecast';
@@ -23,6 +23,13 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
 
   const [selectedCourseIdx, setSelectedCourseIdx] = useState(0);
   const [checklist, setChecklist] = useState({});
+  
+  // 💡 드래그로 가로 스크롤을 하기 위한 상태와 Ref 추가
+  const scrollRef = useRef(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragMoved, setDragMoved] = useState(false); // 드래그 중 실수로 버튼이 눌리는 것 방지
+  const [startX, setStartX] = useState(0);
+  const [scrollLeft, setScrollLeft] = useState(0);
 
   useEffect(() => {
     setCurrentIndex(0);
@@ -35,6 +42,31 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
 
   const toggleCheck = (item) => {
     setChecklist(prev => ({ ...prev, [item]: !prev[item] }));
+  };
+
+  // 💡 마우스 드래그 이벤트 핸들러
+  const handleMouseDown = (e) => {
+    setIsDragging(true);
+    setDragMoved(false);
+    setStartX(e.pageX - scrollRef.current.offsetLeft);
+    setScrollLeft(scrollRef.current.scrollLeft);
+  };
+
+  const handleMouseLeave = () => {
+    setIsDragging(false);
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  const handleMouseMove = (e) => {
+    if (!isDragging) return;
+    e.preventDefault();
+    setDragMoved(true); // 움직임 감지
+    const x = e.pageX - scrollRef.current.offsetLeft;
+    const walk = (x - startX) * 1.5; // 스크롤 속도
+    scrollRef.current.scrollLeft = scrollLeft - walk;
   };
 
   const rawForecastData = Array.isArray(hourlyData)
@@ -155,10 +187,8 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
       {isMountainMode && !isLoading && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '24px' }}>
           
-          {/* 💡 Flex 대신 Grid를 사용하여 화면 비율 고정 (글씨 밀림 원천 차단) */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.1fr', gap: '16px' }}>
             
-            {/* 좌측: 종합 점수 & 3단 고도 기온 맵 */}
             <div style={{ display: 'flex', gap: '10px' }}>
               <div style={{ width: '95px', flexShrink: 0, backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '12px', padding: '16px 8px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
                 <span style={{ fontSize: '11.5px', color: '#166534', fontWeight: 'bold', marginBottom: '8px', whiteSpace: 'nowrap' }}>오늘 산행 지수</span>
@@ -174,7 +204,6 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
                 </span>
               </div>
 
-              {/* 💡 whiteSpace: 'nowrap' 추가로 글씨가 찌그러지는 현상 방지 */}
               <div style={{ flex: 1, backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '14px', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '10px', fontSize: '12px', overflow: 'hidden' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '6px', borderBottom: '1px dashed #cbd5e1' }}>
                   <span style={{ fontWeight: 'bold', color: '#334155', whiteSpace: 'nowrap' }}>⛰️ 정상 <span style={{fontSize:'10px', color:'#94a3b8', fontWeight:'normal'}}>({mountainInfo?.elevation}m)</span></span>
@@ -198,17 +227,33 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
                 <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 'normal', whiteSpace: 'nowrap' }}>일몰 {sunset} 기준</span>
               </h4>
               
-              <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '6px', marginBottom: '8px' }} className="no-scrollbar">
+              {/* 💡 마우스 드래그(스와이프) 이벤트 적용 및 커서 모양 변경 */}
+              <div 
+                ref={scrollRef}
+                onMouseDown={handleMouseDown}
+                onMouseLeave={handleMouseLeave}
+                onMouseUp={handleMouseUp}
+                onMouseMove={handleMouseMove}
+                style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '6px', marginBottom: '8px', cursor: isDragging ? 'grabbing' : 'grab' }} 
+                className="no-scrollbar"
+              >
                 {courses.map((c, idx) => (
                   <button 
                     key={idx} 
-                    onClick={() => setSelectedCourseIdx(idx)}
+                    onClick={(e) => {
+                      if (dragMoved) {
+                        e.stopPropagation();
+                        return;
+                      }
+                      setSelectedCourseIdx(idx);
+                    }}
                     style={{
-                      flexShrink: 0, padding: '6px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: 'bold', cursor: 'pointer',
+                      flexShrink: 0, padding: '6px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: 'bold', cursor: 'inherit',
                       border: selectedCourseIdx === idx ? '1px solid #3182ce' : '1px solid #cbd5e1',
                       background: selectedCourseIdx === idx ? '#ebf8ff' : '#f8fafc',
                       color: selectedCourseIdx === idx ? '#2b6cb0' : '#64748b',
-                      transition: 'all 0.2s'
+                      transition: 'all 0.2s',
+                      userSelect: 'none'
                     }}
                   >
                     {c.name}
@@ -216,7 +261,8 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
                 ))}
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px', color: '#334155', backgroundColor: '#f1f5f9', padding: '8px 10px', borderRadius: '6px', marginBottom: '10px', whiteSpace: 'nowrap' }}>
+              {/* 💡 텍스트 크기를 10.5px로 줄이고 gap을 줘서 줄바꿈이나 잘림 완벽 방지 */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '10.5px', color: '#334155', backgroundColor: '#f1f5f9', padding: '8px 10px', borderRadius: '6px', marginBottom: '10px', whiteSpace: 'nowrap', gap: '4px' }}>
                 <span>거리: <strong>{selectedCourse.distance}</strong></span>
                 <span>소요: <strong>{Math.floor(selectedCourse.time / 60)}시간 {selectedCourse.time % 60}분</strong></span>
                 <span>난이도: <strong style={{ color: selectedCourse.diff.includes('상') ? '#dc2626' : '#16a34a' }}>{selectedCourse.diff}</strong></span>
@@ -236,7 +282,7 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
             <h4 style={{ margin: '0 0 12px 0', fontSize: '14px', color: '#1e293b' }}>🎒 오늘 기상 맞춤 배낭 체크리스트</h4>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '10px' }}>
               {gearList.map((item, idx) => (
-                <label key={idx} style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12.5px', color: checklist[item] ? '#94a3b8' : '#334155', cursor: 'pointer', textDecoration: checklist[item] ? 'line-through' : 'none' }}>
+                <label key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12.5px', color: checklist[item] ? '#94a3b8' : '#334155', cursor: 'pointer', textDecoration: checklist[item] ? 'line-through' : 'none', padding: '6px 0', userSelect: 'none' }}>
                   <input type="checkbox" checked={!!checklist[item]} onChange={() => toggleCheck(item)} style={{ cursor: 'pointer', accentColor: '#16a34a', width: '15px', height: '15px', flexShrink: 0 }} />
                   <span style={{ whiteSpace: 'nowrap' }}>{item}</span>
                 </label>
