@@ -454,20 +454,22 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
       ) : forecastData.length === 0 ? (
         <p style={{ margin: '10px 0', fontSize: '14px', color: '#475569' }}>예보 데이터가 없습니다.</p>
       ) : (
-        <div className="hourly-chart-wrapper" style={{ width: '100%', position: 'relative' }}>
+        /* 🚨 핵심 복구 영역: overflow: 'hidden'을 반드시 유지! */
+        <div className="hourly-chart-wrapper" style={{ overflow: 'hidden', width: '100%', position: 'relative' }}>
           <div style={{ transition: 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)', transform: `translateX(-${(visibleIndex / forecastData.length) * 100}%)`, width: `${(forecastData.length / ITEMS_TO_SHOW) * 100}%`, position: 'relative' }}>
             
-            {/* 💡 Recharts 부모 컨테이너에 양옆 패딩을 명시적으로 주어 첫 숫자 잘림 완벽 방지 */}
-            <div style={{ position: 'absolute', top: '68px', left: 0, right: 0, height: '100px', zIndex: 1, padding: '0 15px', boxSizing: 'border-box' }}>
+            {/* Recharts에는 margin을 주고 DOM 구조 패딩은 제거하여 완벽 정렬 */}
+            <div style={{ position: 'absolute', top: '68px', left: 0, right: 0, height: '100px', zIndex: 1 }}>
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={forecastData}>
+                <LineChart data={forecastData} margin={{ top: 28, bottom: 16, left: 20, right: 20 }}>
                   <YAxis domain={[yMin, yMax]} allowDataOverflow={true} hide />
                   <Line type="monotone" dataKey="plotTemp" stroke={isMountainMode ? "#16a34a" : "#0284c7"} strokeWidth={3} dot={{ r: 5, fill: '#ffffff', stroke: isMountainMode ? "#16a34a" : "#0284c7", strokeWidth: 2 }} label={(props) => <CustomLabel {...props} value={forecastData[props.index]?.tempNum} />} isAnimationActive={false} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
             
-            <div style={{ display: 'flex', width: '100%', position: 'relative', zIndex: 2, padding: '0 15px', boxSizing: 'border-box' }}>
+            {/* 플렉스 컨테이너에 차트 마진과 동일한 20px 패딩을 주어 아이콘과 숫자 라인 정렬 */}
+            <div style={{ display: 'flex', width: '100%', position: 'relative', zIndex: 2, padding: '0 20px', boxSizing: 'border-box' }}>
               {forecastData.map((item) => (
                 <div key={item.id} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                   <span style={{ fontSize: '13px', color: '#475569', height: '20px', lineHeight: '20px', marginBottom: '8px', fontWeight: '600' }}>{item.time}</span>
