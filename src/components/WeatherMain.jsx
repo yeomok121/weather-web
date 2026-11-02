@@ -43,7 +43,6 @@ function WeatherMain({
 
   const tempDiff = Number(weatherData.tempDiff || 0);
   const getComparisonBadge = () => {
-    // 💡 미래 날짜를 선택했을 때는 어제 기온과 비교하지 않음
     if (weatherData.isFuture) return { text: `🗓️ 해당 일자의 예상 최고기온 기준입니다`, bg: '#f1f5f9', color: '#475569', border: '#e2e8f0' };
 
     if (isMountainMode) {
@@ -119,7 +118,7 @@ function WeatherMain({
           {isMountainMode && mountainInfo?.difficulty && <span style={{ fontSize: '11px', color: '#9a3412', backgroundColor: '#ffedd5', padding: '3px 8px', borderRadius: '12px', fontWeight: 'bold' }}>난이도 {mountainInfo.difficulty}</span>}
         </h3>
         
-        {/* 💡 날짜 선택 드롭다운 UI (이 부분이 화면에 나타납니다!) */}
+        {/* 💡 이 부분이 바로 날짜 선택 드롭다운 버튼입니다! */}
         <div style={{ display: 'flex', justifyContent: 'center', margin: '10px 0 14px 0' }}>
           <div ref={dropdownRef} style={{ position: 'relative', display: 'inline-block' }}>
             <button 
@@ -148,6 +147,7 @@ function WeatherMain({
             )}
           </div>
         </div>
+        {/* 💡 날짜 버튼 끝 */}
         
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '10px' }}>
           <h1 style={{ fontSize: '62px', margin: '0' }}>{weatherData.temp}°<span style={{ fontSize: '30px' }}>C</span></h1>
@@ -177,7 +177,7 @@ function WeatherMain({
           <>
             <div>
               <h4 style={{ fontSize: '12px', color: '#15803d', fontWeight: 'bold', margin: '0 0 8px 0' }}>📌 {weatherData.region} 핵심 산행 팁</h4>
-              <div style={{ backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '9px 10px', fontSize: '12px', color: '#334155', lineHeight: '1.45', marginBottom: '12px', wordBreak: 'keep-all' }}>
+              <div style={{ backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '9px 10px', fontSize: '12px', color: '#334155', lineHeight: '1.45', margin: '0 0 12px 0', wordBreak: 'keep-all' }}>
                 {mountainInfo?.course_tip || '정상 부근 기온 하강과 강풍에 대비해 방풍 의류와 스틱을 준비하세요.'}
               </div>
               <h4 style={{ fontSize: '12px', color: '#64748b', margin: '0 0 6px 0' }}>⛰️ 20대 명산 빠른 선택</h4>
