@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { FiChevronLeft, FiChevronRight, FiShare2 } from 'react-icons/fi';
+import { FiChevronLeft, FiChevronRight, FiShare2, FiPlus, FiX, FiRotateCcw, FiVideo } from 'react-icons/fi';
 import { LineChart, Line, YAxis, ResponsiveContainer } from 'recharts';
 import { getEmojiIcon } from './WeeklyForecast';
 
@@ -21,7 +21,11 @@ const CustomLabel = ({ x, y, value }) => (
 function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = '', isMountainMode = false, mountainInfo = null, weatherData = {}, onShowToast }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedCourseIdx, setSelectedCourseIdx] = useState(0);
+
+  // 💡 사용자 맞춤형 체크리스트 상태 (기상 추천 기본값 + 사용자 추가/삭제 지원)
+  const [gearList, setGearList] = useState([]);
   const [checklist, setChecklist] = useState({});
+  const [newGearInput, setNewGearInput] = useState('');
   
   const scrollRef = useRef(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -29,17 +33,86 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
   const [startX, setStartX] = useState(0);
   const [scrollLeft, setScrollLeft] = useState(0);
 
+  const temp = weatherData?.temp || 0;
+  const baseTemp = weatherData?.baseTemp || temp + 5;
+  const wind = weatherData?.wind_speed || 0;
+  const dustStr = weatherData?.dust || '';
+  const pm25Match = dustStr.match(/\d+/);
+  const pm25 = pm25Match ? parseInt(pm25Match[0], 10) : 15;
+  const desc = weatherData?.condition || '';
+  const isRainOrSnow = desc.includes('비') || desc.includes('소나기') || desc.includes('눈') || desc.includes('우박') || (weatherData?.targetPop >= 60);
+  const isSnow = desc.includes('눈');
+  const sunset = weatherData?.sunset || '18:00';
+  const safeDescentTime = weatherData?.safeDescentTime || mountainInfo?.safe_descent_time || '15:30';
+  const terrain = mountainInfo?.terrain || '';
+  const isFuture = weatherData?.isFuture || false;
+
+  // 💡 현재 산악 기상(기온·풍속·강수·지형)에 맞춰 기본 추천 체크리스트 생성
+  const buildWeatherGearList = () => {
+    const items = ['등산화 (접지력 확인)', '충분한 식수', '초코바 등 행동식'];
+    if (temp <= 2 || isSnow) items.push('아이젠 및 스패츠', '보온병 (온수)', '방한모 및 넥워머');
+    if (temp <= 15 || wind >= 5) items.push('방풍 재킷(바람막이)');
+    if (isRainOrSnow) items.push('판초우의 또는 배낭 커버');
+    if (terrain.includes('암릉') || terrain.includes('바위')) items.push('반장갑 (바위용)', '릿지화(암릉화)');
+    items.push('등산 스틱', '비상용 헤드랜턴');
+    return items;
+  };
+
   useEffect(() => {
     setCurrentIndex(0);
   }, [hourlyData]);
 
+  // 산, 날짜, 기온, 날씨 조건이 바뀔 때 기상에 맞는 추천 준비물로 자동 갱신
   useEffect(() => {
-    setChecklist({});
     setSelectedCourseIdx(0);
-  }, [mountainInfo?.name, weatherData?.date]);
+    setGearList(buildWeatherGearList());
+    setChecklist({});
+  }, [mountainInfo?.name, weatherData?.date, temp, wind, isRainOrSnow, terrain]);
 
   const toggleCheck = (item) => {
     setChecklist(prev => ({ ...prev, [item]: !prev[item] }));
+  };
+
+  // 💡 사용자 준비물 직접 추가
+  const handleAddGear = () => {
+    const trimmed = newGearInput.trim();
+    if (!trimmed) return;
+    if (gearList.includes(trimmed)) {
+      if (onShowToast) onShowToast('이미 체크리스트에 있는 준비물입니다.');
+      return;
+    }
+    setGearList(prev => [...prev, trimmed]);
+    setNewGearInput('');
+  };
+
+  // 💡 사용자 준비물 개별 삭제
+  const handleRemoveGear = (itemToRemove) => {
+    setGearList(prev => prev.filter(item => item !== itemToRemove));
+    setChecklist(prev => {
+      const next = { ...prev };
+      delete next[itemToRemove];
+      return next;
+    });
+  };
+
+  // 💡 기상 맞춤 기본 추천 목록으로 복원
+  const handleResetGear = () => {
+    setGearList(buildWeatherGearList());
+    setChecklist({});
+    if (onShowToast) onShowToast('🔄 현재 기상에 맞는 기본 추천 준비물로 복원되었습니다.');
+  };
+
+  // 💡 실시간 CCTV 새 창 팝업 열기
+  const handleOpenCctv = () => {
+    const mountainName = weatherData?.region || mountainInfo?.name || '북한산';
+    let cctvUrl = mountainInfo?.cctv_url;
+    if (!cctvUrl) {
+      if (mountainName === '한라산') cctvUrl = 'https://www.jeju.go.kr/hallasan/info/cctv.htm';
+      else if (['관악산', '대둔산', '마이산'].includes(mountainName)) {
+        cctvUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(mountainName + ' 실시간 CCTV')}`;
+      } else cctvUrl = 'https://www.knps.or.kr/portal/main/contents.do?menuNo=8000159';
+    }
+    window.open(cctvUrl, 'MountainCCTVPopup', 'width=1100,height=780,left=150,top=100,noopener,noreferrer');
   };
 
   const handleMouseDown = (e) => {
@@ -63,14 +136,14 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
 
   const rawForecastData = Array.isArray(hourlyData)
     ? hourlyData.filter(item => item && typeof item === 'object').map((item, index) => {
-        const temp = toNumber(item.temp);
+        const t = toNumber(item.temp);
         const pop = toNumber(item.pop);
         return {
           id: index,
           time: item.time || '시간 없음',
           icon: item.icon,
           description: item.description,
-          tempNum: temp,
+          tempNum: t,
           pop: pop === null ? 0 : Math.round(Math.max(0, Math.min(1, pop)) * 100),
         };
       })
@@ -101,20 +174,6 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
     background: '#f1f5f9', border: 'none', borderRadius: '50%', width: '32px', height: '32px',
     display: 'flex', justifyContent: 'center', alignItems: 'center', color: '#333', transition: 'background-color 0.2s',
   };
-
-  const temp = weatherData?.temp || 0;
-  const baseTemp = weatherData?.baseTemp || temp + 5;
-  const wind = weatherData?.wind_speed || 0;
-  const dustStr = weatherData?.dust || '';
-  const pm25Match = dustStr.match(/\d+/);
-  const pm25 = pm25Match ? parseInt(pm25Match[0], 10) : 15;
-  const desc = weatherData?.condition || '';
-  const isRainOrSnow = desc.includes('비') || desc.includes('소나기') || desc.includes('눈') || desc.includes('우박') || (weatherData?.targetPop >= 60);
-  const isSnow = desc.includes('눈');
-  const sunset = weatherData?.sunset || '18:00';
-  const safeDescentTime = weatherData?.safeDescentTime || mountainInfo?.safe_descent_time || '15:30';
-  const terrain = mountainInfo?.terrain || '';
-  const isFuture = weatherData?.isFuture || false;
 
   const getMountainScore = () => {
     let score = 100;
@@ -158,21 +217,14 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
   };
   const timeline = getTimelineStatus();
 
-  const getChecklistItems = () => {
-    const items = ['등산화 (접지력 확인)', '충분한 식수', '초코바 등 행동식'];
-    if (temp <= 2 || isSnow) items.push('아이젠 및 스패츠', '보온병 (온수)', '방한모 및 넥워머');
-    if (temp <= 15 || wind >= 5) items.push('방풍 재킷(바람막이)');
-    if (isRainOrSnow) items.push('판초우의 또는 배낭 커버');
-    if (terrain.includes('암릉') || terrain.includes('바위')) items.push('반장갑 (바위용)', '릿지화(암릉화)');
-    items.push('등산 스틱', '비상용 헤드랜턴');
-    return items;
-  };
-  const gearList = getChecklistItems();
-
-  // 💡 카카오톡/클립보드 산행 브리핑 공유 함수
+  // 💡 사용자가 추가/삭제/체크한 맞춤 체크리스트가 그대로 반영되는 공유 함수
   const handleSharePlan = async () => {
     const mName = weatherData.region || mountainInfo?.name || '명산';
     const peak = mountainInfo?.peak ? `(${mountainInfo.peak} ${mountainInfo.elevation}m)` : '';
+    const formattedGear = gearList.length > 0
+      ? gearList.map(item => `${checklist[item] ? '☑️' : '⬜'} ${item}`).join('\n  ')
+      : '없음';
+
     const shareText = [
       `⛰️ [${mName} ${peak} 산행 기상 브리핑]`,
       `📅 일자: ${weatherData.date}`,
@@ -180,13 +232,13 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
       `🏆 산행 지수: ${score}점 (${score >= 80 ? '매우 쾌적' : score >= 60 ? '산행 무난' : '주의 필요'})`,
       `🥾 선택 코스: ${selectedCourse.name} (거리 ${selectedCourse.distance} · 약 ${Math.floor(selectedCourse.time / 60)}시간 ${selectedCourse.time % 60}분 소요)`,
       `🚨 안전 하산 마감: ${safeDescentTime} 이전 (일몰 ${sunset})`,
-      `🎒 필수 준비물: ${gearList.join(', ')}`,
+      `🎒 맞춤 배낭 체크리스트:\n  ${formattedGear}`,
       `🔗 산악 기상 대시보드: ${window.location.href}`
     ].join('\n');
 
     try {
       await navigator.clipboard.writeText(shareText);
-      if (onShowToast) onShowToast('📋 산행 일정과 기상 브리핑이 클립보드에 복사되었습니다! 카카오톡 등에 붙여넣어 공유하세요.');
+      if (onShowToast) onShowToast('📋 내가 편집한 체크리스트와 산행 일정이 복사되었습니다! 카톡 등에 붙여넣어 공유하세요.');
     } catch (err) {
       if (onShowToast) onShowToast('복사에 실패했습니다. 브라우저 권한을 확인해주세요.');
     }
@@ -209,11 +261,23 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
         }
       `}</style>
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '16px' }}>
         <h4 style={{ margin: 0, fontSize: '16px', fontWeight: 'bold', color: isMountainMode ? '#166534' : '#1e293b' }}>
           {isMountainMode ? '⛰️ 산악 기상 & 등산 환경 대시보드' : '시간대별 예보 (기온 변화)'}
         </h4>
-        {!isMountainMode && (
+        {isMountainMode ? (
+          <button
+            type="button"
+            onClick={handleOpenCctv}
+            style={{
+              padding: '6px 12px', borderRadius: '8px', border: '1px solid #16a34a',
+              backgroundColor: '#f0fdf4', color: '#15803d', fontSize: '12px', fontWeight: 'bold',
+              cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px'
+            }}
+          >
+            <FiVideo size={14} /> 📷 실시간 정상 CCTV 보기
+          </button>
+        ) : (
           <div style={{ display: 'flex', gap: '8px' }}>
             <button type="button" onClick={handlePrev} disabled={prevDisabled} style={{ ...buttonStyle, opacity: prevDisabled ? 0.3 : 1, cursor: prevDisabled ? 'default' : 'pointer' }}><FiChevronLeft size={20} /></button>
             <button type="button" onClick={handleNext} disabled={nextDisabled} style={{ ...buttonStyle, opacity: nextDisabled ? 0.3 : 1, cursor: nextDisabled ? 'default' : 'pointer' }}><FiChevronRight size={20} /></button>
@@ -309,31 +373,106 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
             </div>
           </div>
 
+          {/* 💡 기상 맞춤 추천 + 사용자 직접 추가/삭제 + 공유 연동 배낭 체크리스트 */}
           <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '16px 20px', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '12px' }}>
-              <h4 style={{ margin: 0, fontSize: '14px', color: '#1e293b' }}>🎒 {isFuture ? '예상 기상 맞춤 배낭 준비물' : '오늘 기상 맞춤 배낭 체크리스트'}</h4>
-              {/* 💡 카카오톡/클립보드 산행 일정 공유 버튼 */}
+              <div>
+                <h4 style={{ margin: 0, fontSize: '14px', color: '#1e293b' }}>
+                  🎒 {isFuture ? '예상 기상 맞춤 배낭 체크리스트' : '오늘 기상 맞춤 배낭 체크리스트'}
+                </h4>
+                <span style={{ fontSize: '11px', color: '#64748b' }}>
+                  기온({temp}°C)·바람({wind}m/s)·지형에 맞춰 자동 추천되며, 직접 추가·삭제하여 공유할 수 있습니다.
+                </span>
+              </div>
+              <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                <button
+                  type="button"
+                  onClick={handleResetGear}
+                  title="기상 추천 기본값으로 초기화"
+                  style={{
+                    padding: '6px 10px', borderRadius: '8px', border: '1px solid #cbd5e1',
+                    backgroundColor: '#f8fafc', color: '#475569', fontSize: '11.5px', fontWeight: 'bold',
+                    cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px'
+                  }}
+                >
+                  <FiRotateCcw size={12} /> 기본값 복원
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSharePlan}
+                  style={{
+                    padding: '6px 12px', borderRadius: '8px', border: '1px solid #16a34a',
+                    backgroundColor: '#166534', color: '#ffffff', fontSize: '12px', fontWeight: 'bold',
+                    cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.08)'
+                  }}
+                >
+                  <FiShare2 size={13} /> 📤 일행에게 산행 일정·날씨 공유하기
+                </button>
+              </div>
+            </div>
+
+            {/* 💡 준비물 직접 추가 입력창 */}
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+              <input
+                type="text"
+                placeholder="추가할 준비물을 입력하세요 (예: 무릎보호대, 김밥, 보조배터리)"
+                value={newGearInput}
+                onChange={(e) => setNewGearInput(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleAddGear()}
+                style={{
+                  flex: 1, padding: '8px 12px', borderRadius: '8px', border: '1px solid #cbd5e1',
+                  fontSize: '12.5px', outline: 'none', color: '#334155', backgroundColor: '#f8fafc'
+                }}
+              />
               <button
                 type="button"
-                onClick={handleSharePlan}
+                onClick={handleAddGear}
                 style={{
-                  padding: '6px 12px', borderRadius: '8px', border: '1px solid #16a34a',
-                  backgroundColor: '#166534', color: '#ffffff', fontSize: '12px', fontWeight: 'bold',
-                  cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px',
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.08)'
+                  padding: '8px 14px', borderRadius: '8px', border: 'none',
+                  backgroundColor: '#15803d', color: '#ffffff', fontSize: '12.5px', fontWeight: 'bold',
+                  cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap'
                 }}
               >
-                <FiShare2 size={13} /> 📤 일행에게 산행 일정·날씨 공유하기
+                <FiPlus size={14} /> 추가
               </button>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '10px' }}>
-              {gearList.map((item, idx) => (
-                <label key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12.5px', color: checklist[item] ? '#94a3b8' : '#334155', cursor: 'pointer', textDecoration: checklist[item] ? 'line-through' : 'none', padding: '6px 0', userSelect: 'none' }}>
-                  <input type="checkbox" checked={!!checklist[item]} onChange={() => toggleCheck(item)} style={{ cursor: 'pointer', accentColor: '#16a34a', width: '15px', height: '15px', flexShrink: 0 }} />
-                  <span style={{ whiteSpace: 'nowrap' }}>{item}</span>
-                </label>
-              ))}
-            </div>
+
+            {/* 체크리스트 아이템 그리드 (각 아이템 우측에 ✕ 삭제 버튼 포함) */}
+            {gearList.length === 0 ? (
+              <p style={{ margin: '8px 0', fontSize: '12.5px', color: '#94a3b8', textAlign: 'center' }}>
+                체크리스트가 비어 있습니다. 준비물을 추가하거나 [기본값 복원]을 눌러주세요.
+              </p>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(175px, 1fr))', gap: '8px' }}>
+                {gearList.map((item, idx) => (
+                  <div
+                    key={idx}
+                    style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                      padding: '6px 10px', borderRadius: '8px', backgroundColor: '#f8fafc',
+                      border: '1px solid #f1f5f9'
+                    }}
+                  >
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12.5px', color: checklist[item] ? '#94a3b8' : '#334155', cursor: 'pointer', textDecoration: checklist[item] ? 'line-through' : 'none', userSelect: 'none', flex: 1, minWidth: 0 }}>
+                      <input type="checkbox" checked={!!checklist[item]} onChange={() => toggleCheck(item)} style={{ cursor: 'pointer', accentColor: '#16a34a', width: '15px', height: '15px', flexShrink: 0 }} />
+                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item}</span>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveGear(item)}
+                      title="준비물 삭제"
+                      style={{
+                        background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer',
+                        display: 'flex', alignItems: 'center', padding: '2px', marginLeft: '4px', flexShrink: 0
+                      }}
+                    >
+                      <FiX size={14} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
           
           {!isFuture && (
