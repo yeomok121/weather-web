@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { FiTrash2 } from 'react-icons/fi';
 
-function WeatherMain({ weatherData, hourlyData = [], isAiLoading, aiMessage, favorites, onAddClick, onFavoriteClick, onRemoveFavorite, onCurrentLocationClick }) {
+function WeatherMain({ weatherData, hourlyData = [], isAiLoading, aiMessage, favorites, onAddClick, onFavoriteClick, onRemoveFavorite, onCurrentLocationClick, isMountainMode, onToggleMountainMode }) {
   const [hoveredIndex, setHoveredIndex] = useState(null);
 
   if (isAiLoading) {
@@ -24,7 +24,6 @@ function WeatherMain({ weatherData, hourlyData = [], isAiLoading, aiMessage, fav
     );
   }
 
-  // 💡 1. 어제 기온 비교 문구 및 색상 생성
   const tempDiff = Number(weatherData.tempDiff || 0);
   const getTempDiffBadge = () => {
     if (tempDiff > 0) {
@@ -36,7 +35,6 @@ function WeatherMain({ weatherData, hourlyData = [], isAiLoading, aiMessage, fav
     return { text: '어제와 기온이 비슷해요 ➖', bg: '#f8fafc', color: '#475569', border: '#e2e8f0' };
   };
 
-  // 💡 2. 악천후 / 기상 주의 알림 배너 자동 판별
   const getWeatherAlert = () => {
     const cond = weatherData.condition || '';
     const wind = Number(weatherData.wind_speed || 0);
@@ -50,40 +48,22 @@ function WeatherMain({ weatherData, hourlyData = [], isAiLoading, aiMessage, fav
       : 0;
 
     if (cond.includes('비') || cond.includes('소나기') || cond.includes('눈')) {
-      return {
-        text: '☔ 현재 비/눈이 내리고 있습니다. 외출 시 우산을 꼭 챙기세요!',
-        bg: '#eff6ff', color: '#1d4ed8', border: '#bfdbfe'
-      };
+      return { text: '☔ 현재 비/눈이 내리고 있습니다. 우산을 챙기세요!', bg: '#eff6ff', color: '#1d4ed8', border: '#bfdbfe' };
     }
     if (maxPop >= 60) {
-      return {
-        text: `🌂 곧 비 소식이 있습니다 (강수확률 ${maxPop}%). 우산을 미리 챙기세요!`,
-        bg: '#eff6ff', color: '#1d4ed8', border: '#bfdbfe'
-      };
+      return { text: `🌂 곧 비 소식이 있습니다 (강수확률 ${maxPop}%).`, bg: '#eff6ff', color: '#1d4ed8', border: '#bfdbfe' };
     }
     if (pm25 >= 36) {
-      return {
-        text: `😷 미세먼지 농도가 높습니다 (${dustStr}). 외출 시 마스크를 착용하세요!`,
-        bg: '#fff7ed', color: '#c2410c', border: '#fed7aa'
-      };
+      return { text: `😷 미세먼지 농도가 높습니다 (${dustStr}). 마스크를 착용하세요!`, bg: '#fff7ed', color: '#c2410c', border: '#fed7aa' };
     }
     if (wind >= 8) {
-      return {
-        text: `💨 강풍 주의! 현재 바람이 강하게 불고 있습니다 (${wind}m/s).`,
-        bg: '#fefce8', color: '#a16207', border: '#fef08a'
-      };
+      return { text: `💨 강풍 주의! 현재 바람이 강하게 불고 있습니다 (${wind}m/s).`, bg: '#fefce8', color: '#a16207', border: '#fef08a' };
     }
     if (temp >= 33) {
-      return {
-        text: '🥵 폭염 주의! 한낮 야외 활동을 자제하시고 수분을 자주 섭취하세요.',
-        bg: '#fef2f2', color: '#b91c1c', border: '#fecaca'
-      };
+      return { text: '🥵 폭염 주의! 한낮 야외 활동을 자제하시고 수분을 섭취하세요.', bg: '#fef2f2', color: '#b91c1c', border: '#fecaca' };
     }
     if (temp <= -8) {
-      return {
-        text: '🥶 한파 주의! 기온이 매우 낮으니 보온에 각별히 유의하세요.',
-        bg: '#eff6ff', color: '#1e40af', border: '#bfdbfe'
-      };
+      return { text: '🥶 한파 주의! 기온이 매우 낮으니 보온에 유의하세요.', bg: '#eff6ff', color: '#1e40af', border: '#bfdbfe' };
     }
     return null;
   };
@@ -95,24 +75,40 @@ function WeatherMain({ weatherData, hourlyData = [], isAiLoading, aiMessage, fav
     <div style={{ backgroundColor: '#f0f7ff', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'row', overflow: 'hidden' }}>
       <div style={{ flex: 2, padding: '26px 30px', textAlign: 'center', color: '#333', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
         
-        {/* 🚨 악천후/기상 특보 감지 시 상단에 자동 노출되는 배너 */}
+        {/* 💡 상단 알림 배너 */}
         {weatherAlert && (
           <div style={{
-            backgroundColor: weatherAlert.bg,
-            color: weatherAlert.color,
-            border: `1px solid ${weatherAlert.border}`,
-            borderRadius: '8px',
-            padding: '8px 12px',
-            fontSize: '12px',
-            fontWeight: 'bold',
-            marginBottom: '14px',
-            wordBreak: 'keep-all'
+            backgroundColor: weatherAlert.bg, color: weatherAlert.color, border: `1px solid ${weatherAlert.border}`,
+            borderRadius: '8px', padding: '8px 12px', fontSize: '12px', fontWeight: 'bold', marginBottom: '14px', wordBreak: 'keep-all'
           }}>
             {weatherAlert.text}
           </div>
         )}
 
-        <h3 style={{ margin: '0', fontSize: '18px' }}>{weatherData.region}</h3>
+        {/* 💡 산악 모드 전환 토글 버튼 */}
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '10px' }}>
+          <button 
+            onClick={onToggleMountainMode}
+            style={{
+              padding: '6px 14px', borderRadius: '20px', fontSize: '13px', fontWeight: 'bold', cursor: 'pointer',
+              border: isMountainMode ? '1px solid #15803d' : '1px solid #3182ce',
+              backgroundColor: isMountainMode ? '#dcfce7' : '#ebf8ff',
+              color: isMountainMode ? '#166534' : '#2b6cb0',
+              transition: 'all 0.3s ease'
+            }}
+          >
+            {isMountainMode ? '⛰️ 산악 날씨 모드' : '🏕️ 일반 날씨 모드'}
+          </button>
+        </div>
+
+        <h3 style={{ margin: '0', fontSize: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+          {weatherData.region} 
+          {isMountainMode && weatherData.elevation > 0 && (
+            <span style={{ fontSize: '12px', color: '#166534', backgroundColor: '#bbf7d0', padding: '2px 8px', borderRadius: '12px' }}>
+              해발 {weatherData.elevation}m
+            </span>
+          )}
+        </h3>
         <p style={{ margin: '5px 0 16px 0', fontSize: '14px', color: '#666' }}>{weatherData.date}</p>
         
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '10px' }}>
@@ -123,17 +119,11 @@ function WeatherMain({ weatherData, hourlyData = [], isAiLoading, aiMessage, fav
         <p style={{ margin: '10px 0 4px 0', fontWeight: 'bold' }}>{weatherData.condition}</p>
         <p style={{ margin: '0 0 10px 0', color: '#666', fontSize: '14px' }}>{weatherData.highLow}</p>
 
-        {/* 💡 어제 기온 비교 배지 */}
+        {/* 어제 기온 비교 배지 */}
         <div style={{ display: 'flex', justifyContent: 'center' }}>
           <span style={{
-            display: 'inline-block',
-            backgroundColor: diffBadge.bg,
-            color: diffBadge.color,
-            border: `1px solid ${diffBadge.border}`,
-            borderRadius: '999px',
-            padding: '4px 12px',
-            fontSize: '12px',
-            fontWeight: 'bold'
+            display: 'inline-block', backgroundColor: diffBadge.bg, color: diffBadge.color, border: `1px solid ${diffBadge.border}`,
+            borderRadius: '999px', padding: '4px 12px', fontSize: '12px', fontWeight: 'bold'
           }}>
             {diffBadge.text}
           </span>
@@ -147,11 +137,14 @@ function WeatherMain({ weatherData, hourlyData = [], isAiLoading, aiMessage, fav
         </div>
       </div>
       
+      {/* 우측 관심 지역 패널 */}
       <div style={{ flex: 1, backgroundColor: 'white', padding: '20px', borderLeft: '1px solid #e2e8f0', color: '#333' }}>
         <h4 style={{ fontSize: '12px', color: '#a0aec0', margin: '0 0 15px 0' }}>관심 지역 관리 ({favorites.length}/5)</h4>
         <ul style={{ listStyle: 'none', padding: '0', margin: '0', fontSize: '14px', lineHeight: '2.5' }}>
-          <li onClick={onCurrentLocationClick} style={{ cursor: 'pointer', color: '#e53e3e', fontWeight: 'bold' }}>📍 현재 위치</li>
-          {favorites.length < 5 && <li onClick={onAddClick} style={{ cursor: 'pointer', color: '#3182ce' }}>➕ 새 지역 추가</li>}
+          <li onClick={onCurrentLocationClick} style={{ cursor: 'pointer', color: '#e53e3e', fontWeight: 'bold', opacity: isMountainMode ? 0.3 : 1 }}>
+            📍 현재 위치
+          </li>
+          {favorites.length < 5 && <li onClick={onAddClick} style={{ cursor: 'pointer', color: '#3182ce', opacity: isMountainMode ? 0.3 : 1 }}>➕ 새 지역 추가</li>}
           {favorites.map((fav, index) => (
             <li key={index} onMouseEnter={() => setHoveredIndex(index)} onMouseLeave={() => setHoveredIndex(null)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: index === 0 ? '10px' : '0', padding: '2px 0' }}>
               <span onClick={() => onFavoriteClick(fav)} style={{ cursor: 'pointer', flex: 1, color: weatherData.region === fav.name ? '#333' : '#666', fontWeight: weatherData.region === fav.name ? 'bold' : 'normal' }}>

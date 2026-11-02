@@ -13,7 +13,6 @@ import WeatherOutlook from './components/WeatherOutlook';
 import { FiSearch, FiBell, FiSettings, FiClock, FiCheckCircle } from 'react-icons/fi';
 import { API } from './config';
 
-
 const KOREA_REGIONS = [
   '서울특별시', '부산광역시', '대구광역시', '인천광역시', '광주광역시', '대전광역시', '울산광역시', '세종특별자치시',
   '수원시', '성남시', '고양시', '용인시', '부천시', '안산시', '안양시', '남양주시', '화성시', '평택시', '의정부시', '시흥시', '파주시', '광명시', '김포시', '군포시', '광주시', '이천시', '양주시', '오산시', '구리시', '안성시', '포천시', '의왕시', '하남시', '여주시', '양평군', '동두천시', '과천시', '가평군', '연천군',
@@ -26,6 +25,8 @@ const KOREA_REGIONS = [
   '창원시', '진주시', '통영시', '사천시', '김해시', '밀양시', '거제시', '양산시', '의령군', '함안군', '창녕군', '고성군', '남해군', '하동군', '산청군', '함양군', '거창군', '합천군',
   '제주시', '서귀포시'
 ];
+
+const MOUNTAINS = ['북한산', '설악산', '한라산', '지리산', '관악산', '도봉산', '계룡산'];
 
 const getTodayDateString = () => {
   const now = new Date();
@@ -41,6 +42,9 @@ function App() {
   const [recentSearches, setRecentSearches] = useState([]);
   const [autoCompleteList, setAutoCompleteList] = useState([]);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
+
+  // 💡 산악 날씨 모드 상태 추가
+  const [isMountainMode, setIsMountainMode] = useState(false);
 
   const [isNoticeOpen, setIsNoticeOpen] = useState(false);
   const [isSignUpOpen, setIsSignUpOpen] = useState(false);
@@ -70,7 +74,7 @@ function App() {
     condition: '대기 중...', highLow: '최고 -° / 최저 -°',
     icon: <span style={{ fontSize: '60px' }}>☀️</span>, uv: '높음',
     humidity: 0, dust: '확인 중...', wind_speed: 0, 
-    sunrise: '06:00', sunset: '18:00'
+    sunrise: '06:00', sunset: '18:00', elevation: 0
   });
 
   const showToast = (message) => {
@@ -179,7 +183,7 @@ function App() {
     localStorage.setItem(userKey, JSON.stringify(newFavs));
   };
 
-  const updateWeatherState = (data, regionName) => {
+  const updateWeatherState = (data, regionName, elevation = 0) => {
     const c = data.current;
     const aqi = data.air_quality;
 
@@ -200,56 +204,77 @@ function App() {
       highLow: `최고 ${Math.round(c.temp_max)}° / 최저 ${Math.round(c.temp_min)}°`,
       humidity: c.humidity, 
       wind_speed: c.wind_speed,
-      dust: aqi ? `${aqi.level} (${aqi.pm25})` : prev.dust,
+      dust: aqi ? `${aqi.level} (${aqi.pm25})` : (prev.dust || '정보 없음'),
       sunrise: c.sunrise || '06:00',
-      sunset: c.sunset || '18:00'
+      sunset: c.sunset || '18:00',
+      elevation: elevation
     }));
     
     setHourlyData(Array.isArray(data.hourly) ? data.hourly : []);
     setWeeklyData(Array.isArray(data.weekly) ? data.weekly : []); 
   };
 
+  // 💡 일반 지역 날씨 호출
   const loadWeather = async (lat, lon, regionName) => {
     setForecastError('');
-    
-    const cacheKey = `weather_cache_${lat}_${lon}`;
-    const cachedData = localStorage.getItem(cacheKey);
-    if (cachedData) {
-      updateWeatherState(JSON.parse(cachedData), regionName);
-      setAiMessage('✨ AI가 오늘 날씨를 분석하고 있어요...');
-      setIsAiLoading(false);
-    } else {
-      setIsAiLoading(true);
-    }
+    setIsAiLoading(true);
 
     try {
       const res = await fetch(`${API}/api/weather/summary?lat=${lat}&lon=${lon}`);
       if (!res.ok) throw new Error(`요청 실패`);
       const data = await res.json();
       
-      updateWeatherState(data, regionName);
-      localStorage.setItem(cacheKey, JSON.stringify(data));
+      updateWeatherState(data, regionName, 0);
       setIsAiLoading(false);
-      
       setAiMessage('✨ AI가 실시간 날씨를 분석 중이에요...');
-      setAiBriefing('데이터를 불러오는 중입니다...');
       
       const aiRes = await fetch(`${API}/api/weather/ai`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ current: data.current, forecast: data.hourly, air_quality: data.air_quality })
       });
-      
       if (aiRes.ok) {
         const aiData = await aiRes.json();
-        const advice = Array.isArray(aiData.advice) ? aiData.advice.join(' ') : (typeof aiData.advice === 'string' ? aiData.advice : '');
-        setAiMessage(advice || '오늘도 좋은 하루 보내세요!');
+        setAiMessage(aiData.advice?.[0] || '오늘도 좋은 하루 보내세요!');
         setAiBriefing(aiData.ai_briefing || 'AI 날씨 전망을 불러오지 못했습니다.');
       }
-      
     } catch (error) {
       setForecastError('서버 상태를 확인해주세요.');
-      setAiMessage('날씨 정보를 불러오지 못했어요.');
+      setIsAiLoading(false);
+    }
+  };
+
+  // 💡 산악 지역 전용 날씨 호출
+  const loadMountainWeather = async (mountainName) => {
+    setForecastError('');
+    setIsAiLoading(true);
+
+    try {
+      const res = await fetch(`${API}/api/mountain/summary?name=${encodeURIComponent(mountainName)}`);
+      if (!res.ok) {
+        showToast('해당 산의 날씨 데이터를 찾을 수 없습니다.');
+        setIsAiLoading(false);
+        return;
+      }
+      const data = await res.json();
+      
+      updateWeatherState(data, data.mountain_name, data.elevation);
+      setIsAiLoading(false);
+      setAiMessage('🧗 AI가 산악 기상을 분석 중이에요...');
+      
+      // 현재는 임시로 일반 AI 호출, 나중에 산악 전용 AI로 교체 예정
+      const aiRes = await fetch(`${API}/api/weather/ai`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ current: data.current, forecast: data.hourly, air_quality: { level: '보통', pm25: 15 } })
+      });
+      if (aiRes.ok) {
+        const aiData = await aiRes.json();
+        setAiMessage(aiData.advice?.[0] || '안전한 산행 되세요!');
+        setAiBriefing(aiData.ai_briefing || '산악 전망을 불러오지 못했습니다.');
+      }
+    } catch (error) {
+      setForecastError('서버 상태를 확인해주세요.');
       setIsAiLoading(false);
     }
   };
@@ -260,13 +285,22 @@ function App() {
     setSearchInput('');
     try {
       setIsAiLoading(true);
-      const res = await fetch(`${API}/api/location/search?q=${encodeURIComponent(query)}`);
-      if (!res.ok) { showToast('해당 지역을 찾을 수 없습니다.'); setIsAiLoading(false); return; }
-      const loc = await res.json();
-      const updatedSearches = [loc.name, ...recentSearches.filter(t => t !== loc.name)].slice(0, 5);
-      setRecentSearches(updatedSearches);
-      localStorage.setItem('recentSearches', JSON.stringify(updatedSearches));
-      await loadWeather(loc.lat, loc.lon, loc.name);
+      
+      // 💡 모드에 따라 통신 주소 분기
+      if (isMountainMode) {
+        const res = await fetch(`${API}/api/mountain/search?q=${encodeURIComponent(query)}`);
+        if (!res.ok) { showToast('지원하지 않는 산 이름입니다.'); setIsAiLoading(false); return; }
+        const loc = await res.json();
+        await loadMountainWeather(loc.name);
+      } else {
+        const res = await fetch(`${API}/api/location/search?q=${encodeURIComponent(query)}`);
+        if (!res.ok) { showToast('해당 지역을 찾을 수 없습니다.'); setIsAiLoading(false); return; }
+        const loc = await res.json();
+        const updatedSearches = [loc.name, ...recentSearches.filter(t => t !== loc.name)].slice(0, 5);
+        setRecentSearches(updatedSearches);
+        localStorage.setItem('recentSearches', JSON.stringify(updatedSearches));
+        await loadWeather(loc.lat, loc.lon, loc.name);
+      }
     } catch (error) {
       showToast('검색 중 오류가 발생했습니다.');
       setIsAiLoading(false);
@@ -282,7 +316,8 @@ function App() {
     if (value.trim() === '') {
       setAutoCompleteList([]);
     } else {
-      const filtered = KOREA_REGIONS.filter(region => 
+      const sourceList = isMountainMode ? MOUNTAINS : KOREA_REGIONS;
+      const filtered = sourceList.filter(region => 
         region.toLowerCase().includes(value.toLowerCase())
       );
       setAutoCompleteList(filtered);
@@ -333,6 +368,10 @@ function App() {
   };
 
   const handleCurrentLocation = () => {
+    if (isMountainMode) {
+      showToast('현재 위치는 산악 모드에서 지원하지 않습니다.');
+      return;
+    }
     if (!navigator.geolocation) {
       showToast('브라우저에서 위치 서비스를 지원하지 않습니다.');
       return;
@@ -409,7 +448,7 @@ function App() {
             <div style={{ display: 'flex', width: '100%', backgroundColor: 'white', borderRadius: '30px', padding: '5px 20px', alignItems: 'center', zIndex: 10 }}>
               <input 
                 type="text" 
-                placeholder="검색할 지역을 입력하세요" 
+                placeholder={isMountainMode ? "오르고 싶은 산을 검색하세요 (예: 북한산)" : "검색할 지역을 입력하세요"} 
                 value={searchInput} 
                 onChange={handleInputChange} 
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()} 
@@ -424,7 +463,7 @@ function App() {
 
             {isSearchFocused && (
               <div className="no-scrollbar" style={{ position: 'absolute', top: '100%', left: 0, right: 0, backgroundColor: 'white', borderRadius: '15px', boxShadow: '0 10px 25px rgba(0,0,0,0.15)', marginTop: '10px', zIndex: 50, padding: '15px', maxHeight: '300px', overflowY: 'auto' }}>
-                {searchInput.trim() === '' ? (
+                {searchInput.trim() === '' && !isMountainMode ? (
                   <>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', paddingBottom: '10px', borderBottom: '1px solid #f1f5f9' }}>
                       <h4 style={{ margin: 0, fontSize: '13px', color: '#a0aec0', display: 'flex', alignItems: 'center', gap: '5px' }}><FiClock /> 최근 검색어</h4>
@@ -447,7 +486,7 @@ function App() {
                 ) : (
                   <>
                     <div style={{ marginBottom: '10px', paddingBottom: '10px', borderBottom: '1px solid #f1f5f9' }}>
-                      <h4 style={{ margin: 0, fontSize: '13px', color: '#a0aec0', display: 'flex', alignItems: 'center', gap: '5px' }}><FiSearch size={12}/> 일치하는 지역명</h4>
+                      <h4 style={{ margin: 0, fontSize: '13px', color: '#a0aec0', display: 'flex', alignItems: 'center', gap: '5px' }}><FiSearch size={12}/> 일치하는 {isMountainMode ? '산 이름' : '지역명'}</h4>
                     </div>
                     {autoCompleteList.length > 0 ? (
                       <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
@@ -463,7 +502,7 @@ function App() {
                         ))}
                       </ul>
                     ) : (
-                      <p style={{ margin: 0, fontSize: '13px', color: '#94a3b8', textAlign: 'center', padding: '10px 0' }}>'{searchInput}' 지역을 찾을 수 없습니다.</p>
+                      <p style={{ margin: 0, fontSize: '13px', color: '#94a3b8', textAlign: 'center', padding: '10px 0' }}>결과가 없습니다.</p>
                     )}
                   </>
                 )}
@@ -486,9 +525,14 @@ function App() {
             aiMessage={aiMessage} 
             favorites={favorites} 
             onAddClick={handleOpenAddRegion} 
-            onFavoriteClick={(fav) => loadWeather(fav.lat, fav.lon, fav.name)} 
+            onFavoriteClick={(fav) => {
+              if(isMountainMode) setIsMountainMode(false);
+              loadWeather(fav.lat, fav.lon, fav.name);
+            }} 
             onRemoveFavorite={handleRemoveFavorite} 
-            onCurrentLocationClick={handleCurrentLocation} 
+            onCurrentLocationClick={handleCurrentLocation}
+            isMountainMode={isMountainMode}
+            onToggleMountainMode={() => setIsMountainMode(!isMountainMode)}
           />
           <HourlyForecast hourlyData={hourlyData} isLoading={isAiLoading} error={forecastError} />
           <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
@@ -516,8 +560,8 @@ function App() {
               sunset: weatherData.sunset
             }} 
             airQuality={{ 
-              level: weatherData.dust.split(' ')[0], 
-              pm25: weatherData.dust.match(/\d+/) ? parseInt(weatherData.dust.match(/\d+/)[0]) : 15 
+              level: (weatherData.dust && weatherData.dust.split(' ')[0]) || '보통', 
+              pm25: (weatherData.dust && weatherData.dust.match(/\d+/)) ? parseInt(weatherData.dust.match(/\d+/)[0]) : 15 
             }} 
           />
           <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
