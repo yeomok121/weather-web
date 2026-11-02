@@ -26,28 +26,64 @@ const KOREA_REGIONS = [
   '제주시', '서귀포시'
 ];
 
-// 💡 한국의 20대 명산 목록 및 메타데이터
+// 💡 20대 명산 + 코스(타임라인용) 상세 데이터 추가
 export const MOUNTAINS_LIST = [
-  { name: '북한산', elevation: 836, peak: '백운대', region: '서울/경기', terrain: '화강암 암릉', difficulty: '중상', course_tip: '백운대 정상 부근 화강암 바위가 가파르고 미끄러우니 접지력이 좋은 등산화와 장갑을 꼭 착용하세요.' },
-  { name: '설악산', elevation: 1708, peak: '대청봉', region: '강원 속초/인제', terrain: '고산 암릉·돌계단', difficulty: '상', course_tip: '오색~대청봉 코스는 경사가 급하고 정상 능선에 강한 칼바람이 불어 사계절 방풍 재킷이 필수입니다.' },
-  { name: '한라산', elevation: 1947, peak: '백록담', region: '제주', terrain: '화산지형·현무암', difficulty: '상', course_tip: '성판악·관음사 코스는 사전 탐방 예약이 필수이며, 정상 백록담은 평지보다 12°C 이상 낮고 기상 변화가 급격합니다.' },
-  { name: '지리산', elevation: 1915, peak: '천왕봉', region: '경남/전남/전북', terrain: '고산 능선·너덜길', difficulty: '상', course_tip: '중산리~천왕봉 코스는 장거리 산행이므로 일몰 시간과 체력을 고려해 헤드랜턴과 행동식을 충분히 준비하세요.' },
-  { name: '덕유산', elevation: 1614, peak: '향적봉', region: '전북 무주', terrain: '아고산대 능선', difficulty: '중하', course_tip: '곤돌라로 설천봉까지 쉽게 오를 수 있으나 향적봉 정상 능선은 습도가 높고 상고대·강풍이 잦아 보온에 유의하세요.' },
-  { name: '소백산', elevation: 1439, peak: '비로봉', region: '충북 단양/영주', terrain: '초원 능선(육산)', difficulty: '중', course_tip: '나무가 없는 탁 트인 능선이라 바람을 막아줄 지형물이 없습니다. 체감온도가 급락하니 방풍·방한모를 꼭 챙기세요.' },
-  { name: '태백산', elevation: 1567, peak: '장군봉', region: '강원 태백', terrain: '완만한 육산', difficulty: '중하', course_tip: '유일사·당골 코스는 해발고도에 비해 경사가 완만해 초보자도 오르기 좋으며 겨울철 눈꽃과 일출 조망이 뛰어납니다.' },
-  { name: '오대산', elevation: 1563, peak: '비로봉', region: '강원 평창', terrain: '부드러운 흙길(육산)', difficulty: '중', course_tip: '상원사~비로봉 구간은 흙길과 계단이 잘 정비되어 있으나 정상 직전 오르막이 가파르니 등산 스틱을 활용하세요.' },
-  { name: '치악산', elevation: 1288, peak: '비로봉', region: '강원 원주', terrain: '급경사 계단·너덜길', difficulty: '상', course_tip: '구룡사~사다리병창 코스는 급경사 철계단과 돌길이 이어지므로 무릎 보호대와 스틱이 필수입니다.' },
-  { name: '월악산', elevation: 1097, peak: '영봉', region: '충북 제천', terrain: '험준한 암릉·철계단', difficulty: '상', course_tip: '영봉 직전 수백 개의 가파른 철계단 구간이 있으며 충주호에서 불어오는 골바람이 강해 안전에 주의해야 합니다.' },
-  { name: '속리산', elevation: 1058, peak: '천왕봉·문장대', region: '충북 보은', terrain: '기암괴석·암릉', difficulty: '중', course_tip: '문장대 바위 정상은 사방이 트여 조망이 압도적이지만 난간 구간에서 강풍이 불 때 안전에 각별히 유의하세요.' },
-  { name: '가야산', elevation: 1430, peak: '상왕봉', region: '경남 합천', terrain: '뾰족한 암봉', difficulty: '중상', course_tip: '해인사·백운동 코스 모두 정상 부근 암릉 구간이 험준하므로 비나 눈이 온 뒤에는 바위 미끄럼을 조심하세요.' },
-  { name: '계룡산', elevation: 845, peak: '관음봉', region: '충남 공주', terrain: '암릉·가파른 계단', difficulty: '중상', course_tip: '동학사~남매탑~관음봉 코스는 자연성릉 바위 능선과 고깔바위 계단이 가팔라 체력 소모가 큽니다.' },
-  { name: '무등산', elevation: 1187, peak: '서석대', region: '광주/전남', terrain: '주상절리대·육산', difficulty: '중', course_tip: '서석대 주상절리 능선 구간은 그늘이 적고 바람이 강해 자외선 차단과 방풍 준비가 필요합니다.' },
-  { name: '주왕산', elevation: 721, peak: '주봉', region: '경북 청송', terrain: '기암절벽 협곡·흙길', difficulty: '하', course_tip: '대전사~주봉~용추폭포 코스는 험한 구간이 적어 초보자 산행에 적합하며 협곡 내 아침 물안개가 자주 낍니다.' },
-  { name: '도봉산', elevation: 740, peak: '자운봉·신선대', region: '서울/경기 양주', terrain: '거대 화강암 암봉', difficulty: '중상', course_tip: '신선대 정상 오름길은 가파른 바위와 쇠난간을 잡고 올라야 하므로 장갑과 등산화 착용을 강력히 권장합니다.' },
-  { name: '관악산', elevation: 632, peak: '연주대', region: '서울/경기 과천', terrain: '바위 능선·돌계단', difficulty: '중', course_tip: '사당·서울대 코스는 노출된 바위 능선 구간이 이어져 비나 서리가 내린 날에는 미끄럼 사고에 주의해야 합니다.' },
-  { name: '대둔산', elevation: 878, peak: '마천대', region: '충남 금산/완주', terrain: '구름다리·철계단', difficulty: '중', course_tip: '금강구름다리와 삼선계단은 경사가 매우 가파르고 일방통행이므로 강풍 시 우회 등산로를 이용하세요.' },
-  { name: '내장산', elevation: 763, peak: '신선봉', region: '전북 정읍', terrain: '단풍 계곡·암릉', difficulty: '중', course_tip: '내장사까지는 평탄하지만 신선봉 정상으로 오르는 능선은 경사가 급하고 습기가 많아 미끄럼에 유의하세요.' },
-  { name: '마이산', elevation: 686, peak: '암마이봉', region: '전북 진안', terrain: '역암 바위·데크계단', difficulty: '중하', course_tip: '탑사~암마이봉 구간은 바위 경사가 가파르며 겨울철 결빙 시 정상부가 통제될 수 있으니 노면 상태를 꼭 확인하세요.' }
+  { 
+    name: '북한산', elevation: 836, peak: '백운대', region: '서울/경기', terrain: '화강암 암릉', difficulty: '중상', 
+    course_tip: '백운대 정상 부근 바위가 미끄러우니 접지력이 좋은 등산화와 장갑을 착용하세요.',
+    courses: [
+      { name: '백운대 최단 코스 (탐방지원센터)', distance: '4km', time: 180, diff: '중상' },
+      { name: '대남문 능선 코스 (구기동)', distance: '8.5km', time: 270, diff: '중' },
+      { name: '숨은벽 능선 코스 (밤골)', distance: '7.6km', time: 240, diff: '상' }
+    ]
+  },
+  { 
+    name: '설악산', elevation: 1708, peak: '대청봉', region: '강원 속초/인제', terrain: '고산 암릉', difficulty: '상', 
+    course_tip: '정상 능선에 강한 칼바람이 불어 사계절 방풍 재킷이 필수입니다.',
+    courses: [
+      { name: '대청봉 최단 (오색 코스)', distance: '10km', time: 480, diff: '상' },
+      { name: '한계령~대청봉 종주 코스', distance: '13.5km', time: 660, diff: '최상' }
+    ]
+  },
+  { 
+    name: '한라산', elevation: 1947, peak: '백록담', region: '제주', terrain: '화산지형', difficulty: '상', 
+    course_tip: '성판악 코스는 탐방 예약이 필수이며, 정상은 평지보다 12°C 이상 낮습니다.',
+    courses: [
+      { name: '성판악~백록담 코스', distance: '19.2km', time: 540, diff: '중상' },
+      { name: '관음사~백록담 코스', distance: '17.4km', time: 600, diff: '상' }
+    ]
+  },
+  { 
+    name: '지리산', elevation: 1915, peak: '천왕봉', region: '경남/전남/전북', terrain: '고산 능선', difficulty: '상', 
+    course_tip: '장거리 산행이므로 일몰 시간과 체력을 고려해 헤드랜턴을 준비하세요.',
+    courses: [
+      { name: '중산리~천왕봉 단거리', distance: '10.8km', time: 480, diff: '상' },
+      { name: '백무동~천왕봉 코스', distance: '15km', time: 570, diff: '중상' }
+    ]
+  },
+  { 
+    name: '계룡산', elevation: 845, peak: '관음봉', region: '충남 공주', terrain: '암릉·가파른 계단', difficulty: '중상', 
+    course_tip: '자연성릉 바위 능선과 고깔바위 계단이 가팔라 체력 소모가 큽니다.',
+    courses: [
+      { name: '동학사~관음봉 순환 코스', distance: '8.5km', time: 300, diff: '중상' },
+      { name: '갑사~관음봉 코스', distance: '7km', time: 240, diff: '중' }
+    ]
+  },
+  { name: '덕유산', elevation: 1614, peak: '향적봉', region: '전북 무주', terrain: '아고산대 능선', difficulty: '중하', course_tip: '정상 능선은 습도가 높고 상고대·강풍이 잦아 보온에 유의하세요.', courses: [{ name: '곤돌라~향적봉 코스', distance: '1.2km', time: 40, diff: '하' }, { name: '구천동~향적봉 코스', distance: '17km', time: 510, diff: '중상' }] },
+  { name: '소백산', elevation: 1439, peak: '비로봉', region: '충북 단양', terrain: '초원 능선(육산)', difficulty: '중', course_tip: '나무가 없는 탁 트인 능선이라 방풍·방한모를 꼭 챙기세요.', courses: [{ name: '어의곡~비로봉 코스', distance: '10km', time: 300, diff: '중' }] },
+  { name: '태백산', elevation: 1567, peak: '장군봉', region: '강원 태백', terrain: '완만한 육산', difficulty: '중하', course_tip: '경사가 완만해 초보자도 오르기 좋으며 일출 조망이 뛰어납니다.', courses: [{ name: '유일사~천제단 코스', distance: '8km', time: 240, diff: '중하' }] },
+  { name: '오대산', elevation: 1563, peak: '비로봉', region: '강원 평창', terrain: '부드러운 흙길', difficulty: '중', course_tip: '흙길이 잘 정비되어 있으나 정상 직전 오르막이 가파릅니다.', courses: [{ name: '상원사~비로봉 코스', distance: '7km', time: 210, diff: '중' }] },
+  { name: '치악산', elevation: 1288, peak: '비로봉', region: '강원 원주', terrain: '급경사 철계단', difficulty: '상', course_tip: '급경사 철계단이 이어지므로 무릎 보호대와 스틱이 필수입니다.', courses: [{ name: '구룡사~사다리병창 코스', distance: '11km', time: 360, diff: '상' }] },
+  { name: '월악산', elevation: 1097, peak: '영봉', region: '충북 제천', terrain: '험준한 암릉', difficulty: '상', course_tip: '수백 개의 가파른 철계단과 충주호 골바람에 주의하세요.', courses: [{ name: '보덕암~영봉 코스', distance: '8km', time: 330, diff: '상' }] },
+  { name: '속리산', elevation: 1058, peak: '문장대', region: '충북 보은', terrain: '기암괴석·암릉', difficulty: '중', course_tip: '문장대 바위 정상 난간 구간에서 강풍이 불 때 안전에 유의하세요.', courses: [{ name: '법주사~문장대 코스', distance: '12km', time: 330, diff: '중' }] },
+  { name: '가야산', elevation: 1430, peak: '상왕봉', region: '경남 합천', terrain: '뾰족한 암봉', difficulty: '중상', course_tip: '정상 부근 암릉 구간이 험준하므로 미끄럼을 조심하세요.', courses: [{ name: '백운동~상왕봉 코스', distance: '7.5km', time: 270, diff: '중상' }] },
+  { name: '무등산', elevation: 1187, peak: '서석대', region: '광주/전남', terrain: '주상절리대', difficulty: '중', course_tip: '서석대 능선은 그늘이 적고 바람이 강해 방풍 준비가 필요합니다.', courses: [{ name: '증심사~서석대 코스', distance: '12km', time: 330, diff: '중' }] },
+  { name: '주왕산', elevation: 721, peak: '주봉', region: '경북 청송', terrain: '협곡·흙길', difficulty: '하', course_tip: '험한 구간이 적어 초보자 산행에 적합하며 아침 물안개가 자주 낍니다.', courses: [{ name: '대전사~주봉 코스', distance: '9km', time: 270, diff: '하' }] },
+  { name: '도봉산', elevation: 740, peak: '신선대', region: '서울/경기', terrain: '거대 화강암', difficulty: '중상', course_tip: '신선대 오름길은 가파른 쇠난간을 잡아야 하므로 장갑을 권장합니다.', courses: [{ name: '도봉탐방센터~신선대', distance: '6.5km', time: 210, diff: '중상' }] },
+  { name: '관악산', elevation: 632, peak: '연주대', region: '서울/경기과천', terrain: '바위 능선', difficulty: '중', course_tip: '사당 코스는 노출된 바위 능선이 많아 비 온 뒤 미끄럼에 주의하세요.', courses: [{ name: '서울대~연주대 코스', distance: '6km', time: 210, diff: '중' }] },
+  { name: '대둔산', elevation: 878, peak: '마천대', region: '충남/전북', terrain: '구름다리·철계단', difficulty: '중', course_tip: '삼선계단은 경사가 매우 가파르고 일방통행이므로 우회로를 체크하세요.', courses: [{ name: '케이블카~마천대 코스', distance: '2km', time: 90, diff: '하' }, { name: '수락계곡~마천대 코스', distance: '7km', time: 240, diff: '중' }] },
+  { name: '내장산', elevation: 763, peak: '신선봉', region: '전북 정읍', terrain: '단풍 계곡·암릉', difficulty: '중', course_tip: '신선봉 정상으로 오르는 능선은 경사가 급하고 습기가 많습니다.', courses: [{ name: '일주문~신선봉 코스', distance: '8km', time: 270, diff: '중' }] },
+  { name: '마이산', elevation: 686, peak: '암마이봉', region: '전북 진안', terrain: '역암 바위', difficulty: '중하', course_tip: '암마이봉 구간은 겨울철 결빙 시 통제될 수 있으니 노면을 확인하세요.', courses: [{ name: '탑사~암마이봉 코스', distance: '5km', time: 150, diff: '중하' }] }
 ];
 
 const MOUNTAINS = MOUNTAINS_LIST.map(m => m.name);
@@ -67,7 +103,6 @@ function App() {
   const [autoCompleteList, setAutoCompleteList] = useState([]);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
 
-  // 💡 산악 날씨 모드 상태 추가
   const [isMountainMode, setIsMountainMode] = useState(false);
   const [mountainInfo, setMountainInfo] = useState(null);
 
@@ -246,7 +281,6 @@ function App() {
     setWeeklyData(Array.isArray(data.weekly) ? data.weekly : []); 
   };
 
-  // 일반 지역 날씨 호출
   const loadWeather = async (lat, lon, regionName) => {
     setForecastError('');
     const cacheKey = `weather_cache_${lat}_${lon}`;
@@ -284,7 +318,6 @@ function App() {
     }
   };
 
-  // 💡 산악 지역 전용 날씨 호출
   const loadMountainWeather = async (mountainName) => {
     setForecastError('');
     const localMInfo = MOUNTAINS_LIST.find(m => m.name === mountainName) || MOUNTAINS_LIST[0];
@@ -293,7 +326,7 @@ function App() {
 
     if (cachedData) {
       const parsed = JSON.parse(cachedData);
-      updateWeatherState(parsed, parsed.mountain_name, parsed.elevation, parsed.mountain_info || localMInfo);
+      updateWeatherState(parsed, parsed.mountain_name, parsed.elevation, { ...localMInfo, ...parsed.mountain_info });
       setIsAiLoading(false);
     } else {
       setIsAiLoading(true);
@@ -307,7 +340,7 @@ function App() {
         return;
       }
       const data = await res.json();
-      const mergedMInfo = data.mountain_info || localMInfo;
+      const mergedMInfo = { ...localMInfo, ...data.mountain_info };
       
       updateWeatherState(data, data.mountain_name, data.elevation, mergedMInfo);
       localStorage.setItem(cacheKey, JSON.stringify(data));
@@ -335,7 +368,6 @@ function App() {
     }
   };
 
-  // 일반 모드 <-> 산악 모드 전환
   const handleToggleMountainMode = () => {
     const nextMode = !isMountainMode;
     setIsMountainMode(nextMode);
@@ -626,7 +658,6 @@ function App() {
           />
           <HourlyForecast hourlyData={hourlyData} isLoading={isAiLoading} error={forecastError} />
           <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
-            {/* 💡 산악 정보가 전달되도록 업데이트 완료 */}
             <WeatherOutlook 
               weeklyData={weeklyData} 
               aiBriefing={aiBriefing} 
@@ -646,10 +677,13 @@ function App() {
             onUpdateUser={handleUpdateUser}
             onDeleteAccount={handleDeleteAccount}
           />
+          
+          {/* 💡 완전히 새로고침된 등산 특화 인터랙티브 UI 컴포넌트 연결 */}
           <WeatherDetails 
             current={{ 
               temp: weatherData.temp, 
               feelsLike: weatherData.feelsLike,
+              baseTemp: weatherData.baseTemp,
               humidity: weatherData.humidity, 
               wind_speed: weatherData.wind_speed, 
               description: weatherData.condition,
@@ -665,6 +699,7 @@ function App() {
             isMountainMode={isMountainMode}
             mountainInfo={mountainInfo}
           />
+          
           <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
             <WeeklyForecast weeklyData={weeklyData} isLoading={isAiLoading} />
           </div>
