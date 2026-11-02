@@ -185,7 +185,7 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
     const deadlineStr = `${deadlineH}:${deadlineM}`;
     
     if (isFuture) {
-      return { status: 'safe', deadlineStr, msg: `🗓️ ${weatherData.date} 계획: 늦어도 ${deadlineStr} 전에는 산행을 시작해야 안전합니다.` };
+      return { status: 'safe', deadlineStr, msg: `🗓️ ${weatherData.date} 계획: 늦어도 ${deadlineStr} 전에는 등산을 시작해야 안전합니다.` };
     }
 
     const now = new Date();
@@ -225,7 +225,14 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
 
   return (
     <div className="glass-card" style={{ borderRadius: '16px', padding: '24px', display: 'flex', flexDirection: 'column', color: '#1e293b', width: '100%', boxSizing: 'border-box' }}>
-      
+      <style>{`
+        .hourly-chart-wrapper .recharts-surface { overflow: visible !important; }
+        @media (max-width: 640px) {
+          .mtn-score-altitude-box { flex-direction: column !important; }
+          .mtn-score-card { width: 100% !important; flex-direction: row !important; justify-content: space-around !important; padding: 12px !important; }
+        }
+      `}</style>
+
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '16px' }}>
         <h4 style={{ margin: 0, fontSize: '17px', fontWeight: '800', color: isMountainMode ? '#166534' : '#1e293b' }}>
           {isMountainMode ? '⛰️ 산악 기상 & 등산 환경 대시보드' : '시간대별 예보 (기온 변화)'}
@@ -438,7 +445,7 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
 
       {isMountainMode && isFuture ? (
          <div style={{ textAlign: 'center', padding: '16px 0', color: '#475569', fontSize: '13.5px', fontWeight: '600' }}>
-            미래 예보일은 시간대별 기온 변화 그래프가 제공되지 않습니다.
+            미래 예보일은 시간대별 상세 기온 변화 그래프가 제공되지 않습니다.
          </div>
       ) : isLoading ? (
         <p style={{ margin: '10px 0', fontSize: '14px', color: '#475569', fontWeight: '500' }}>예보를 불러오는 중입니다...</p>
@@ -449,14 +456,17 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
       ) : (
         <div className="hourly-chart-wrapper" style={{ overflow: 'hidden', width: '100%', position: 'relative' }}>
           <div style={{ transition: 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)', transform: `translateX(-${(visibleIndex / forecastData.length) * 100}%)`, width: `${(forecastData.length / ITEMS_TO_SHOW) * 100}%`, position: 'relative' }}>
+            
+            {/* 💡 Recharts 여백(margin) 수정 영역: left/right에 20px 추가하여 글씨 잘림 방지 */}
             <div style={{ position: 'absolute', top: '68px', left: 0, right: 0, height: '100px', zIndex: 1, padding: `0 ${100 / (2 * forecastData.length)}%`, boxSizing: 'border-box' }}>
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={forecastData} margin={{ top: 28, bottom: 16, left: 0, right: 0 }}>
+                <LineChart data={forecastData} margin={{ top: 28, bottom: 16, left: 20, right: 20 }}>
                   <YAxis domain={[yMin, yMax]} allowDataOverflow={true} hide />
                   <Line type="monotone" dataKey="plotTemp" stroke={isMountainMode ? "#16a34a" : "#0284c7"} strokeWidth={3} dot={{ r: 5, fill: '#ffffff', stroke: isMountainMode ? "#16a34a" : "#0284c7", strokeWidth: 2 }} label={(props) => <CustomLabel {...props} value={forecastData[props.index]?.tempNum} />} isAnimationActive={false} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
+            
             <div style={{ display: 'flex', width: '100%', position: 'relative', zIndex: 2 }}>
               {forecastData.map((item) => (
                 <div key={item.id} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
