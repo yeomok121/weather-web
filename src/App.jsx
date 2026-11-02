@@ -67,6 +67,7 @@ function App() {
   const [autoCompleteList, setAutoCompleteList] = useState([]);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
 
+  // 💡 산악 날씨 모드 상태 추가
   const [isMountainMode, setIsMountainMode] = useState(false);
   const [mountainInfo, setMountainInfo] = useState(null);
 
@@ -334,7 +335,7 @@ function App() {
     }
   };
 
-  // 💡 일반 모드 <-> 산악 모드 전환 시 즉시 데이터 불러오기
+  // 일반 모드 <-> 산악 모드 전환
   const handleToggleMountainMode = () => {
     const nextMode = !isMountainMode;
     setIsMountainMode(nextMode);
@@ -556,7 +557,6 @@ function App() {
                     )}
                   </>
                 ) : searchInput.trim() === '' && isMountainMode ? (
-                  /* 💡 산악 모드에서 검색창을 클릭하면 20대 명산 전체 리스트 바로 표시 */
                   <>
                     <div style={{ marginBottom: '10px', paddingBottom: '10px', borderBottom: '1px solid #f1f5f9' }}>
                       <h4 style={{ margin: 0, fontSize: '13px', color: '#166534', display: 'flex', alignItems: 'center', gap: '5px' }}>⛰️ 한국의 20대 명산 전체 목록 (클릭 시 이동)</h4>
@@ -573,7 +573,7 @@ function App() {
                 ) : (
                   <>
                     <div style={{ marginBottom: '10px', paddingBottom: '10px', borderBottom: '1px solid #f1f5f9' }}>
-                      <h4 style={{ margin: 0, fontSize: '13px', color: '#a0aec0', display: 'flex', alignItems: 'center', gap: '5px' }}><FiSearch size={12}/> 일치하는 {isMountainMode ? '산 이름' : '지역명'}</h4>
+                      <h4 style={{ margin: '0', fontSize: '13px', color: '#a0aec0', display: 'flex', alignItems: 'center', gap: '5px' }}><FiSearch size={12}/> 일치하는 {isMountainMode ? '산 이름' : '지역명'}</h4>
                     </div>
                     {autoCompleteList.length > 0 ? (
                       <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
@@ -626,7 +626,13 @@ function App() {
           />
           <HourlyForecast hourlyData={hourlyData} isLoading={isAiLoading} error={forecastError} />
           <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
-            <WeatherOutlook aiBriefing="{aiBriefing}" isMountainMode="{isMountainMode}" mountainInfo="{mountainInfo}" weeklyData="{weeklyData}"/>
+            {/* 💡 산악 정보가 전달되도록 업데이트 완료 */}
+            <WeatherOutlook 
+              weeklyData={weeklyData} 
+              aiBriefing={aiBriefing} 
+              isMountainMode={isMountainMode} 
+              mountainInfo={mountainInfo} 
+            />
           </div>
         </div>
         
