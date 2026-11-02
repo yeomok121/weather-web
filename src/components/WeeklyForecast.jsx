@@ -15,7 +15,6 @@ export const getEmojiIcon = (code) => {
 };
 
 function WeeklyForecast({ weeklyData = [], isLoading = false }) {
-  // 💡 5일 전체의 최저 기온과 최고 기온을 구해 온도 막대(Range Bar) 비율 계산
   const allMins = weeklyData.map(d => Number(d.temp_min)).filter(Number.isFinite);
   const allMaxs = weeklyData.map(d => Number(d.temp_max)).filter(Number.isFinite);
   const weekMin = allMins.length > 0 ? Math.min(...allMins) : 0;
@@ -23,12 +22,14 @@ function WeeklyForecast({ weeklyData = [], isLoading = false }) {
   const totalRange = Math.max(1, weekMax - weekMin);
 
   return (
-    <div style={{ background: '#ffffff', borderRadius: '16px', padding: '24px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', boxSizing: 'border-box', height: '100%', display: 'flex', flexDirection: 'column' }}>
+    // 💡 height: 100% 제거로 카드가 불필요하게 밑으로 늘어지는 현상 해결
+    <div style={{ background: '#ffffff', borderRadius: '16px', padding: '24px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', boxSizing: 'border-box', display: 'flex', flexDirection: 'column' }}>
       <h3 style={{ margin: '0 0 16px 0', fontSize: '16px', fontWeight: 'bold', color: '#1e293b' }}>주간 예보 (5일)</h3>
       {isLoading ? (
         <p style={{ fontSize: '14px', color: '#64748b' }}>주간 날씨를 불러오는 중...</p>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', flexGrow: 1, justifyContent: 'space-between', gap: '8px' }}>
+        // 💡 flexGrow 및 space-between 제거, gap: 14px를 주어 리스트가 촘촘하고 예쁘게 모이도록 수정
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
           {weeklyData.map((day, idx) => {
             const minVal = Number(day.temp_min);
             const maxVal = Number(day.temp_max);
@@ -42,27 +43,23 @@ function WeeklyForecast({ weeklyData = [], isLoading = false }) {
                   display: 'flex', 
                   alignItems: 'center', 
                   justifyContent: 'space-between', 
-                  paddingBottom: idx !== weeklyData.length - 1 ? '10px' : '0', 
+                  paddingBottom: idx !== weeklyData.length - 1 ? '14px' : '0', 
                   borderBottom: idx !== weeklyData.length - 1 ? '1px solid #f1f5f9' : 'none',
                   gap: '6px'
                 }}
               >
-                {/* 요일 */}
                 <span style={{ width: '36px', fontSize: '14px', fontWeight: day.isToday ? 'bold' : '500', color: day.isToday ? '#3182ce' : '#334155' }}>
                   {day.isToday ? '오늘' : day.day}
                 </span>
                 
-                {/* 강수확률 */}
                 <span style={{ width: '48px', color: day.pop > 0 ? '#38bdf8' : '#cbd5e1', fontSize: '12px', textAlign: 'left', fontWeight: 'bold' }}>
                   💧 {day.pop || 0}%
                 </span>
                 
-                {/* 날씨 아이콘 */}
                 <span style={{ fontSize: '20px', width: '30px', textAlign: 'center' }}>
                   {getEmojiIcon(day.icon)}
                 </span>
 
-                {/* 최저 기온 + 온도 범위 막대(Range Bar) + 최고 기온 */}
                 <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '8px', marginLeft: '4px' }}>
                   <span style={{ width: '26px', textAlign: 'right', fontSize: '13px', color: '#64748b', fontWeight: '500' }}>
                     {day.temp_min}°
@@ -71,14 +68,8 @@ function WeeklyForecast({ weeklyData = [], isLoading = false }) {
                   <div style={{ flex: 1, height: '6px', backgroundColor: '#f1f5f9', borderRadius: '999px', position: 'relative', overflow: 'hidden' }}>
                     <div 
                       style={{ 
-                        position: 'absolute', 
-                        top: 0, 
-                        bottom: 0, 
-                        left: `${leftPercent}%`, 
-                        width: `${widthPercent}%`, 
-                        borderRadius: '999px',
-                        background: 'linear-gradient(90deg, #38bdf8 0%, #fbbf24 60%, #f97316 100%)',
-                        transition: 'all 0.4s ease'
+                        position: 'absolute', top: 0, bottom: 0, left: `${leftPercent}%`, width: `${widthPercent}%`, 
+                        borderRadius: '999px', background: 'linear-gradient(90deg, #38bdf8 0%, #fbbf24 60%, #f97316 100%)',
                       }} 
                     />
                   </div>
