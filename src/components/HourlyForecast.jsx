@@ -13,7 +13,7 @@ function toNumber(value) {
 }
 
 const CustomLabel = ({ x, y, value }) => (
-  <text x={x} y={y - 10} fill="#1e293b" fontSize="14" fontWeight="bold" textAnchor="middle">
+  <text x={x} y={y - 12} fill="#1e293b" fontSize="14" fontWeight="bold" textAnchor="middle">
     {value}°
   </text>
 );
@@ -454,20 +454,20 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
       ) : forecastData.length === 0 ? (
         <p style={{ margin: '10px 0', fontSize: '14px', color: '#475569' }}>예보 데이터가 없습니다.</p>
       ) : (
-        <div className="hourly-chart-wrapper" style={{ overflow: 'hidden', width: '100%', position: 'relative' }}>
+        <div className="hourly-chart-wrapper" style={{ width: '100%', position: 'relative' }}>
           <div style={{ transition: 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)', transform: `translateX(-${(visibleIndex / forecastData.length) * 100}%)`, width: `${(forecastData.length / ITEMS_TO_SHOW) * 100}%`, position: 'relative' }}>
             
-            {/* 💡 Recharts 여백(margin) 수정 영역: left/right에 20px 추가하여 글씨 잘림 방지 */}
-            <div style={{ position: 'absolute', top: '68px', left: 0, right: 0, height: '100px', zIndex: 1, padding: `0 ${100 / (2 * forecastData.length)}%`, boxSizing: 'border-box' }}>
+            {/* 💡 Recharts 부모 컨테이너에 양옆 패딩을 명시적으로 주어 첫 숫자 잘림 완벽 방지 */}
+            <div style={{ position: 'absolute', top: '68px', left: 0, right: 0, height: '100px', zIndex: 1, padding: '0 15px', boxSizing: 'border-box' }}>
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={forecastData} margin={{ top: 28, bottom: 16, left: 20, right: 20 }}>
+                <LineChart data={forecastData}>
                   <YAxis domain={[yMin, yMax]} allowDataOverflow={true} hide />
                   <Line type="monotone" dataKey="plotTemp" stroke={isMountainMode ? "#16a34a" : "#0284c7"} strokeWidth={3} dot={{ r: 5, fill: '#ffffff', stroke: isMountainMode ? "#16a34a" : "#0284c7", strokeWidth: 2 }} label={(props) => <CustomLabel {...props} value={forecastData[props.index]?.tempNum} />} isAnimationActive={false} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
             
-            <div style={{ display: 'flex', width: '100%', position: 'relative', zIndex: 2 }}>
+            <div style={{ display: 'flex', width: '100%', position: 'relative', zIndex: 2, padding: '0 15px', boxSizing: 'border-box' }}>
               {forecastData.map((item) => (
                 <div key={item.id} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                   <span style={{ fontSize: '13px', color: '#475569', height: '20px', lineHeight: '20px', marginBottom: '8px', fontWeight: '600' }}>{item.time}</span>
