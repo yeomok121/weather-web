@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { FiChevronLeft, FiChevronRight, FiShare2, FiPlus, FiX, FiRotateCcw, FiVideo } from 'react-icons/fi';
+import { FiChevronLeft, FiChevronRight, FiShare2, FiPlus, FiX, FiRotateCcw } from 'react-icons/fi';
 import { LineChart, Line, YAxis, ResponsiveContainer } from 'recharts';
 import { getEmojiIcon } from './WeeklyForecast';
 
@@ -21,8 +21,6 @@ const CustomLabel = ({ x, y, value }) => (
 function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = '', isMountainMode = false, mountainInfo = null, weatherData = {}, onShowToast }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedCourseIdx, setSelectedCourseIdx] = useState(0);
-
-  // 💡 사용자 맞춤형 체크리스트 상태 (기상 추천 기본값 + 사용자 추가/삭제 지원)
   const [gearList, setGearList] = useState([]);
   const [checklist, setChecklist] = useState({});
   const [newGearInput, setNewGearInput] = useState('');
@@ -47,7 +45,6 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
   const terrain = mountainInfo?.terrain || '';
   const isFuture = weatherData?.isFuture || false;
 
-  // 💡 현재 산악 기상(기온·풍속·강수·지형)에 맞춰 기본 추천 체크리스트 생성
   const buildWeatherGearList = () => {
     const items = ['등산화 (접지력 확인)', '충분한 식수', '초코바 등 행동식'];
     if (temp <= 2 || isSnow) items.push('아이젠 및 스패츠', '보온병 (온수)', '방한모 및 넥워머');
@@ -62,7 +59,6 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
     setCurrentIndex(0);
   }, [hourlyData]);
 
-  // 산, 날짜, 기온, 날씨 조건이 바뀔 때 기상에 맞는 추천 준비물로 자동 갱신
   useEffect(() => {
     setSelectedCourseIdx(0);
     setGearList(buildWeatherGearList());
@@ -73,7 +69,6 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
     setChecklist(prev => ({ ...prev, [item]: !prev[item] }));
   };
 
-  // 💡 사용자 준비물 직접 추가
   const handleAddGear = () => {
     const trimmed = newGearInput.trim();
     if (!trimmed) return;
@@ -85,7 +80,6 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
     setNewGearInput('');
   };
 
-  // 💡 사용자 준비물 개별 삭제
   const handleRemoveGear = (itemToRemove) => {
     setGearList(prev => prev.filter(item => item !== itemToRemove));
     setChecklist(prev => {
@@ -95,24 +89,10 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
     });
   };
 
-  // 💡 기상 맞춤 기본 추천 목록으로 복원
   const handleResetGear = () => {
     setGearList(buildWeatherGearList());
     setChecklist({});
     if (onShowToast) onShowToast('🔄 현재 기상에 맞는 기본 추천 준비물로 복원되었습니다.');
-  };
-
-  // 💡 실시간 CCTV 새 창 팝업 열기
-  const handleOpenCctv = () => {
-    const mountainName = weatherData?.region || mountainInfo?.name || '북한산';
-    let cctvUrl = mountainInfo?.cctv_url;
-    if (!cctvUrl) {
-      if (mountainName === '한라산') cctvUrl = 'https://www.jeju.go.kr/hallasan/info/cctv.htm';
-      else if (['관악산', '대둔산', '마이산'].includes(mountainName)) {
-        cctvUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(mountainName + ' 실시간 CCTV')}`;
-      } else cctvUrl = 'https://www.knps.or.kr/portal/main/contents.do?menuNo=8000159';
-    }
-    window.open(cctvUrl, 'MountainCCTVPopup', 'width=1100,height=780,left=150,top=100,noopener,noreferrer');
   };
 
   const handleMouseDown = (e) => {
@@ -217,7 +197,6 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
   };
   const timeline = getTimelineStatus();
 
-  // 💡 사용자가 추가/삭제/체크한 맞춤 체크리스트가 그대로 반영되는 공유 함수
   const handleSharePlan = async () => {
     const mName = weatherData.region || mountainInfo?.name || '명산';
     const peak = mountainInfo?.peak ? `(${mountainInfo.peak} ${mountainInfo.elevation}m)` : '';
@@ -249,15 +228,8 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
       <style>{`
         .hourly-chart-wrapper .recharts-surface { overflow: visible !important; }
         @media (max-width: 640px) {
-          .mtn-score-altitude-box {
-            flex-direction: column !important;
-          }
-          .mtn-score-card {
-            width: 100% !important;
-            flex-direction: row !important;
-            justify-content: space-around !important;
-            padding: 12px !important;
-          }
+          .mtn-score-altitude-box { flex-direction: column !important; }
+          .mtn-score-card { width: 100% !important; flex-direction: row !important; justify-content: space-around !important; padding: 12px !important; }
         }
       `}</style>
 
@@ -265,19 +237,7 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
         <h4 style={{ margin: 0, fontSize: '16px', fontWeight: 'bold', color: isMountainMode ? '#166534' : '#1e293b' }}>
           {isMountainMode ? '⛰️ 산악 기상 & 등산 환경 대시보드' : '시간대별 예보 (기온 변화)'}
         </h4>
-        {isMountainMode ? (
-          <button
-            type="button"
-            onClick={handleOpenCctv}
-            style={{
-              padding: '6px 12px', borderRadius: '8px', border: '1px solid #16a34a',
-              backgroundColor: '#f0fdf4', color: '#15803d', fontSize: '12px', fontWeight: 'bold',
-              cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px'
-            }}
-          >
-            <FiVideo size={14} /> 📷 실시간 정상 CCTV 보기
-          </button>
-        ) : (
+        {!isMountainMode && (
           <div style={{ display: 'flex', gap: '8px' }}>
             <button type="button" onClick={handlePrev} disabled={prevDisabled} style={{ ...buttonStyle, opacity: prevDisabled ? 0.3 : 1, cursor: prevDisabled ? 'default' : 'pointer' }}><FiChevronLeft size={20} /></button>
             <button type="button" onClick={handleNext} disabled={nextDisabled} style={{ ...buttonStyle, opacity: nextDisabled ? 0.3 : 1, cursor: nextDisabled ? 'default' : 'pointer' }}><FiChevronRight size={20} /></button>
@@ -373,7 +333,6 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
             </div>
           </div>
 
-          {/* 💡 기상 맞춤 추천 + 사용자 직접 추가/삭제 + 공유 연동 배낭 체크리스트 */}
           <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '16px 20px', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '12px' }}>
               <div>
@@ -412,7 +371,6 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
               </div>
             </div>
 
-            {/* 💡 준비물 직접 추가 입력창 */}
             <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
               <input
                 type="text"
@@ -438,7 +396,6 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
               </button>
             </div>
 
-            {/* 체크리스트 아이템 그리드 (각 아이템 우측에 ✕ 삭제 버튼 포함) */}
             {gearList.length === 0 ? (
               <p style={{ margin: '8px 0', fontSize: '12.5px', color: '#94a3b8', textAlign: 'center' }}>
                 체크리스트가 비어 있습니다. 준비물을 추가하거나 [기본값 복원]을 눌러주세요.

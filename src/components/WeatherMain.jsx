@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { FiTrash2, FiCalendar, FiChevronDown, FiVideo, FiExternalLink } from 'react-icons/fi';
+import { FiTrash2, FiCalendar, FiChevronDown } from 'react-icons/fi';
 
 function WeatherMain({
   weatherData, hourlyData = [], weeklyData = [],
@@ -18,24 +18,6 @@ function WeatherMain({
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-
-  // 💡 실시간 CCTV 새 창 팝업 열기 함수 (백엔드/프론트엔드 URL 모두 대응)
-  const handleOpenCctv = () => {
-    const mountainName = weatherData?.region || mountainInfo?.name || '북한산';
-    let cctvUrl = mountainInfo?.cctv_url;
-
-    if (!cctvUrl) {
-      if (mountainName === '한라산') {
-        cctvUrl = 'https://www.jeju.go.kr/hallasan/info/cctv.htm';
-      } else if (['관악산', '대둔산', '마이산'].includes(mountainName)) {
-        cctvUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(mountainName + ' 실시간 CCTV')}`;
-      } else {
-        cctvUrl = 'https://www.knps.or.kr/portal/main/contents.do?menuNo=8000159';
-      }
-    }
-
-    window.open(cctvUrl, 'MountainCCTVPopup', 'width=1100,height=780,left=150,top=100,noopener,noreferrer');
-  };
 
   if (isAiLoading) {
     return (
@@ -71,7 +53,6 @@ function WeatherMain({
     return { text: '어제와 기온이 비슷해요 ➖', bg: '#f8fafc', color: '#475569', border: '#e2e8f0' };
   };
 
-  // 💡 산악 모드일 때는 상단 알림 배너를 띄우지 않음 (하단 AI 멘트와 중복 방지!)
   const getWeatherAlert = () => {
     if (weatherData.isFuture || isMountainMode) return null;
 
@@ -126,7 +107,6 @@ function WeatherMain({
           {isMountainMode && mountainInfo?.difficulty && <span style={{ fontSize: '11px', color: '#9a3412', backgroundColor: '#ffedd5', padding: '3px 8px', borderRadius: '12px', fontWeight: 'bold' }}>난이도 {mountainInfo.difficulty}</span>}
         </h3>
         
-        {/* 💡 날짜 선택 드롭다운 + 실시간 CCTV 바로가기 버튼 */}
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', flexWrap: 'wrap', margin: '10px 0 14px 0' }}>
           <div ref={dropdownRef} style={{ position: 'relative', display: 'inline-block' }}>
             <button 
@@ -154,20 +134,6 @@ function WeatherMain({
               </div>
             )}
           </div>
-
-          {isMountainMode && (
-            <button
-              type="button"
-              onClick={handleOpenCctv}
-              style={{
-                display: 'flex', alignItems: 'center', gap: '5px', padding: '6px 12px', borderRadius: '8px',
-                border: '1px solid #16a34a', backgroundColor: '#ffffff', color: '#15803d',
-                fontSize: '12.5px', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
-              }}
-            >
-              <FiVideo size={14} /> 실시간 정상 CCTV 보기 <FiExternalLink size={12} />
-            </button>
-          )}
         </div>
         
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '10px' }}>
@@ -198,27 +164,12 @@ function WeatherMain({
           <>
             <div>
               <h4 style={{ fontSize: '12px', color: '#15803d', fontWeight: 'bold', margin: '0 0 8px 0' }}>📌 {weatherData.region} 핵심 산행 팁</h4>
-              <div style={{ backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '9px 10px', fontSize: '12px', color: '#334155', lineHeight: '1.45', margin: '0 0 8px 0', wordBreak: 'keep-all' }}>
+              <div style={{ backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '9px 10px', fontSize: '12px', color: '#334155', lineHeight: '1.45', margin: '0 0 12px 0', wordBreak: 'keep-all' }}>
                 {mountainInfo?.course_tip || '정상 부근 기온 하강과 강풍에 대비해 방풍 의류와 스틱을 준비하세요.'}
               </div>
 
-              {/* 💡 우측 패널 실시간 CCTV 새 창 팝업 버튼 */}
-              <button
-                type="button"
-                onClick={handleOpenCctv}
-                style={{
-                  width: '100%', padding: '8px 10px', marginBottom: '12px', borderRadius: '8px',
-                  border: '1px solid #16a34a', backgroundColor: '#166534', color: '#ffffff',
-                  fontSize: '12px', fontWeight: 'bold', cursor: 'pointer',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.08)'
-                }}
-              >
-                <FiVideo size={14} /> 📷 {weatherData.region} 실시간 CCTV 팝업 열기 <FiExternalLink size={12} />
-              </button>
-
               <h4 style={{ fontSize: '12px', color: '#64748b', margin: '0 0 6px 0' }}>⛰️ 20대 명산 빠른 선택</h4>
-              <ul className="no-scrollbar" style={{ listStyle: 'none', padding: '0', margin: '0', fontSize: '13px', maxHeight: '150px', overflowY: 'auto', borderTop: '1px solid #f1f5f9' }}>
+              <ul className="no-scrollbar" style={{ listStyle: 'none', padding: '0', margin: '0', fontSize: '13px', maxHeight: '175px', overflowY: 'auto', borderTop: '1px solid #f1f5f9' }}>
                 {mountainsList.map((m, idx) => {
                   const isSelected = weatherData.region === m.name;
                   return (
