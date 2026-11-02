@@ -626,7 +626,7 @@ function App() {
           />
           <HourlyForecast hourlyData={hourlyData} isLoading={isAiLoading} error={forecastError} />
           <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
-            <WeatherOutlook weeklyData={weeklyData} aiBriefing={aiBriefing} />
+            <WeatherOutlook aiBriefing="{aiBriefing}" isMountainMode="{isMountainMode}" mountainInfo="{mountainInfo}" weeklyData="{weeklyData}"/>
           </div>
         </div>
         
