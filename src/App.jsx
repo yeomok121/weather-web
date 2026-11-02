@@ -33,7 +33,7 @@ export const MOUNTAINS_LIST = [
   { name: '지리산', elevation: 1915, peak: '천왕봉', region: '경남/전남/전북', terrain: '고산 능선', difficulty: '상', cctv_url: 'https://www.knps.or.kr/portal/main/contents.do?menuNo=8000159', course_tip: '장거리 산행이므로 일몰 시간과 체력을 고려해 헤드랜턴을 준비하세요.', courses: [{ name: '중산리~천왕봉 단거리', distance: '10.8km', time: 480, diff: '상' }, { name: '백무동~천왕봉 코스', distance: '15km', time: 570, diff: '중상' }] },
   { name: '계룡산', elevation: 845, peak: '관음봉', region: '충남 공주', terrain: '암릉·가파른 계단', difficulty: '중상', cctv_url: 'https://www.knps.or.kr/portal/main/contents.do?menuNo=8000159', course_tip: '자연성릉 바위 능선과 고깔바위 계단이 가팔라 체력 소모가 큽니다.', courses: [{ name: '동학사~관음봉 순환 코스', distance: '8.5km', time: 300, diff: '중상' }, { name: '갑사~관음봉 코스', distance: '7km', time: 240, diff: '중' }] },
   { name: '덕유산', elevation: 1614, peak: '향적봉', region: '전북 무주', terrain: '아고산대 능선', difficulty: '중하', cctv_url: 'https://www.knps.or.kr/portal/main/contents.do?menuNo=8000159', course_tip: '정상 능선은 습도가 높고 상고대·강풍이 잦아 보온에 유의하세요.', courses: [{ name: '곤돌라~향적봉 코스', distance: '1.2km', time: 40, diff: '하' }, { name: '구천동~향적봉 코스', distance: '17km', time: 510, diff: '중상' }] },
-  { name: '소백산', elevation: 1439, peak: '비로봉', region: '충북 단양', terrain: '초원 능선(육산)', difficulty: '중', cctv_url: 'https://www.knps.or.kr/portal/main/contents.do?menuNo=8000159', course_tip: '나무가 없는 탁 트인 능선이라 방풍·방한모를 꼭 챙기세요.', courses: [{ name: '어의곡~비로봉 코스', distance: '10km', time: 300, diff: '중' }] },
+  { name: '소백산', elevation: 1439, peak: '비로봉', region: '충북 단양', terrain: '초원 능선(육산)', difficulty: '중', cctv_url: 'https://www.knps.or.kr/portal/main/contents.do?menuNo=8000159', course_tip: '나무가 없는 탁 트인 능선이라 바람을 막아줄 지형물이 없습니다. 체감온도가 급락하니 방풍·방한모를 꼭 챙기세요.', courses: [{ name: '어의곡~비로봉 코스', distance: '10km', time: 300, diff: '중' }] },
   { name: '태백산', elevation: 1567, peak: '장군봉', region: '강원 태백', terrain: '완만한 육산', difficulty: '중하', cctv_url: 'https://www.knps.or.kr/portal/main/contents.do?menuNo=8000159', course_tip: '경사가 완만해 초보자도 오르기 좋으며 일출 조망이 뛰어납니다.', courses: [{ name: '유일사~천제단 코스', distance: '8km', time: 240, diff: '중하' }] },
   { name: '오대산', elevation: 1563, peak: '비로봉', region: '강원 평창', terrain: '부드러운 흙길', difficulty: '중', cctv_url: 'https://www.knps.or.kr/portal/main/contents.do?menuNo=8000159', course_tip: '흙길이 잘 정비되어 있으나 정상 직전 오르막이 가파릅니다.', courses: [{ name: '상원사~비로봉 코스', distance: '7km', time: 210, diff: '중' }] },
   { name: '치악산', elevation: 1288, peak: '비로봉', region: '강원 원주', terrain: '급경사 철계단', difficulty: '상', cctv_url: 'https://www.knps.or.kr/portal/main/contents.do?menuNo=8000159', course_tip: '급경사 철계단이 이어지므로 무릎 보호대와 스틱이 필수입니다.', courses: [{ name: '구룡사~사다리병창 코스', distance: '11km', time: 360, diff: '상' }] },
@@ -46,7 +46,7 @@ export const MOUNTAINS_LIST = [
   { name: '관악산', elevation: 632, peak: '연주대', region: '서울/경기과천', terrain: '바위 능선', difficulty: '중', cctv_url: 'https://www.youtube.com/results?search_query=%EA%B4%80%EC%95%85%EC%82%B0+%EC%97%B0%EC%A3%BC%EB%8C%80+%EC%8B%A4%EC%8B%9C%EA%B0%84', course_tip: '사당 코스는 노출된 바위 능선이 많아 비 온 뒤 미끄럼에 주의하세요.', courses: [{ name: '서울대~연주대 코스', distance: '6km', time: 210, diff: '중' }] },
   { name: '대둔산', elevation: 878, peak: '마천대', region: '충남/전북', terrain: '구름다리·철계단', difficulty: '중', cctv_url: 'https://www.youtube.com/results?search_query=%EB%8C%80%EB%91%94%EC%82%B0+%EB%A7%88%EC%B2%9C%EB%8C%80+%EC%8B%A4%EC%8B%9C%EA%B0%84', course_tip: '삼선계단은 경사가 매우 가파르고 일방통행이므로 우회로를 체크하세요.', courses: [{ name: '케이블카~마천대 코스', distance: '2km', time: 90, diff: '하' }, { name: '수락계곡~마천대 코스', distance: '7km', time: 240, diff: '중' }] },
   { name: '내장산', elevation: 763, peak: '신선봉', region: '전북 정읍', terrain: '단풍 계곡·암릉', difficulty: '중', cctv_url: 'https://www.knps.or.kr/portal/main/contents.do?menuNo=8000159', course_tip: '신선봉 정상으로 오르는 능선은 경사가 급하고 습기가 많습니다.', courses: [{ name: '일주문~신선봉 코스', distance: '8km', time: 270, diff: '중' }] },
-  { name: '마이산', elevation: 686, peak: '암마이봉', region: '전북 진안', terrain: '역암 바위', difficulty: '중하', cctv_url: 'https://www.youtube.com/results?search_query=%EB%A7%88%EC%9D%B4%EC%82%B0+%EC%8B%A4%EC%8B%9C%EA%B0%84', course_tip: '암마이봉 구간은 겨울철 결빙 시 통제될 수 있으니 노면을 확인하세요.', courses: [{ name: '탑사~암마이봉 코스', distance: '5km', time: 150, diff: '중하' }] }
+  { name: '마이산', elevation: 686, peak: '암마이봉', region: '전북 진안', terrain: '역암 바위', difficulty: '중하', cctv_url: 'https://www.youtube.com/results?search_query=%EB%A7%88%EC%9D%B4%EC%82%B0+%EC%8B%A4%EC%8B%9C%EA%B0%84', course_tip: '암마이봉 구간은 겨울철 결빙 시 통제될 수 있으니 노면 상태를 꼭 확인하세요.', courses: [{ name: '탑사~암마이봉 코스', distance: '5km', time: 150, diff: '중하' }] }
 ];
 
 const MOUNTAINS = MOUNTAINS_LIST.map(m => m.name);
@@ -59,7 +59,6 @@ const getTodayDateString = () => {
   return `${month}월 ${date}일 ${days[now.getDay()]}`;
 };
 
-// 💡 날씨에 따라 다이나믹한 감성 애니메이션 배경을 렌더링하는 헬퍼 컴포넌트
 const WeatherBackground = ({ theme }) => {
   const isRain = theme === 'rain';
   const isSnow = theme === 'snow';
@@ -112,7 +111,7 @@ function App() {
   const [hourlyData, setHourlyData] = useState([]);
   const [weeklyData, setWeeklyData] = useState([]);
   const [forecastError, setForecastError] = useState('');
-  const [bgTheme, setBgTheme] = useState('clear-day'); // 💡 테마 상태 확장
+  const [bgTheme, setBgTheme] = useState('clear-day');
 
   const [loggedInUser, setLoggedInUser] = useState(null);
   const [favorites, setFavorites] = useState([]);
@@ -217,7 +216,6 @@ function App() {
     const iconCode = c.icon || '';
     const desc = c.description || '';
     
-    // 💡 날씨와 시간에 맞춘 다이나믹 배경 테마 세팅
     const isNight = iconCode.includes('n');
     let theme = 'clear-day';
     if (desc.includes('눈')) theme = 'snow';
@@ -430,32 +428,23 @@ function App() {
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', position: 'relative' }}>
       
-      {/* 💡 감성 넘치는 애플 날씨 스타일 글로벌 CSS 정의 (글래스모피즘, 배경 애니메이션) */}
       <style>{`
-        /* Dynamic Animated Backgrounds */
-        .weather-bg {
-          background-size: 400% 400%;
-          animation: gradientMove 15s ease infinite;
-        }
-        @keyframes gradientMove {
-          0% { background-position: 0% 50%; }
-          50% { background-position: 100% 50%; }
-          100% { background-position: 0% 50%; }
-        }
-        .clear-day { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+        /* 💡 맑은 날(clear-day) 그라데이션을 쨍한 파란색에서 부드러운 스카이블루+피치 파스텔톤으로 변경! */
+        .weather-bg { background-size: 400% 400%; animation: gradientMove 15s ease infinite; }
+        @keyframes gradientMove { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+        
+        .clear-day { background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%); }
         .clear-night { background: linear-gradient(135deg, #141e30 0%, #243b55 100%); }
         .cloudy-day { background: linear-gradient(135deg, #8e9eab 0%, #eef2f3 100%); }
         .cloudy-night { background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%); }
         .rain { background: linear-gradient(135deg, #3a7bd5 0%, #3a6073 100%); }
         .snow { background: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%); }
 
-        /* Weather Particles */
         .snow-flake { position: absolute; width: 6px; height: 6px; background: white; border-radius: 50%; top: -10px; animation: snowFall linear infinite; opacity: 0.8; }
         .rain-drop { position: absolute; width: 2px; height: 15px; background: rgba(255,255,255,0.5); top: -20px; animation: rainFall linear infinite; }
         @keyframes snowFall { to { transform: translateY(110vh) translateX(20px); opacity: 0; } }
         @keyframes rainFall { to { transform: translateY(110vh) rotate(15deg); opacity: 0; } }
 
-        /* 💡 Glassmorphism Card Style (유리 질감 카드) */
         .glass-card {
           background: rgba(255, 255, 255, 0.75) !important;
           backdrop-filter: blur(20px) saturate(180%);
@@ -464,7 +453,6 @@ function App() {
           box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.05) !important;
         }
 
-        /* 💡 모바일 및 태블릿 최적화 */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         @keyframes skeleton-loading { 0% { background-color: rgba(255,255,255,0.5); } 50% { background-color: rgba(255,255,255,0.2); } 100% { background-color: rgba(255,255,255,0.5); } }
@@ -487,12 +475,10 @@ function App() {
         <FiCheckCircle size={18} /> {toast.message}
       </div>
 
-      {/* 💡 상단 고정(Sticky) 유리질감 네비게이션 바 */}
       <nav className="top-nav" style={{ position: 'sticky', top: 0, zIndex: 100, background: 'rgba(255, 255, 255, 0.25)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(255, 255, 255, 0.3)', padding: '15px 40px', display: 'flex', justifyContent: 'center' }}>
         <div className="top-nav-inner" style={{ display: 'flex', width: '100%', maxWidth: '1000px', justifyContent: 'space-between', alignItems: 'center' }}>
           
           <div className="search-wrapper" style={{ position: 'relative', display: 'flex', width: '44%', maxWidth: '520px' }}>
-            {/* 검색창도 반투명한 세련된 느낌으로 변경 */}
             <div style={{ display: 'flex', width: '100%', backgroundColor: 'rgba(255, 255, 255, 0.65)', backdropFilter: 'blur(10px)', borderRadius: '30px', padding: '6px 20px', alignItems: 'center', zIndex: 10, border: '1px solid rgba(255,255,255,0.8)', boxShadow: '0 2px 6px rgba(0,0,0,0.05)' }}>
               <input 
                 type="text" 
@@ -617,7 +603,6 @@ function App() {
         </div>
         
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', minWidth: 0, height: '100%' }}>
-          {/* 우측 로그인 카드에도 글래스모피즘이 적용됩니다. */}
           <div className="glass-card" style={{ borderRadius: '16px', overflow: 'hidden' }}>
              <LoginCard 
               onSignUpClick={() => setIsSignUpOpen(true)} 
@@ -668,7 +653,6 @@ function App() {
         <button onClick={() => setIsAdminAuthOpen(true)} style={{ background: 'none', border: 'none', color: '#1e293b', cursor: 'pointer', opacity: 0.3 }} title="Admin"><FiSettings size={18} /></button>
       </footer>
 
-      {/* 모달창들 (생략 없이 원본 유지) */}
       {isAdminAuthOpen && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 9999 }}>
           <div className="glass-card" style={{ padding: '30px', borderRadius: '16px', width: '350px', textAlign: 'center' }}>
