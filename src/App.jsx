@@ -516,6 +516,7 @@ function App() {
       <main className="main-container" style={{ flexGrow: 1, maxWidth: '1000px', margin: '0 auto', width: '100%' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', minWidth: 0, height: '100%' }}>
           
+          {/* 💡 WeatherMain에 주간예보(날짜 드롭다운용)와 선택 함수를 완벽히 꽂아주었습니다! */}
           <WeatherMain 
             weatherData={activeWeather} 
             hourlyData={hourlyData}
