@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
+import { FiChevronLeft, FiChevronRight, FiShare2 } from 'react-icons/fi';
 import { LineChart, Line, YAxis, ResponsiveContainer } from 'recharts';
 import { getEmojiIcon } from './WeeklyForecast';
 
@@ -18,9 +18,8 @@ const CustomLabel = ({ x, y, value }) => (
   </text>
 );
 
-function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = '', isMountainMode = false, mountainInfo = null, weatherData = {} }) {
+function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = '', isMountainMode = false, mountainInfo = null, weatherData = {}, onShowToast }) {
   const [currentIndex, setCurrentIndex] = useState(0);
-
   const [selectedCourseIdx, setSelectedCourseIdx] = useState(0);
   const [checklist, setChecklist] = useState({});
   
@@ -133,7 +132,6 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
   const courses = mountainInfo?.courses || [{ name: '기본 탐방로', distance: '5km', time: 180, diff: '중' }];
   const selectedCourse = courses[selectedCourseIdx] || courses[0];
 
-  // 💡 미래 날짜일 경우 "지금 출발하면"을 "이 시각 전에 산행 시작"으로 바꿈
   const getTimelineStatus = () => {
     const parseTime = (str) => {
       if (!str || !str.includes(':')) return 1080;
@@ -148,15 +146,15 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
     const deadlineStr = `${deadlineH}:${deadlineM}`;
     
     if (isFuture) {
-      return { status: 'safe', msg: `🗓️ ${weatherData.date} 계획: 늦어도 ${deadlineStr} 전에는 등산을 시작해야 안전합니다.` };
+      return { status: 'safe', deadlineStr, msg: `🗓️ ${weatherData.date} 계획: 늦어도 ${deadlineStr} 전에는 등산을 시작해야 안전합니다.` };
     }
 
     const now = new Date();
     const currentMins = now.getHours() * 60 + now.getMinutes();
 
-    if (currentMins > safeDescentMins) return { status: 'danger', msg: '⚠️ 하산 마감 시간이 지났습니다. 야간 산행(랜턴) 모드입니다.' };
-    if (currentMins > deadlineMins) return { status: 'warning', msg: `⚠️ 지금 출발하면 일몰(${sunset}) 후 하산합니다. 랜턴 필수!` };
-    return { status: 'safe', msg: `✅ 지금 출발하면 일몰 전 안전하게 하산 가능합니다.` };
+    if (currentMins > safeDescentMins) return { status: 'danger', deadlineStr, msg: '⚠️ 하산 마감 시간이 지났습니다. 야간 산행(랜턴) 모드입니다.' };
+    if (currentMins > deadlineMins) return { status: 'warning', deadlineStr, msg: `⚠️ 지금 출발하면 일몰(${sunset}) 후 하산합니다. 랜턴 필수!` };
+    return { status: 'safe', deadlineStr, msg: `✅ 지금 출발하면 일몰 전 안전하게 하산 가능합니다.` };
   };
   const timeline = getTimelineStatus();
 
@@ -171,9 +169,45 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
   };
   const gearList = getChecklistItems();
 
+  // 💡 카카오톡/클립보드 산행 브리핑 공유 함수
+  const handleSharePlan = async () => {
+    const mName = weatherData.region || mountainInfo?.name || '명산';
+    const peak = mountainInfo?.peak ? `(${mountainInfo.peak} ${mountainInfo.elevation}m)` : '';
+    const shareText = [
+      `⛰️ [${mName} ${peak} 산행 기상 브리핑]`,
+      `📅 일자: ${weatherData.date}`,
+      `🌡️ 정상 기온: ${temp}°C (입구 평지 ${baseTemp}°C / 풍속 ${wind}m/s)`,
+      `🏆 산행 지수: ${score}점 (${score >= 80 ? '매우 쾌적' : score >= 60 ? '산행 무난' : '주의 필요'})`,
+      `🥾 선택 코스: ${selectedCourse.name} (거리 ${selectedCourse.distance} · 약 ${Math.floor(selectedCourse.time / 60)}시간 ${selectedCourse.time % 60}분 소요)`,
+      `🚨 안전 하산 마감: ${safeDescentTime} 이전 (일몰 ${sunset})`,
+      `🎒 필수 준비물: ${gearList.join(', ')}`,
+      `🔗 산악 기상 대시보드: ${window.location.href}`
+    ].join('\n');
+
+    try {
+      await navigator.clipboard.writeText(shareText);
+      if (onShowToast) onShowToast('📋 산행 일정과 기상 브리핑이 클립보드에 복사되었습니다! 카카오톡 등에 붙여넣어 공유하세요.');
+    } catch (err) {
+      if (onShowToast) onShowToast('복사에 실패했습니다. 브라우저 권한을 확인해주세요.');
+    }
+  };
+
   return (
     <div style={{ backgroundColor: '#ffffff', borderRadius: '16px', padding: '24px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', color: '#333', width: '100%', boxSizing: 'border-box' }}>
-      <style>{`.hourly-chart-wrapper .recharts-surface { overflow: visible !important; }`}</style>
+      <style>{`
+        .hourly-chart-wrapper .recharts-surface { overflow: visible !important; }
+        @media (max-width: 640px) {
+          .mtn-score-altitude-box {
+            flex-direction: column !important;
+          }
+          .mtn-score-card {
+            width: 100% !important;
+            flex-direction: row !important;
+            justify-content: space-around !important;
+            padding: 12px !important;
+          }
+        }
+      `}</style>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
         <h4 style={{ margin: 0, fontSize: '16px', fontWeight: 'bold', color: isMountainMode ? '#166534' : '#1e293b' }}>
@@ -192,8 +226,8 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
           
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px' }}>
             
-            <div style={{ flex: '1 1 250px', display: 'flex', gap: '10px' }}>
-              <div style={{ width: '95px', flexShrink: 0, backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '12px', padding: '16px 8px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+            <div className="mtn-score-altitude-box" style={{ flex: '1 1 250px', display: 'flex', gap: '10px' }}>
+              <div className="mtn-score-card" style={{ width: '95px', flexShrink: 0, backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '12px', padding: '16px 8px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
                 <span style={{ fontSize: '11.5px', color: '#166534', fontWeight: 'bold', marginBottom: '8px', whiteSpace: 'nowrap' }}>{isFuture ? '예상 산행 지수' : '오늘 산행 지수'}</span>
                 <div style={{ position: 'relative', width: '56px', height: '56px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <svg viewBox="0 0 36 36" style={{ width: '100%', height: '100%', transform: 'rotate(-90deg)' }}>
@@ -276,7 +310,22 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
           </div>
 
           <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '16px 20px', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
-            <h4 style={{ margin: '0 0 12px 0', fontSize: '14px', color: '#1e293b' }}>🎒 {isFuture ? '예상 기상 맞춤 배낭 준비물' : '오늘 기상 맞춤 배낭 체크리스트'}</h4>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '12px' }}>
+              <h4 style={{ margin: 0, fontSize: '14px', color: '#1e293b' }}>🎒 {isFuture ? '예상 기상 맞춤 배낭 준비물' : '오늘 기상 맞춤 배낭 체크리스트'}</h4>
+              {/* 💡 카카오톡/클립보드 산행 일정 공유 버튼 */}
+              <button
+                type="button"
+                onClick={handleSharePlan}
+                style={{
+                  padding: '6px 12px', borderRadius: '8px', border: '1px solid #16a34a',
+                  backgroundColor: '#166534', color: '#ffffff', fontSize: '12px', fontWeight: 'bold',
+                  cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.08)'
+                }}
+              >
+                <FiShare2 size={13} /> 📤 일행에게 산행 일정·날씨 공유하기
+              </button>
+            </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '10px' }}>
               {gearList.map((item, idx) => (
                 <label key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12.5px', color: checklist[item] ? '#94a3b8' : '#334155', cursor: 'pointer', textDecoration: checklist[item] ? 'line-through' : 'none', padding: '6px 0', userSelect: 'none' }}>
@@ -299,7 +348,6 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
         </div>
       )}
 
-      {/* 💡 미래 날짜 선택 시 상세 시간대별 차트를 가리고 안내 문구 띄우기 */}
       {isMountainMode && isFuture ? (
          <div style={{ textAlign: 'center', padding: '10px 0', color: '#94a3b8', fontSize: '13px' }}>
             미래 예보일은 시간대별 상세 기온 변화 그래프가 제공되지 않습니다.

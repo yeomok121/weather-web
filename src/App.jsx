@@ -27,26 +27,26 @@ const KOREA_REGIONS = [
 ];
 
 export const MOUNTAINS_LIST = [
-  { name: '북한산', elevation: 836, peak: '백운대', region: '서울/경기', terrain: '화강암 암릉', difficulty: '중상', course_tip: '백운대 정상 부근 바위가 미끄러우니 접지력이 좋은 등산화와 장갑을 착용하세요.', courses: [{ name: '백운대 최단 코스 (탐방지원센터)', distance: '4km', time: 180, diff: '중상' }, { name: '대남문 능선 코스 (구기동)', distance: '8.5km', time: 270, diff: '중' }, { name: '숨은벽 능선 코스 (밤골)', distance: '7.6km', time: 240, diff: '상' }] },
-  { name: '설악산', elevation: 1708, peak: '대청봉', region: '강원 속초/인제', terrain: '고산 암릉', difficulty: '상', course_tip: '정상 능선에 강한 칼바람이 불어 사계절 방풍 재킷이 필수입니다.', courses: [{ name: '대청봉 최단 (오색 코스)', distance: '10km', time: 480, diff: '상' }, { name: '한계령~대청봉 종주 코스', distance: '13.5km', time: 660, diff: '최상' }] },
-  { name: '한라산', elevation: 1947, peak: '백록담', region: '제주', terrain: '화산지형', difficulty: '상', course_tip: '성판악 코스는 탐방 예약이 필수이며, 정상은 평지보다 12°C 이상 낮습니다.', courses: [{ name: '성판악~백록담 코스', distance: '19.2km', time: 540, diff: '중상' }, { name: '관음사~백록담 코스', distance: '17.4km', time: 600, diff: '상' }] },
-  { name: '지리산', elevation: 1915, peak: '천왕봉', region: '경남/전남/전북', terrain: '고산 능선', difficulty: '상', course_tip: '장거리 산행이므로 일몰 시간과 체력을 고려해 헤드랜턴을 준비하세요.', courses: [{ name: '중산리~천왕봉 단거리', distance: '10.8km', time: 480, diff: '상' }, { name: '백무동~천왕봉 코스', distance: '15km', time: 570, diff: '중상' }] },
-  { name: '계룡산', elevation: 845, peak: '관음봉', region: '충남 공주', terrain: '암릉·가파른 계단', difficulty: '중상', course_tip: '자연성릉 바위 능선과 고깔바위 계단이 가팔라 체력 소모가 큽니다.', courses: [{ name: '동학사~관음봉 순환 코스', distance: '8.5km', time: 300, diff: '중상' }, { name: '갑사~관음봉 코스', distance: '7km', time: 240, diff: '중' }] },
-  { name: '덕유산', elevation: 1614, peak: '향적봉', region: '전북 무주', terrain: '아고산대 능선', difficulty: '중하', course_tip: '정상 능선은 습도가 높고 상고대·강풍이 잦아 보온에 유의하세요.', courses: [{ name: '곤돌라~향적봉 코스', distance: '1.2km', time: 40, diff: '하' }, { name: '구천동~향적봉 코스', distance: '17km', time: 510, diff: '중상' }] },
-  { name: '소백산', elevation: 1439, peak: '비로봉', region: '충북 단양', terrain: '초원 능선(육산)', difficulty: '중', course_tip: '나무가 없는 탁 트인 능선이라 방풍·방한모를 꼭 챙기세요.', courses: [{ name: '어의곡~비로봉 코스', distance: '10km', time: 300, diff: '중' }] },
-  { name: '태백산', elevation: 1567, peak: '장군봉', region: '강원 태백', terrain: '완만한 육산', difficulty: '중하', course_tip: '경사가 완만해 초보자도 오르기 좋으며 일출 조망이 뛰어납니다.', courses: [{ name: '유일사~천제단 코스', distance: '8km', time: 240, diff: '중하' }] },
-  { name: '오대산', elevation: 1563, peak: '비로봉', region: '강원 평창', terrain: '부드러운 흙길', difficulty: '중', course_tip: '흙길이 잘 정비되어 있으나 정상 직전 오르막이 가파릅니다.', courses: [{ name: '상원사~비로봉 코스', distance: '7km', time: 210, diff: '중' }] },
-  { name: '치악산', elevation: 1288, peak: '비로봉', region: '강원 원주', terrain: '급경사 철계단', difficulty: '상', course_tip: '급경사 철계단이 이어지므로 무릎 보호대와 스틱이 필수입니다.', courses: [{ name: '구룡사~사다리병창 코스', distance: '11km', time: 360, diff: '상' }] },
-  { name: '월악산', elevation: 1097, peak: '영봉', region: '충북 제천', terrain: '험준한 암릉', difficulty: '상', course_tip: '수백 개의 가파른 철계단과 충주호 골바람에 주의하세요.', courses: [{ name: '보덕암~영봉 코스', distance: '8km', time: 330, diff: '상' }] },
-  { name: '속리산', elevation: 1058, peak: '문장대', region: '충북 보은', terrain: '기암괴석·암릉', difficulty: '중', course_tip: '문장대 바위 정상 난간 구간에서 강풍이 불 때 안전에 유의하세요.', courses: [{ name: '법주사~문장대 코스', distance: '12km', time: 330, diff: '중' }] },
-  { name: '가야산', elevation: 1430, peak: '상왕봉', region: '경남 합천', terrain: '뾰족한 암봉', difficulty: '중상', course_tip: '정상 부근 암릉 구간이 험준하므로 미끄럼을 조심하세요.', courses: [{ name: '백운동~상왕봉 코스', distance: '7.5km', time: 270, diff: '중상' }] },
-  { name: '무등산', elevation: 1187, peak: '서석대', region: '광주/전남', terrain: '주상절리대', difficulty: '중', course_tip: '서석대 능선은 그늘이 적고 바람이 강해 방풍 준비가 필요합니다.', courses: [{ name: '증심사~서석대 코스', distance: '12km', time: 330, diff: '중' }] },
-  { name: '주왕산', elevation: 721, peak: '주봉', region: '경북 청송', terrain: '협곡·흙길', difficulty: '하', course_tip: '험한 구간이 적어 초보자 산행에 적합하며 아침 물안개가 자주 낍니다.', courses: [{ name: '대전사~주봉 코스', distance: '9km', time: 270, diff: '하' }] },
-  { name: '도봉산', elevation: 740, peak: '신선대', region: '서울/경기', terrain: '거대 화강암', difficulty: '중상', course_tip: '신선대 오름길은 가파른 쇠난간을 잡아야 하므로 장갑을 권장합니다.', courses: [{ name: '도봉탐방센터~신선대', distance: '6.5km', time: 210, diff: '중상' }] },
-  { name: '관악산', elevation: 632, peak: '연주대', region: '서울/경기과천', terrain: '바위 능선', difficulty: '중', course_tip: '사당 코스는 노출된 바위 능선이 많아 비 온 뒤 미끄럼에 주의하세요.', courses: [{ name: '서울대~연주대 코스', distance: '6km', time: 210, diff: '중' }] },
-  { name: '대둔산', elevation: 878, peak: '마천대', region: '충남/전북', terrain: '구름다리·철계단', difficulty: '중', course_tip: '삼선계단은 경사가 매우 가파르고 일방통행이므로 우회로를 체크하세요.', courses: [{ name: '케이블카~마천대 코스', distance: '2km', time: 90, diff: '하' }, { name: '수락계곡~마천대 코스', distance: '7km', time: 240, diff: '중' }] },
-  { name: '내장산', elevation: 763, peak: '신선봉', region: '전북 정읍', terrain: '단풍 계곡·암릉', difficulty: '중', course_tip: '신선봉 정상으로 오르는 능선은 경사가 급하고 습기가 많습니다.', courses: [{ name: '일주문~신선봉 코스', distance: '8km', time: 270, diff: '중' }] },
-  { name: '마이산', elevation: 686, peak: '암마이봉', region: '전북 진안', terrain: '역암 바위', difficulty: '중하', course_tip: '암마이봉 구간은 겨울철 결빙 시 통제될 수 있으니 노면을 확인하세요.', courses: [{ name: '탑사~암마이봉 코스', distance: '5km', time: 150, diff: '중하' }] }
+  { name: '북한산', elevation: 836, peak: '백운대', region: '서울/경기', terrain: '화강암 암릉', difficulty: '중상', cctv_url: 'https://www.knps.or.kr/portal/main/contents.do?menuNo=8000159', course_tip: '백운대 정상 부근 바위가 미끄러우니 접지력이 좋은 등산화와 장갑을 착용하세요.', courses: [{ name: '백운대 최단 코스 (탐방지원센터)', distance: '4km', time: 180, diff: '중상' }, { name: '대남문 능선 코스 (구기동)', distance: '8.5km', time: 270, diff: '중' }, { name: '숨은벽 능선 코스 (밤골)', distance: '7.6km', time: 240, diff: '상' }] },
+  { name: '설악산', elevation: 1708, peak: '대청봉', region: '강원 속초/인제', terrain: '고산 암릉', difficulty: '상', cctv_url: 'https://www.knps.or.kr/portal/main/contents.do?menuNo=8000159', course_tip: '정상 능선에 강한 칼바람이 불어 사계절 방풍 재킷이 필수입니다.', courses: [{ name: '대청봉 최단 (오색 코스)', distance: '10km', time: 480, diff: '상' }, { name: '한계령~대청봉 종주 코스', distance: '13.5km', time: 660, diff: '최상' }] },
+  { name: '한라산', elevation: 1947, peak: '백록담', region: '제주', terrain: '화산지형', difficulty: '상', cctv_url: 'https://www.jeju.go.kr/hallasan/info/cctv.htm', course_tip: '성판악 코스는 탐방 예약이 필수이며, 정상은 평지보다 12°C 이상 낮습니다.', courses: [{ name: '성판악~백록담 코스', distance: '19.2km', time: 540, diff: '중상' }, { name: '관음사~백록담 코스', distance: '17.4km', time: 600, diff: '상' }] },
+  { name: '지리산', elevation: 1915, peak: '천왕봉', region: '경남/전남/전북', terrain: '고산 능선', difficulty: '상', cctv_url: 'https://www.knps.or.kr/portal/main/contents.do?menuNo=8000159', course_tip: '장거리 산행이므로 일몰 시간과 체력을 고려해 헤드랜턴을 준비하세요.', courses: [{ name: '중산리~천왕봉 단거리', distance: '10.8km', time: 480, diff: '상' }, { name: '백무동~천왕봉 코스', distance: '15km', time: 570, diff: '중상' }] },
+  { name: '계룡산', elevation: 845, peak: '관음봉', region: '충남 공주', terrain: '암릉·가파른 계단', difficulty: '중상', cctv_url: 'https://www.knps.or.kr/portal/main/contents.do?menuNo=8000159', course_tip: '자연성릉 바위 능선과 고깔바위 계단이 가팔라 체력 소모가 큽니다.', courses: [{ name: '동학사~관음봉 순환 코스', distance: '8.5km', time: 300, diff: '중상' }, { name: '갑사~관음봉 코스', distance: '7km', time: 240, diff: '중' }] },
+  { name: '덕유산', elevation: 1614, peak: '향적봉', region: '전북 무주', terrain: '아고산대 능선', difficulty: '중하', cctv_url: 'https://www.knps.or.kr/portal/main/contents.do?menuNo=8000159', course_tip: '정상 능선은 습도가 높고 상고대·강풍이 잦아 보온에 유의하세요.', courses: [{ name: '곤돌라~향적봉 코스', distance: '1.2km', time: 40, diff: '하' }, { name: '구천동~향적봉 코스', distance: '17km', time: 510, diff: '중상' }] },
+  { name: '소백산', elevation: 1439, peak: '비로봉', region: '충북 단양', terrain: '초원 능선(육산)', difficulty: '중', cctv_url: 'https://www.knps.or.kr/portal/main/contents.do?menuNo=8000159', course_tip: '나무가 없는 탁 트인 능선이라 방풍·방한모를 꼭 챙기세요.', courses: [{ name: '어의곡~비로봉 코스', distance: '10km', time: 300, diff: '중' }] },
+  { name: '태백산', elevation: 1567, peak: '장군봉', region: '강원 태백', terrain: '완만한 육산', difficulty: '중하', cctv_url: 'https://www.knps.or.kr/portal/main/contents.do?menuNo=8000159', course_tip: '경사가 완만해 초보자도 오르기 좋으며 일출 조망이 뛰어납니다.', courses: [{ name: '유일사~천제단 코스', distance: '8km', time: 240, diff: '중하' }] },
+  { name: '오대산', elevation: 1563, peak: '비로봉', region: '강원 평창', terrain: '부드러운 흙길', difficulty: '중', cctv_url: 'https://www.knps.or.kr/portal/main/contents.do?menuNo=8000159', course_tip: '흙길이 잘 정비되어 있으나 정상 직전 오르막이 가파릅니다.', courses: [{ name: '상원사~비로봉 코스', distance: '7km', time: 210, diff: '중' }] },
+  { name: '치악산', elevation: 1288, peak: '비로봉', region: '강원 원주', terrain: '급경사 철계단', difficulty: '상', cctv_url: 'https://www.knps.or.kr/portal/main/contents.do?menuNo=8000159', course_tip: '급경사 철계단이 이어지므로 무릎 보호대와 스틱이 필수입니다.', courses: [{ name: '구룡사~사다리병창 코스', distance: '11km', time: 360, diff: '상' }] },
+  { name: '월악산', elevation: 1097, peak: '영봉', region: '충북 제천', terrain: '험준한 암릉', difficulty: '상', cctv_url: 'https://www.knps.or.kr/portal/main/contents.do?menuNo=8000159', course_tip: '수백 개의 가파른 철계단과 충주호 골바람에 주의하세요.', courses: [{ name: '보덕암~영봉 코스', distance: '8km', time: 330, diff: '상' }] },
+  { name: '속리산', elevation: 1058, peak: '문장대', region: '충북 보은', terrain: '기암괴석·암릉', difficulty: '중', cctv_url: 'https://www.knps.or.kr/portal/main/contents.do?menuNo=8000159', course_tip: '문장대 바위 정상 난간 구간에서 강풍이 불 때 안전에 유의하세요.', courses: [{ name: '법주사~문장대 코스', distance: '12km', time: 330, diff: '중' }] },
+  { name: '가야산', elevation: 1430, peak: '상왕봉', region: '경남 합천', terrain: '뾰족한 암봉', difficulty: '중상', cctv_url: 'https://www.knps.or.kr/portal/main/contents.do?menuNo=8000159', course_tip: '정상 부근 암릉 구간이 험준하므로 미끄럼을 조심하세요.', courses: [{ name: '백운동~상왕봉 코스', distance: '7.5km', time: 270, diff: '중상' }] },
+  { name: '무등산', elevation: 1187, peak: '서석대', region: '광주/전남', terrain: '주상절리대', difficulty: '중', cctv_url: 'https://www.knps.or.kr/portal/main/contents.do?menuNo=8000159', course_tip: '서석대 능선은 그늘이 적고 바람이 강해 방풍 준비가 필요합니다.', courses: [{ name: '증심사~서석대 코스', distance: '12km', time: 330, diff: '중' }] },
+  { name: '주왕산', elevation: 721, peak: '주봉', region: '경북 청송', terrain: '협곡·흙길', difficulty: '하', cctv_url: 'https://www.knps.or.kr/portal/main/contents.do?menuNo=8000159', course_tip: '험한 구간이 적어 초보자 산행에 적합하며 아침 물안개가 자주 낍니다.', courses: [{ name: '대전사~주봉 코스', distance: '9km', time: 270, diff: '하' }] },
+  { name: '도봉산', elevation: 740, peak: '신선대', region: '서울/경기', terrain: '거대 화강암', difficulty: '중상', cctv_url: 'https://www.knps.or.kr/portal/main/contents.do?menuNo=8000159', course_tip: '신선대 오름길은 가파른 쇠난간을 잡아야 하므로 장갑을 권장합니다.', courses: [{ name: '도봉탐방센터~신선대', distance: '6.5km', time: 210, diff: '중상' }] },
+  { name: '관악산', elevation: 632, peak: '연주대', region: '서울/경기과천', terrain: '바위 능선', difficulty: '중', cctv_url: 'https://www.youtube.com/results?search_query=%EA%B4%80%EC%95%85%EC%82%B0+%EC%97%B0%EC%A3%BC%EB%8C%80+%EC%8B%A4%EC%8B%9C%EA%B0%84', course_tip: '사당 코스는 노출된 바위 능선이 많아 비 온 뒤 미끄럼에 주의하세요.', courses: [{ name: '서울대~연주대 코스', distance: '6km', time: 210, diff: '중' }] },
+  { name: '대둔산', elevation: 878, peak: '마천대', region: '충남/전북', terrain: '구름다리·철계단', difficulty: '중', cctv_url: 'https://www.youtube.com/results?search_query=%EB%8C%80%EB%91%94%EC%82%B0+%EB%A7%88%EC%B2%9C%EB%8C%80+%EC%8B%A4%EC%8B%9C%EA%B0%84', course_tip: '삼선계단은 경사가 매우 가파르고 일방통행이므로 우회로를 체크하세요.', courses: [{ name: '케이블카~마천대 코스', distance: '2km', time: 90, diff: '하' }, { name: '수락계곡~마천대 코스', distance: '7km', time: 240, diff: '중' }] },
+  { name: '내장산', elevation: 763, peak: '신선봉', region: '전북 정읍', terrain: '단풍 계곡·암릉', difficulty: '중', cctv_url: 'https://www.knps.or.kr/portal/main/contents.do?menuNo=8000159', course_tip: '신선봉 정상으로 오르는 능선은 경사가 급하고 습기가 많습니다.', courses: [{ name: '일주문~신선봉 코스', distance: '8km', time: 270, diff: '중' }] },
+  { name: '마이산', elevation: 686, peak: '암마이봉', region: '전북 진안', terrain: '역암 바위', difficulty: '중하', cctv_url: 'https://www.youtube.com/results?search_query=%EB%A7%88%EC%9D%B4%EC%82%B0+%EC%8B%A4%EC%8B%9C%EA%B0%84', course_tip: '암마이봉 구간은 겨울철 결빙 시 통제될 수 있으니 노면을 확인하세요.', courses: [{ name: '탑사~암마이봉 코스', distance: '5km', time: 150, diff: '중하' }] }
 ];
 
 const MOUNTAINS = MOUNTAINS_LIST.map(m => m.name);
@@ -68,8 +68,6 @@ function App() {
 
   const [isMountainMode, setIsMountainMode] = useState(false);
   const [mountainInfo, setMountainInfo] = useState(null);
-  
-  // 💡 선택된 미래 날짜 관리
   const [selectedDateIdx, setSelectedDateIdx] = useState(0); 
 
   const [isNoticeOpen, setIsNoticeOpen] = useState(false);
@@ -201,7 +199,7 @@ function App() {
     else setBgTheme('clear');
 
     setMountainInfo(mInfo);
-    setSelectedDateIdx(0); // 새로운 지역/산을 검색하면 무조건 '오늘'로 리셋
+    setSelectedDateIdx(0);
 
     setWeatherData((prev) => ({
       ...prev,
@@ -393,7 +391,6 @@ function App() {
     switch (bgTheme) { case 'night': return '#000000'; case 'rain': return '#334155'; case 'cloud': return '#475569'; default: return '#1a365d'; }
   };
 
-  // 💡 선택된 날짜에 따라 활성화할 날씨 데이터를 동적으로 계산
   const activeWeather = useMemo(() => {
     if (selectedDateIdx === 0 || !weeklyData[selectedDateIdx]) return weatherData;
     const target = weeklyData[selectedDateIdx];
@@ -417,21 +414,56 @@ function App() {
 
   return (
     <div style={{ backgroundColor: getBgColor(), minHeight: '100vh', display: 'flex', flexDirection: 'column', transition: 'background-color 0.8s ease', position: 'relative' }}>
+      {/* 💡 모바일·태블릿 완벽 대응 반응형 CSS 추가 */}
       <style>{`
         @keyframes skeleton-loading { 0% { background-color: #e2e8f0; } 50% { background-color: #cbd5e1; } 100% { background-color: #e2e8f0; } }
         .skeleton { animation: skeleton-loading 1.5s infinite ease-in-out; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        @media (max-width: 900px) {
+          .main-container {
+            grid-template-columns: 1fr !important;
+            display: flex !important;
+            flex-direction: column !important;
+            padding: 16px !important;
+            gap: 16px !important;
+          }
+          .top-nav {
+            padding: 12px 16px !important;
+          }
+          .top-nav-inner {
+            flex-direction: column !important;
+            gap: 10px !important;
+          }
+          .search-wrapper {
+            width: 100% !important;
+            max-width: 100% !important;
+          }
+          .weather-main-card {
+            flex-direction: column !important;
+          }
+          .weather-main-right {
+            border-left: none !important;
+            border-top: 1px solid #e2e8f0 !important;
+          }
+          .app-footer {
+            flex-direction: column !important;
+            gap: 10px !important;
+            padding: 16px !important;
+            text-align: center !important;
+          }
+        }
       `}</style>
 
-      <div style={{ position: 'fixed', bottom: '30px', right: '30px', zIndex: 9999, backgroundColor: '#3182ce', color: 'white', padding: '15px 25px', borderRadius: '8px', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)', display: 'flex', alignItems: 'center', gap: '10px', fontWeight: 'bold', fontSize: '14px', transform: toast.visible ? 'translateY(0)' : 'translateY(100px)', opacity: toast.visible ? 1 : 0, transition: 'all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55)' }}>
+      <div style={{ position: 'fixed', bottom: '30px', right: '30px', zIndex: 9999, backgroundColor: '#166534', color: 'white', padding: '15px 25px', borderRadius: '8px', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.15)', display: 'flex', alignItems: 'center', gap: '10px', fontWeight: 'bold', fontSize: '14px', transform: toast.visible ? 'translateY(0)' : 'translateY(100px)', opacity: toast.visible ? 1 : 0, transition: 'all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55)' }}>
         <FiCheckCircle size={18} /> {toast.message}
       </div>
 
-      <nav style={{ backgroundColor: getNavColor(), padding: '15px 40px', display: 'flex', justifyContent: 'center', transition: 'background-color 0.8s ease' }}>
-        <div style={{ display: 'flex', width: '100%', maxWidth: '1000px', justifyContent: 'space-between', alignItems: 'center' }}>
+      <nav className="top-nav" style={{ backgroundColor: getNavColor(), padding: '15px 40px', display: 'flex', justifyContent: 'center', transition: 'background-color 0.8s ease' }}>
+        <div className="top-nav-inner" style={{ display: 'flex', width: '100%', maxWidth: '1000px', justifyContent: 'space-between', alignItems: 'center' }}>
           
-          <div style={{ position: 'relative', display: 'flex', width: '44%', maxWidth: '520px' }}>
+          <div className="search-wrapper" style={{ position: 'relative', display: 'flex', width: '44%', maxWidth: '520px' }}>
             <div style={{ display: 'flex', width: '100%', backgroundColor: 'white', borderRadius: '30px', padding: '5px 20px', alignItems: 'center', zIndex: 10 }}>
               <input 
                 type="text" 
@@ -516,7 +548,6 @@ function App() {
       <main className="main-container" style={{ flexGrow: 1, maxWidth: '1000px', margin: '0 auto', width: '100%' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', minWidth: 0, height: '100%' }}>
           
-          {/* 💡 WeatherMain에 주간예보(날짜 드롭다운용)와 선택 함수를 완벽히 꽂아주었습니다! */}
           <WeatherMain 
             weatherData={activeWeather} 
             hourlyData={hourlyData}
@@ -544,6 +575,7 @@ function App() {
             isMountainMode={isMountainMode}
             mountainInfo={mountainInfo}
             weatherData={activeWeather}
+            onShowToast={showToast}
           />
           <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
             <WeatherOutlook 
@@ -595,7 +627,7 @@ function App() {
         </div>
       </main>
 
-      <footer style={{ backgroundColor: bgTheme === 'night' ? '#111827' : '#e2e8f0', transition: 'background-color 0.8s ease', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 40px', color: '#718096', fontSize: '13px' }}>
+      <footer className="app-footer" style={{ backgroundColor: bgTheme === 'night' ? '#111827' : '#e2e8f0', transition: 'background-color 0.8s ease', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 40px', color: '#718096', fontSize: '13px' }}>
         <div>
           <span>© 2026 Weather Web Project.</span><span style={{ margin: '0 15px' }}>|</span>
           <span style={{ cursor: 'pointer' }} onClick={() => showToast('이용약관 페이지는 준비 중입니다.')}>이용약관</span><span style={{ margin: '0 15px' }}>|</span>
@@ -616,6 +648,13 @@ function App() {
             </div>
           </div>
         </div>
+      )}
+      {isNoticeOpen && <NoticeModal onClose={() => setIsNoticeOpen(false)} />}
+      {isSignUpOpen && <SignUpModal onClose={() => setIsSignUpOpen(false)} />}
+      {isFindPasswordOpen && <FindPasswordModal onClose={() => setIsFindPasswordOpen(false)} />}
+      {isAddRegionOpen && <AddRegionModal onClose={() => setIsAddRegionOpen(false)} onAddRegion={handleAddFavorite} isAiLoading={isAiLoading} />}
+      {isAdminPageOpen && (
+        <AdminPage adminPassword={adminPw} onClose={() => { setIsAdminPageOpen(false); setAdminPw(''); }} />
       )}
     </div>
   );
