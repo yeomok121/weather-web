@@ -12,11 +12,13 @@ function WeatherDetails({ airQuality = {}, current = {}, isMountainMode = false,
   const wind = current.wind_speed !== undefined ? Number(current.wind_speed) : 2;
   const desc = current.description || '맑음';
   const terrain = mountainInfo?.terrain || '';
+  const isFuture = current.isFuture || false;
 
-  const isRainOrSnow = desc.includes('비') || desc.includes('소나기') || desc.includes('눈') || desc.includes('우박') || desc.includes('천둥');
+  // 💡 강수 판단 (미래 날짜일 경우 targetPop 확률이 60% 이상이면 비/눈으로 간주)
+  const isRainOrSnow = desc.includes('비') || desc.includes('소나기') || desc.includes('눈') || desc.includes('우박') || (current.targetPop >= 60);
   const isSnow = desc.includes('눈');
 
-  // 💡 일반 도시 옷차림 추천
+  // 일반 도시 옷차림 추천
   const getClothingRecommendation = () => {
     let base = '';
     if (temp >= 28) base = '👕 민소매, 린넨, 반바지';
@@ -33,7 +35,7 @@ function WeatherDetails({ airQuality = {}, current = {}, isMountainMode = false,
     return `${base} 추천`;
   };
 
-  // 💡 산악 전용 등산 레이어링 추천
+  // 산악 전용 등산 레이어링 추천
   const getHikingGearRecommendation = () => {
     let layering = '';
     if (temp >= 22) layering = '👕 흡습속건 기능성 반팔 + 얇은 방풍 재킷';
@@ -51,7 +53,7 @@ function WeatherDetails({ airQuality = {}, current = {}, isMountainMode = false,
     return `${layering} (${gears.join(' · ')})`;
   };
 
-  // 💡 일반 도시 생활 지수
+  // 일반 도시 생활 지수
   const getLifeIndices = () => {
     const badges = [];
     if (isRainOrSnow) badges.push({ text: isSnow ? '🧘 눈길 조심·실내 운동' : '🧘 실내 스트레칭 추천', color: '#6366f1' });
@@ -80,11 +82,10 @@ function WeatherDetails({ airQuality = {}, current = {}, isMountainMode = false,
     return badges;
   };
 
-  // 💡 산악 전용 4대 등산 지수
+  // 산악 전용 4대 등산 지수
   const getMountainIndices = () => {
     const badges = [];
 
-    // 1. 조망 & 절경 지수
     if (isRainOrSnow) badges.push({ text: '🌫️ 시야 불량 (곰탕 주의)', color: '#64748b' });
     else if (temp <= -2 && humidity >= 75) badges.push({ text: '❄️ 눈꽃·상고대 절경 기대', color: '#0ea5e9' });
     else if (humidity >= 80 && wind <= 3.5) badges.push({ text: '🌊 운해(구름바다) 확률 높음', color: '#8b5cf6' });
@@ -92,22 +93,19 @@ function WeatherDetails({ airQuality = {}, current = {}, isMountainMode = false,
     else if (pm25 <= 25 && desc.includes('맑음')) badges.push({ text: '🔭 쾌청! 탁 트인 정상 뻥뷰', color: '#0ea5e9' });
     else badges.push({ text: '🏞️ 조망 양호·산행 무난', color: '#10b981' });
 
-    // 2. 등산로 노면 상태
     if (temp <= 2 && (isRainOrSnow || humidity >= 70)) badges.push({ text: '🧊 결빙·블랙아이스 주의', color: '#dc2626' });
     else if (isRainOrSnow) badges.push({ text: '⚠️ 젖은 바위·진흙 미끄럼', color: '#ea580c' });
     else if (temp <= 0) badges.push({ text: '❄️ 그늘 구간 서리·결빙', color: '#2563eb' });
     else if (terrain.includes('암릉') || terrain.includes('바위')) badges.push({ text: '🪨 암릉 구간 접지력 주의', color: '#d97706' });
     else badges.push({ text: '🥾 노면 건조·보행 쾌적', color: '#16a34a' });
 
-    // 3. 정상 칼바람 지수
     if (wind >= 10) badges.push({ text: '🌪️ 강풍 특보 (체류 자제)', color: '#dc2626' });
     else if (wind >= 6) badges.push({ text: '💨 능선 칼바람 (방풍 필수)', color: '#ea580c' });
     else if (temp <= 3) badges.push({ text: '🥶 정상 한기 (보온병 지참)', color: '#0284c7' });
     else badges.push({ text: '🍃 능선 바람 잔잔·쾌적', color: '#0d9488' });
 
-    // 4. 종합 산행 판단
     if (isRainOrSnow || wind >= 10) badges.push({ text: '🚫 악천후 입산 자제 권장', color: '#dc2626' });
-    else if (celestial.isNight) badges.push({ text: '🔦 야간 산행 주의 (랜턴)', color: '#475569' });
+    else if (celestial.isNight && !isFuture) badges.push({ text: '🔦 야간 산행 주의 (랜턴)', color: '#475569' });
     else if (temp <= -5 || wind >= 7 || pm25 >= 55) badges.push({ text: '⚠️ 초보자 주의·방한 철저', color: '#d97706' });
     else badges.push({ text: '🧗 등산 가기 완벽한 날씨!', color: '#15803d' });
 
@@ -167,7 +165,6 @@ function WeatherDetails({ airQuality = {}, current = {}, isMountainMode = false,
         {isMountainMode ? '⛰️ 4대 산행 환경 지수' : '상세 날씨 정보'}
       </h3>
 
-      {/* 미세먼지 바 */}
       <div style={{ marginBottom: '20px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: '6px' }}>
           <span style={{ color: '#64748b' }}>미세먼지 (PM2.5)</span>
@@ -180,7 +177,6 @@ function WeatherDetails({ airQuality = {}, current = {}, isMountainMode = false,
         </div>
       </div>
 
-      {/* 일출/일몰 궤적 */}
       <div style={{ marginTop: '20px', marginBottom: isMountainMode ? '16px' : '10px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#64748b', fontWeight: '500' }}>
           {celestial.isNight ? (
@@ -215,7 +211,6 @@ function WeatherDetails({ airQuality = {}, current = {}, isMountainMode = false,
           </span>
         </div>
 
-        {/* 산악 전용 하산 권장 시각 배지 */}
         {isMountainMode && (
           <div style={{ marginTop: '6px', backgroundColor: '#fff7ed', border: '1px solid #fed7aa', color: '#c2410c', borderRadius: '8px', padding: '6px 10px', fontSize: '12px', fontWeight: 'bold', textAlign: 'center' }}>
             🚨 안전 하산 마감 권장: {safeDescentTime} 이전
@@ -223,16 +218,14 @@ function WeatherDetails({ airQuality = {}, current = {}, isMountainMode = false,
         )}
       </div>
 
-      {/* 습도 및 풍속 */}
       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#334155', marginTop: '12px', paddingTop: '14px', borderTop: '1px solid #f1f5f9' }}>
-        <span>{isMountainMode ? '정상 습도:' : '습도:'} <strong>{humidity}%</strong></span>
-        <span>{isMountainMode ? '능선 풍속:' : '풍속:'} <strong>{wind} m/s</strong></span>
+        <span>{isMountainMode ? '예상 정상 습도:' : '습도:'} <strong>{humidity}%</strong></span>
+        <span>{isMountainMode ? '예상 능선 풍속:' : '풍속:'} <strong>{wind} m/s</strong></span>
       </div>
 
-      {/* 지수 추천 (레이어링 + 2x2 배지) */}
       <div style={{ marginTop: '14px', paddingTop: '14px', borderTop: '1px solid #f1f5f9', display: 'flex', flexDirection: 'column', gap: '8px' }}>
         <h4 style={{ margin: '0 0 4px 0', fontSize: '13px', color: isMountainMode ? '#166534' : '#64748b' }}>
-          {isMountainMode ? '🎒 등산 복장 레이어링 추천' : '생활 지수 추천'}
+          {isMountainMode ? '🎒 예상 기온 기반 레이어링' : '생활 지수 추천'}
         </h4>
         
         <div style={{ background: isMountainMode ? '#f0fdf4' : '#f8fafc', border: isMountainMode ? '1px solid #bbf7d0' : 'none', padding: '10px 12px', borderRadius: '8px', fontSize: '12px', color: '#334155', display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center', lineHeight: '1.45', wordBreak: 'keep-all' }}>

@@ -24,7 +24,6 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
   const [selectedCourseIdx, setSelectedCourseIdx] = useState(0);
   const [checklist, setChecklist] = useState({});
   
-  // 💡 마우스 드래그(스와이프) 스크롤을 위한 상태
   const scrollRef = useRef(null);
   const [isDragging, setIsDragging] = useState(false);
   const [dragMoved, setDragMoved] = useState(false); 
@@ -38,13 +37,12 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
   useEffect(() => {
     setChecklist({});
     setSelectedCourseIdx(0);
-  }, [mountainInfo?.name]);
+  }, [mountainInfo?.name, weatherData?.date]);
 
   const toggleCheck = (item) => {
     setChecklist(prev => ({ ...prev, [item]: !prev[item] }));
   };
 
-  // 💡 드래그 스크롤 로직 (미세한 떨림에 클릭되는 현상 방지)
   const handleMouseDown = (e) => {
     setIsDragging(true);
     setDragMoved(false);
@@ -59,8 +57,8 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
     if (!isDragging) return;
     e.preventDefault();
     const x = e.pageX - scrollRef.current.offsetLeft;
-    const walk = (x - startX) * 1.5; // 스크롤 속도
-    if (Math.abs(walk) > 5) setDragMoved(true); // 5px 이상 움직여야만 드래그로 판정
+    const walk = (x - startX) * 1.5; 
+    if (Math.abs(walk) > 5) setDragMoved(true); 
     scrollRef.current.scrollLeft = scrollLeft - walk;
   };
 
@@ -112,11 +110,12 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
   const pm25Match = dustStr.match(/\d+/);
   const pm25 = pm25Match ? parseInt(pm25Match[0], 10) : 15;
   const desc = weatherData?.condition || '';
-  const isRainOrSnow = desc.includes('비') || desc.includes('소나기') || desc.includes('눈') || desc.includes('우박');
+  const isRainOrSnow = desc.includes('비') || desc.includes('소나기') || desc.includes('눈') || desc.includes('우박') || (weatherData?.targetPop >= 60);
   const isSnow = desc.includes('눈');
   const sunset = weatherData?.sunset || '18:00';
   const safeDescentTime = weatherData?.safeDescentTime || mountainInfo?.safe_descent_time || '15:30';
   const terrain = mountainInfo?.terrain || '';
+  const isFuture = weatherData?.isFuture || false;
 
   const getMountainScore = () => {
     let score = 100;
@@ -134,9 +133,8 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
   const courses = mountainInfo?.courses || [{ name: '기본 탐방로', distance: '5km', time: 180, diff: '중' }];
   const selectedCourse = courses[selectedCourseIdx] || courses[0];
 
+  // 💡 미래 날짜일 경우 "지금 출발하면"을 "이 시각 전에 산행 시작"으로 바꿈
   const getTimelineStatus = () => {
-    const now = new Date();
-    const currentMins = now.getHours() * 60 + now.getMinutes();
     const parseTime = (str) => {
       if (!str || !str.includes(':')) return 1080;
       const [h, m] = str.split(':').map(Number);
@@ -145,7 +143,17 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
     const safeDescentMins = parseTime(safeDescentTime);
     const requiredMins = selectedCourse.time;
     const deadlineMins = safeDescentMins - requiredMins; 
+    const deadlineH = Math.floor(deadlineMins / 60);
+    const deadlineM = String(deadlineMins % 60).padStart(2, '0');
+    const deadlineStr = `${deadlineH}:${deadlineM}`;
     
+    if (isFuture) {
+      return { status: 'safe', msg: `🗓️ ${weatherData.date} 계획: 늦어도 ${deadlineStr} 전에는 등산을 시작해야 안전합니다.` };
+    }
+
+    const now = new Date();
+    const currentMins = now.getHours() * 60 + now.getMinutes();
+
     if (currentMins > safeDescentMins) return { status: 'danger', msg: '⚠️ 하산 마감 시간이 지났습니다. 야간 산행(랜턴) 모드입니다.' };
     if (currentMins > deadlineMins) return { status: 'warning', msg: `⚠️ 지금 출발하면 일몰(${sunset}) 후 하산합니다. 랜턴 필수!` };
     return { status: 'safe', msg: `✅ 지금 출발하면 일몰 전 안전하게 하산 가능합니다.` };
@@ -182,13 +190,11 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
       {isMountainMode && !isLoading && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '24px' }}>
           
-          {/* 💡 Flex Wrap을 사용하여 화면이 좁을 경우 글자가 찌그러지지 않고 자연스럽게 아래로 내려가게 처리 */}
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px' }}>
             
-            {/* 좌측: 종합 점수 & 3단 고도 맵 */}
             <div style={{ flex: '1 1 250px', display: 'flex', gap: '10px' }}>
               <div style={{ width: '95px', flexShrink: 0, backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '12px', padding: '16px 8px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                <span style={{ fontSize: '11.5px', color: '#166534', fontWeight: 'bold', marginBottom: '8px', whiteSpace: 'nowrap' }}>오늘 산행 지수</span>
+                <span style={{ fontSize: '11.5px', color: '#166534', fontWeight: 'bold', marginBottom: '8px', whiteSpace: 'nowrap' }}>{isFuture ? '예상 산행 지수' : '오늘 산행 지수'}</span>
                 <div style={{ position: 'relative', width: '56px', height: '56px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <svg viewBox="0 0 36 36" style={{ width: '100%', height: '100%', transform: 'rotate(-90deg)' }}>
                     <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#dcfce7" strokeWidth="4" />
@@ -201,33 +207,29 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
                 </span>
               </div>
 
-              {/* 💡 Flex Wrap을 주어 글씨 공간이 부족하면 자동으로 줄바꿈 되도록 설정 */}
               <div style={{ flex: 1, backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '14px', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '10px', fontSize: '12px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '4px', paddingBottom: '6px', borderBottom: '1px dashed #cbd5e1' }}>
-                  <span style={{ fontWeight: 'bold', color: '#334155' }}>⛰️ 정상 <span style={{fontSize:'10px', color:'#94a3b8', fontWeight:'normal'}}>({mountainInfo?.elevation}m)</span></span>
+                  <span style={{ fontWeight: 'bold', color: '#334155', whiteSpace: 'nowrap' }}>⛰️ 정상 <span style={{fontSize:'10px', color:'#94a3b8', fontWeight:'normal'}}>({mountainInfo?.elevation}m)</span></span>
                   <span style={{ color: '#0f172a', fontWeight: 'bold' }}>{temp}°C <span style={{fontSize:'10px', color:'#64748b', fontWeight:'normal'}}>(풍속 {wind}m/s)</span></span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '4px', padding: '6px 0', borderBottom: '1px dashed #cbd5e1' }}>
-                  <span style={{ color: '#64748b' }}>🌲 중턱 <span style={{fontSize:'10px', color:'#94a3b8'}}>({Math.round(mountainInfo?.elevation / 2)}m)</span></span>
+                  <span style={{ color: '#64748b', whiteSpace: 'nowrap' }}>🌲 중턱 <span style={{fontSize:'10px', color:'#94a3b8'}}>({Math.round(mountainInfo?.elevation / 2)}m)</span></span>
                   <span style={{ color: '#475569', fontWeight: '500' }}>{Math.round((temp + baseTemp) / 2)}°C</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '4px', paddingTop: '6px' }}>
-                  <span style={{ color: '#64748b' }}>👟 들머리 <span style={{fontSize:'10px', color:'#94a3b8'}}>(입구)</span></span>
+                  <span style={{ color: '#64748b', whiteSpace: 'nowrap' }}>👟 들머리 <span style={{fontSize:'10px', color:'#94a3b8'}}>(입구)</span></span>
                   <span style={{ color: '#475569', fontWeight: '500' }}>{baseTemp}°C</span>
                 </div>
               </div>
             </div>
 
-            {/* 우측: 코스별 하산 타임라인 계산기 */}
             <div style={{ flex: '1 1 270px', backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '14px', boxShadow: '0 2px 4px rgba(0,0,0,0.02)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
               
-              {/* 💡 Flex Wrap을 적용하여 제목과 일몰 기준 텍스트가 겹치지 않게 분리 */}
               <h4 style={{ margin: '0 0 10px 0', fontSize: '13px', color: '#1e293b', display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
-                <span>⏱️ 코스별 하산 타임라인</span>
-                <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 'normal' }}>일몰 {sunset} 기준</span>
+                <span style={{ whiteSpace: 'nowrap' }}>⏱️ 코스별 하산 타임라인</span>
+                <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 'normal', whiteSpace: 'nowrap' }}>일몰 {sunset} 기준</span>
               </h4>
               
-              {/* 💡 마우스 드래그/모바일 터치 스와이프 완벽 적용 */}
               <div 
                 ref={scrollRef}
                 onMouseDown={handleMouseDown}
@@ -241,7 +243,7 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
                   <button 
                     key={idx} 
                     onClick={(e) => {
-                      if (dragMoved) { e.preventDefault(); e.stopPropagation(); return; } // 드래그 중 클릭 오작동 방지
+                      if (dragMoved) { e.preventDefault(); e.stopPropagation(); return; }
                       setSelectedCourseIdx(idx);
                     }}
                     style={{
@@ -257,7 +259,6 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
                 ))}
               </div>
 
-              {/* 💡 CSS Grid를 사용하여 거리, 소요, 난이도를 2줄로 완벽하게 배치 (글자 겹침 차단) */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', fontSize: '11.5px', color: '#334155', backgroundColor: '#f1f5f9', padding: '10px', borderRadius: '8px', marginBottom: '10px' }}>
                 <span>거리: <strong>{selectedCourse.distance}</strong></span>
                 <span>소요: <strong>{Math.floor(selectedCourse.time / 60)}시간 {selectedCourse.time % 60}분</strong></span>
@@ -275,7 +276,7 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
           </div>
 
           <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '16px 20px', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
-            <h4 style={{ margin: '0 0 12px 0', fontSize: '14px', color: '#1e293b' }}>🎒 오늘 기상 맞춤 배낭 체크리스트</h4>
+            <h4 style={{ margin: '0 0 12px 0', fontSize: '14px', color: '#1e293b' }}>🎒 {isFuture ? '예상 기상 맞춤 배낭 준비물' : '오늘 기상 맞춤 배낭 체크리스트'}</h4>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '10px' }}>
               {gearList.map((item, idx) => (
                 <label key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12.5px', color: checklist[item] ? '#94a3b8' : '#334155', cursor: 'pointer', textDecoration: checklist[item] ? 'line-through' : 'none', padding: '6px 0', userSelect: 'none' }}>
@@ -286,17 +287,24 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
             </div>
           </div>
           
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', borderTop: '2px dashed #e2e8f0', paddingTop: '20px' }}>
-            <h4 style={{ margin: 0, fontSize: '14px', fontWeight: 'bold', color: '#475569' }}>시간대별 산 정상 기온 변화</h4>
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <button type="button" onClick={handlePrev} disabled={prevDisabled} style={{ ...buttonStyle, opacity: prevDisabled ? 0.3 : 1, cursor: prevDisabled ? 'default' : 'pointer' }}><FiChevronLeft size={20} /></button>
-              <button type="button" onClick={handleNext} disabled={nextDisabled} style={{ ...buttonStyle, opacity: nextDisabled ? 0.3 : 1, cursor: nextDisabled ? 'default' : 'pointer' }}><FiChevronRight size={20} /></button>
+          {!isFuture && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', borderTop: '2px dashed #e2e8f0', paddingTop: '20px' }}>
+              <h4 style={{ margin: 0, fontSize: '14px', fontWeight: 'bold', color: '#475569' }}>시간대별 산 정상 기온 변화</h4>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button type="button" onClick={handlePrev} disabled={prevDisabled} style={{ ...buttonStyle, opacity: prevDisabled ? 0.3 : 1, cursor: prevDisabled ? 'default' : 'pointer' }}><FiChevronLeft size={20} /></button>
+                <button type="button" onClick={handleNext} disabled={nextDisabled} style={{ ...buttonStyle, opacity: nextDisabled ? 0.3 : 1, cursor: nextDisabled ? 'default' : 'pointer' }}><FiChevronRight size={20} /></button>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       )}
 
-      {isLoading ? (
+      {/* 💡 미래 날짜 선택 시 상세 시간대별 차트를 가리고 안내 문구 띄우기 */}
+      {isMountainMode && isFuture ? (
+         <div style={{ textAlign: 'center', padding: '10px 0', color: '#94a3b8', fontSize: '13px' }}>
+            미래 예보일은 시간대별 상세 기온 변화 그래프가 제공되지 않습니다.
+         </div>
+      ) : isLoading ? (
         <p style={{ margin: '10px 0', fontSize: '14px', color: '#666' }}>예보를 불러오는 중입니다...</p>
       ) : error ? (
         <p style={{ margin: '10px 0', fontSize: '14px', color: '#dc2626' }}>{error}</p>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import LoginCard from './components/LoginCard';
 import HourlyForecast from './components/HourlyForecast';
 import NoticeModal from './components/NoticeModal';
@@ -27,47 +27,11 @@ const KOREA_REGIONS = [
 ];
 
 export const MOUNTAINS_LIST = [
-  { 
-    name: '북한산', elevation: 836, peak: '백운대', region: '서울/경기', terrain: '화강암 암릉', difficulty: '중상', 
-    course_tip: '백운대 정상 부근 바위가 미끄러우니 접지력이 좋은 등산화와 장갑을 착용하세요.',
-    courses: [
-      { name: '백운대 최단 코스 (탐방지원센터)', distance: '4km', time: 180, diff: '중상' },
-      { name: '대남문 능선 코스 (구기동)', distance: '8.5km', time: 270, diff: '중' },
-      { name: '숨은벽 능선 코스 (밤골)', distance: '7.6km', time: 240, diff: '상' }
-    ]
-  },
-  { 
-    name: '설악산', elevation: 1708, peak: '대청봉', region: '강원 속초/인제', terrain: '고산 암릉', difficulty: '상', 
-    course_tip: '정상 능선에 강한 칼바람이 불어 사계절 방풍 재킷이 필수입니다.',
-    courses: [
-      { name: '대청봉 최단 (오색 코스)', distance: '10km', time: 480, diff: '상' },
-      { name: '한계령~대청봉 종주 코스', distance: '13.5km', time: 660, diff: '최상' }
-    ]
-  },
-  { 
-    name: '한라산', elevation: 1947, peak: '백록담', region: '제주', terrain: '화산지형', difficulty: '상', 
-    course_tip: '성판악 코스는 탐방 예약이 필수이며, 정상은 평지보다 12°C 이상 낮습니다.',
-    courses: [
-      { name: '성판악~백록담 코스', distance: '19.2km', time: 540, diff: '중상' },
-      { name: '관음사~백록담 코스', distance: '17.4km', time: 600, diff: '상' }
-    ]
-  },
-  { 
-    name: '지리산', elevation: 1915, peak: '천왕봉', region: '경남/전남/전북', terrain: '고산 능선', difficulty: '상', 
-    course_tip: '장거리 산행이므로 일몰 시간과 체력을 고려해 헤드랜턴을 준비하세요.',
-    courses: [
-      { name: '중산리~천왕봉 단거리', distance: '10.8km', time: 480, diff: '상' },
-      { name: '백무동~천왕봉 코스', distance: '15km', time: 570, diff: '중상' }
-    ]
-  },
-  { 
-    name: '계룡산', elevation: 845, peak: '관음봉', region: '충남 공주', terrain: '암릉·가파른 계단', difficulty: '중상', 
-    course_tip: '자연성릉 바위 능선과 고깔바위 계단이 가팔라 체력 소모가 큽니다.',
-    courses: [
-      { name: '동학사~관음봉 순환 코스', distance: '8.5km', time: 300, diff: '중상' },
-      { name: '갑사~관음봉 코스', distance: '7km', time: 240, diff: '중' }
-    ]
-  },
+  { name: '북한산', elevation: 836, peak: '백운대', region: '서울/경기', terrain: '화강암 암릉', difficulty: '중상', course_tip: '백운대 정상 부근 바위가 미끄러우니 접지력이 좋은 등산화와 장갑을 착용하세요.', courses: [{ name: '백운대 최단 코스 (탐방지원센터)', distance: '4km', time: 180, diff: '중상' }, { name: '대남문 능선 코스 (구기동)', distance: '8.5km', time: 270, diff: '중' }, { name: '숨은벽 능선 코스 (밤골)', distance: '7.6km', time: 240, diff: '상' }] },
+  { name: '설악산', elevation: 1708, peak: '대청봉', region: '강원 속초/인제', terrain: '고산 암릉', difficulty: '상', course_tip: '정상 능선에 강한 칼바람이 불어 사계절 방풍 재킷이 필수입니다.', courses: [{ name: '대청봉 최단 (오색 코스)', distance: '10km', time: 480, diff: '상' }, { name: '한계령~대청봉 종주 코스', distance: '13.5km', time: 660, diff: '최상' }] },
+  { name: '한라산', elevation: 1947, peak: '백록담', region: '제주', terrain: '화산지형', difficulty: '상', course_tip: '성판악 코스는 탐방 예약이 필수이며, 정상은 평지보다 12°C 이상 낮습니다.', courses: [{ name: '성판악~백록담 코스', distance: '19.2km', time: 540, diff: '중상' }, { name: '관음사~백록담 코스', distance: '17.4km', time: 600, diff: '상' }] },
+  { name: '지리산', elevation: 1915, peak: '천왕봉', region: '경남/전남/전북', terrain: '고산 능선', difficulty: '상', course_tip: '장거리 산행이므로 일몰 시간과 체력을 고려해 헤드랜턴을 준비하세요.', courses: [{ name: '중산리~천왕봉 단거리', distance: '10.8km', time: 480, diff: '상' }, { name: '백무동~천왕봉 코스', distance: '15km', time: 570, diff: '중상' }] },
+  { name: '계룡산', elevation: 845, peak: '관음봉', region: '충남 공주', terrain: '암릉·가파른 계단', difficulty: '중상', course_tip: '자연성릉 바위 능선과 고깔바위 계단이 가팔라 체력 소모가 큽니다.', courses: [{ name: '동학사~관음봉 순환 코스', distance: '8.5km', time: 300, diff: '중상' }, { name: '갑사~관음봉 코스', distance: '7km', time: 240, diff: '중' }] },
   { name: '덕유산', elevation: 1614, peak: '향적봉', region: '전북 무주', terrain: '아고산대 능선', difficulty: '중하', course_tip: '정상 능선은 습도가 높고 상고대·강풍이 잦아 보온에 유의하세요.', courses: [{ name: '곤돌라~향적봉 코스', distance: '1.2km', time: 40, diff: '하' }, { name: '구천동~향적봉 코스', distance: '17km', time: 510, diff: '중상' }] },
   { name: '소백산', elevation: 1439, peak: '비로봉', region: '충북 단양', terrain: '초원 능선(육산)', difficulty: '중', course_tip: '나무가 없는 탁 트인 능선이라 방풍·방한모를 꼭 챙기세요.', courses: [{ name: '어의곡~비로봉 코스', distance: '10km', time: 300, diff: '중' }] },
   { name: '태백산', elevation: 1567, peak: '장군봉', region: '강원 태백', terrain: '완만한 육산', difficulty: '중하', course_tip: '경사가 완만해 초보자도 오르기 좋으며 일출 조망이 뛰어납니다.', courses: [{ name: '유일사~천제단 코스', distance: '8km', time: 240, diff: '중하' }] },
@@ -104,6 +68,9 @@ function App() {
 
   const [isMountainMode, setIsMountainMode] = useState(false);
   const [mountainInfo, setMountainInfo] = useState(null);
+  
+  // 💡 선택된 미래 날짜 관리를 위한 State 추가
+  const [selectedDateIdx, setSelectedDateIdx] = useState(0); 
 
   const [isNoticeOpen, setIsNoticeOpen] = useState(false);
   const [isSignUpOpen, setIsSignUpOpen] = useState(false);
@@ -145,7 +112,6 @@ function App() {
   useEffect(() => {
     const storedSearches = JSON.parse(localStorage.getItem('recentSearches')) || [];
     setRecentSearches(storedSearches);
-
     const savedUser = JSON.parse(localStorage.getItem('loggedInUser'));
     if (savedUser) setLoggedInUser(savedUser);
   }, []);
@@ -154,7 +120,6 @@ function App() {
     setLoggedInUser(user);
     localStorage.setItem('loggedInUser', JSON.stringify(user));
   };
-
   const handleLogout = () => {
     setLoggedInUser(null);
     localStorage.removeItem('loggedInUser');
@@ -164,49 +129,34 @@ function App() {
   const handleUpdateUser = async ({ name, currentPassword, newPassword }) => {
     try {
       const res = await fetch(`${API}/api/users/update`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          username: loggedInUser.id,
-          current_password: currentPassword,
-          name,
-          new_password: newPassword || null,
-        }),
+        method: 'PUT', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: loggedInUser.id, current_password: currentPassword, name, new_password: newPassword || null }),
       });
       const data = await res.json();
-      if (!res.ok) {
-        alert(data.detail || '정보 수정에 실패했습니다.');
-        return false;
-      }
+      if (!res.ok) { alert(data.detail || '정보 수정에 실패했습니다.'); return false; }
       const updated = { ...loggedInUser, name: data.name };
       localStorage.setItem('loggedInUser', JSON.stringify(updated));
       setLoggedInUser(updated);
       showToast('내 정보가 성공적으로 수정되었습니다.');
       return true;
     } catch (e) {
-      alert('서버에 연결할 수 없습니다.');
-      return false;
+      alert('서버에 연결할 수 없습니다.'); return false;
     }
   };
 
   const handleDeleteAccount = async () => {
     if (!loggedInUser) return;
     if (!window.confirm('정말 회원 탈퇴하시겠습니까? 저장된 관심 지역 정보도 함께 삭제됩니다.')) return;
-
     const password = window.prompt('본인 확인을 위해 비밀번호를 입력해 주세요.');
     if (!password) return;
 
     try {
       const res = await fetch(`${API}/api/users/delete`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: loggedInUser.id, password }),
       });
       const data = await res.json();
-      if (!res.ok) {
-        alert(data.detail || '회원 탈퇴에 실패했습니다.');
-        return;
-      }
+      if (!res.ok) { alert(data.detail || '회원 탈퇴에 실패했습니다.'); return; }
       localStorage.removeItem(`favorites_${loggedInUser.id}`);
       localStorage.removeItem('loggedInUser');
       setLoggedInUser(null);
@@ -218,7 +168,6 @@ function App() {
 
   useEffect(() => {
     const defaultFav = [{ name: '부천시', lat: 37.5034, lon: 126.7660 }];
-
     if (loggedInUser) {
       const userKey = `favorites_${loggedInUser.id}`;
       const savedFavs = JSON.parse(localStorage.getItem(userKey));
@@ -239,14 +188,12 @@ function App() {
   const saveFavorites = (newFavs) => {
     if (!loggedInUser) return;
     setFavorites(newFavs);
-    const userKey = `favorites_${loggedInUser.id}`;
-    localStorage.setItem(userKey, JSON.stringify(newFavs));
+    localStorage.setItem(`favorites_${loggedInUser.id}`, JSON.stringify(newFavs));
   };
 
   const updateWeatherState = (data, regionName, elevation = 0, mInfo = null) => {
     const c = data.current;
     const aqi = data.air_quality;
-
     const iconCode = c.icon || '';
     if (iconCode.includes('n')) setBgTheme('night');
     else if (iconCode.includes('09') || iconCode.includes('10') || iconCode.includes('11')) setBgTheme('rain');
@@ -254,6 +201,7 @@ function App() {
     else setBgTheme('clear');
 
     setMountainInfo(mInfo);
+    setSelectedDateIdx(0); // 새로운 지역/산을 검색하면 무조건 '오늘'로 리셋
 
     setWeatherData((prev) => ({
       ...prev,
@@ -282,28 +230,18 @@ function App() {
 
   const loadWeather = async (lat, lon, regionName) => {
     setForecastError('');
-    const cacheKey = `weather_cache_${lat}_${lon}`;
-    const cachedData = localStorage.getItem(cacheKey);
-    if (cachedData) {
-      updateWeatherState(JSON.parse(cachedData), regionName, 0, null);
-      setIsAiLoading(false);
-    } else {
-      setIsAiLoading(true);
-    }
-
+    setIsAiLoading(true);
     try {
       const res = await fetch(`${API}/api/weather/summary?lat=${lat}&lon=${lon}`);
       if (!res.ok) throw new Error(`요청 실패`);
       const data = await res.json();
       
       updateWeatherState(data, regionName, 0, null);
-      localStorage.setItem(cacheKey, JSON.stringify(data));
       setIsAiLoading(false);
       setAiMessage('✨ AI가 실시간 날씨를 분석 중이에요...');
       
       const aiRes = await fetch(`${API}/api/weather/ai`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ current: data.current, forecast: data.hourly, air_quality: data.air_quality, mountain_info: null })
       });
       if (aiRes.ok) {
@@ -320,41 +258,20 @@ function App() {
   const loadMountainWeather = async (mountainName) => {
     setForecastError('');
     const localMInfo = MOUNTAINS_LIST.find(m => m.name === mountainName) || MOUNTAINS_LIST[0];
-    const cacheKey = `mountain_cache_${mountainName}`;
-    const cachedData = localStorage.getItem(cacheKey);
-
-    if (cachedData) {
-      const parsed = JSON.parse(cachedData);
-      updateWeatherState(parsed, parsed.mountain_name, parsed.elevation, { ...localMInfo, ...parsed.mountain_info });
-      setIsAiLoading(false);
-    } else {
-      setIsAiLoading(true);
-    }
-
+    setIsAiLoading(true);
     try {
       const res = await fetch(`${API}/api/mountain/summary?name=${encodeURIComponent(mountainName)}`);
-      if (!res.ok) {
-        showToast('해당 산의 날씨 데이터를 찾을 수 없습니다.');
-        setIsAiLoading(false);
-        return;
-      }
+      if (!res.ok) { showToast('해당 산의 날씨 데이터를 찾을 수 없습니다.'); setIsAiLoading(false); return; }
       const data = await res.json();
       const mergedMInfo = { ...localMInfo, ...data.mountain_info };
       
       updateWeatherState(data, data.mountain_name, data.elevation, mergedMInfo);
-      localStorage.setItem(cacheKey, JSON.stringify(data));
       setIsAiLoading(false);
       setAiMessage(`🧗 AI 산악 가이드가 ${data.mountain_name} 등산 환경을 분석 중이에요...`);
       
       const aiRes = await fetch(`${API}/api/weather/ai`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          current: data.current,
-          forecast: data.hourly,
-          air_quality: data.air_quality || { level: '좋음', pm25: 10 },
-          mountain_info: mergedMInfo
-        })
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ current: data.current, forecast: data.hourly, air_quality: data.air_quality || { level: '좋음', pm25: 10 }, mountain_info: mergedMInfo })
       });
       if (aiRes.ok) {
         const aiData = await aiRes.json();
@@ -389,7 +306,6 @@ function App() {
     setSearchInput('');
     try {
       setIsAiLoading(true);
-      
       if (isMountainMode) {
         const res = await fetch(`${API}/api/mountain/search?q=${encodeURIComponent(query)}`);
         if (!res.ok) { showToast('지원하지 않는 산 이름입니다.'); setIsAiLoading(false); return; }
@@ -404,10 +320,7 @@ function App() {
         localStorage.setItem('recentSearches', JSON.stringify(updatedSearches));
         await loadWeather(loc.lat, loc.lon, loc.name);
       }
-    } catch (error) {
-      showToast('검색 중 오류가 발생했습니다.');
-      setIsAiLoading(false);
-    }
+    } catch (error) { showToast('검색 중 오류가 발생했습니다.'); setIsAiLoading(false); }
   };
 
   const handleSearch = () => executeSearch(searchInput.trim());
@@ -415,71 +328,45 @@ function App() {
   const handleInputChange = (e) => {
     const value = e.target.value;
     setSearchInput(value);
-
-    if (value.trim() === '') {
-      setAutoCompleteList([]);
-    } else {
+    if (value.trim() === '') setAutoCompleteList([]);
+    else {
       const sourceList = isMountainMode ? MOUNTAINS : KOREA_REGIONS;
-      const filtered = sourceList.filter(region => 
-        region.toLowerCase().includes(value.toLowerCase())
-      );
-      setAutoCompleteList(filtered);
+      setAutoCompleteList(sourceList.filter(region => region.toLowerCase().includes(value.toLowerCase())));
     }
   };
 
   const handleOpenAddRegion = () => {
-    if (!loggedInUser) {
-      showToast('로그인 후 관심 지역을 관리할 수 있습니다.');
-      return;
-    }
+    if (!loggedInUser) { showToast('로그인 후 관심 지역을 관리할 수 있습니다.'); return; }
     setIsAddRegionOpen(true);
   };
 
   const handleAddFavorite = async (query) => {
-    if (!loggedInUser) {
-      showToast('로그인이 필요한 기능입니다.');
-      return;
-    }
+    if (!loggedInUser) { showToast('로그인이 필요한 기능입니다.'); return; }
     try {
       setIsAiLoading(true);
       const res = await fetch(`${API}/api/location/search?q=${encodeURIComponent(query)}`);
       if (!res.ok) { showToast('지역을 찾을 수 없습니다.'); setIsAiLoading(false); return; }
       const loc = await res.json();
-      if (favorites.some(fav => fav.name === loc.name)) {
-        showToast('이미 관심 지역에 등록되어 있습니다.');
-        setIsAiLoading(false); return;
-      }
+      if (favorites.some(fav => fav.name === loc.name)) { showToast('이미 관심 지역에 등록되어 있습니다.'); setIsAiLoading(false); return; }
       const newFavs = [...favorites, { name: loc.name, lat: loc.lat, lon: loc.lon }];
       saveFavorites(newFavs);
       setIsAddRegionOpen(false);
       showToast(`'${loc.name}' 지역이 성공적으로 추가되었습니다!`);
       if (isMountainMode) setIsMountainMode(false);
       await loadWeather(loc.lat, loc.lon, loc.name);
-    } catch (error) {
-      showToast('지역 추가 중 오류가 발생했습니다.');
-      setIsAiLoading(false);
-    }
+    } catch (error) { showToast('지역 추가 중 오류가 발생했습니다.'); setIsAiLoading(false); }
   };
 
   const handleRemoveFavorite = (nameToRemove) => {
-    if (!loggedInUser) {
-      showToast('로그인 후 관심 지역을 관리할 수 있습니다.');
-      return;
-    }
+    if (!loggedInUser) { showToast('로그인 후 관심 지역을 관리할 수 있습니다.'); return; }
     const newFavs = favorites.filter(fav => fav.name !== nameToRemove);
     saveFavorites(newFavs);
     showToast('관심 지역이 삭제되었습니다.');
   };
 
   const handleCurrentLocation = () => {
-    if (isMountainMode) {
-      showToast('산악 모드에서는 우측 20대 명산 목록을 선택해 주세요.');
-      return;
-    }
-    if (!navigator.geolocation) {
-      showToast('브라우저에서 위치 서비스를 지원하지 않습니다.');
-      return;
-    }
+    if (isMountainMode) { showToast('산악 모드에서는 우측 20대 명산 목록을 선택해 주세요.'); return; }
+    if (!navigator.geolocation) { showToast('브라우저에서 위치 서비스를 지원하지 않습니다.'); return; }
     setIsAiLoading(true);
     navigator.geolocation.getCurrentPosition(
       async (position) => {
@@ -487,50 +374,48 @@ function App() {
         await loadWeather(latitude, longitude, null);
         showToast('현재 위치의 날씨를 성공적으로 불러왔습니다.');
       },
-      (error) => {
-        setIsAiLoading(false);
-        showToast('위치 접근 권한을 허용해 주세요.');
-      }
+      (error) => { setIsAiLoading(false); showToast('위치 접근 권한을 허용해 주세요.'); }
     );
   };
 
   const handleAdminAuth = async () => {
     try {
-      const res = await fetch(`${API}/api/admin/verify`, {
-        method: 'POST',
-        headers: { 'x-admin-password': adminPasswordInput },
-      });
-      if (!res.ok) {
-        alert('비밀번호가 틀렸습니다. 접근 권한이 없습니다.');
-        setAdminPasswordInput('');
-        return;
-      }
-      setAdminPw(adminPasswordInput);
-      setIsAdminAuthOpen(false);
-      setAdminPasswordInput('');
-      setIsAdminPageOpen(true);
-    } catch (e) {
-      alert('서버에 연결할 수 없습니다.');
-    }
+      const res = await fetch(`${API}/api/admin/verify`, { method: 'POST', headers: { 'x-admin-password': adminPasswordInput } });
+      if (!res.ok) { alert('비밀번호가 틀렸습니다. 접근 권한이 없습니다.'); setAdminPasswordInput(''); return; }
+      setAdminPw(adminPasswordInput); setIsAdminAuthOpen(false); setAdminPasswordInput(''); setIsAdminPageOpen(true);
+    } catch (e) { alert('서버에 연결할 수 없습니다.'); }
   };
 
   const getBgColor = () => {
-    switch (bgTheme) {
-      case 'night': return '#1a202c'; 
-      case 'rain': return '#cbd5e1';  
-      case 'cloud': return '#e2e8f0'; 
-      default: return '#f8f6f0';      
-    }
+    switch (bgTheme) { case 'night': return '#1a202c'; case 'rain': return '#cbd5e1'; case 'cloud': return '#e2e8f0'; default: return '#f8f6f0'; }
+  };
+  const getNavColor = () => {
+    switch (bgTheme) { case 'night': return '#000000'; case 'rain': return '#334155'; case 'cloud': return '#475569'; default: return '#1a365d'; }
   };
 
-  const getNavColor = () => {
-    switch (bgTheme) {
-      case 'night': return '#000000';
-      case 'rain': return '#334155';
-      case 'cloud': return '#475569';
-      default: return '#1a365d';
-    }
-  };
+  // 💡 선택된 날짜에 따라 활성화할 날씨 데이터를 동적으로 계산(Mocking)하는 로직
+  const activeWeather = useMemo(() => {
+    if (selectedDateIdx === 0 || !weeklyData[selectedDateIdx]) return weatherData;
+    const target = weeklyData[selectedDateIdx];
+    
+    // 산악 모드일 경우 정상 기온과 산 입구(baseTemp) 기온 차이를 추정
+    const tempDrop = isMountainMode ? (weatherData.summitDrop || 5) : 0;
+    
+    return {
+      ...weatherData,
+      date: `${target.date} (${target.day})`,
+      temp: target.temp_max, // 미래 계획 시 활동 시간대인 '최고기온'을 메인으로 설정
+      feelsLike: target.temp_max - (target.wind_speed >= 5 ? 3 : 0), 
+      baseTemp: target.temp_max + tempDrop,
+      condition: '주간 예보 기준',
+      highLow: `최고 ${target.temp_max}° / 최저 ${target.temp_min}°`,
+      icon: <span style={{ fontSize: '70px', filter: 'drop-shadow(0px 4px 6px rgba(0,0,0,0.1))' }}>{getEmojiIcon(target.icon)}</span>,
+      wind_speed: target.wind_speed || weatherData.wind_speed,
+      humidity: target.humidity || weatherData.humidity,
+      targetPop: target.pop,
+      isFuture: true // 미래 날짜 여부 플래그
+    };
+  }, [weatherData, weeklyData, selectedDateIdx, isMountainMode]);
 
   return (
     <div style={{ backgroundColor: getBgColor(), minHeight: '100vh', display: 'flex', flexDirection: 'column', transition: 'background-color 0.8s ease', position: 'relative' }}>
@@ -583,9 +468,7 @@ function App() {
                           </li>
                         ))}
                       </ul>
-                    ) : (
-                      <p style={{ margin: 0, fontSize: '13px', color: '#94a3b8', textAlign: 'center', padding: '10px 0' }}>최근 검색어가 없습니다.</p>
-                    )}
+                    ) : <p style={{ margin: 0, fontSize: '13px', color: '#94a3b8', textAlign: 'center', padding: '10px 0' }}>최근 검색어가 없습니다.</p>}
                   </>
                 ) : searchInput.trim() === '' && isMountainMode ? (
                   <>
@@ -619,9 +502,7 @@ function App() {
                           </li>
                         ))}
                       </ul>
-                    ) : (
-                      <p style={{ margin: 0, fontSize: '13px', color: '#94a3b8', textAlign: 'center', padding: '10px 0' }}>결과가 없습니다.</p>
-                    )}
+                    ) : <p style={{ margin: 0, fontSize: '13px', color: '#94a3b8', textAlign: 'center', padding: '10px 0' }}>결과가 없습니다.</p>}
                   </>
                 )}
               </div>
@@ -636,17 +517,19 @@ function App() {
 
       <main className="main-container" style={{ flexGrow: 1, maxWidth: '1000px', margin: '0 auto', width: '100%' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', minWidth: 0, height: '100%' }}>
+          
+          {/* 💡 계산된 activeWeather를 모든 하위 컴포넌트로 전달 (날짜 선택 기능 추가) */}
           <WeatherMain 
-            weatherData={weatherData} 
+            weatherData={activeWeather} 
             hourlyData={hourlyData}
+            weeklyData={weeklyData}
+            selectedDateIdx={selectedDateIdx}
+            onSelectDate={(idx) => setSelectedDateIdx(idx)}
             isAiLoading={isAiLoading} 
             aiMessage={aiMessage} 
             favorites={favorites} 
             onAddClick={handleOpenAddRegion} 
-            onFavoriteClick={(fav) => {
-              if (isMountainMode) setIsMountainMode(false);
-              loadWeather(fav.lat, fav.lon, fav.name);
-            }} 
+            onFavoriteClick={(fav) => { if (isMountainMode) setIsMountainMode(false); loadWeather(fav.lat, fav.lon, fav.name); }} 
             onRemoveFavorite={handleRemoveFavorite} 
             onCurrentLocationClick={handleCurrentLocation}
             isMountainMode={isMountainMode}
@@ -655,14 +538,14 @@ function App() {
             mountainsList={MOUNTAINS_LIST}
             onSelectMountain={(mName) => loadMountainWeather(mName)}
           />
-          {/* 💡 산악 모드 정보를 담아 넓은 화면의 HourlyForecast로 데이터 전송 */}
+          
           <HourlyForecast 
             hourlyData={hourlyData} 
             isLoading={isAiLoading} 
             error={forecastError} 
             isMountainMode={isMountainMode}
             mountainInfo={mountainInfo}
-            weatherData={weatherData}
+            weatherData={activeWeather}
           />
           <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
             <WeatherOutlook 
@@ -684,26 +567,30 @@ function App() {
             onUpdateUser={handleUpdateUser}
             onDeleteAccount={handleDeleteAccount}
           />
+          
           <WeatherDetails 
             current={{ 
-              temp: weatherData.temp, 
-              feelsLike: weatherData.feelsLike,
-              baseTemp: weatherData.baseTemp,
-              humidity: weatherData.humidity, 
-              wind_speed: weatherData.wind_speed, 
-              description: weatherData.condition,
-              sunrise: weatherData.sunrise,
-              sunset: weatherData.sunset,
-              safeDescentTime: weatherData.safeDescentTime,
-              elevation: weatherData.elevation
+              temp: activeWeather.temp, 
+              feelsLike: activeWeather.feelsLike,
+              baseTemp: activeWeather.baseTemp,
+              humidity: activeWeather.humidity, 
+              wind_speed: activeWeather.wind_speed, 
+              description: activeWeather.condition,
+              sunrise: activeWeather.sunrise,
+              sunset: activeWeather.sunset,
+              safeDescentTime: activeWeather.safeDescentTime,
+              elevation: activeWeather.elevation,
+              targetPop: activeWeather.targetPop, // 💡 미래 강수 판단용으로 추가
+              isFuture: activeWeather.isFuture
             }} 
             airQuality={{ 
-              level: (weatherData.dust && weatherData.dust.split(' ')[0]) || '보통', 
-              pm25: (weatherData.dust && weatherData.dust.match(/\d+/)) ? parseInt(weatherData.dust.match(/\d+/)[0]) : 15 
+              level: (activeWeather.dust && activeWeather.dust.split(' ')[0]) || '보통', 
+              pm25: (activeWeather.dust && activeWeather.dust.match(/\d+/)) ? parseInt(activeWeather.dust.match(/\d+/)[0]) : 15 
             }}
             isMountainMode={isMountainMode}
             mountainInfo={mountainInfo}
           />
+          
           <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
             <WeeklyForecast weeklyData={weeklyData} isLoading={isAiLoading} />
           </div>
@@ -731,13 +618,6 @@ function App() {
             </div>
           </div>
         </div>
-      )}
-      {isNoticeOpen && <NoticeModal onClose={() => setIsNoticeOpen(false)} />}
-      {isSignUpOpen && <SignUpModal onClose={() => setIsSignUpOpen(false)} />}
-      {isFindPasswordOpen && <FindPasswordModal onClose={() => setIsFindPasswordOpen(false)} />}
-      {isAddRegionOpen && <AddRegionModal onClose={() => setIsAddRegionOpen(false)} onAddRegion={handleAddFavorite} isAiLoading={isAiLoading} />}
-      {isAdminPageOpen && (
-        <AdminPage adminPassword={adminPw} onClose={() => { setIsAdminPageOpen(false); setAdminPw(''); }} />
       )}
     </div>
   );
