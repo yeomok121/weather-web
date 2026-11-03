@@ -9,6 +9,7 @@ const prettyKey = (key = '') => ({
   TM_EF: '예보 시각', W1: '풍향 시작', W2: '풍향 종료', ST: '강수 확률', SKY: '하늘 상태', PREP: '강수 형태', WF: '예보',
   LON: '경도', LAT: '위도', TP: '관측 종류', WS2: '풍속 범위', WH1: '파고 시작', WH2: '파고 범위',
   obsvtrNm: '기준 관측소', obsrvnDt: '예측 시각', obsrvnHgt: '예측 조위',
+  distance_km: '선택 위치와 거리',
 })[key] || key.replaceAll('_', ' ');
 
 function DataRows({ rows, type }) {
@@ -23,7 +24,12 @@ function DataRows({ rows, type }) {
 }
 
 async function fetchFishingSummary() {
-  const response = await fetch(`${API}/api/fishing/summary?place=${encodeURIComponent('제주 북부 해상')}&region=`);
+  const query = new URLSearchParams({
+    place: '추자도 해상',
+    lat: '33.96194',
+    lon: '126.44527',
+  });
+  const response = await fetch(`${API}/api/fishing/summary?${query}`);
   const body = await response.json();
   if (!response.ok) throw new Error(body.detail || '해양 자료를 불러오지 못했습니다.');
   return body;
@@ -62,7 +68,7 @@ export default function FishingPage() {
         <span className="fish-eyebrow"><FiAnchor /> WEATHER+ · 바다</span>
         <h1>오늘, 바다에 나가도 될까?</h1>
         <p>해상예보와 부이 실황, 조위 흐름을 한 화면에서 확인하세요.</p>
-        <div className="fish-place"><FiMapPin /> 제주 북부 해상 <span>· 조위 예측은 추자도 기준, 해상예보는 전국 발표 자료</span></div>
+        <div className="fish-place"><FiMapPin /> {data?.place || '추자도 해상'} <span>· 관측은 선택 위치에서 가까운 부이, 조위는 인근 TideBED 관측소 기준</span></div>
         <button className="fish-refresh" onClick={load} disabled={loading}><FiRefreshCw className={loading ? 'fish-spin' : ''} /> {loading ? '자료 확인 중' : '최신 자료 불러오기'}</button>
       </div>
       <div className="fish-hero-art"><div className="fish-orb"><FiAnchor /></div><span>CHECK THE SEA</span></div>
@@ -72,23 +78,23 @@ export default function FishingPage() {
     <div className="fish-data-meta"><FiClock /> 기준 자료 갱신 {data?.updated_at || '확인 전'} <span>· 기관 원자료 기준</span></div>
 
     <section className="fish-metrics">
-      <article className="fish-panel fish-metric-panel"><div className="fish-panel-title"><FiActivity /><div><h2>바다 실황</h2><p>기상청 전체 부이 관측 중 최근 자료</p></div></div>
+      <article className="fish-panel fish-metric-panel"><div className="fish-panel-title"><FiActivity /><div><h2>바다 실황</h2><p>선택 위치에서 가까운 기상청 해양 부이 관측</p></div></div>
         <div className="fish-metric-grid">
           {metrics.map((key) => <div className="fish-metric" key={key}><span>{prettyKey(key)}</span><strong>{firstBuoy[key] || '—'}<small>{({WH:' m',WH_SIG:' m',WS:' m/s',WS1:' m/s',TW:'°C',TA:'°C',HM:'%'})[key] || ''}</small></strong></div>)}
           {!buoyEntries.length && <p className="fish-empty">관측 자료를 불러오면 파고와 바람을 이곳에 표시합니다.</p>}
         </div>
-        {firstBuoy.STN_KO && <p className="fish-station">가장 최근 관측 지점 <b>{firstBuoy.STN_KO}</b> · {firstBuoy.TM}</p>}
+        {firstBuoy.STN_KO && <p className="fish-station">가장 가까운 관측 지점 <b>{firstBuoy.STN_KO}</b> · 약 {firstBuoy.distance_km ?? '—'} km · {firstBuoy.TM}</p>}
         <DataRows rows={buoyRows.slice(1)} type="buoy" />
         {data?.errors?.buoy && <p className="fish-inline-error">{data.errors.buoy}</p>}
       </article>
 
-      <article className="fish-panel fish-tide-panel"><div className="fish-panel-title"><FiDroplet /><div><h2>오늘의 조위</h2><p>TideBED 예측 · 추자도 기준</p></div></div>
+      <article className="fish-panel fish-tide-panel"><div className="fish-panel-title"><FiDroplet /><div><h2>오늘의 조위</h2><p>TideBED 예측 · 선택 위치 인근 관측소 기준</p></div></div>
         {tideRows.length ? <div className="fish-tide-values">{tideRows.map((item, index) => <div className="fish-tide-item" key={`${item.obsrvnDt}-${index}`}><span>{prettyKey('obsrvnDt')}</span><b>{item.obsrvnDt || '—'}</b><span>{prettyKey('obsrvnHgt')}</span><b>{item.obsrvnHgt ?? '—'}</b></div>)}</div> : <p className="fish-empty">조위 자료를 불러오면 예측 정보를 표시합니다.</p>}
         {data?.errors?.tide && <p className="fish-inline-error">{data.errors.tide}</p>}
       </article>
     </section>
 
-    <section className="fish-panel fish-forecast-panel"><div className="fish-panel-title"><FiWind /><div><h2>해상예보</h2><p>기상청 단기 해상예보 · 전국 발표 자료</p></div></div>
+    <section className="fish-panel fish-forecast-panel"><div className="fish-panel-title"><FiWind /><div><h2>해상예보</h2><p>기상청 단기 해상예보 · {data?.region_name || '제주 인근 해역'}</p></div></div>
       <DataRows rows={sources.forecast?.records} type="forecast" />
       {data?.errors?.forecast && <p className="fish-inline-error">{data.errors.forecast}</p>}
     </section>
