@@ -728,7 +728,15 @@ function App() {
 
         /* 💡 레이아웃 전체 간격(gap) 축소 및 모바일 최적화 */
         @media (max-width: 900px) {
-          .main-container { grid-template-columns: 1fr !important; display: flex !important; flex-direction: column !important; padding: 18px 16px !important; gap: 14px !important; }
+          .main-container { grid-template-columns: minmax(0, 1fr) !important; display: grid !important; padding: 18px 16px !important; gap: 14px !important; }
+          .main-primary-column, .main-side-column { display: contents !important; }
+          .main-container .detail-info-card { order: 1; }
+          .main-container .hourly-forecast-card { order: 2; }
+          .main-container .main-weekly-card { order: 3; }
+          .main-container .main-outlook-card { order: 4; }
+          .main-container .main-login-card { order: 5; }
+          .main-container.is-mountain-mode .hourly-forecast-card { order: 1; }
+          .main-container.is-mountain-mode .detail-info-card { order: 2; }
           .top-nav { padding: 10px 16px !important; }
           .top-nav-inner { flex-direction: column !important; gap: 8px !important; }
           .search-wrapper { width: 100% !important; max-width: 100% !important; }
@@ -840,8 +848,8 @@ function App() {
         </div>
       </nav>
 
-      <main className="main-container" style={{ flexGrow: 1, maxWidth: '1320px', margin: '0 auto', width: '100%', zIndex: 1, padding: '28px 24px' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', minWidth: 0 }}>
+      <main className={`main-container ${isMountainMode ? 'is-mountain-mode' : ''}`} style={{ flexGrow: 1, maxWidth: '1320px', margin: '0 auto', width: '100%', zIndex: 1, padding: '28px 24px' }}>
+        <div className="main-primary-column" style={{ display: 'flex', flexDirection: 'column', gap: '16px', minWidth: 0 }}>
           
           <WeatherMain 
             weatherData={activeWeather} 
@@ -884,7 +892,7 @@ function App() {
             onApplyHikingPlan={handleApplyHikingPlan}
           />
           
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <div className="main-outlook-card" style={{ display: 'flex', flexDirection: 'column' }}>
             <WeatherOutlook 
               weeklyData={weeklyData} 
               aiBriefing={aiBriefing} 
@@ -896,8 +904,8 @@ function App() {
           </div>
         </div>
         
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', minWidth: 0 }}>
-          <div className="glass-card" style={{ borderRadius: '16px', overflow: 'hidden' }}>
+        <div className="main-side-column" style={{ display: 'flex', flexDirection: 'column', gap: '16px', minWidth: 0 }}>
+          <div className="glass-card main-login-card" style={{ borderRadius: '16px', overflow: 'hidden' }}>
              <LoginCard 
               onSignUpClick={() => setIsSignUpOpen(true)} 
               onFindPasswordClick={() => setIsFindPasswordOpen(true)} 
@@ -936,7 +944,7 @@ function App() {
             weatherFetchedAt={weatherFetchedAt}
           />
           
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <div className="main-weekly-card" style={{ display: 'flex', flexDirection: 'column' }}>
             <WeeklyForecast weeklyData={weeklyData} isLoading={isAiLoading} />
           </div>
         </div>

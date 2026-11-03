@@ -555,7 +555,7 @@ function HourlyForecast({
   };
 
   return (
-    <div className="glass-card" style={{ borderRadius: '16px', padding: '20px', display: 'flex', flexDirection: 'column', color: '#1e293b', width: '100%', boxSizing: 'border-box' }}>
+    <div className="glass-card hourly-forecast-card" style={{ borderRadius: '16px', padding: '20px', display: 'flex', flexDirection: 'column', color: '#1e293b', width: '100%', boxSizing: 'border-box' }}>
       <style>{`
         .hourly-chart-wrapper .recharts-surface { overflow: visible !important; }
         @media (max-width: 640px) {
