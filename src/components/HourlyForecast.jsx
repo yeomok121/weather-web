@@ -55,7 +55,7 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
   const terrain = mountainInfo?.terrain || '';
   const isFuture = weatherData?.isFuture || false;
 
-  // 💡 정상 풍속을 반영한 실제 체감온도 계산
+  // 정상 풍속을 반영한 실제 체감온도 계산
   const summitFeelsLike = temp <= 15 ? Math.round(temp - (wind * 0.7)) : temp;
 
   const courses = mountainInfo?.courses || [{ name: '기본 탐방로', distance: '5km', time: 180, diff: '중' }];
@@ -352,10 +352,8 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
       {isMountainMode && !isLoading && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '24px' }}>
           
-          {/* 💡 Flexbox의 억지 늘어남(stretch)을 없애서 자연스럽게 채워지도록 함 */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', alignItems: 'flex-start' }}>
             
-            {/* 💡 빈 공간을 완벽히 채워줄 컬럼 레이아웃 (위: 지수/고도, 아래: 체감기상) */}
             <div className="mtn-score-altitude-box" style={{ flex: '1 1 250px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
               
               <div className="mtn-left-top-row" style={{ display: 'flex', gap: '12px', flex: 1 }}>
@@ -389,7 +387,6 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
                 </div>
               </div>
 
-              {/* 💡 빈 공간을 꽉 채워주는 신규 '체감 기상 및 노면 상태' 정보 카드 */}
               <div style={{ flex: 1, backgroundColor: 'rgba(255,255,255,0.5)', borderRadius: '12px', padding: '16px', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '10px' }}>
                 <h4 style={{ margin: '0 0 4px 0', fontSize: '13.5px', color: '#166534', fontWeight: '800' }}>🌡️ 체감 기상 및 노면 상태</h4>
                 
@@ -415,7 +412,7 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
 
             </div>
 
-            <div style={{ flex: '1 1 290px', backgroundColor: 'rgba(255,255,255,0.6)', borderRadius: '12px', padding: '16px', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            <div style={{ flex: '1 1 290px', backgroundColor: 'rgba(255,255,255,0.6)', borderRadius: '12px', padding: '16px', display: 'flex', flexDirection: 'column', overflow: 'hidden', height: 'fit-content' }}>
               
               <h4 style={{ margin: '0 0 10px 0', fontSize: '14px', color: '#1e293b', display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
                 <span style={{ whiteSpace: 'nowrap', fontWeight: '800' }}>⏱️ 코스별 타임라인</span>
@@ -473,11 +470,12 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
                       type="button"
                       onClick={() => setPaceType(p.key)}
                       style={{
-                        flex: 1, padding: '4px 6px', fontSize: '11px', fontWeight: 'bold', borderRadius: '6px', cursor: 'pointer',
+                        /* 💡 whiteSpace: 'nowrap'을 적용해 글자 밀림 방지 */
+                        flex: 1, padding: '4px 2px', fontSize: '11px', fontWeight: 'bold', borderRadius: '6px', cursor: 'pointer',
                         border: paceType === p.key ? '1px solid #16a34a' : '1px solid transparent',
                         backgroundColor: paceType === p.key ? '#dcfce7' : 'rgba(255,255,255,0.7)',
                         color: paceType === p.key ? '#166534' : '#64748b',
-                        transition: 'all 0.15s'
+                        transition: 'all 0.15s', whiteSpace: 'nowrap', letterSpacing: '-0.3px'
                       }}
                     >
                       {p.label}
@@ -504,16 +502,18 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
               </div>
 
               <div style={{ display: 'flex', gap: '6px', marginTop: 'auto' }}>
+                {/* 💡 양쪽 지도 버튼 텍스트를 "카카오맵/네이버지도 들머리"로 짧고 깔끔하게 통일 */}
                 <button
                   type="button"
                   onPointerDown={(e) => handleOpenMap('kakao', e)}
                   style={{
                     flex: 1, padding: '7px 8px', borderRadius: '8px', border: '1px solid #eab308',
                     backgroundColor: '#fef9c3', color: '#854d0e', fontSize: '11.5px', fontWeight: '800',
-                    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px'
+                    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px',
+                    whiteSpace: 'nowrap'
                   }}
                 >
-                  <FiMapPin size={12} /> 카카오맵 들머리 길찾기
+                  <FiMapPin size={12} /> 카카오맵 들머리
                 </button>
                 <button
                   type="button"
@@ -521,7 +521,8 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
                   style={{
                     flex: 1, padding: '7px 8px', borderRadius: '8px', border: '1px solid #22c55e',
                     backgroundColor: '#dcfce7', color: '#166534', fontSize: '11.5px', fontWeight: '800',
-                    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px'
+                    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px',
+                    whiteSpace: 'nowrap'
                   }}
                 >
                   <FiMapPin size={12} /> 네이버지도 들머리
