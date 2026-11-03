@@ -21,6 +21,10 @@ const CustomLabel = ({ x, y, value }) => (
 function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = '', isMountainMode = false, mountainInfo = null, weatherData = {}, onShowToast }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedCourseIdx, setSelectedCourseIdx] = useState(0);
+  
+  // 💡 일출(등산)/일몰(하산) 모드를 전환하는 상태 추가
+  const [timelineMode, setTimelineMode] = useState('descent'); // 'descent' | 'ascent'
+  
   const [gearList, setGearList] = useState([]);
   const [checklist, setChecklist] = useState({});
   const [newGearInput, setNewGearInput] = useState('');
@@ -40,6 +44,7 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
   const desc = weatherData?.condition || '';
   const isRainOrSnow = desc.includes('비') || desc.includes('소나기') || desc.includes('눈') || desc.includes('우박') || (weatherData?.targetPop >= 60);
   const isSnow = desc.includes('눈');
+  const sunrise = weatherData?.sunrise || '06:30';
   const sunset = weatherData?.sunset || '18:00';
   const safeDescentTime = weatherData?.safeDescentTime || mountainInfo?.safe_descent_time || '15:30';
   const terrain = mountainInfo?.terrain || '';
@@ -52,6 +57,12 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
     if (isRainOrSnow) items.push('판초우의 또는 배낭 커버');
     if (terrain.includes('암릉') || terrain.includes('바위')) items.push('반장갑 (바위용)', '릿지화(암릉화)');
     items.push('등산 스틱', '비상용 헤드랜턴');
+    
+    // 일출 산행 모드일 경우 강제로 헤드랜턴 및 방한 용품 추가
+    if (timelineMode === 'ascent' && isMountainMode) {
+      if (!items.includes('비상용 헤드랜턴')) items.push('헤드랜턴 (여분 배터리)');
+      if (temp <= 10 && !items.includes('방한모 및 넥워머')) items.push('새벽 칼바람 대비 보온의류');
+    }
     return items;
   };
 
@@ -63,7 +74,7 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
     setSelectedCourseIdx(0);
     setGearList(buildWeatherGearList());
     setChecklist({});
-  }, [mountainInfo?.name, weatherData?.date, temp, wind, isRainOrSnow, terrain]);
+  }, [mountainInfo?.name, weatherData?.date, temp, wind, isRainOrSnow, terrain, timelineMode]);
 
   const toggleCheck = (item) => {
     setChecklist(prev => ({ ...prev, [item]: !prev[item] }));
@@ -171,14 +182,40 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
   const courses = mountainInfo?.courses || [{ name: '기본 탐방로', distance: '5km', time: 180, diff: '중' }];
   const selectedCourse = courses[selectedCourseIdx] || courses[0];
 
+  // 💡 일몰(하산) 계산과 일출(등산) 계산을 분리 처리하는 로직
   const getTimelineStatus = () => {
     const parseTime = (str) => {
       if (!str || !str.includes(':')) return 1080;
       const [h, m] = str.split(':').map(Number);
       return h * 60 + m;
     };
-    const safeDescentMins = parseTime(safeDescentTime);
+    
     const requiredMins = selectedCourse.time;
+
+    // 1. 일출 산행 모드 (Sunrise Ascent)
+    if (timelineMode === 'ascent') {
+      const sunriseMins = parseTime(sunrise);
+      let depMins = sunriseMins - requiredMins;
+      let isPrevDay = false;
+      
+      if (depMins < 0) {
+        depMins += 24 * 60; // 전날로 넘어감
+        isPrevDay = true;
+      }
+      
+      const depH = Math.floor(depMins / 60);
+      const depM = String(depMins % 60).padStart(2, '0');
+      const depStr = `${isPrevDay ? '전날 ' : ''}${depH}:${depM}`;
+      
+      return { 
+        status: 'sunrise', 
+        deadlineStr: depStr, 
+        msg: `🌅 일출(${sunrise}) 조망: 늦어도 ${depStr}에는 산행을 시작해야 합니다.` 
+      };
+    }
+
+    // 2. 일몰 하산 모드 (Sunset Descent) - 기존 로직
+    const safeDescentMins = parseTime(safeDescentTime);
     const deadlineMins = safeDescentMins - requiredMins; 
     const deadlineH = Math.floor(deadlineMins / 60);
     const deadlineM = String(deadlineMins % 60).padStart(2, '0');
@@ -204,13 +241,17 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
       ? gearList.map(item => `${checklist[item] ? '☑️' : '⬜'} ${item}`).join('\n  ')
       : '없음';
 
+    const timelineStr = timelineMode === 'ascent'
+      ? `🌅 일출 산행: 일출(${sunrise})을 보려면 늦어도 ${timeline.deadlineStr}에 출발하세요.`
+      : `🚨 안전 하산 마감: ${safeDescentTime} 이전 (일몰 ${sunset})`;
+
     const shareText = [
       `⛰️ [${mName} ${peak} 산행 기상 브리핑]`,
       `📅 일자: ${weatherData.date}`,
       `🌡️ 정상 기온: ${temp}°C (입구 평지 ${baseTemp}°C / 풍속 ${wind}m/s)`,
       `🏆 산행 지수: ${score}점 (${score >= 80 ? '매우 쾌적' : score >= 60 ? '산행 무난' : '주의 필요'})`,
       `🥾 선택 코스: ${selectedCourse.name} (거리 ${selectedCourse.distance} · 약 ${Math.floor(selectedCourse.time / 60)}시간 ${selectedCourse.time % 60}분 소요)`,
-      `🚨 안전 하산 마감: ${safeDescentTime} 이전 (일몰 ${sunset})`,
+      timelineStr,
       `🎒 맞춤 배낭 체크리스트:\n  ${formattedGear}`,
       `🔗 날씨 대시보드: ${window.location.href}`
     ].join('\n');
@@ -283,9 +324,23 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
 
             <div style={{ flex: '1 1 270px', backgroundColor: 'rgba(255,255,255,0.6)', borderRadius: '12px', padding: '16px', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
               
+              {/* 💡 일출(등산)/일몰(하산) 모드를 전환하는 토글 버튼 추가 */}
               <h4 style={{ margin: '0 0 12px 0', fontSize: '14px', color: '#1e293b', display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
-                <span style={{ whiteSpace: 'nowrap', fontWeight: '800' }}>⏱️ 코스별 하산 타임라인</span>
-                <span style={{ fontSize: '11px', color: '#475569', fontWeight: '600', whiteSpace: 'nowrap', backgroundColor: 'rgba(255,255,255,0.8)', padding: '2px 8px', borderRadius:'10px' }}>일몰 {sunset} 기준</span>
+                <span style={{ whiteSpace: 'nowrap', fontWeight: '800' }}>⏱️ 코스별 타임라인</span>
+                <div style={{ display: 'flex', backgroundColor: 'rgba(255,255,255,0.6)', padding: '2px', borderRadius: '8px', border: '1px solid rgba(0,0,0,0.05)' }}>
+                  <button
+                    onClick={() => setTimelineMode('descent')}
+                    style={{ padding: '4px 10px', fontSize: '11px', fontWeight: 'bold', border: 'none', borderRadius: '6px', cursor: 'pointer', backgroundColor: timelineMode === 'descent' ? '#ffffff' : 'transparent', color: timelineMode === 'descent' ? '#1d4ed8' : '#64748b', boxShadow: timelineMode === 'descent' ? '0 1px 2px rgba(0,0,0,0.1)' : 'none', transition: 'all 0.2s' }}
+                  >
+                    🌇 일몰/하산
+                  </button>
+                  <button
+                    onClick={() => setTimelineMode('ascent')}
+                    style={{ padding: '4px 10px', fontSize: '11px', fontWeight: 'bold', border: 'none', borderRadius: '6px', cursor: 'pointer', backgroundColor: timelineMode === 'ascent' ? '#ffffff' : 'transparent', color: timelineMode === 'ascent' ? '#c2410c' : '#64748b', boxShadow: timelineMode === 'ascent' ? '0 1px 2px rgba(0,0,0,0.1)' : 'none', transition: 'all 0.2s' }}
+                  >
+                    🌅 일출/등산
+                  </button>
+                </div>
               </h4>
               
               <div 
@@ -324,8 +379,8 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
               </div>
 
               <div style={{ fontSize: '12px', fontWeight: 'bold', textAlign: 'center', padding: '10px', borderRadius: '8px', marginTop: 'auto', wordBreak: 'keep-all', lineHeight: '1.4',
-                backgroundColor: timeline.status === 'safe' ? 'rgba(240,253,244,0.8)' : timeline.status === 'warning' ? 'rgba(254,252,232,0.8)' : 'rgba(254,242,242,0.8)',
-                color: timeline.status === 'safe' ? '#166534' : timeline.status === 'warning' ? '#a16207' : '#991b1b'
+                backgroundColor: timeline.status === 'sunrise' ? 'rgba(255,247,237,0.8)' : timeline.status === 'safe' ? 'rgba(240,253,244,0.8)' : timeline.status === 'warning' ? 'rgba(254,252,232,0.8)' : 'rgba(254,242,242,0.8)',
+                color: timeline.status === 'sunrise' ? '#c2410c' : timeline.status === 'safe' ? '#166534' : timeline.status === 'warning' ? '#a16207' : '#991b1b'
               }}>
                 {timeline.msg}
               </div>
@@ -457,7 +512,6 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
         <div className="hourly-chart-wrapper" style={{ overflow: 'hidden', width: '100%', position: 'relative' }}>
           <div style={{ transition: 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)', transform: `translateX(-${(visibleIndex / forecastData.length) * 100}%)`, width: `${(forecastData.length / ITEMS_TO_SHOW) * 100}%`, position: 'relative' }}>
             
-            {/* 💡 핵심: 각 시간 칼럼의 정중앙(100 / 2N %)에 그래프의 첫 점과 끝 점이 정확히 오도록 수학적 비율 패딩 적용 */}
             <div style={{ position: 'absolute', top: '68px', left: 0, right: 0, height: '100px', zIndex: 1, padding: `0 ${100 / (2 * forecastData.length)}%`, boxSizing: 'border-box' }}>
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={forecastData} margin={{ top: 28, bottom: 16, left: 0, right: 0 }}>
@@ -467,7 +521,6 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
               </ResponsiveContainer>
             </div>
             
-            {/* 상/하단 시간·아이콘·강수확률 영역은 패딩 없이 1/N 균등 분할하여 위 차트의 점과 1:1 수직 일치 */}
             <div style={{ display: 'flex', width: '100%', position: 'relative', zIndex: 2 }}>
               {forecastData.map((item) => (
                 <div key={item.id} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
