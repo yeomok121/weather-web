@@ -12,7 +12,7 @@ import WeeklyForecast, { getEmojiIcon } from './components/WeeklyForecast';
 import WeatherOutlook from './components/WeatherOutlook'; 
 import { FiSearch, FiBell, FiSettings, FiClock, FiCheckCircle } from 'react-icons/fi';
 import { API } from './config';
-import { assessMountainWeather } from './components/mountainAssessment';
+import { assessMountainWeather, getHourlyForecastIndex } from './components/mountainAssessment';
 
 const KOREA_REGIONS = [
   '서울특별시', '부산광역시', '대구광역시', '인천광역시', '광주광역시', '대전광역시', '울산광역시', '세종특별자치시',
@@ -433,7 +433,20 @@ function App() {
       wind_speed: target.wind_speed || weatherData.wind_speed,
       humidity: target.humidity || weatherData.humidity,
       targetPop: target.pop,
-      isFuture: true
+      isFuture: true,
+      weatherSources: isMountainMode ? {
+        temperature: '주간 예보 기반 고도 보정 추정값',
+        wind: '주간 예보 기반 고도·지형 보정 추정값',
+        humidity: '주간 예보 기반 추정값',
+      } : {
+        temperature: '기상청 주간 예보',
+        wind: '기상청 주간 예보',
+        humidity: '기상청 주간 예보',
+      },
+      dataAsOf: null,
+      dataNote: isMountainMode
+        ? '선택 날짜의 주간 예보를 고도·지형 보정해 표시합니다. 정상 실측값이 아닙니다.'
+        : '선택 날짜의 주간 예보입니다.'
     };
   }, [weatherData, weeklyData, selectedDateIdx, isMountainMode]);
 
@@ -497,7 +510,11 @@ function App() {
 
     let summitForecast = null;
     if (!activeWeather.isFuture && Array.isArray(hourlyData) && hourlyData.length > 0) {
-      const elapsedHoursToSummit = departureOffsetHours + Math.round(ascentMins / 60);
+      const elapsedHoursToSummit = getHourlyForecastIndex({
+        now,
+        departureOffsetHours,
+        ascentMinutes: ascentMins,
+      });
       if (elapsedHoursToSummit >= 0 && elapsedHoursToSummit < hourlyData.length) {
         const matched = hourlyData[elapsedHoursToSummit];
         const mTemp = Number(matched.temp);

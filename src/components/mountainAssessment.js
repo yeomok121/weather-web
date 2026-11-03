@@ -1,6 +1,13 @@
 // 산악 기상 점수는 공식 산행 허가나 안전 보증이 아닌, 제공된 기상요소를 조합한 참고 지표입니다.
 const clamp = (value, min = 0, max = 100) => Math.max(min, Math.min(max, value));
 
+// Hourly forecast rows start at the current floored hour. Select the closest
+// forecast hour to the estimated summit arrival; do not invent interpolated values.
+export function getHourlyForecastIndex({ now = new Date(), departureOffsetHours = 0, ascentMinutes = 0 } = {}) {
+  const minutesFromForecastStart = now.getMinutes() + (departureOffsetHours * 60) + ascentMinutes;
+  return Math.max(0, Math.round(minutesFromForecastStart / 60));
+}
+
 export function assessMountainWeather({ temp = 0, wind = 0, condition = '', targetPop = 0, pm25 = 15, humidity = 50 } = {}) {
   const text = String(condition || '');
   const popValue = Number(targetPop) || 0;

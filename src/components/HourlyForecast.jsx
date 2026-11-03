@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { FiChevronLeft, FiChevronRight, FiShare2, FiPlus, FiX, FiRotateCcw, FiMapPin, FiClock, FiEye } from 'react-icons/fi';
 import { LineChart, Line, YAxis, ResponsiveContainer } from 'recharts';
 import { getEmojiIcon } from './WeeklyForecast';
-import { assessMountainWeather, estimateSummitView } from './mountainAssessment';
+import { assessMountainWeather, estimateSummitView, getHourlyForecastIndex } from './mountainAssessment';
 
 const ITEMS_TO_SHOW = 6;
 const EMPTY_HOURLY = [];
@@ -312,7 +312,11 @@ function HourlyForecast({
     if (isFuture) {
       arrivalWeather = { available: false, reason: '예측 불가 (미래 일자는 주간 예보 참고)' };
     } else if (Array.isArray(rawForecastData) && rawForecastData.length > 0) {
-      const hoursUntilSummit = activeDepOffset + Math.round(ascentTimeMins / 60);
+      const hoursUntilSummit = getHourlyForecastIndex({
+        now,
+        departureOffsetHours: activeDepOffset,
+        ascentMinutes: ascentTimeMins,
+      });
       if (hoursUntilSummit >= 0 && hoursUntilSummit < rawForecastData.length) {
         const matched = rawForecastData[hoursUntilSummit];
         const mTemp = matched.tempNum;
@@ -542,7 +546,7 @@ function HourlyForecast({
                 </div>
                 <div style={{ fontSize: '9.5px', color: '#64748b', lineHeight: '1.45', borderTop: '1px dashed rgba(0,0,0,0.1)', paddingTop: '5px' }}>
                   <strong>데이터 구분:</strong> 기온 {weatherData?.weatherSources?.temperature || '고도 보정 추정값'} · 바람 {weatherData?.weatherSources?.wind || '고도 보정 추정값'} · 습도 {weatherData?.weatherSources?.humidity || '고도 보정 추정값'}
-                  {weatherData?.dataAsOf && <div>수신 시각: {weatherData.dataAsOf.replace('T', ' ')}</div>}
+                  {weatherData?.dataAsOf && <div>응답 생성 시각: {weatherData.dataAsOf.replace('T', ' ')}</div>}
                   <div>{weatherData?.dataNote || '정상 실측값이 없는 항목은 고도 보정 추정값일 수 있습니다.'}</div>
                 </div>
               </div>

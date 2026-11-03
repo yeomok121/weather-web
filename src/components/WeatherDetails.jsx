@@ -75,11 +75,11 @@ function WeatherDetails({ airQuality = {}, current = {}, isMountainMode = false,
   const getMountainIndices = () => {
     const badges = [];
     if (isRainOrSnow) badges.push({ text: '🌫️ 곰탕 시야 불량', color: '#64748b' });
-    else if (temp <= -2 && humidity >= 75) badges.push({ text: '❄️ 눈꽃 절경 기대', color: '#0ea5e9' });
-    else if (humidity >= 80 && wind <= 3.5) badges.push({ text: '🌊 운해 확률 높음', color: '#8b5cf6' });
+    else if (temp <= -2 && humidity >= 75) badges.push({ text: '❄️ 상고대 형성 조건 참고', color: '#0ea5e9' });
+    else if (humidity >= 80 && wind <= 3.5) badges.push({ text: '🌊 운해 형성 조건 일부 해당', color: '#8b5cf6' });
     else if (humidity >= 85) badges.push({ text: '🌫️ 산안개 시야 주의', color: '#c2410c' });
-    else if (pm25 <= 25 && desc.includes('맑음')) badges.push({ text: '🔭 탁 트인 뻥뷰', color: '#0ea5e9' });
-    else badges.push({ text: '🏞️ 조망 양호', color: '#10b981' });
+    else if (pm25 <= 25 && desc.includes('맑음')) badges.push({ text: '🔭 조망 환경 양호 추정', color: '#0ea5e9' });
+    else badges.push({ text: '🏞️ 조망 환경 참고 판단', color: '#10b981' });
 
     if (temp <= 2 && (isRainOrSnow || humidity >= 70)) badges.push({ text: '🧊 블랙아이스 주의', color: '#dc2626' });
     else if (isRainOrSnow) badges.push({ text: '⚠️ 젖은 바위 조심', color: '#ea580c' });
