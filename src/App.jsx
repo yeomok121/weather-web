@@ -44,7 +44,7 @@ export const MOUNTAINS_LIST = [
   { name: '주왕산', elevation: 721, peak: '주봉', region: '경북 청송', terrain: '협곡·흙길', difficulty: '하', cctv_url: 'https://www.knps.or.kr/portal/main/contents.do?menuNo=8000159', course_tip: '험한 구간이 적어 초보자 산행에 적합하며 아침 물안개가 자주 낍니다.', courses: [{ name: '대전사~주봉 코스', distance: '9km', time: 270, diff: '하' }] },
   { name: '도봉산', elevation: 740, peak: '신선대', region: '서울/경기', terrain: '거대 화강암', difficulty: '중상', cctv_url: 'https://www.knps.or.kr/portal/main/contents.do?menuNo=8000159', course_tip: '신선대 오름길은 가파른 쇠난간을 잡아야 하므로 장갑을 권장합니다.', courses: [{ name: '도봉탐방센터~신선대', distance: '6.5km', time: 210, diff: '중상' }] },
   { name: '관악산', elevation: 632, peak: '연주대', region: '서울/경기과천', terrain: '바위 능선', difficulty: '중', cctv_url: 'https://www.youtube.com/results?search_query=%EA%B4%80%EC%95%85%EC%82%B0+%EC%97%B0%EC%A3%BC%EB%8C%80+%EC%8B%A4%EC%8B%9C%EA%B0%84', course_tip: '사당 코스는 노출된 바위 능선이 많아 비 온 뒤 미끄럼에 주의하세요.', courses: [{ name: '서울대~연주대 코스', distance: '6km', time: 210, diff: '중' }] },
-  { name: '대둔산', elevation: 878, peak: '마천대', region: '충남/전북', terrain: '구름다리·철계단', difficulty: '중', cctv_url: 'https://www.youtube.com/results?search_query=%EB%8C%80%EB%91%94%EC%82%B0+%EB%A7%88%EC%B2%9C%EB%8C%80+%EC%8B%A4%EC%8B%9C%EA%B0%84', course_tip: '삼선계단은 경사가 매우 가파르고 일방통행이므로 우회로를 체크하세요.', courses: [{ name: '케이블카~마천대 코스', distance: '2km', time: 90, diff: '하' }, { name: '수락계곡~마천대 코스', distance: '7km', time: 240, diff: '중' }] },
+  { name: '대둔산', elevation: 878, peak: '마천대', region: '충남/전북', terrain: '구름다리·철계단', difficulty: '중', cctv_url: 'https://www.youtube.com/results?search_query=%EB%8C%80%EB%91%94%EC%82%B0+%EB%A7%88%EC%B2%9C%EB%8C%80+%EC%8B%A4%EC%8B%9C%EA%B0%84', course_tip: '삼선계단은 경사가 매우 가파르고 일방통행이므로 고소공포증이나 강풍 시 우회 등산로를 이용하세요.', courses: [{ name: '케이블카~마천대 코스', distance: '2km', time: 90, diff: '하' }, { name: '수락계곡~마천대 코스', distance: '7km', time: 240, diff: '중' }] },
   { name: '내장산', elevation: 763, peak: '신선봉', region: '전북 정읍', terrain: '단풍 계곡·암릉', difficulty: '중', cctv_url: 'https://www.knps.or.kr/portal/main/contents.do?menuNo=8000159', course_tip: '신선봉 정상으로 오르는 능선은 경사가 급하고 습기가 많습니다.', courses: [{ name: '일주문~신선봉 코스', distance: '8km', time: 270, diff: '중' }] },
   { name: '마이산', elevation: 686, peak: '암마이봉', region: '전북 진안', terrain: '역암 바위', difficulty: '중하', cctv_url: 'https://www.youtube.com/results?search_query=%EB%A7%88%EC%9D%B4%EC%82%B0+%EC%8B%A4%EC%8B%9C%EA%B0%84', course_tip: '암마이봉 구간은 겨울철 결빙 시 통제될 수 있으니 노면 상태를 꼭 확인하세요.', courses: [{ name: '탑사~암마이봉 코스', distance: '5km', time: 150, diff: '중하' }] }
 ];
@@ -429,7 +429,6 @@ function App() {
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', position: 'relative' }}>
       
       <style>{`
-        /* 💡 맑은 날(clear-day) 그라데이션을 쨍한 파란색에서 부드러운 스카이블루+피치 파스텔톤으로 변경! */
         .weather-bg { background-size: 400% 400%; animation: gradientMove 15s ease infinite; }
         @keyframes gradientMove { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
         
@@ -561,7 +560,8 @@ function App() {
       </nav>
 
       <main className="main-container" style={{ flexGrow: 1, maxWidth: '1000px', margin: '0 auto', width: '100%', zIndex: 1, padding: '30px 0' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', minWidth: 0, height: '100%' }}>
+        {/* 💡 핵심: 좌측 열을 감싸는 wrapper에서 height: '100%'를 제거하여 모바일에서 늘어남 방지 */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', minWidth: 0 }}>
           
           <WeatherMain 
             weatherData={activeWeather} 
@@ -592,7 +592,9 @@ function App() {
             weatherData={activeWeather}
             onShowToast={showToast}
           />
-          <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
+          
+          {/* 💡 핵심: WeatherOutlook을 감싸는 div에서 flexGrow: 1 제거 */}
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
             <WeatherOutlook 
               weeklyData={weeklyData} 
               aiBriefing={aiBriefing} 
@@ -602,7 +604,8 @@ function App() {
           </div>
         </div>
         
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', minWidth: 0, height: '100%' }}>
+        {/* 💡 핵심: 우측 열을 감싸는 wrapper에서도 height: '100%'를 제거 */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', minWidth: 0 }}>
           <div className="glass-card" style={{ borderRadius: '16px', overflow: 'hidden' }}>
              <LoginCard 
               onSignUpClick={() => setIsSignUpOpen(true)} 
@@ -638,7 +641,7 @@ function App() {
             mountainInfo={mountainInfo}
           />
           
-          <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
             <WeeklyForecast weeklyData={weeklyData} isLoading={isAiLoading} />
           </div>
         </div>

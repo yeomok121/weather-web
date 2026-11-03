@@ -39,7 +39,8 @@ function WeatherOutlook({ weeklyData = [], aiBriefing = '', isMountainMode = fal
   }
 
   return (
-    <div className="glass-card" style={{ borderRadius: '16px', padding: '24px', color: '#1e293b', width: '100%', boxSizing: 'border-box', height: '100%', display: 'flex', flexDirection: 'column' }}>
+    // 💡 핵심: height를 '100%'에서 'fit-content'로 변경하여 모바일에서 위아래로 쭉 늘어나는 현상 제거
+    <div className="glass-card" style={{ borderRadius: '16px', padding: '24px', color: '#1e293b', width: '100%', boxSizing: 'border-box', height: 'fit-content', display: 'flex', flexDirection: 'column' }}>
       <h3 style={{ margin: '0 0 16px 0', fontSize: '17px', fontWeight: '800', color: isMountainMode ? '#166534' : '#1e293b' }}>
         {isMountainMode ? '⛰️ 산악 기상 주간 전망' : '날씨 전망'}
       </h3>
