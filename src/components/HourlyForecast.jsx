@@ -67,6 +67,7 @@ function HourlyForecast({
   const [startX, setStartX] = useState(0);
   const [scrollLeft, setScrollLeft] = useState(0);
 
+  // 💡 부모 상태(State)와 로컬 임시 상태를 추상화해둔 도구
   const activeCourseIdx = onSelectCourseIdx ? selectedCourseIdx : localCourseIdx;
   const setCourseIdx = onSelectCourseIdx || setLocalCourseIdx;
   const activePace = onSelectPaceType ? paceType : localPaceType;
@@ -167,8 +168,9 @@ function HourlyForecast({
     setCurrentIndex(0);
   }, [hourlyData]);
 
+  // 💡 [수정] setSelectedCourseIdx(0)를 올바른 바인딩 함수 setCourseIdx(0)로 변경하여 ReferenceError 해결
   useEffect(() => {
-    setSelectedCourseIdx(0);
+    setCourseIdx(0);
   }, [mountainInfo?.name]);
 
   useEffect(() => {
@@ -513,7 +515,6 @@ function HourlyForecast({
   };
 
   return (
-    // 💡 전체 패딩 24px -> 20px 축소
     <div className="glass-card" style={{ borderRadius: '16px', padding: '20px', display: 'flex', flexDirection: 'column', color: '#1e293b', width: '100%', boxSizing: 'border-box' }}>
       
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '12px' }}>
@@ -533,7 +534,6 @@ function HourlyForecast({
           
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'stretch' }}>
             
-            {/* 좌측 컬럼 패딩 축소 및 밀도 증가 */}
             <div className="mtn-score-altitude-box" style={{ flex: '1 1 250px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
               
               <div className="mtn-dual-score-row" style={{ display: 'flex', gap: '8px' }}>
@@ -597,7 +597,6 @@ function HourlyForecast({
               </div>
             </div>
 
-            {/* 우측 컬럼 패딩 축소 및 요소 압축 */}
             <div style={{ flex: '1.15 1 290px', backgroundColor: 'rgba(255,255,255,0.6)', borderRadius: '12px', padding: '16px', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
               
               <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '6px', marginBottom: '8px' }}>
@@ -647,7 +646,6 @@ function HourlyForecast({
                 ))}
               </div>
 
-              {/* 속도 & 출발시간: 한 줄에 컴팩트하게 배치 */}
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '8px', backgroundColor: 'rgba(255,255,255,0.5)', padding: '6px', borderRadius: '8px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flex: 1, minWidth: '130px' }}>
                   <span style={{ fontSize: '10.5px', fontWeight: 'bold', color: '#475569', whiteSpace: 'nowrap' }}>속도:</span>
