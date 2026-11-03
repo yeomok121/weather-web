@@ -1,15 +1,26 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { FiChevronLeft, FiChevronRight, FiShare2, FiPlus, FiX, FiRotateCcw, FiMapPin } from 'react-icons/fi';
+import { FiChevronLeft, FiChevronRight, FiShare2, FiPlus, FiX, FiRotateCcw, FiMapPin, FiClock, FiEye } from 'react-icons/fi';
 import { LineChart, Line, YAxis, ResponsiveContainer } from 'recharts';
 import { getEmojiIcon } from './WeeklyForecast';
 
 const ITEMS_TO_SHOW = 6;
 const EMPTY_HOURLY = [];
 
-const PACE_OPTIONS = [
+export const PACE_OPTIONS = [
   { key: 'slow', label: '🐢 초보(여유)', multiplier: 1.3 },
   { key: 'normal', label: '🥾 보통(표준)', multiplier: 1.0 },
   { key: 'fast', label: '⚡ 숙련(빠름)', multiplier: 0.85 },
+];
+
+const DEPARTURE_OFFSETS = [
+  { value: 0, label: '지금 바로 출발' },
+  { value: 1, label: '1시간 뒤 출발' },
+  { value: 2, label: '2시간 뒤 출발' },
+  { value: 3, label: '3시간 뒤 출발' },
+  { value: 4, label: '4시간 뒤 출발' },
+  { value: 6, label: '6시간 뒤 출발' },
+  { value: 9, label: '9시간 뒤 출발' },
+  { value: 12, label: '12시간 뒤 출발' },
 ];
 
 function toNumber(value) {
@@ -24,11 +35,27 @@ const CustomLabel = ({ x, y, value }) => (
   </text>
 );
 
-function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = '', isMountainMode = false, mountainInfo = null, weatherData = {}, onShowToast }) {
+function HourlyForecast({
+  hourlyData = EMPTY_HOURLY,
+  isLoading = false,
+  error = '',
+  isMountainMode = false,
+  mountainInfo = null,
+  weatherData = {},
+  onShowToast,
+  selectedCourseIdx = 0,
+  onSelectCourseIdx,
+  paceType = 'normal',
+  onSelectPaceType,
+  departureOffsetHours = 0,
+  onSelectDepartureOffset,
+  onGearListChange
+}) {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [selectedCourseIdx, setSelectedCourseIdx] = useState(0);
-  const [timelineMode, setTimelineMode] = useState('descent'); 
-  const [paceType, setPaceType] = useState('normal'); 
+  const [localCourseIdx, setLocalCourseIdx] = useState(0);
+  const [localPaceType, setLocalPaceType] = useState('normal');
+  const [localDepOffset, setLocalDepOffset] = useState(0);
+  const [timelineMode, setTimelineMode] = useState('descent');
   
   const [gearList, setGearList] = useState([]);
   const [checklist, setChecklist] = useState({});
@@ -40,9 +67,17 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
   const [startX, setStartX] = useState(0);
   const [scrollLeft, setScrollLeft] = useState(0);
 
-  const temp = weatherData?.temp || 0;
-  const baseTemp = weatherData?.baseTemp || temp + 5;
-  const wind = weatherData?.wind_speed || 0;
+  const activeCourseIdx = onSelectCourseIdx ? selectedCourseIdx : localCourseIdx;
+  const setCourseIdx = onSelectCourseIdx || setLocalCourseIdx;
+  const activePace = onSelectPaceType ? paceType : localPaceType;
+  const setPace = onSelectPaceType || setLocalPaceType;
+  const activeDepOffset = onSelectDepartureOffset ? departureOffsetHours : localDepOffset;
+  const setDepOffset = onSelectDepartureOffset || setLocalDepOffset;
+
+  const temp = Number(weatherData?.temp || 0);
+  const baseTemp = Number(weatherData?.baseTemp ?? (temp + 5));
+  const wind = Number(weatherData?.wind_speed || 0);
+  const humidity = Number(weatherData?.humidity || 50);
   const dustStr = weatherData?.dust || '';
   const pm25Match = dustStr.match(/\d+/);
   const pm25 = pm25Match ? parseInt(pm25Match[0], 10) : 15;
@@ -55,14 +90,14 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
   const terrain = mountainInfo?.terrain || '';
   const isFuture = weatherData?.isFuture || false;
 
-  // 정상 풍속을 반영한 실제 체감온도 계산
   const summitFeelsLike = temp <= 15 ? Math.round(temp - (wind * 0.7)) : temp;
 
   const courses = mountainInfo?.courses || [{ name: '기본 탐방로', distance: '5km', time: 180, diff: '중' }];
-  const selectedCourse = courses[selectedCourseIdx] || courses[0];
+  const selectedCourse = courses[activeCourseIdx] || courses[0];
 
-  const currentPaceObj = PACE_OPTIONS.find(p => p.key === paceType) || PACE_OPTIONS[1];
+  const currentPaceObj = PACE_OPTIONS.find(p => p.key === activePace) || PACE_OPTIONS[1];
   const adjustedTimeMins = Math.max(20, Math.round((selectedCourse.time * currentPaceObj.multiplier) / 10) * 10);
+  const ascentTimeMins = Math.max(15, Math.round((adjustedTimeMins * 0.55) / 5) * 5);
 
   const getNutritionGuide = () => {
     const hours = adjustedTimeMins / 60;
@@ -133,13 +168,16 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
   }, [hourlyData]);
 
   useEffect(() => {
-    setSelectedCourseIdx(0);
-  }, [mountainInfo?.name]);
-
-  useEffect(() => {
-    setGearList(buildWeatherGearList());
+    const defaultGears = buildWeatherGearList();
+    setGearList(defaultGears);
     setChecklist({});
-  }, [mountainInfo?.name, weatherData?.date, temp, wind, isRainOrSnow, terrain, timelineMode, selectedCourseIdx, paceType]);
+    if (onGearListChange) onGearListChange(defaultGears);
+  }, [mountainInfo?.name, weatherData?.date, temp, wind, isRainOrSnow, terrain, timelineMode, activeCourseIdx, activePace]);
+
+  const updateGears = (nextGears) => {
+    setGearList(nextGears);
+    if (onGearListChange) onGearListChange(nextGears);
+  };
 
   const toggleCheck = (item) => {
     setChecklist(prev => ({ ...prev, [item]: !prev[item] }));
@@ -152,12 +190,12 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
       if (onShowToast) onShowToast('이미 체크리스트에 있는 준비물입니다.');
       return;
     }
-    setGearList(prev => [...prev, trimmed]);
+    updateGears([...gearList, trimmed]);
     setNewGearInput('');
   };
 
   const handleRemoveGear = (itemToRemove) => {
-    setGearList(prev => prev.filter(item => item !== itemToRemove));
+    updateGears(gearList.filter(item => item !== itemToRemove));
     setChecklist(prev => {
       const next = { ...prev };
       delete next[itemToRemove];
@@ -166,7 +204,7 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
   };
 
   const handleResetGear = () => {
-    setGearList(buildWeatherGearList());
+    updateGears(buildWeatherGearList());
     setChecklist({});
     if (onShowToast) onShowToast('🔄 현재 기상과 코스에 맞는 기본 추천 준비물로 복원되었습니다.');
   };
@@ -231,68 +269,216 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
     display: 'flex', justifyContent: 'center', alignItems: 'center', color: '#1e293b', transition: 'background-color 0.2s',
   };
 
-  const getMountainScore = () => {
-    let score = 100;
-    if (isRainOrSnow) score -= 40;
-    if (wind >= 10) score -= 30;
-    else if (wind >= 6) score -= 15;
-    if (temp <= -10 || temp >= 33) score -= 20;
-    else if (temp <= -3 || temp >= 28) score -= 10;
-    if (pm25 >= 75) score -= 15;
-    else if (pm25 >= 36) score -= 5;
-    return Math.max(0, score);
+  // 💡 [원칙 1] 기상 적합도는 순수 기상 데이터(강수·풍속·기온·미세먼지)만으로 산출
+  const getWeatherSuitabilityScore = () => {
+    let s = 100;
+    if (isRainOrSnow) s -= 40;
+    if (wind >= 10) s -= 30;
+    else if (wind >= 6) s -= 15;
+    if (temp <= -10 || temp >= 33) s -= 20;
+    else if (temp <= -3 || temp >= 28) s -= 10;
+    if (pm25 >= 75) s -= 15;
+    else if (pm25 >= 36) s -= 5;
+    return Math.max(0, s);
   };
-  const score = getMountainScore();
+  const weatherScore = getWeatherSuitabilityScore();
 
-  const getTimelineStatus = () => {
-    const parseTime = (str) => {
-      if (!str || !str.includes(':')) return 1080;
-      const [h, m] = str.split(':').map(Number);
-      return h * 60 + m;
+  // 💡 [원칙 3] 확보 가능한 데이터(하늘상태, 강수확률, 습도, PM2.5, 풍속)만 활용한 정상 조망 추정 지수
+  const getSummitViewEstimate = () => {
+    let vScore = 95;
+    const reasons = [];
+
+    if (isRainOrSnow) {
+      vScore -= 45;
+      reasons.push('우천/강설 시야 저하');
+    } else if (desc.includes('흐림')) {
+      vScore -= 25;
+      reasons.push('흐린 하늘');
+    } else if (desc.includes('구름')) {
+      vScore -= 12;
+      reasons.push('구름 많음');
+    } else {
+      reasons.push('하늘 맑음');
+    }
+
+    if (humidity >= 85) {
+      vScore -= 25;
+      reasons.push(`고습도(${humidity}%) 산안개 가능성`);
+    } else if (humidity >= 75) {
+      vScore -= 12;
+      reasons.push(`습도(${humidity}%) 다소 높음`);
+    } else {
+      reasons.push(`습도(${humidity}%) 양호`);
+    }
+
+    if (pm25 >= 75) {
+      vScore -= 30;
+      reasons.push(`초미세먼지 매우나쁨(${pm25})`);
+    } else if (pm25 >= 36) {
+      vScore -= 18;
+      reasons.push(`초미세먼지 나쁨(${pm25})`);
+    } else if (pm25 <= 15) {
+      reasons.push(`대기 청정(PM2.5 ${pm25})`);
+    }
+
+    vScore = Math.max(10, Math.min(100, vScore));
+
+    // 운해 가능성 보조 판단 (습도 80% 이상 + 바람 3.5m/s 이하 + 비 안 옴)
+    const seaOfCloudsHint = (!isRainOrSnow && humidity >= 80 && wind <= 3.5)
+      ? '🌊 고습도·약풍 조건으로 이른 아침 운해 형성 가능성 있음'
+      : null;
+
+    let gradeText = '조망 양호 추정';
+    let gradeColor = '#0284c7';
+    if (vScore < 45) {
+      gradeText = '시야 불량(곰탕) 주의';
+      gradeColor = '#dc2626';
+    } else if (vScore < 70) {
+      gradeText = '보통 (박무·구름 참고)';
+      gradeColor = '#d97706';
+    }
+
+    return {
+      score: vScore,
+      gradeText,
+      gradeColor,
+      summaryReason: reasons.slice(0, 2).join(' · '),
+      seaOfCloudsHint
     };
-    
-    const requiredMins = adjustedTimeMins;
+  };
+  const viewEstimate = getSummitViewEstimate();
+
+  // 💡 [원칙 1 & 2] 시간 안전 판정 및 정상 도착 시점의 시간별 예보 매칭
+  const getTimelineAndSummitArrival = () => {
+    const parseTime = (str, fallback = 1080) => {
+      if (!str || !str.includes(':')) return fallback;
+      const [h, m] = str.split(':').map(Number);
+      return (Number.isFinite(h) ? h : 18) * 60 + (Number.isFinite(m) ? m : 0);
+    };
+    const formatTime = (mins) => {
+      const normalized = ((mins % 1440) + 1440) % 1440;
+      return `${String(Math.floor(normalized / 60)).padStart(2, '0')}:${String(normalized % 60).padStart(2, '0')}`;
+    };
+
+    const now = new Date();
+    const baseNowMins = now.getHours() * 60 + now.getMinutes();
+    const depMins = isFuture ? (8 + activeDepOffset) * 60 : baseNowMins + (activeDepOffset * 60);
+    const summitArrivalMins = depMins + ascentTimeMins;
+    const descentFinishMins = depMins + adjustedTimeMins;
+
+    const depTimeStr = formatTime(depMins);
+    const summitArrivalStr = formatTime(summitArrivalMins);
+    const descentFinishStr = formatTime(descentFinishMins);
+
+    // 정상 도착 시점의 시간별 예보 매칭 (오늘 + 24시간 이내일 때만 실제 매칭)
+    let arrivalWeather = { available: false, reason: '예측 불가 (상세 시간별 예보 범위 초과)' };
+    if (isFuture) {
+      arrivalWeather = { available: false, reason: '예측 불가 (미래 일자는 시간별 예보 미제공 · 주간 예보 참고)' };
+    } else if (Array.isArray(rawForecastData) && rawForecastData.length > 0) {
+      const hoursUntilSummit = activeDepOffset + Math.round(ascentTimeMins / 60);
+      if (hoursUntilSummit >= 0 && hoursUntilSummit < rawForecastData.length) {
+        const matched = rawForecastData[hoursUntilSummit];
+        const mTemp = matched.tempNum;
+        const estFeels = mTemp !== null ? (mTemp <= 15 ? Math.round(mTemp - (wind * 0.7)) : mTemp) : null;
+        arrivalWeather = {
+          available: true,
+          forecastHour: matched.time,
+          temp: mTemp,
+          feelsLike: estFeels,
+          pop: matched.pop,
+          description: matched.description || '예보',
+          icon: matched.icon
+        };
+      }
+    }
 
     if (timelineMode === 'ascent') {
-      const ascentMins = Math.max(20, Math.round((requiredMins * 0.55) / 5) * 5);
-      const sunriseMins = parseTime(sunrise);
-      let depMins = sunriseMins - ascentMins;
+      const sunriseMins = parseTime(sunrise, 390);
+      let reqDepMins = sunriseMins - ascentTimeMins;
       let isPrevDay = false;
-      
-      if (depMins < 0) {
-        depMins += 24 * 60;
+      if (reqDepMins < 0) {
+        reqDepMins += 1440;
         isPrevDay = true;
       }
-      
-      const depH = Math.floor(depMins / 60);
-      const depM = String(depMins % 60).padStart(2, '0');
-      const depStr = `${isPrevDay ? '전날 ' : ''}${depH}:${depM}`;
-      
-      return { 
-        status: 'sunrise', 
-        deadlineStr: depStr, 
-        msg: `🌅 일출(${sunrise}) 정상 조망: 늦어도 ${depStr}에는 들머리에서 출발해야 합니다. (정상 등정 약 ${Math.floor(ascentMins / 60)}시간 ${ascentMins % 60}분 기준)` 
+      const reqDepStr = `${isPrevDay ? '전날 ' : ''}${formatTime(reqDepMins)}`;
+      return {
+        status: 'sunrise',
+        safetyBadge: '🌅 일출 산행 계획',
+        safetyColor: '#c2410c',
+        safetyBg: 'rgba(255,247,237,0.9)',
+        deadlineStr: reqDepStr,
+        depTimeStr,
+        summitArrivalStr,
+        descentFinishStr,
+        arrivalWeather,
+        msg: `🌅 일출(${sunrise}) 정상 조망 목표: 늦어도 ${reqDepStr}에 들머리에서 출발하세요. (정상 등정 약 ${Math.floor(ascentTimeMins / 60)}시간 ${ascentTimeMins % 60}분 소요)`
       };
     }
 
-    const safeDescentMins = parseTime(safeDescentTime);
-    const deadlineMins = safeDescentMins - requiredMins; 
-    const deadlineH = Math.floor(deadlineMins / 60);
-    const deadlineM = String(deadlineMins % 60).padStart(2, '0');
-    const deadlineStr = `${deadlineH}:${deadlineM}`;
-    
+    const safeDescentMins = parseTime(safeDescentTime, 930);
+    const sunsetMins = parseTime(sunset, 1080);
+    const deadlineMins = safeDescentMins - adjustedTimeMins;
+    const deadlineStr = formatTime(deadlineMins);
+
     if (isFuture) {
-      return { status: 'safe', deadlineStr, msg: `🗓️ ${weatherData.date} 계획 (${currentPaceObj.label}): 늦어도 ${deadlineStr} 전에는 등산을 시작해야 일몰 전 안전 하산이 가능합니다.` };
+      return {
+        status: 'safe',
+        safetyBadge: '🗓️ 일정 사전 계획',
+        safetyColor: '#166534',
+        safetyBg: 'rgba(240,253,244,0.9)',
+        deadlineStr,
+        depTimeStr,
+        summitArrivalStr,
+        descentFinishStr,
+        arrivalWeather,
+        msg: `🗓️ ${weatherData.date} 안전 하산 권장 출발 마감: 늦어도 ${deadlineStr} 이전 출발 (안전 하산 완료 ${safeDescentTime} 기준)`
+      };
     }
 
-    const now = new Date();
-    const currentMins = now.getHours() * 60 + now.getMinutes();
+    if (descentFinishMins > sunsetMins) {
+      return {
+        status: 'danger',
+        safetyBadge: '🚨 시간 안전: 위험 (일몰 후 하산)',
+        safetyColor: '#991b1b',
+        safetyBg: 'rgba(254,242,242,0.9)',
+        deadlineStr,
+        depTimeStr,
+        summitArrivalStr,
+        descentFinishStr,
+        arrivalWeather,
+        msg: `🚨 [시간 안전 경고] ${depTimeStr} 출발 시 하산 완료(${descentFinishStr})가 일몰(${sunset}) 이후입니다. 기상이 좋아도 주간 산행은 비추천합니다.`
+      };
+    }
 
-    if (currentMins > safeDescentMins) return { status: 'danger', deadlineStr, msg: '⚠️ 하산 마감 시간이 지났습니다. 야간 산행(랜턴) 모드입니다.' };
-    if (currentMins > deadlineMins) return { status: 'warning', deadlineStr, msg: `⚠️ 지금 출발하면 일몰(${sunset}) 후 하산합니다. (출발 마감 ${deadlineStr} 경과 · 랜턴 필수!)` };
-    return { status: 'safe', deadlineStr, msg: `✅ 지금 출발하면 일몰 전 안전 하산 가능! (권장 출발 마감 ${deadlineStr})` };
+    if (descentFinishMins > safeDescentMins) {
+      return {
+        status: 'warning',
+        safetyBadge: '⚠️ 시간 안전: 주의 (권장 마감 경과)',
+        safetyColor: '#b45309',
+        safetyBg: 'rgba(254,252,232,0.9)',
+        deadlineStr,
+        depTimeStr,
+        summitArrivalStr,
+        descentFinishStr,
+        arrivalWeather,
+        msg: `⚠️ [시간 주의] ${depTimeStr} 출발 시 예상 하산 완료는 ${descentFinishStr}입니다. 권장 출발 마감(${deadlineStr})이 지났으니 헤드랜턴을 필히 지참하세요.`
+      };
+    }
+
+    return {
+      status: 'safe',
+      safetyBadge: '✅ 시간 안전: 양호 (일몰 전 하산)',
+      safetyColor: '#166534',
+      safetyBg: 'rgba(240,253,244,0.9)',
+      deadlineStr,
+      depTimeStr,
+      summitArrivalStr,
+      descentFinishStr,
+      arrivalWeather,
+      msg: `✅ [시간 안전 확인] ${depTimeStr} 출발 시 약 ${summitArrivalStr} 정상 도착, 일몰(${sunset}) 전인 ${descentFinishStr}경 안전 하산 가능합니다.`
+    };
   };
-  const timeline = getTimelineStatus();
+  const timeline = getTimelineAndSummitArrival();
 
   const handleSharePlan = async () => {
     const mName = weatherData.region || mountainInfo?.name || '명산';
@@ -301,26 +487,27 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
       ? gearList.map(item => `${checklist[item] ? '☑️' : '⬜'} ${item}`).join('\n  ')
       : '없음';
 
-    const timelineStr = timelineMode === 'ascent'
-      ? `🌅 일출 산행: 일출(${sunrise})을 보려면 늦어도 ${timeline.deadlineStr}에 출발하세요.`
-      : `🚨 안전 출발 마감: ${timeline.deadlineStr} 이전 출발 권장 (하산 마감 ${safeDescentTime} / 일몰 ${sunset})`;
+    const arrivalWeatherLine = timeline.arrivalWeather.available
+      ? `⛰️ 정상 도착(${timeline.summitArrivalStr}경 / ${timeline.arrivalWeather.forecastHour} 예보): ${timeline.arrivalWeather.temp}°C (체감 ${timeline.arrivalWeather.feelsLike}°C · ${timeline.arrivalWeather.description} · 강수확률 ${timeline.arrivalWeather.pop}%)`
+      : `⛰️ 정상 도착(${timeline.summitArrivalStr}경): ${timeline.arrivalWeather.reason}`;
 
     const shareText = [
       `⛰️ [${mName} ${peak} 산행 기상 브리핑]`,
       `📅 일자: ${weatherData.date}`,
-      `🌡️ 정상 기온: ${temp}°C (입구 평지 ${baseTemp}°C / 풍속 ${wind}m/s)`,
-      `🏆 산행 지수: ${score}점 (${score >= 80 ? '매우 쾌적' : score >= 60 ? '산행 무난' : '주의 필요'})`,
-      `🥾 선택 코스: ${selectedCourse.name} (거리 ${selectedCourse.distance} · ${currentPaceObj.label} 약 ${Math.floor(adjustedTimeMins / 60)}시간 ${adjustedTimeMins % 60}분 소요)`,
+      `🌤️ 기상 적합도: ${weatherScore}점 / 🔭 조망 추정: ${viewEstimate.score}점 (${viewEstimate.gradeText})`,
+      `⏱️ 시간 안전 판정: ${timeline.safetyBadge}`,
+      `🥾 선택 코스: ${selectedCourse.name} (${selectedCourse.distance} · ${currentPaceObj.label} 총 ${Math.floor(adjustedTimeMins / 60)}시간 ${adjustedTimeMins % 60}분)`,
+      `🕒 일정: ${timeline.depTimeStr} 출발 → ${timeline.summitArrivalStr} 정상 → ${timeline.descentFinishStr} 하산 완료`,
+      arrivalWeatherLine,
       `📍 들머리 검색: ${getTrailheadQuery()}`,
       `💧 권장 식수/열량: ${nutrition.waterText} / ${nutrition.kcalText}`,
-      timelineStr,
       `🎒 맞춤 배낭 체크리스트:\n  ${formattedGear}`,
       `🔗 날씨 대시보드: ${window.location.href}`
     ].join('\n');
 
     try {
       await navigator.clipboard.writeText(shareText);
-      if (onShowToast) onShowToast('📋 코스·식수량·체크리스트가 포함된 산행 일정이 복사되었습니다!');
+      if (onShowToast) onShowToast('📋 정상 도착 기상·안전 판정·체크리스트가 클립보드에 복사되었습니다!');
     } catch (err) {
       if (onShowToast) onShowToast('복사에 실패했습니다. 브라우저 권한을 확인해주세요.');
     }
@@ -333,7 +520,7 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
         @media (max-width: 640px) {
           .mtn-score-altitude-box { flex-direction: column !important; }
           .mtn-left-top-row { flex-direction: column !important; }
-          .mtn-score-card { width: 100% !important; flex-direction: row !important; justify-content: space-around !important; padding: 12px !important; }
+          .mtn-dual-score-row { flex-direction: row !important; }
         }
       `}</style>
 
@@ -352,70 +539,84 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
       {isMountainMode && !isLoading && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '24px' }}>
           
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', alignItems: 'flex-start' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', alignItems: 'stretch' }}>
             
-            <div className="mtn-score-altitude-box" style={{ flex: '1 1 250px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {/* 좌측 컬럼: ① 기상 적합도 & 정상 조망 추정 지수 + ② 고도별 기온(기온감률 설명) + ③ 체감/노면 */}
+            <div className="mtn-score-altitude-box" style={{ flex: '1 1 280px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
               
-              <div className="mtn-left-top-row" style={{ display: 'flex', gap: '12px', flex: 1 }}>
-                <div className="mtn-score-card" style={{ width: '105px', flexShrink: 0, backgroundColor: 'rgba(240,253,244,0.7)', borderRadius: '12px', padding: '16px 8px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                  <span style={{ fontSize: '11.5px', color: '#166534', fontWeight: 'bold', marginBottom: '10px', whiteSpace: 'nowrap' }}>{isFuture ? '예상 산행 지수' : '오늘 산행 지수'}</span>
-                  <div style={{ position: 'relative', width: '60px', height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {/* 💡 기상 적합도(순수 날씨) + 정상 조망 추정 지수 듀얼 카드 */}
+              <div className="mtn-dual-score-row" style={{ display: 'flex', gap: '10px' }}>
+                <div style={{ flex: 1, backgroundColor: 'rgba(240,253,244,0.75)', borderRadius: '12px', padding: '12px 10px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(22,163,74,0.2)' }}>
+                  <span style={{ fontSize: '11px', color: '#166534', fontWeight: '800', marginBottom: '6px', whiteSpace: 'nowrap' }}>🌤️ 기상 적합도 (날씨만)</span>
+                  <div style={{ position: 'relative', width: '52px', height: '52px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <svg viewBox="0 0 36 36" style={{ width: '100%', height: '100%', transform: 'rotate(-90deg)' }}>
                       <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="rgba(22,163,74,0.2)" strokeWidth="4" />
-                      <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke={score >= 70 ? "#16a34a" : score >= 40 ? "#eab308" : "#dc2626"} strokeWidth="4" strokeDasharray={`${score}, 100`} />
+                      <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke={weatherScore >= 70 ? "#16a34a" : weatherScore >= 40 ? "#eab308" : "#dc2626"} strokeWidth="4" strokeDasharray={`${weatherScore}, 100`} />
                     </svg>
-                    <span style={{ position: 'absolute', fontSize: '18px', fontWeight: 'bold', color: '#064e3b' }}>{score}</span>
+                    <span style={{ position: 'absolute', fontSize: '16px', fontWeight: '800', color: '#064e3b' }}>{weatherScore}</span>
                   </div>
-                  <span style={{ fontSize: '11.5px', color: '#0f172a', marginTop: '12px', fontWeight: 'bold', whiteSpace: 'nowrap' }}>
-                    {score >= 80 ? '아주 쾌적함' : score >= 60 ? '산행 무난함' : score >= 40 ? '주의 필요' : '입산 자제'}
+                  <span style={{ fontSize: '11px', color: '#0f172a', marginTop: '6px', fontWeight: 'bold', whiteSpace: 'nowrap' }}>
+                    {weatherScore >= 80 ? '기상 매우 쾌적' : weatherScore >= 60 ? '기상 무난함' : '악천후 주의'}
+                  </span>
+                  <span style={{ fontSize: '9.5px', color: '#64748b', marginTop: '2px', textAlign: 'center' }}>
+                    *하산 시간 조건 별도
                   </span>
                 </div>
 
-                <div style={{ flex: 1, backgroundColor: 'rgba(255,255,255,0.5)', borderRadius: '12px', padding: '16px', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '12px', fontSize: '12.5px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '4px', paddingBottom: '6px', borderBottom: '1px dashed rgba(0,0,0,0.1)' }}>
-                    <span style={{ fontWeight: '800', color: '#1e293b', whiteSpace: 'nowrap' }}>⛰️ 정상 <span style={{fontSize:'10px', color:'#475569', fontWeight:'normal'}}>({mountainInfo?.elevation}m)</span></span>
-                    <span style={{ color: '#0f172a', fontWeight: '800' }}>{temp}°C <span style={{fontSize:'10.5px', color:'#475569', fontWeight:'normal'}}>(풍속 {wind}m/s)</span></span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '4px', padding: '6px 0', borderBottom: '1px dashed rgba(0,0,0,0.1)' }}>
-                    <span style={{ color: '#475569', whiteSpace: 'nowrap', fontWeight: 'bold' }}>🌲 중턱 <span style={{fontSize:'10px', color:'#64748b', fontWeight:'normal'}}>({Math.round(mountainInfo?.elevation / 2)}m)</span></span>
-                    <span style={{ color: '#334155', fontWeight: '600' }}>{Math.round((temp + baseTemp) / 2)}°C</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '4px', paddingTop: '6px' }}>
-                    <span style={{ color: '#475569', whiteSpace: 'nowrap', fontWeight: 'bold' }}>👟 들머리 <span style={{fontSize:'10px', color:'#64748b', fontWeight:'normal'}}>(입구)</span></span>
-                    <span style={{ color: '#334155', fontWeight: '600' }}>{baseTemp}°C</span>
-                  </div>
-                </div>
-              </div>
-
-              <div style={{ flex: 1, backgroundColor: 'rgba(255,255,255,0.5)', borderRadius: '12px', padding: '16px', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '10px' }}>
-                <h4 style={{ margin: '0 0 4px 0', fontSize: '13.5px', color: '#166534', fontWeight: '800' }}>🌡️ 체감 기상 및 노면 상태</h4>
-                
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px dashed rgba(0,0,0,0.1)', paddingBottom: '6px' }}>
-                  <span style={{ fontSize: '12.5px', color: '#475569', fontWeight: 'bold' }}>정상 체감 온도</span>
-                  <span style={{ fontSize: '13.5px', fontWeight: '800', color: summitFeelsLike < 0 ? '#2563eb' : '#b45309' }}>{summitFeelsLike}°C</span>
-                </div>
-
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px dashed rgba(0,0,0,0.1)', paddingBottom: '6px' }}>
-                  <span style={{ fontSize: '12.5px', color: '#475569', fontWeight: 'bold' }}>풍속 상태</span>
-                  <span style={{ fontSize: '12.5px', fontWeight: '800', color: wind >= 10 ? '#dc2626' : wind >= 6 ? '#ea580c' : '#16a34a' }}>
-                    {wind >= 10 ? '태풍급 강풍' : wind >= 6 ? '거센 칼바람' : wind >= 3 ? '적당한 바람' : '바람 잔잔함'} ({wind}m/s)
+                {/* 💡 정상 조망 추정 지수 카드 */}
+                <div style={{ flex: 1.25, backgroundColor: 'rgba(240,249,255,0.8)', borderRadius: '12px', padding: '12px 10px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(2,132,199,0.2)' }}>
+                  <span style={{ fontSize: '11px', color: '#0369a1', fontWeight: '800', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }}>
+                    <FiEye size={12} /> 정상 조망 추정 지수
                   </span>
-                </div>
-
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '12.5px', color: '#475569', fontWeight: 'bold' }}>탐방로 노면</span>
-                  <span style={{ fontSize: '12.5px', fontWeight: '800', color: (temp <= 2 && (isRainOrSnow || isSnow)) ? '#2563eb' : isRainOrSnow ? '#ea580c' : '#16a34a' }}>
-                    {(temp <= 2 && (isRainOrSnow || isSnow)) ? '🧊 결빙·아이스' : isRainOrSnow ? '⚠️ 미끄럼 주의' : '🥾 뽀송한 흙길'}
+                  <div style={{ position: 'relative', width: '52px', height: '52px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <svg viewBox="0 0 36 36" style={{ width: '100%', height: '100%', transform: 'rotate(-90deg)' }}>
+                      <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="rgba(2,132,199,0.2)" strokeWidth="4" />
+                      <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke={viewEstimate.gradeColor} strokeWidth="4" strokeDasharray={`${viewEstimate.score}, 100`} />
+                    </svg>
+                    <span style={{ position: 'absolute', fontSize: '16px', fontWeight: '800', color: '#0c4a6e' }}>{viewEstimate.score}</span>
+                  </div>
+                  <span style={{ fontSize: '11px', color: viewEstimate.gradeColor, marginTop: '6px', fontWeight: '800', whiteSpace: 'nowrap' }}>
+                    {viewEstimate.gradeText}
+                  </span>
+                  <span style={{ fontSize: '10px', color: '#475569', marginTop: '2px', textAlign: 'center', wordBreak: 'keep-all' }}>
+                    {viewEstimate.summaryReason}
                   </span>
                 </div>
               </div>
 
+              {/* 💡 조망 추정치 데이터 한계 고지 & 운해 힌트 */}
+              <div style={{ backgroundColor: 'rgba(255,255,255,0.55)', borderRadius: '10px', padding: '8px 10px', fontSize: '10.5px', color: '#475569', lineHeight: '1.4', wordBreak: 'keep-all' }}>
+                {viewEstimate.seaOfCloudsHint && (
+                  <div style={{ color: '#0369a1', fontWeight: 'bold', marginBottom: '3px' }}>{viewEstimate.seaOfCloudsHint}</div>
+                )}
+                <span>※ 본 조망 지수는 운고(구름 높이)·실측 가시거리 데이터가 제외된 <strong>습도·하늘상태·미세먼지(PM2.5) 기반 추정치</strong>로 실제 정상 시야와 다를 수 있습니다.</span>
+              </div>
+
+              {/* 💡 고도별 3단 기온 비교 + 기온 감률 설명 */}
+              <div style={{ backgroundColor: 'rgba(255,255,255,0.55)', borderRadius: '12px', padding: '14px', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '8px', fontSize: '12px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '5px', borderBottom: '1px dashed rgba(0,0,0,0.1)' }}>
+                  <span style={{ fontWeight: '800', color: '#1e293b' }}>⛰️ 정상 <span style={{fontSize:'10.5px', color:'#475569', fontWeight:'normal'}}>({mountainInfo?.elevation}m)</span></span>
+                  <span style={{ color: '#0f172a', fontWeight: '800' }}>{temp}°C <span style={{fontSize:'10.5px', color:'#475569', fontWeight:'normal'}}>(체감 {summitFeelsLike}°C)</span></span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '3px 0', borderBottom: '1px dashed rgba(0,0,0,0.1)' }}>
+                  <span style={{ color: '#475569', fontWeight: 'bold' }}>🌲 중턱 <span style={{fontSize:'10.5px', color:'#64748b', fontWeight:'normal'}}>({Math.round((mountainInfo?.elevation || 800) / 2)}m)</span></span>
+                  <span style={{ color: '#334155', fontWeight: '600' }}>{Math.round((temp + baseTemp) / 2)}°C</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '3px' }}>
+                  <span style={{ color: '#475569', fontWeight: 'bold' }}>👟 들머리 <span style={{fontSize:'10.5px', color:'#64748b', fontWeight:'normal'}}>(평지 입구)</span></span>
+                  <span style={{ color: '#334155', fontWeight: '600' }}>{baseTemp}°C</span>
+                </div>
+                <div style={{ fontSize: '10.5px', color: '#64748b', backgroundColor: 'rgba(255,255,255,0.6)', padding: '5px 8px', borderRadius: '6px', marginTop: '2px', wordBreak: 'keep-all' }}>
+                  💡 고도가 100m 높아질 때마다 기온이 약 0.65°C씩 하강하며, 정상 능선 풍속({wind}m/s)으로 인해 체감온도는 평지보다 훨씬 낮습니다.
+                </div>
+              </div>
             </div>
 
-            <div style={{ flex: '1 1 290px', backgroundColor: 'rgba(255,255,255,0.6)', borderRadius: '12px', padding: '16px', display: 'flex', flexDirection: 'column', overflow: 'hidden', height: 'fit-content' }}>
+            {/* 우측 컬럼: 코스별 타임라인 + 출발 시간 선택 + 정상 도착 시점 기상 예측 */}
+            <div style={{ flex: '1.15 1 310px', backgroundColor: 'rgba(255,255,255,0.6)', borderRadius: '12px', padding: '16px', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
               
-              <h4 style={{ margin: '0 0 10px 0', fontSize: '14px', color: '#1e293b', display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
-                <span style={{ whiteSpace: 'nowrap', fontWeight: '800' }}>⏱️ 코스별 타임라인</span>
+              <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '6px', marginBottom: '10px' }}>
+                <span style={{ whiteSpace: 'nowrap', fontWeight: '800', fontSize: '14px', color: '#1e293b' }}>⏱️ 코스 & 정상 도착 기상 예측</span>
                 <div style={{ display: 'flex', backgroundColor: 'rgba(255,255,255,0.6)', padding: '2px', borderRadius: '8px', border: '1px solid rgba(0,0,0,0.05)' }}>
                   <button
                     onClick={() => setTimelineMode('descent')}
@@ -430,7 +631,7 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
                     🌅 일출/등산
                   </button>
                 </div>
-              </h4>
+              </div>
               
               <div 
                 ref={scrollRef}
@@ -446,13 +647,13 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
                     key={idx} 
                     onClick={(e) => {
                       if (dragMoved) { e.preventDefault(); e.stopPropagation(); return; }
-                      setSelectedCourseIdx(idx);
+                      setCourseIdx(idx);
                     }}
                     style={{
                       flexShrink: 0, padding: '7px 12px', borderRadius: '8px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer',
-                      border: selectedCourseIdx === idx ? '1px solid #2563eb' : '1px solid rgba(0,0,0,0.1)',
-                      background: selectedCourseIdx === idx ? '#eff6ff' : 'rgba(255,255,255,0.8)',
-                      color: selectedCourseIdx === idx ? '#1d4ed8' : '#475569',
+                      border: activeCourseIdx === idx ? '1px solid #2563eb' : '1px solid rgba(0,0,0,0.1)',
+                      background: activeCourseIdx === idx ? '#eff6ff' : 'rgba(255,255,255,0.8)',
+                      color: activeCourseIdx === idx ? '#1d4ed8' : '#475569',
                       transition: 'all 0.2s', userSelect: 'none'
                     }}
                   >
@@ -461,32 +662,55 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
                 ))}
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px', marginBottom: '8px', backgroundColor: 'rgba(255,255,255,0.5)', padding: '5px 8px', borderRadius: '8px' }}>
-                <span style={{ fontSize: '11px', fontWeight: 'bold', color: '#475569', whiteSpace: 'nowrap' }}>걸음 속도:</span>
-                <div style={{ display: 'flex', gap: '4px', flex: 1 }}>
-                  {PACE_OPTIONS.map((p) => (
-                    <button
-                      key={p.key}
-                      type="button"
-                      onClick={() => setPaceType(p.key)}
-                      style={{
-                        /* 💡 whiteSpace: 'nowrap'을 적용해 글자 밀림 방지 */
-                        flex: 1, padding: '4px 2px', fontSize: '11px', fontWeight: 'bold', borderRadius: '6px', cursor: 'pointer',
-                        border: paceType === p.key ? '1px solid #16a34a' : '1px solid transparent',
-                        backgroundColor: paceType === p.key ? '#dcfce7' : 'rgba(255,255,255,0.7)',
-                        color: paceType === p.key ? '#166534' : '#64748b',
-                        transition: 'all 0.15s', whiteSpace: 'nowrap', letterSpacing: '-0.3px'
-                      }}
-                    >
-                      {p.label}
-                    </button>
-                  ))}
+              {/* 걸음 속도 & 출발 예정 시각 선택 바 */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '8px', backgroundColor: 'rgba(255,255,255,0.5)', padding: '8px', borderRadius: '8px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
+                  <span style={{ fontSize: '11px', fontWeight: 'bold', color: '#475569', whiteSpace: 'nowrap' }}>걸음 속도:</span>
+                  <div style={{ display: 'flex', gap: '4px', flex: 1 }}>
+                    {PACE_OPTIONS.map((p) => (
+                      <button
+                        key={p.key}
+                        type="button"
+                        onClick={() => setPace(p.key)}
+                        style={{
+                          flex: 1, padding: '4px 2px', fontSize: '11px', fontWeight: 'bold', borderRadius: '6px', cursor: 'pointer',
+                          border: activePace === p.key ? '1px solid #16a34a' : '1px solid transparent',
+                          backgroundColor: activePace === p.key ? '#dcfce7' : 'rgba(255,255,255,0.7)',
+                          color: activePace === p.key ? '#166534' : '#64748b',
+                          transition: 'all 0.15s', whiteSpace: 'nowrap', letterSpacing: '-0.3px'
+                        }}
+                      >
+                        {p.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 💡 출발 예정 시각 선택 드롭다운 */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
+                  <span style={{ fontSize: '11px', fontWeight: 'bold', color: '#475569', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                    <FiClock size={11} /> 출발 시각:
+                  </span>
+                  <select
+                    value={activeDepOffset}
+                    onChange={(e) => setDepOffset(Number(e.target.value))}
+                    style={{
+                      flex: 1, padding: '4px 8px', fontSize: '11.5px', fontWeight: 'bold', borderRadius: '6px',
+                      border: '1px solid rgba(0,0,0,0.12)', backgroundColor: '#ffffff', color: '#1e293b', cursor: 'pointer', outline: 'none'
+                    }}
+                  >
+                    {DEPARTURE_OFFSETS.map(opt => (
+                      <option key={opt.value} value={opt.value}>
+                        {isFuture ? `오전 08:00 기준 +${opt.value}시간 뒤` : opt.label} ({timeline.depTimeStr} 출발)
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', fontSize: '11.5px', color: '#1e293b', backgroundColor: 'rgba(255,255,255,0.7)', padding: '10px 12px', borderRadius: '8px', marginBottom: '8px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '5px', fontSize: '11.5px', color: '#1e293b', backgroundColor: 'rgba(255,255,255,0.7)', padding: '9px 12px', borderRadius: '8px', marginBottom: '8px' }}>
                 <span>거리: <strong>{selectedCourse.distance}</strong></span>
-                <span>소요: <strong>{Math.floor(adjustedTimeMins / 60)}시간 {adjustedTimeMins % 60 > 0 ? `${adjustedTimeMins % 60}분` : ''}</strong></span>
+                <span>총 소요: <strong>{Math.floor(adjustedTimeMins / 60)}시간 {adjustedTimeMins % 60 > 0 ? `${adjustedTimeMins % 60}분` : ''}</strong></span>
                 <span>난이도: <strong style={{ color: selectedCourse.diff.includes('상') ? '#dc2626' : '#16a34a' }}>{selectedCourse.diff}</strong></span>
                 <span>열량: <strong>🍫 {nutrition.kcalText}</strong></span>
                 <span style={{ gridColumn: 'span 2', color: '#0369a1', fontWeight: '600' }}>
@@ -494,15 +718,42 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
                 </span>
               </div>
 
-              <div style={{ fontSize: '11.5px', fontWeight: 'bold', textAlign: 'center', padding: '9px 10px', borderRadius: '8px', wordBreak: 'keep-all', lineHeight: '1.4', marginBottom: '8px',
-                backgroundColor: timeline.status === 'sunrise' ? 'rgba(255,247,237,0.85)' : timeline.status === 'safe' ? 'rgba(240,253,244,0.85)' : timeline.status === 'warning' ? 'rgba(254,252,232,0.85)' : 'rgba(254,242,242,0.85)',
-                color: timeline.status === 'sunrise' ? '#c2410c' : timeline.status === 'safe' ? '#166534' : timeline.status === 'warning' ? '#a16207' : '#991b1b'
+              {/* 💡 [원칙 2] 정상 도착 예상 시점의 시간별 예보 매칭 박스 */}
+              <div style={{ backgroundColor: 'rgba(239,246,255,0.85)', border: '1px solid rgba(59,130,246,0.25)', borderRadius: '8px', padding: '9px 11px', marginBottom: '8px', fontSize: '11.5px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                  <span style={{ fontWeight: '800', color: '#1e3a8a' }}>
+                    ⛰️ 정상 도착 시점 예보 ({timeline.summitArrivalStr}경)
+                  </span>
+                  <span style={{ fontSize: '10.5px', color: '#475569', fontWeight: '600' }}>
+                    등정 편도 약 {Math.floor(ascentTimeMins / 60)}시간 {ascentTimeMins % 60}분
+                  </span>
+                </div>
+                {timeline.arrivalWeather.available ? (
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '4px', color: '#1e293b', fontWeight: '700' }}>
+                    <span>
+                      {getEmojiIcon(timeline.arrivalWeather.icon)} {timeline.arrivalWeather.forecastHour} 예보: <strong>{timeline.arrivalWeather.temp}°C</strong> (체감 {timeline.arrivalWeather.feelsLike}°C)
+                    </span>
+                    <span style={{ color: timeline.arrivalWeather.pop >= 30 ? '#2563eb' : '#475569' }}>
+                      {timeline.arrivalWeather.description} · 💧강수 {timeline.arrivalWeather.pop}%
+                    </span>
+                  </div>
+                ) : (
+                  <div style={{ color: '#64748b', fontSize: '11px', fontWeight: '600' }}>
+                    ℹ️ {timeline.arrivalWeather.reason}
+                  </div>
+                )}
+              </div>
+
+              {/* 💡 [원칙 1] 기상 적합도와 분리된 시간 안전 판정 박스 */}
+              <div style={{ fontSize: '11.5px', fontWeight: 'bold', textAlign: 'center', padding: '8px 10px', borderRadius: '8px', wordBreak: 'keep-all', lineHeight: '1.4', marginBottom: '8px',
+                backgroundColor: timeline.safetyBg,
+                color: timeline.safetyColor,
+                border: `1px solid ${timeline.safetyColor}30`
               }}>
                 {timeline.msg}
               </div>
 
               <div style={{ display: 'flex', gap: '6px', marginTop: 'auto' }}>
-                {/* 💡 양쪽 지도 버튼 텍스트를 "카카오맵/네이버지도 들머리"로 짧고 깔끔하게 통일 */}
                 <button
                   type="button"
                   onPointerDown={(e) => handleOpenMap('kakao', e)}

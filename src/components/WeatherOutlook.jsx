@@ -1,6 +1,13 @@
 import React, { useState } from 'react';
 
-function WeatherOutlook({ weeklyData = [], aiBriefing = '', isMountainMode = false, mountainInfo = null }) {
+function WeatherOutlook({
+  weeklyData = [],
+  aiBriefing = '',
+  isMountainMode = false,
+  mountainInfo = null,
+  weatherData = {},
+  hikingPlanSummary = null
+}) {
   const [activeTab, setActiveTab] = useState('weekly');
 
   if (!weeklyData || weeklyData.length === 0) {
@@ -39,10 +46,9 @@ function WeatherOutlook({ weeklyData = [], aiBriefing = '', isMountainMode = fal
   }
 
   return (
-    // 💡 핵심: height를 '100%'에서 'fit-content'로 변경하여 모바일에서 위아래로 쭉 늘어나는 현상 제거
     <div className="glass-card" style={{ borderRadius: '16px', padding: '24px', color: '#1e293b', width: '100%', boxSizing: 'border-box', height: 'fit-content', display: 'flex', flexDirection: 'column' }}>
       <h3 style={{ margin: '0 0 16px 0', fontSize: '17px', fontWeight: '800', color: isMountainMode ? '#166534' : '#1e293b' }}>
-        {isMountainMode ? '⛰️ 산악 기상 주간 전망' : '날씨 전망'}
+        {isMountainMode ? '⛰️ 산악 기상 전망 & AI 의사결정 가이드' : '날씨 전망'}
       </h3>
       
       <div style={{ display: 'flex', borderRadius: '8px', overflow: 'hidden', marginBottom: '16px', border: '1px solid rgba(0,0,0,0.08)', backgroundColor: 'rgba(255,255,255,0.4)' }}>
@@ -50,7 +56,7 @@ function WeatherOutlook({ weeklyData = [], aiBriefing = '', isMountainMode = fal
           {isMountainMode ? '산간 종합 전망' : '주간 종합 전망'}
         </button>
         <button onClick={() => setActiveTab('ai')} style={{ flex: 1, padding: '10px 0', background: activeTab === 'ai' ? 'rgba(255,255,255,0.8)' : 'transparent', border: 'none', fontWeight: activeTab === 'ai' ? 'bold' : '600', cursor: 'pointer', color: activeTab === 'ai' ? (isMountainMode ? '#15803d' : '#0f172a') : '#64748b', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px', transition: 'all 0.2s ease' }}>
-          {isMountainMode ? '🧗 AI 산악 가이드' : '🤖 AI 브리핑'}
+          {isMountainMode ? '🧗 AI 산행 의사결정 리포트' : '🤖 AI 브리핑'}
         </button>
       </div>
 
@@ -69,6 +75,65 @@ function WeatherOutlook({ weeklyData = [], aiBriefing = '', isMountainMode = fal
               {briefingText}
             </p>
           </>
+        ) : isMountainMode && hikingPlanSummary ? (
+          /* 💡 [원칙 4] 실제 날씨·코스·시간·준비물 데이터에 근거한 AI 산행 의사결정 종합 리포트 */
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '13px', color: '#1e293b' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '6px' }}>
+              <span style={{ border: '1px solid rgba(5,150,105,0.4)', color: '#059669', padding: '4px 12px', borderRadius: '16px', fontSize: '12px', fontWeight: 'bold', backgroundColor: 'rgba(209,250,229,0.6)' }}>
+                ✨ {weatherData?.region} ({mountainInfo?.peak}) 맞춤 의사결정 리포트
+              </span>
+              <span style={{ fontSize: '11.5px', color: '#64748b', fontWeight: '600' }}>
+                {weatherData?.date} 기준
+              </span>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(135px, 1fr))', gap: '8px', backgroundColor: 'rgba(255,255,255,0.65)', padding: '12px', borderRadius: '10px', border: '1px solid rgba(0,0,0,0.06)' }}>
+              <div>
+                <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 'bold' }}>기상 적합도 (날씨)</div>
+                <div style={{ fontSize: '13.5px', fontWeight: '800', color: hikingPlanSummary.weatherScore >= 70 ? '#166534' : '#d97706', marginTop: '2px' }}>
+                  {hikingPlanSummary.weatherScore}점 ({hikingPlanSummary.weatherScore >= 80 ? '양호' : hikingPlanSummary.weatherScore >= 60 ? '무난' : '주의'})
+                </div>
+              </div>
+              <div>
+                <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 'bold' }}>시간 안전 판정</div>
+                <div style={{ fontSize: '12.5px', fontWeight: '800', color: hikingPlanSummary.timeSafetyColor, marginTop: '2px', wordBreak: 'keep-all' }}>
+                  {hikingPlanSummary.timeSafetyStatus}
+                </div>
+              </div>
+              <div>
+                <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 'bold' }}>선택 코스 ({hikingPlanSummary.paceObj.label})</div>
+                <div style={{ fontSize: '12.5px', fontWeight: '800', color: '#0f172a', marginTop: '2px' }}>
+                  {hikingPlanSummary.course.name.split(' ')[0]} ({Math.floor(hikingPlanSummary.totalMins / 60)}시간 {hikingPlanSummary.totalMins % 60}분)
+                </div>
+              </div>
+              <div>
+                <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 'bold' }}>출발 → 정상 → 하산</div>
+                <div style={{ fontSize: '12.5px', fontWeight: '800', color: '#1d4ed8', marginTop: '2px' }}>
+                  {hikingPlanSummary.departureTimeStr} → {hikingPlanSummary.summitArrivalTimeStr} → {hikingPlanSummary.descentFinishTimeStr}
+                </div>
+              </div>
+            </div>
+
+            <div style={{ backgroundColor: 'rgba(255,255,255,0.55)', padding: '10px 12px', borderRadius: '8px', fontSize: '12.5px', lineHeight: '1.5' }}>
+              <div><strong>⛰️ 정상 도착 시점({hikingPlanSummary.summitArrivalTimeStr}) 예보:</strong>{' '}
+                {hikingPlanSummary.summitForecast?.available
+                  ? `${hikingPlanSummary.summitForecast.targetHourLabel} 기준 기온 ${hikingPlanSummary.summitForecast.temp}°C (체감 ${hikingPlanSummary.summitForecast.feelsLike}°C), ${hikingPlanSummary.summitForecast.description}, 강수확률 ${hikingPlanSummary.summitForecast.pop}%`
+                  : hikingPlanSummary.summitForecast?.reason}
+              </div>
+              <div style={{ marginTop: '4px' }}>
+                <strong>🚨 안전 출발 마감:</strong> 일몰({weatherData?.sunset}) 전 안전 하산({weatherData?.safeDescentTime})을 위해 늦어도 <strong>{hikingPlanSummary.recommendedDepDeadlineStr} 이전</strong> 출발 권장
+              </div>
+              {hikingPlanSummary.gearList?.length > 0 && (
+                <div style={{ marginTop: '4px' }}>
+                  <strong>🎒 핵심 준비물:</strong> {hikingPlanSummary.gearList.slice(0, 5).join(', ')}
+                </div>
+              )}
+            </div>
+
+            <div style={{ borderLeft: '3px solid #059669', paddingLeft: '12px', color: '#334155', lineHeight: '1.6', wordBreak: 'keep-all', fontWeight: '500' }}>
+              {aiBriefing}
+            </div>
+          </div>
         ) : (
           <div style={{ padding: '2px 0', color: '#334155', fontSize: '13.5px', lineHeight: '1.65', wordBreak: 'keep-all', fontWeight: '500' }}>
             <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>

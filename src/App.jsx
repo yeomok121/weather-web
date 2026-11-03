@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import LoginCard from './components/LoginCard';
-import HourlyForecast from './components/HourlyForecast';
+import HourlyForecast, { PACE_OPTIONS } from './components/HourlyForecast';
 import NoticeModal from './components/NoticeModal';
 import WeatherMain from './components/WeatherMain';
 import WeatherDetails from './components/WeatherDetails';
@@ -33,7 +33,7 @@ export const MOUNTAINS_LIST = [
   { name: '지리산', elevation: 1915, peak: '천왕봉', region: '경남/전남/전북', terrain: '고산 능선', difficulty: '상', cctv_url: 'https://www.knps.or.kr/portal/main/contents.do?menuNo=8000159', course_tip: '장거리 산행이므로 일몰 시간과 체력을 고려해 헤드랜턴을 준비하세요.', courses: [{ name: '중산리~천왕봉 단거리', distance: '10.8km', time: 480, diff: '상', trailhead: '지리산 중산리탐방안내소' }, { name: '백무동~천왕봉 코스', distance: '15km', time: 570, diff: '중상', trailhead: '지리산 백무동탐방지원센터' }] },
   { name: '계룡산', elevation: 845, peak: '관음봉', region: '충남 공주', terrain: '암릉·가파른 계단', difficulty: '중상', cctv_url: 'https://www.knps.or.kr/portal/main/contents.do?menuNo=8000159', course_tip: '자연성릉 바위 능선과 고깔바위 계단이 가팔라 체력 소모가 큽니다.', courses: [{ name: '동학사~관음봉 순환 코스', distance: '8.5km', time: 300, diff: '중상', trailhead: '계룡산 동학사주차장' }, { name: '갑사~관음봉 코스', distance: '7km', time: 240, diff: '중', trailhead: '계룡산 갑사주차장' }] },
   { name: '덕유산', elevation: 1614, peak: '향적봉', region: '전북 무주', terrain: '아고산대 능선', difficulty: '중하', cctv_url: 'https://www.knps.or.kr/portal/main/contents.do?menuNo=8000159', course_tip: '정상 능선은 습도가 높고 상고대·강풍이 잦아 보온에 유의하세요.', courses: [{ name: '곤돌라~향적봉 코스', distance: '1.2km', time: 40, diff: '하', trailhead: '무주덕유산리조트 관광곤도라' }, { name: '구천동~향적봉 코스', distance: '17km', time: 510, diff: '중상', trailhead: '덕유산 삼공탐방지원센터' }] },
-  { name: '소백산', elevation: 1439, peak: '비로봉', region: '충북 단양', terrain: '초원 능선(육산)', difficulty: '중', cctv_url: 'https://www.knps.or.kr/portal/main/contents.do?menuNo=8000159', course_tip: '나무가 없는 탁 트인 능선이라 방풍·방한모를 꼭 챙기세요.', courses: [{ name: '어의곡~비로봉 코스', distance: '10km', time: 300, diff: '중', trailhead: '소백산 어의곡탐방지원센터' }] },
+  { name: '소백산', elevation: 1439, peak: '비로봉', region: '충북 단양', terrain: '초원 능선(육산)', difficulty: '중', cctv_url: 'https://www.knps.or.kr/portal/main/contents.do?menuNo=8000159', course_tip: '나무가 없는 탁 트인 능선이라 바람을 막아줄 지형물이 없습니다. 체감온도가 급락하니 방풍·방한모를 꼭 챙기세요.', courses: [{ name: '어의곡~비로봉 코스', distance: '10km', time: 300, diff: '중', trailhead: '소백산 어의곡탐방지원센터' }] },
   { name: '태백산', elevation: 1567, peak: '장군봉', region: '강원 태백', terrain: '완만한 육산', difficulty: '중하', cctv_url: 'https://www.knps.or.kr/portal/main/contents.do?menuNo=8000159', course_tip: '경사가 완만해 초보자도 오르기 좋으며 일출 조망이 뛰어납니다.', courses: [{ name: '유일사~천제단 코스', distance: '8km', time: 240, diff: '중하', trailhead: '태백산 유일사주차장' }] },
   { name: '오대산', elevation: 1563, peak: '비로봉', region: '강원 평창', terrain: '부드러운 흙길', difficulty: '중', cctv_url: 'https://www.knps.or.kr/portal/main/contents.do?menuNo=8000159', course_tip: '흙길이 잘 정비되어 있으나 정상 직전 오르막이 가파릅니다.', courses: [{ name: '상원사~비로봉 코스', distance: '7km', time: 210, diff: '중', trailhead: '오대산 상원사주차장' }] },
   { name: '치악산', elevation: 1288, peak: '비로봉', region: '강원 원주', terrain: '급경사 철계단', difficulty: '상', cctv_url: 'https://www.knps.or.kr/portal/main/contents.do?menuNo=8000159', course_tip: '급경사 철계단이 이어지므로 무릎 보호대와 스틱이 필수입니다.', courses: [{ name: '구룡사~사다리병창 코스', distance: '11km', time: 360, diff: '상', trailhead: '치악산 구룡탐방지원센터' }] },
@@ -44,9 +44,9 @@ export const MOUNTAINS_LIST = [
   { name: '주왕산', elevation: 721, peak: '주봉', region: '경북 청송', terrain: '협곡·흙길', difficulty: '하', cctv_url: 'https://www.knps.or.kr/portal/main/contents.do?menuNo=8000159', course_tip: '험한 구간이 적어 초보자 산행에 적합하며 아침 물안개가 자주 낍니다.', courses: [{ name: '대전사~주봉 코스', distance: '9km', time: 270, diff: '하', trailhead: '주왕산 상의주차장' }] },
   { name: '도봉산', elevation: 740, peak: '신선대', region: '서울/경기', terrain: '거대 화강암', difficulty: '중상', cctv_url: 'https://www.knps.or.kr/portal/main/contents.do?menuNo=8000159', course_tip: '신선대 오름길은 가파른 쇠난간을 잡아야 하므로 장갑을 권장합니다.', courses: [{ name: '도봉탐방센터~신선대', distance: '6.5km', time: 210, diff: '중상', trailhead: '도봉산탐방지원센터' }] },
   { name: '관악산', elevation: 632, peak: '연주대', region: '서울/경기과천', terrain: '바위 능선', difficulty: '중', cctv_url: 'https://www.youtube.com/results?search_query=%EA%B4%80%EC%95%85%EC%82%B0+%EC%97%B0%EC%A3%BC%EB%8C%80+%EC%8B%A4%EC%8B%9C%EA%B0%84', course_tip: '사당 코스는 노출된 바위 능선이 많아 비 온 뒤 미끄럼에 주의하세요.', courses: [{ name: '서울대~연주대 코스', distance: '6km', time: 210, diff: '중', trailhead: '관악산공원 입구' }] },
-  { name: '대둔산', elevation: 878, peak: '마천대', region: '충남/전북', terrain: '구름다리·철계단', difficulty: '중', cctv_url: 'https://www.youtube.com/results?search_query=%EB%8C%80%EB%91%94%EC%82%B0+%EB%A7%88%EC%B2%9C%EB%8C%80+%EC%8B%A4%EC%8B%9C%EA%B0%84', course_tip: '삼선계단은 경사가 매우 가파르고 일방통행이므로 우회로를 체크하세요.', courses: [{ name: '케이블카~마천대 코스', distance: '2km', time: 90, diff: '하', trailhead: '대둔산케이블카' }, { name: '수락계곡~마천대 코스', distance: '7km', time: 240, diff: '중', trailhead: '대둔산 수락계곡주차장' }] },
+  { name: '대둔산', elevation: 878, peak: '마천대', region: '충남/전북', terrain: '구름다리·철계단', difficulty: '중', cctv_url: 'https://www.youtube.com/results?search_query=%EB%8C%80%EB%91%94%EC%82%B0+%EB%A7%88%EC%B2%9C%EB%8C%80+%EC%8B%A4%EC%8B%9C%EA%B0%84', course_tip: '삼선계단은 경사가 매우 가파르고 일방통행이므로 고소공포증이나 강풍 시 우회 등산로를 이용하세요.', courses: [{ name: '케이블카~마천대 코스', distance: '2km', time: 90, diff: '하', trailhead: '대둔산케이블카' }, { name: '수락계곡~마천대 코스', distance: '7km', time: 240, diff: '중', trailhead: '대둔산 수락계곡주차장' }] },
   { name: '내장산', elevation: 763, peak: '신선봉', region: '전북 정읍', terrain: '단풍 계곡·암릉', difficulty: '중', cctv_url: 'https://www.knps.or.kr/portal/main/contents.do?menuNo=8000159', course_tip: '신선봉 정상으로 오르는 능선은 경사가 급하고 습기가 많습니다.', courses: [{ name: '일주문~신선봉 코스', distance: '8km', time: 270, diff: '중', trailhead: '내장산 일주문' }] },
-  { name: '마이산', elevation: 686, peak: '암마이봉', region: '전북 진안', terrain: '역암 바위', difficulty: '중하', cctv_url: 'https://www.youtube.com/results?search_query=%EB%A7%88%EC%9D%B4%EC%82%B0+%EC%8B%A4%EC%8B%9C%EA%B0%84', course_tip: '암마이봉 구간은 겨울철 결빙 시 통제될 수 있으니 노면을 확인하세요.', courses: [{ name: '탑사~암마이봉 코스', distance: '5km', time: 150, diff: '중하', trailhead: '마이산 남부주차장' }] }
+  { name: '마이산', elevation: 686, peak: '암마이봉', region: '전북 진안', terrain: '역암 바위', difficulty: '중하', cctv_url: 'https://www.youtube.com/results?search_query=%EB%A7%88%EC%9D%B4%EC%82%B0+%EC%8B%A4%EC%8B%9C%EA%B0%84', course_tip: '암마이봉 구간은 겨울철 결빙 시 통제될 수 있으니 노면 상태를 꼭 확인하세요.', courses: [{ name: '탑사~암마이봉 코스', distance: '5km', time: 150, diff: '중하', trailhead: '마이산 남부주차장' }] }
 ];
 
 const MOUNTAINS = MOUNTAINS_LIST.map(m => m.name);
@@ -92,6 +92,12 @@ function App() {
   const [isMountainMode, setIsMountainMode] = useState(false);
   const [mountainInfo, setMountainInfo] = useState(null);
   const [selectedDateIdx, setSelectedDateIdx] = useState(0); 
+
+  // 💡 산행 의사결정 종합 리포트 연동을 위해 끌어올린 상태 (State Lifting)
+  const [selectedCourseIdx, setSelectedCourseIdx] = useState(0);
+  const [paceType, setPaceType] = useState('normal');
+  const [departureOffsetHours, setDepartureOffsetHours] = useState(0);
+  const [customGearList, setCustomGearList] = useState([]);
 
   const [isNoticeOpen, setIsNoticeOpen] = useState(false);
   const [isSignUpOpen, setIsSignUpOpen] = useState(false);
@@ -225,7 +231,9 @@ function App() {
     setBgTheme(theme);
 
     setMountainInfo(mInfo);
-    setSelectedDateIdx(0); 
+    setSelectedDateIdx(0);
+    setSelectedCourseIdx(0);
+    setDepartureOffsetHours(0);
 
     setWeatherData((prev) => ({
       ...prev,
@@ -425,6 +433,107 @@ function App() {
     };
   }, [weatherData, weeklyData, selectedDateIdx, isMountainMode]);
 
+  // 💡 선택된 코스·걸음속도·출발시간·시간별예보를 종합한 산행 의사결정 데이터 계산
+  const hikingPlanSummary = useMemo(() => {
+    if (!isMountainMode) return null;
+    const courses = mountainInfo?.courses || [{ name: '기본 탐방로', distance: '5km', time: 180, diff: '중' }];
+    const selectedCourse = courses[selectedCourseIdx] || courses[0];
+    const paceObj = PACE_OPTIONS.find(p => p.key === paceType) || PACE_OPTIONS[1];
+    const totalMins = Math.max(20, Math.round((selectedCourse.time * paceObj.multiplier) / 10) * 10);
+    const ascentMins = Math.max(15, Math.round((totalMins * 0.55) / 5) * 5);
+
+    const parseTime = (str, fallback = 1080) => {
+      if (!str || !str.includes(':')) return fallback;
+      const [h, m] = str.split(':').map(Number);
+      return (Number.isFinite(h) ? h : 18) * 60 + (Number.isFinite(m) ? m : 0);
+    };
+    const formatTime = (mins) => {
+      const normalized = ((mins % 1440) + 1440) % 1440;
+      return `${String(Math.floor(normalized / 60)).padStart(2, '0')}:${String(normalized % 60).padStart(2, '0')}`;
+    };
+
+    const now = new Date();
+    const depMins = activeWeather.isFuture
+      ? (8 + departureOffsetHours) * 60
+      : (now.getHours() * 60 + now.getMinutes()) + (departureOffsetHours * 60);
+
+    const summitArrivalMins = depMins + ascentMins;
+    const descentFinishMins = depMins + totalMins;
+
+    const safeDescentMins = parseTime(activeWeather.safeDescentTime || '15:30', 930);
+    const sunsetMins = parseTime(activeWeather.sunset || '18:00', 1080);
+    const recommendedDepDeadlineMins = safeDescentMins - totalMins;
+
+    // 1. 기상 적합도 점수 (순수 기상 데이터만 반영)
+    const temp = Number(activeWeather.temp || 0);
+    const wind = Number(activeWeather.wind_speed || 0);
+    const cond = activeWeather.condition || '';
+    const isRainOrSnow = cond.includes('비') || cond.includes('소나기') || cond.includes('눈') || (activeWeather.targetPop >= 60);
+    const pm25Match = (activeWeather.dust || '').match(/\d+/);
+    const pm25 = pm25Match ? parseInt(pm25Match[0], 10) : 15;
+
+    let weatherScore = 100;
+    if (isRainOrSnow) weatherScore -= 40;
+    if (wind >= 10) weatherScore -= 30;
+    else if (wind >= 6) weatherScore -= 15;
+    if (temp <= -10 || temp >= 33) weatherScore -= 20;
+    else if (temp <= -3 || temp >= 28) weatherScore -= 10;
+    if (pm25 >= 75) weatherScore -= 15;
+    else if (pm25 >= 36) weatherScore -= 5;
+    weatherScore = Math.max(0, weatherScore);
+
+    // 2. 시간 안전 판단 (기상 적합도와 철저히 분리)
+    let timeSafetyStatus = '안전 (일몰 전 하산)';
+    let timeSafetyColor = '#166534';
+    if (descentFinishMins > sunsetMins) {
+      timeSafetyStatus = '위험 (일몰 후 야간 하산)';
+      timeSafetyColor = '#dc2626';
+    } else if (descentFinishMins > safeDescentMins) {
+      timeSafetyStatus = '주의 (안전 하산 권장시각 초과)';
+      timeSafetyColor = '#d97706';
+    }
+
+    // 3. 정상 도착 시점의 시간별 예보 매칭
+    let summitForecast = null;
+    if (!activeWeather.isFuture && Array.isArray(hourlyData) && hourlyData.length > 0) {
+      const elapsedHoursToSummit = departureOffsetHours + Math.round(ascentMins / 60);
+      if (elapsedHoursToSummit >= 0 && elapsedHoursToSummit < hourlyData.length) {
+        const matched = hourlyData[elapsedHoursToSummit];
+        const mTemp = Number(matched.temp);
+        const estFeels = mTemp <= 15 ? Math.round(mTemp - (wind * 0.7)) : mTemp;
+        summitForecast = {
+          available: true,
+          targetHourLabel: matched.time,
+          temp: mTemp,
+          feelsLike: estFeels,
+          pop: Math.round(Number(matched.pop || 0) * 100),
+          description: matched.description || '예보',
+          icon: matched.icon
+        };
+      } else {
+        summitForecast = { available: false, reason: '예측 불가 (24시간 예보 범위 초과)' };
+      }
+    } else {
+      summitForecast = { available: false, reason: '예측 불가 (미래 일자는 시간별 상세 예보 미제공)' };
+    }
+
+    return {
+      course: selectedCourse,
+      paceObj,
+      totalMins,
+      ascentMins,
+      departureTimeStr: formatTime(depMins),
+      summitArrivalTimeStr: formatTime(summitArrivalMins),
+      descentFinishTimeStr: formatTime(descentFinishMins),
+      recommendedDepDeadlineStr: formatTime(recommendedDepDeadlineMins),
+      weatherScore,
+      timeSafetyStatus,
+      timeSafetyColor,
+      summitForecast,
+      gearList: customGearList
+    };
+  }, [isMountainMode, mountainInfo, selectedCourseIdx, paceType, departureOffsetHours, activeWeather, hourlyData, customGearList]);
+
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', position: 'relative' }}>
       
@@ -457,7 +566,6 @@ function App() {
         @keyframes skeleton-loading { 0% { background-color: rgba(255,255,255,0.5); } 50% { background-color: rgba(255,255,255,0.2); } 100% { background-color: rgba(255,255,255,0.5); } }
         .skeleton { animation: skeleton-loading 1.5s infinite ease-in-out; }
 
-        /* 💡 PC vs 모바일 명산 리스트 전환용 클래스 */
         .mobile-mtn-pills { display: none; }
         .desktop-mtn-list { display: block; }
 
@@ -596,6 +704,13 @@ function App() {
             mountainInfo={mountainInfo}
             weatherData={activeWeather}
             onShowToast={showToast}
+            selectedCourseIdx={selectedCourseIdx}
+            onSelectCourseIdx={setSelectedCourseIdx}
+            paceType={paceType}
+            onSelectPaceType={setPaceType}
+            departureOffsetHours={departureOffsetHours}
+            onSelectDepartureOffset={setDepartureOffsetHours}
+            onGearListChange={setCustomGearList}
           />
           
           <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -603,7 +718,9 @@ function App() {
               weeklyData={weeklyData} 
               aiBriefing={aiBriefing} 
               isMountainMode={isMountainMode} 
-              mountainInfo={mountainInfo} 
+              mountainInfo={mountainInfo}
+              weatherData={activeWeather}
+              hikingPlanSummary={hikingPlanSummary}
             />
           </div>
         </div>
