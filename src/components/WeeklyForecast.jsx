@@ -51,7 +51,8 @@ function WeeklyForecast({ weeklyData = [], isLoading = false }) {
                   {day.isToday ? '오늘' : day.day}
                 </span>
                 
-                <span style={{ width: '48px', color: day.pop > 0 ? '#2563eb' : '#94a3b8', fontSize: '12.5px', textAlign: 'left', fontWeight: '800' }}>
+                {/* 💡 수정된 부분: width를 56px로 늘리고 whiteSpace: 'nowrap'을 추가해 100% 글자 밀림 방지 */}
+                <span style={{ width: '56px', whiteSpace: 'nowrap', color: day.pop > 0 ? '#2563eb' : '#94a3b8', fontSize: '12.5px', textAlign: 'left', fontWeight: '800' }}>
                   💧 {day.pop || 0}%
                 </span>
                 
