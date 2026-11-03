@@ -7,14 +7,9 @@ const prettyKey = (key = '') => ({
   WD: '풍향', WD1: '풍향', TW: '해수면 온도', TA: '기온', HM: '습도', PA: '해면기압', WP: '파주기',
   STN_KO: '관측 지점', STN_ID: '지점 ID', TM: '관측 시각', REG_ID: '예보 구역', TM_FC: '예보 발표',
   TM_EF: '예보 시각', W1: '풍향 시작', W2: '풍향 종료', ST: '강수 확률', SKY: '하늘 상태', PREP: '강수 형태', WF: '예보',
-  LON: '경도', LAT: '위도', TP: '관측 종류', WS1: '풍속 시작', WS2: '풍속 범위', WH1: '파고 시작', WH2: '파고 범위',
+  LON: '경도', LAT: '위도', TP: '관측 종류', WS2: '풍속 범위', WH1: '파고 시작', WH2: '파고 범위',
+  obsvtrNm: '기준 관측소', obsrvnDt: '예측 시각', obsrvnHgt: '예측 조위',
 })[key] || key.replaceAll('_', ' ');
-
-function collectValues(value, prefix = '') {
-  if (value == null || typeof value !== 'object') return prefix ? [[prefix, value]] : [];
-  if (Array.isArray(value)) return value.flatMap((item, index) => collectValues(item, `${prefix}[${index + 1}]`));
-  return Object.entries(value).flatMap(([key, item]) => collectValues(item, prefix ? `${prefix} · ${key}` : key));
-}
 
 function DataRows({ rows, type }) {
   if (!rows?.length) return <p className="fish-empty">아직 표시할 자료가 없습니다. {type === 'forecast' ? '예보 구역이나 발표 시각을 확인해 주세요.' : '기관 자료 갱신을 기다리거나 새로고침해 주세요.'}</p>;
@@ -27,27 +22,38 @@ function DataRows({ rows, type }) {
   })}</div>;
 }
 
+async function fetchFishingSummary() {
+  const response = await fetch(`${API}/api/fishing/summary?place=${encodeURIComponent('제주 북부 해상')}&region=`);
+  const body = await response.json();
+  if (!response.ok) throw new Error(body.detail || '해양 자료를 불러오지 못했습니다.');
+  return body;
+}
+
 export default function FishingPage() {
   const [data, setData] = useState(null);
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const load = useCallback(async () => {
     setLoading(true); setError('');
-    try {
-      const response = await fetch(`${API}/api/fishing/summary?place=${encodeURIComponent('제주 북부 해상')}&region=`);
-      const body = await response.json();
-      if (!response.ok) throw new Error(body.detail || '해양 자료를 불러오지 못했습니다.');
-      setData(body);
-    } catch (e) { setError(e.message || '서버에 연결할 수 없습니다.'); }
+    try { setData(await fetchFishingSummary()); }
+    catch (e) { setError(e.message || '서버에 연결할 수 없습니다.'); }
     finally { setLoading(false); }
   }, []);
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    let active = true;
+    fetchFishingSummary()
+      .then((result) => { if (active) setData(result); })
+      .catch((e) => { if (active) setError(e.message || '서버에 연결할 수 없습니다.'); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, []);
 
   const sources = data?.sources || {};
   const buoyRows = sources.buoy?.records || [];
   const firstBuoy = buoyRows[0] || {};
   const buoyEntries = Object.entries(firstBuoy).filter(([key]) => key !== 'fields');
-  const tideValues = collectValues(sources.tide?.data).filter(([key]) => ['obsvtrNm', 'obsrvnDt', 'obsrvnHgt'].includes(key.split(' · ').at(-1)));
+  const tideItems = sources.tide?.data?.body?.items?.item || [];
+  const tideRows = (Array.isArray(tideItems) ? tideItems : [tideItems]).slice(0, 6);
   const metrics = ['WH', 'WS', 'WD', 'TW', 'TA', 'HM'].filter((key) => firstBuoy[key] != null).slice(0, 4);
 
   return <main className="fishing-page">
@@ -77,7 +83,7 @@ export default function FishingPage() {
       </article>
 
       <article className="fish-panel fish-tide-panel"><div className="fish-panel-title"><FiDroplet /><div><h2>오늘의 조위</h2><p>TideBED 예측 · 추자도 기준</p></div></div>
-        {tideValues.length ? <div className="fish-tide-values">{tideValues.map(([key, value]) => <div className="fish-tide-item" key={key}><span>{prettyKey(key.split(' · ').at(-1))}</span><b>{String(value)}{key.endsWith('obsrvnHgt') ? ' cm' : ''}</b></div>)}</div> : <p className="fish-empty">조위 자료를 불러오면 예측 정보를 표시합니다.</p>}
+        {tideRows.length ? <div className="fish-tide-values">{tideRows.map((item, index) => <div className="fish-tide-item" key={`${item.obsrvnDt}-${index}`}><span>{prettyKey('obsrvnDt')}</span><b>{item.obsrvnDt || '—'}</b><span>{prettyKey('obsrvnHgt')}</span><b>{item.obsrvnHgt ?? '—'}</b></div>)}</div> : <p className="fish-empty">조위 자료를 불러오면 예측 정보를 표시합니다.</p>}
         {data?.errors?.tide && <p className="fish-inline-error">{data.errors.tide}</p>}
       </article>
     </section>
