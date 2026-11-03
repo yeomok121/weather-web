@@ -36,7 +36,14 @@ function WeatherMain({
 
   const tempDiff = Number(weatherData.tempDiff || 0);
   const getComparisonBadge = () => {
-    if (weatherData.isFuture) return { text: `🗓️ 해당 일자의 예상 최고기온 기준입니다`, bg: 'rgba(255,255,255,0.5)', color: '#334155', border: 'transparent' };
+    if (weatherData.isFuture) {
+      if (isMountainMode) {
+        const baseTemp = weatherData.baseTemp ?? (weatherData.temp + 5);
+        const drop = weatherData.summitDrop || Math.max(1, baseTemp - weatherData.temp);
+        return { text: `🗓️ 예보 기준 · 산 입구(${baseTemp}°C)보다 약 ${drop}°C 낮아요`, bg: 'rgba(209, 250, 229, 0.7)', color: '#047857', border: 'transparent' };
+      }
+      return { text: `🗓️ 해당 일자의 예상 최고기온 기준입니다`, bg: 'rgba(255,255,255,0.5)', color: '#334155', border: 'transparent' };
+    }
     if (isMountainMode) {
       const baseTemp = weatherData.baseTemp ?? (weatherData.temp + 5);
       const drop = weatherData.summitDrop || Math.max(1, baseTemp - weatherData.temp);
@@ -66,8 +73,37 @@ function WeatherMain({
     return null;
   };
 
+  // 💡 미래 날짜 선택 시에도 그날의 기상 조건에 맞는 스마트 가이드 문구 생성
+  const getActiveGuideMessage = () => {
+    if (!weatherData.isFuture) return aiMessage;
+
+    const t = Number(weatherData.temp || 0);
+    const w = Number(weatherData.wind_speed || 0);
+    const pop = Number(weatherData.targetPop || 0);
+    const rName = weatherData.region || '산';
+
+    if (isMountainMode) {
+      if (pop >= 60) {
+        return `🌧️ ${weatherData.date} ${rName} 강수확률 ${pop}%! 등산로가 미끄러울 수 있으니 방수 재킷·스패츠를 챙기거나 일정을 점검하세요.`;
+      }
+      if (t <= 2) {
+        return `🧊 ${weatherData.date} ${rName} 정상 예상 ${t}°C! 결빙·블랙아이스 대비 아이젠과 보온병, 방한장비를 꼭 준비하세요.`;
+      }
+      if (w >= 6) {
+        return `💨 ${weatherData.date} ${rName} 능선 예상 풍속 ${w}m/s! 체감온도가 급격히 떨어지니 방풍 재킷(바람막이)이 필수입니다.`;
+      }
+      return `🥾 ${weatherData.date} ${rName} 정상 예상 ${t}°C로 산행하기 무난한 기상입니다! 평지보다 서늘하니 겹쳐 입을 겉옷을 챙기세요.`;
+    } else {
+      if (pop >= 60) return `☔ ${weatherData.date}에는 비/눈 예보(강수확률 ${pop}%)가 있습니다. 외출 시 우산을 꼭 챙기세요!`;
+      if (t <= 0) return `🥶 ${weatherData.date} 예상 최고기온 ${t}°C로 추운 날씨가 예상됩니다. 따뜻한 겨울 외투를 준비하세요!`;
+      if (t >= 28) return `☀️ ${weatherData.date} 예상 최고기온 ${t}°C로 다소 덥겠습니다. 시원한 옷차림과 수분 섭취에 신경 쓰세요!`;
+      return `✨ ${weatherData.date} ${rName} 예상 최고기온은 ${t}°C입니다. 일교차에 대비해 가벼운 겉옷을 챙기시면 좋습니다.`;
+    }
+  };
+
   const diffBadge = getComparisonBadge();
   const weatherAlert = getWeatherAlert();
+  const displayGuideMessage = getActiveGuideMessage();
 
   return (
     <div className="weather-main-card glass-card" style={{ borderRadius: '16px', display: 'flex', flexDirection: 'row', overflow: 'hidden' }}>
@@ -146,35 +182,58 @@ function WeatherMain({
           </span>
         </div>
         
-        {!weatherData.isFuture && (
-          <div style={{ marginTop: '16px', padding: '12px 16px', background: 'rgba(255,255,255,0.4)', borderRadius: '12px', display: 'flex', justifyContent: 'center', alignItems: 'center', fontSize: '13.5px', border: '1px solid rgba(255,255,255,0.5)', textAlign: 'center', minHeight: '44px' }}>
-            <span style={{ fontWeight: '600', color: '#1e293b', lineHeight: '1.45', wordBreak: 'keep-all' }}>{aiMessage}</span>
-          </div>
-        )}
+        {/* 💡 오늘/미래 날짜 언제든 맞춤형 가이드 멘트 노출 */}
+        <div style={{ marginTop: '16px', padding: '12px 16px', background: 'rgba(255,255,255,0.4)', borderRadius: '12px', display: 'flex', justifyContent: 'center', alignItems: 'center', fontSize: '13.5px', border: '1px solid rgba(255,255,255,0.5)', textAlign: 'center', minHeight: '44px' }}>
+          <span style={{ fontWeight: '600', color: '#1e293b', lineHeight: '1.45', wordBreak: 'keep-all' }}>{displayGuideMessage}</span>
+        </div>
       </div>
       
-      <div className="weather-main-right" style={{ flex: 1, padding: '24px', borderLeft: '1px solid rgba(255,255,255,0.4)', color: '#333', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', backgroundColor: 'rgba(255,255,255,0.15)' }}>
+      <div className="weather-main-right" style={{ flex: 1, padding: '24px', borderLeft: '1px solid rgba(255,255,255,0.4)', color: '#333', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', backgroundColor: 'rgba(255,255,255,0.15)', minWidth: 0 }}>
         {isMountainMode ? (
-          <>
-            <div>
-              <h4 style={{ fontSize: '12px', color: '#15803d', fontWeight: 'bold', margin: '0 0 8px 0' }}>📌 {weatherData.region} 핵심 산행 팁</h4>
-              <div style={{ backgroundColor: 'rgba(255,255,255,0.6)', borderRadius: '8px', padding: '10px 12px', fontSize: '12px', color: '#1e293b', lineHeight: '1.5', margin: '0 0 16px 0', wordBreak: 'keep-all' }}>
-                {mountainInfo?.course_tip || '정상 부근 기온 하강과 강풍에 대비해 방풍 의류와 스틱을 준비하세요.'}
-              </div>
-
-              <h4 style={{ fontSize: '12px', color: '#475569', margin: '0 0 8px 0', fontWeight: 'bold' }}>⛰️ 20대 명산 빠른 선택</h4>
-              <ul className="no-scrollbar" style={{ listStyle: 'none', padding: '0', margin: '0', fontSize: '13px', maxHeight: '180px', overflowY: 'auto' }}>
-                {mountainsList.map((m, idx) => {
-                  const isSelected = weatherData.region === m.name;
-                  return (
-                    <li key={idx} onClick={() => onSelectMountain && onSelectMountain(m.name)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 10px', cursor: 'pointer', borderRadius: '8px', backgroundColor: isSelected ? 'rgba(22,163,74,0.15)' : 'transparent', color: isSelected ? '#15803d' : '#475569', fontWeight: isSelected ? 'bold' : '500', marginBottom: '4px' }}>
-                      <span>{idx + 1}. {m.name}</span><span style={{ fontSize: '11px', color: isSelected ? '#15803d' : '#94a3b8' }}>{m.elevation}m</span>
-                    </li>
-                  );
-                })}
-              </ul>
+          <div style={{ minWidth: 0 }}>
+            <h4 style={{ fontSize: '12px', color: '#15803d', fontWeight: 'bold', margin: '0 0 8px 0' }}>📌 {weatherData.region} 핵심 산행 팁</h4>
+            <div style={{ backgroundColor: 'rgba(255,255,255,0.6)', borderRadius: '8px', padding: '10px 12px', fontSize: '12px', color: '#1e293b', lineHeight: '1.5', margin: '0 0 14px 0', wordBreak: 'keep-all' }}>
+              {mountainInfo?.course_tip || '정상 부근 기온 하강과 강풍에 대비해 방풍 의류와 스틱을 준비하세요.'}
             </div>
-          </>
+
+            <h4 style={{ fontSize: '12px', color: '#475569', margin: '0 0 8px 0', fontWeight: 'bold' }}>⛰️ 20대 명산 빠른 선택</h4>
+            
+            {/* 💡 모바일 전용: 가로 스와이프 알약(Pill) 버튼 바 (스크롤 절약) */}
+            <div className="mobile-mtn-pills no-scrollbar" style={{ gap: '6px', overflowX: 'auto', paddingBottom: '4px', WebkitOverflowScrolling: 'touch' }}>
+              {mountainsList.map((m, idx) => {
+                const isSelected = weatherData.region === m.name;
+                return (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => onSelectMountain && onSelectMountain(m.name)}
+                    style={{
+                      flexShrink: 0, padding: '7px 12px', borderRadius: '999px', fontSize: '12px', cursor: 'pointer',
+                      border: isSelected ? '1px solid #15803d' : '1px solid rgba(0,0,0,0.1)',
+                      backgroundColor: isSelected ? '#166534' : 'rgba(255,255,255,0.75)',
+                      color: isSelected ? '#ffffff' : '#334155',
+                      fontWeight: isSelected ? 'bold' : '600',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    {m.name} <span style={{ fontSize: '10.5px', opacity: 0.85 }}>{m.elevation}m</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* 💡 데스크톱 전용: 기존 세로 스크롤 리스트 */}
+            <ul className="desktop-mtn-list no-scrollbar" style={{ listStyle: 'none', padding: '0', margin: '0', fontSize: '13px', maxHeight: '180px', overflowY: 'auto' }}>
+              {mountainsList.map((m, idx) => {
+                const isSelected = weatherData.region === m.name;
+                return (
+                  <li key={idx} onClick={() => onSelectMountain && onSelectMountain(m.name)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 10px', cursor: 'pointer', borderRadius: '8px', backgroundColor: isSelected ? 'rgba(22,163,74,0.15)' : 'transparent', color: isSelected ? '#15803d' : '#475569', fontWeight: isSelected ? 'bold' : '500', marginBottom: '4px' }}>
+                    <span>{idx + 1}. {m.name}</span><span style={{ fontSize: '11px', color: isSelected ? '#15803d' : '#94a3b8' }}>{m.elevation}m</span>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
         ) : (
           <div>
             <h4 style={{ fontSize: '12px', color: '#64748b', margin: '0 0 15px 0', fontWeight: 'bold' }}>관심 지역 관리 ({favorites.length}/5)</h4>

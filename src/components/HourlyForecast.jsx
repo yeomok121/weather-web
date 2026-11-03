@@ -1,10 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { FiChevronLeft, FiChevronRight, FiShare2, FiPlus, FiX, FiRotateCcw } from 'react-icons/fi';
+import { FiChevronLeft, FiChevronRight, FiShare2, FiPlus, FiX, FiRotateCcw, FiMapPin } from 'react-icons/fi';
 import { LineChart, Line, YAxis, ResponsiveContainer } from 'recharts';
 import { getEmojiIcon } from './WeeklyForecast';
 
 const ITEMS_TO_SHOW = 6;
 const EMPTY_HOURLY = [];
+
+const PACE_OPTIONS = [
+  { key: 'slow', label: '🐢 초보(여유)', multiplier: 1.3 },
+  { key: 'normal', label: '🥾 보통(표준)', multiplier: 1.0 },
+  { key: 'fast', label: '⚡ 숙련(빠름)', multiplier: 0.85 },
+];
 
 function toNumber(value) {
   if (value === null || value === undefined || value === '') return null;
@@ -21,9 +27,8 @@ const CustomLabel = ({ x, y, value }) => (
 function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = '', isMountainMode = false, mountainInfo = null, weatherData = {}, onShowToast }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedCourseIdx, setSelectedCourseIdx] = useState(0);
-  
-  // 💡 일출(등산)/일몰(하산) 모드를 전환하는 상태 추가
   const [timelineMode, setTimelineMode] = useState('descent'); // 'descent' | 'ascent'
+  const [paceType, setPaceType] = useState('normal'); // 💡 'slow' | 'normal' | 'fast'
   
   const [gearList, setGearList] = useState([]);
   const [checklist, setChecklist] = useState({});
@@ -50,17 +55,72 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
   const terrain = mountainInfo?.terrain || '';
   const isFuture = weatherData?.isFuture || false;
 
+  const courses = mountainInfo?.courses || [{ name: '기본 탐방로', distance: '5km', time: 180, diff: '중' }];
+  const selectedCourse = courses[selectedCourseIdx] || courses[0];
+
+  // 💡 1. 걸음 속도(초보/보통/숙련)에 따른 보정 소요 시간 계산 (10분 단위 반올림)
+  const currentPaceObj = PACE_OPTIONS.find(p => p.key === paceType) || PACE_OPTIONS[1];
+  const adjustedTimeMins = Math.max(20, Math.round((selectedCourse.time * currentPaceObj.multiplier) / 10) * 10);
+
+  // 💡 2. 산행 시간 + 기온 기반 '권장 식수량 & 행동식 열량' 자동 계산
+  const getNutritionGuide = () => {
+    const hours = adjustedTimeMins / 60;
+    let waterPerHour = 0.35; // 기본 시간당 350ml
+    if (temp >= 25) waterPerHour = 0.55;
+    else if (temp >= 18) waterPerHour = 0.45;
+    else if (temp <= 2) waterPerHour = 0.3;
+
+    const totalWaterL = Math.max(0.5, Math.min(3.5, Math.round(hours * waterPerHour * 2) / 2));
+    const waterNote = temp <= 5 ? ' (보온병 온수 500ml 포함)' : temp >= 24 ? ' (이온음료·얼음물 권장)' : '';
+
+    let kcalPerHour = 220;
+    if (selectedCourse.diff.includes('상')) kcalPerHour = 270;
+    if (temp <= 0) kcalPerHour += 30;
+    const totalKcal = Math.max(200, Math.round((hours * kcalPerHour) / 50) * 50);
+
+    return {
+      waterText: `${totalWaterL}L${waterNote}`,
+      kcalText: `약 ${totalKcal.toLocaleString()}kcal`,
+      shortWater: `${totalWaterL}L`
+    };
+  };
+  const nutrition = getNutritionGuide();
+
+  // 💡 3. 들머리(입구) 검색어 추출 및 카카오맵/네이버지도 길찾기 연동
+  const getTrailheadQuery = () => {
+    if (selectedCourse.trailhead) return selectedCourse.trailhead;
+    const mName = weatherData?.region || mountainInfo?.name || '북한산';
+    const match = selectedCourse.name.match(/\(([^)]+)\)/);
+    if (match && match[1]) {
+      const sub = match[1].replace('최단', '').trim();
+      return `${mName} ${sub}`;
+    }
+    const firstPart = selectedCourse.name.split('~')[0].split(' ')[0];
+    return `${mName} ${firstPart}`;
+  };
+
+  const handleOpenMap = (provider) => {
+    const query = encodeURIComponent(getTrailheadQuery());
+    const url = provider === 'kakao'
+      ? `https://map.kakao.com/link/search/${query}`
+      : `https://map.naver.com/p/search/${query}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
   const buildWeatherGearList = () => {
-    const items = ['등산화 (접지력 확인)', '충분한 식수', '초코바 등 행동식'];
+    const items = [
+      '등산화 (접지력 확인)',
+      `식수 최소 ${nutrition.shortWater}`,
+      `행동식 (${nutrition.kcalText})`
+    ];
     if (temp <= 2 || isSnow) items.push('아이젠 및 스패츠', '보온병 (온수)', '방한모 및 넥워머');
     if (temp <= 15 || wind >= 5) items.push('방풍 재킷(바람막이)');
     if (isRainOrSnow) items.push('판초우의 또는 배낭 커버');
     if (terrain.includes('암릉') || terrain.includes('바위')) items.push('반장갑 (바위용)', '릿지화(암릉화)');
     items.push('등산 스틱', '비상용 헤드랜턴');
     
-    // 일출 산행 모드일 경우 강제로 헤드랜턴 및 방한 용품 추가
     if (timelineMode === 'ascent' && isMountainMode) {
-      if (!items.includes('비상용 헤드랜턴')) items.push('헤드랜턴 (여분 배터리)');
+      if (!items.includes('헤드랜턴 (여분 배터리)')) items.push('헤드랜턴 (여분 배터리)');
       if (temp <= 10 && !items.includes('방한모 및 넥워머')) items.push('새벽 칼바람 대비 보온의류');
     }
     return items;
@@ -72,9 +132,12 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
 
   useEffect(() => {
     setSelectedCourseIdx(0);
+  }, [mountainInfo?.name]);
+
+  useEffect(() => {
     setGearList(buildWeatherGearList());
     setChecklist({});
-  }, [mountainInfo?.name, weatherData?.date, temp, wind, isRainOrSnow, terrain, timelineMode]);
+  }, [mountainInfo?.name, weatherData?.date, temp, wind, isRainOrSnow, terrain, timelineMode, selectedCourseIdx, paceType]);
 
   const toggleCheck = (item) => {
     setChecklist(prev => ({ ...prev, [item]: !prev[item] }));
@@ -103,7 +166,7 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
   const handleResetGear = () => {
     setGearList(buildWeatherGearList());
     setChecklist({});
-    if (onShowToast) onShowToast('🔄 현재 기상에 맞는 기본 추천 준비물로 복원되었습니다.');
+    if (onShowToast) onShowToast('🔄 현재 기상과 코스에 맞는 기본 추천 준비물로 복원되었습니다.');
   };
 
   const handleMouseDown = (e) => {
@@ -179,10 +242,7 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
   };
   const score = getMountainScore();
 
-  const courses = mountainInfo?.courses || [{ name: '기본 탐방로', distance: '5km', time: 180, diff: '중' }];
-  const selectedCourse = courses[selectedCourseIdx] || courses[0];
-
-  // 💡 일몰(하산) 계산과 일출(등산) 계산을 분리 처리하는 로직
+  // 💡 보정된 소요 시간(adjustedTimeMins)을 기준으로 일출/일몰 출발 마감 시각 계산
   const getTimelineStatus = () => {
     const parseTime = (str) => {
       if (!str || !str.includes(':')) return 1080;
@@ -190,16 +250,17 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
       return h * 60 + m;
     };
     
-    const requiredMins = selectedCourse.time;
+    const requiredMins = adjustedTimeMins;
 
-    // 1. 일출 산행 모드 (Sunrise Ascent)
     if (timelineMode === 'ascent') {
+      // 일출 산행은 정상까지 편도(왕복 시간의 약 55%) 소요 시간을 기준으로 출발 시각 역산
+      const ascentMins = Math.max(20, Math.round((requiredMins * 0.55) / 5) * 5);
       const sunriseMins = parseTime(sunrise);
-      let depMins = sunriseMins - requiredMins;
+      let depMins = sunriseMins - ascentMins;
       let isPrevDay = false;
       
       if (depMins < 0) {
-        depMins += 24 * 60; // 전날로 넘어감
+        depMins += 24 * 60;
         isPrevDay = true;
       }
       
@@ -210,11 +271,10 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
       return { 
         status: 'sunrise', 
         deadlineStr: depStr, 
-        msg: `🌅 일출(${sunrise}) 조망: 늦어도 ${depStr}에는 산행을 시작해야 합니다.` 
+        msg: `🌅 일출(${sunrise}) 정상 조망: 늦어도 ${depStr}에는 들머리에서 출발해야 합니다. (정상 등정 약 ${Math.floor(ascentMins / 60)}시간 ${ascentMins % 60}분 기준)` 
       };
     }
 
-    // 2. 일몰 하산 모드 (Sunset Descent) - 기존 로직
     const safeDescentMins = parseTime(safeDescentTime);
     const deadlineMins = safeDescentMins - requiredMins; 
     const deadlineH = Math.floor(deadlineMins / 60);
@@ -222,15 +282,15 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
     const deadlineStr = `${deadlineH}:${deadlineM}`;
     
     if (isFuture) {
-      return { status: 'safe', deadlineStr, msg: `🗓️ ${weatherData.date} 계획: 늦어도 ${deadlineStr} 전에는 등산을 시작해야 안전합니다.` };
+      return { status: 'safe', deadlineStr, msg: `🗓️ ${weatherData.date} 계획 (${currentPaceObj.label}): 늦어도 ${deadlineStr} 전에는 등산을 시작해야 일몰 전 안전 하산이 가능합니다.` };
     }
 
     const now = new Date();
     const currentMins = now.getHours() * 60 + now.getMinutes();
 
     if (currentMins > safeDescentMins) return { status: 'danger', deadlineStr, msg: '⚠️ 하산 마감 시간이 지났습니다. 야간 산행(랜턴) 모드입니다.' };
-    if (currentMins > deadlineMins) return { status: 'warning', deadlineStr, msg: `⚠️ 지금 출발하면 일몰(${sunset}) 후 하산합니다. 랜턴 필수!` };
-    return { status: 'safe', deadlineStr, msg: `✅ 지금 출발하면 일몰 전 안전하게 하산 가능합니다.` };
+    if (currentMins > deadlineMins) return { status: 'warning', deadlineStr, msg: `⚠️ 지금 출발하면 일몰(${sunset}) 후 하산합니다. (출발 마감 ${deadlineStr} 경과 · 랜턴 필수!)` };
+    return { status: 'safe', deadlineStr, msg: `✅ 지금 출발하면 일몰 전 안전 하산 가능! (권장 출발 마감 ${deadlineStr})` };
   };
   const timeline = getTimelineStatus();
 
@@ -243,14 +303,16 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
 
     const timelineStr = timelineMode === 'ascent'
       ? `🌅 일출 산행: 일출(${sunrise})을 보려면 늦어도 ${timeline.deadlineStr}에 출발하세요.`
-      : `🚨 안전 하산 마감: ${safeDescentTime} 이전 (일몰 ${sunset})`;
+      : `🚨 안전 출발 마감: ${timeline.deadlineStr} 이전 출발 권장 (하산 마감 ${safeDescentTime} / 일몰 ${sunset})`;
 
     const shareText = [
       `⛰️ [${mName} ${peak} 산행 기상 브리핑]`,
       `📅 일자: ${weatherData.date}`,
       `🌡️ 정상 기온: ${temp}°C (입구 평지 ${baseTemp}°C / 풍속 ${wind}m/s)`,
       `🏆 산행 지수: ${score}점 (${score >= 80 ? '매우 쾌적' : score >= 60 ? '산행 무난' : '주의 필요'})`,
-      `🥾 선택 코스: ${selectedCourse.name} (거리 ${selectedCourse.distance} · 약 ${Math.floor(selectedCourse.time / 60)}시간 ${selectedCourse.time % 60}분 소요)`,
+      `🥾 선택 코스: ${selectedCourse.name} (거리 ${selectedCourse.distance} · ${currentPaceObj.label} 약 ${Math.floor(adjustedTimeMins / 60)}시간 ${adjustedTimeMins % 60}분 소요)`,
+      `📍 들머리 검색: ${getTrailheadQuery()}`,
+      `💧 권장 식수/열량: ${nutrition.waterText} / ${nutrition.kcalText}`,
       timelineStr,
       `🎒 맞춤 배낭 체크리스트:\n  ${formattedGear}`,
       `🔗 날씨 대시보드: ${window.location.href}`
@@ -258,7 +320,7 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
 
     try {
       await navigator.clipboard.writeText(shareText);
-      if (onShowToast) onShowToast('📋 내가 편집한 체크리스트와 산행 일정이 복사되었습니다! 카톡 등에 붙여넣어 공유하세요.');
+      if (onShowToast) onShowToast('📋 코스·식수량·체크리스트가 포함된 산행 일정이 복사되었습니다!');
     } catch (err) {
       if (onShowToast) onShowToast('복사에 실패했습니다. 브라우저 권한을 확인해주세요.');
     }
@@ -322,10 +384,9 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
               </div>
             </div>
 
-            <div style={{ flex: '1 1 270px', backgroundColor: 'rgba(255,255,255,0.6)', borderRadius: '12px', padding: '16px', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            <div style={{ flex: '1 1 290px', backgroundColor: 'rgba(255,255,255,0.6)', borderRadius: '12px', padding: '16px', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
               
-              {/* 💡 일출(등산)/일몰(하산) 모드를 전환하는 토글 버튼 추가 */}
-              <h4 style={{ margin: '0 0 12px 0', fontSize: '14px', color: '#1e293b', display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
+              <h4 style={{ margin: '0 0 10px 0', fontSize: '14px', color: '#1e293b', display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
                 <span style={{ whiteSpace: 'nowrap', fontWeight: '800' }}>⏱️ 코스별 타임라인</span>
                 <div style={{ display: 'flex', backgroundColor: 'rgba(255,255,255,0.6)', padding: '2px', borderRadius: '8px', border: '1px solid rgba(0,0,0,0.05)' }}>
                   <button
@@ -360,7 +421,7 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
                       setSelectedCourseIdx(idx);
                     }}
                     style={{
-                      flexShrink: 0, padding: '8px 12px', borderRadius: '8px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer',
+                      flexShrink: 0, padding: '7px 12px', borderRadius: '8px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer',
                       border: selectedCourseIdx === idx ? '1px solid #2563eb' : '1px solid rgba(0,0,0,0.1)',
                       background: selectedCourseIdx === idx ? '#eff6ff' : 'rgba(255,255,255,0.8)',
                       color: selectedCourseIdx === idx ? '#1d4ed8' : '#475569',
@@ -372,17 +433,71 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
                 ))}
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', fontSize: '12px', color: '#1e293b', backgroundColor: 'rgba(255,255,255,0.7)', padding: '12px', borderRadius: '8px', marginBottom: '10px' }}>
-                <span>거리: <strong>{selectedCourse.distance}</strong></span>
-                <span>소요: <strong>{Math.floor(selectedCourse.time / 60)}시간 {selectedCourse.time % 60}분</strong></span>
-                <span style={{ gridColumn: 'span 2' }}>난이도: <strong style={{ color: selectedCourse.diff.includes('상') ? '#dc2626' : '#16a34a' }}>{selectedCourse.diff}</strong></span>
+              {/* 💡 걸음 속도(체력) 보정 스위치 */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px', marginBottom: '8px', backgroundColor: 'rgba(255,255,255,0.5)', padding: '5px 8px', borderRadius: '8px' }}>
+                <span style={{ fontSize: '11px', fontWeight: 'bold', color: '#475569', whiteSpace: 'nowrap' }}>걸음 속도:</span>
+                <div style={{ display: 'flex', gap: '4px', flex: 1 }}>
+                  {PACE_OPTIONS.map((p) => (
+                    <button
+                      key={p.key}
+                      type="button"
+                      onClick={() => setPaceType(p.key)}
+                      style={{
+                        flex: 1, padding: '4px 6px', fontSize: '11px', fontWeight: 'bold', borderRadius: '6px', cursor: 'pointer',
+                        border: paceType === p.key ? '1px solid #16a34a' : '1px solid transparent',
+                        backgroundColor: paceType === p.key ? '#dcfce7' : 'rgba(255,255,255,0.7)',
+                        color: paceType === p.key ? '#166534' : '#64748b',
+                        transition: 'all 0.15s'
+                      }}
+                    >
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
               </div>
 
-              <div style={{ fontSize: '12px', fontWeight: 'bold', textAlign: 'center', padding: '10px', borderRadius: '8px', marginTop: 'auto', wordBreak: 'keep-all', lineHeight: '1.4',
-                backgroundColor: timeline.status === 'sunrise' ? 'rgba(255,247,237,0.8)' : timeline.status === 'safe' ? 'rgba(240,253,244,0.8)' : timeline.status === 'warning' ? 'rgba(254,252,232,0.8)' : 'rgba(254,242,242,0.8)',
+              {/* 💡 코스 상세 스펙 + 식수량/열량 자동 계산기 */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', fontSize: '11.5px', color: '#1e293b', backgroundColor: 'rgba(255,255,255,0.7)', padding: '10px 12px', borderRadius: '8px', marginBottom: '8px' }}>
+                <span>거리: <strong>{selectedCourse.distance}</strong></span>
+                <span>소요: <strong>{Math.floor(adjustedTimeMins / 60)}시간 {adjustedTimeMins % 60 > 0 ? `${adjustedTimeMins % 60}분` : ''}</strong></span>
+                <span>난이도: <strong style={{ color: selectedCourse.diff.includes('상') ? '#dc2626' : '#16a34a' }}>{selectedCourse.diff}</strong></span>
+                <span>열량: <strong>🍫 {nutrition.kcalText}</strong></span>
+                <span style={{ gridColumn: 'span 2', color: '#0369a1', fontWeight: '600' }}>
+                  💧 권장 식수: <strong>{nutrition.waterText}</strong>
+                </span>
+              </div>
+
+              <div style={{ fontSize: '11.5px', fontWeight: 'bold', textAlign: 'center', padding: '9px 10px', borderRadius: '8px', wordBreak: 'keep-all', lineHeight: '1.4', marginBottom: '8px',
+                backgroundColor: timeline.status === 'sunrise' ? 'rgba(255,247,237,0.85)' : timeline.status === 'safe' ? 'rgba(240,253,244,0.85)' : timeline.status === 'warning' ? 'rgba(254,252,232,0.85)' : 'rgba(254,242,242,0.85)',
                 color: timeline.status === 'sunrise' ? '#c2410c' : timeline.status === 'safe' ? '#166534' : timeline.status === 'warning' ? '#a16207' : '#991b1b'
               }}>
                 {timeline.msg}
+              </div>
+
+              {/* 💡 들머리(입구) 카카오맵 / 네이버지도 원클릭 길찾기 버튼 */}
+              <div style={{ display: 'flex', gap: '6px', marginTop: 'auto' }}>
+                <button
+                  type="button"
+                  onClick={() => handleOpenMap('kakao')}
+                  style={{
+                    flex: 1, padding: '7px 8px', borderRadius: '8px', border: '1px solid #eab308',
+                    backgroundColor: '#fef9c3', color: '#854d0e', fontSize: '11.5px', fontWeight: '800',
+                    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px'
+                  }}
+                >
+                  <FiMapPin size={12} /> 카카오맵 들머리 길찾기
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleOpenMap('naver')}
+                  style={{
+                    flex: 1, padding: '7px 8px', borderRadius: '8px', border: '1px solid #22c55e',
+                    backgroundColor: '#dcfce7', color: '#166534', fontSize: '11.5px', fontWeight: '800',
+                    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px'
+                  }}
+                >
+                  <FiMapPin size={12} /> 네이버지도 들머리
+                </button>
               </div>
             </div>
           </div>
@@ -394,7 +509,7 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
                   🎒 {isFuture ? '예상 기상 맞춤 배낭 체크리스트' : '오늘 기상 맞춤 배낭 체크리스트'}
                 </h4>
                 <span style={{ fontSize: '11px', color: '#475569', fontWeight: '500' }}>
-                  기온({temp}°C)·바람({wind}m/s)·지형에 맞춰 자동 추천되며, 직접 추가·삭제하여 일행에게 공유할 수 있습니다.
+                  기온({temp}°C)·코스 시간·지형에 맞춰 자동 추천되며, 직접 추가·삭제하여 일행에게 공유할 수 있습니다.
                 </span>
               </div>
               <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
