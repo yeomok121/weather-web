@@ -7,6 +7,7 @@ const prettyKey = (key = '') => ({
   WD: '풍향', WD1: '풍향', TW: '해수면 온도', TA: '기온', HM: '습도', PA: '해면기압', WP: '파주기',
   STN_KO: '관측 지점', STN_ID: '지점 ID', TM: '관측 시각', REG_ID: '예보 구역', TM_FC: '예보 발표',
   TM_EF: '예보 시각', W1: '풍향 시작', W2: '풍향 종료', ST: '강수 확률', SKY: '하늘 상태', PREP: '강수 형태', WF: '예보',
+  LON: '경도', LAT: '위도', TP: '관측 종류', WS1: '풍속 시작', WS2: '풍속 범위', WH1: '파고 시작', WH2: '파고 범위',
 })[key] || key.replaceAll('_', ' ');
 
 function collectValues(value, prefix = '') {
@@ -33,7 +34,7 @@ export default function FishingPage() {
   const load = useCallback(async () => {
     setLoading(true); setError('');
     try {
-      const response = await fetch(`${API}/api/fishing/summary?place=${encodeURIComponent('김녕 앞바다')}&region=`);
+      const response = await fetch(`${API}/api/fishing/summary?place=${encodeURIComponent('제주 북부 해상')}&region=`);
       const body = await response.json();
       if (!response.ok) throw new Error(body.detail || '해양 자료를 불러오지 못했습니다.');
       setData(body);
@@ -46,7 +47,8 @@ export default function FishingPage() {
   const buoyRows = sources.buoy?.records || [];
   const firstBuoy = buoyRows[0] || {};
   const buoyEntries = Object.entries(firstBuoy).filter(([key]) => key !== 'fields');
-  const tideValues = collectValues(sources.tide?.data).slice(0, 12);
+  const tideValues = collectValues(sources.tide?.data).filter(([key]) => ['obsvtrNm', 'obsrvnDt', 'obsrvnHgt'].includes(key.split(' · ').at(-1)));
+  const metrics = ['WH', 'WS', 'WD', 'TW', 'TA', 'HM'].filter((key) => firstBuoy[key] != null).slice(0, 4);
 
   return <main className="fishing-page">
     <section className="fish-hero glass-card">
@@ -54,7 +56,7 @@ export default function FishingPage() {
         <span className="fish-eyebrow"><FiAnchor /> WEATHER+ · 바다</span>
         <h1>오늘, 바다에 나가도 될까?</h1>
         <p>해상예보와 부이 실황, 조위 흐름을 한 화면에서 확인하세요.</p>
-        <div className="fish-place"><FiMapPin /> 김녕 앞바다 <span>· 조위는 김녕 기준, 해상예보는 전국 발표 자료</span></div>
+        <div className="fish-place"><FiMapPin /> 제주 북부 해상 <span>· 조위 예측은 추자도 기준, 해상예보는 전국 발표 자료</span></div>
         <button className="fish-refresh" onClick={load} disabled={loading}><FiRefreshCw className={loading ? 'fish-spin' : ''} /> {loading ? '자료 확인 중' : '최신 자료 불러오기'}</button>
       </div>
       <div className="fish-hero-art"><div className="fish-orb"><FiAnchor /></div><span>CHECK THE SEA</span></div>
@@ -66,15 +68,16 @@ export default function FishingPage() {
     <section className="fish-metrics">
       <article className="fish-panel fish-metric-panel"><div className="fish-panel-title"><FiActivity /><div><h2>바다 실황</h2><p>기상청 전체 부이 관측 중 최근 자료</p></div></div>
         <div className="fish-metric-grid">
-          {buoyEntries.slice(0, 4).map(([key, value]) => <div className="fish-metric" key={key}><span>{prettyKey(key)}</span><strong>{value || '—'}<small>{({WH:' m',WH_SIG:' m',WS:' m/s',WS1:' m/s',TW:'°C',TA:'°C',HM:'%'})[key] || ''}</small></strong></div>)}
+          {metrics.map((key) => <div className="fish-metric" key={key}><span>{prettyKey(key)}</span><strong>{firstBuoy[key] || '—'}<small>{({WH:' m',WH_SIG:' m',WS:' m/s',WS1:' m/s',TW:'°C',TA:'°C',HM:'%'})[key] || ''}</small></strong></div>)}
           {!buoyEntries.length && <p className="fish-empty">관측 자료를 불러오면 파고와 바람을 이곳에 표시합니다.</p>}
         </div>
+        {firstBuoy.STN_KO && <p className="fish-station">가장 최근 관측 지점 <b>{firstBuoy.STN_KO}</b> · {firstBuoy.TM}</p>}
         <DataRows rows={buoyRows.slice(1)} type="buoy" />
         {data?.errors?.buoy && <p className="fish-inline-error">{data.errors.buoy}</p>}
       </article>
 
-      <article className="fish-panel fish-tide-panel"><div className="fish-panel-title"><FiDroplet /><div><h2>오늘의 조위</h2><p>TideBED 예측 · 김녕 기준</p></div></div>
-        {tideValues.length ? <div className="fish-tide-values">{tideValues.map(([key, value]) => <div className="fish-tide-item" key={key}><span>{prettyKey(key.split(' · ').at(-1))}</span><b>{String(value)}</b></div>)}</div> : <p className="fish-empty">조위 자료를 불러오면 시간대별 예측을 표시합니다.</p>}
+      <article className="fish-panel fish-tide-panel"><div className="fish-panel-title"><FiDroplet /><div><h2>오늘의 조위</h2><p>TideBED 예측 · 추자도 기준</p></div></div>
+        {tideValues.length ? <div className="fish-tide-values">{tideValues.map(([key, value]) => <div className="fish-tide-item" key={key}><span>{prettyKey(key.split(' · ').at(-1))}</span><b>{String(value)}{key.endsWith('obsrvnHgt') ? ' cm' : ''}</b></div>)}</div> : <p className="fish-empty">조위 자료를 불러오면 예측 정보를 표시합니다.</p>}
         {data?.errors?.tide && <p className="fish-inline-error">{data.errors.tide}</p>}
       </article>
     </section>
