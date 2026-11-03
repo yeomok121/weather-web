@@ -90,8 +90,8 @@ function WeatherOutlook({
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(135px, 1fr))', gap: '8px', backgroundColor: 'rgba(255,255,255,0.65)', padding: '12px', borderRadius: '10px', border: '1px solid rgba(0,0,0,0.06)' }}>
               <div>
                 <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 'bold' }}>기상 적합도 (날씨)</div>
-                <div style={{ fontSize: '13.5px', fontWeight: '800', color: hikingPlanSummary.weatherScore >= 70 ? '#166534' : '#d97706', marginTop: '2px' }}>
-                  {hikingPlanSummary.weatherScore}점 ({hikingPlanSummary.weatherScore >= 80 ? '양호' : hikingPlanSummary.weatherScore >= 60 ? '무난' : '주의'})
+                <div style={{ fontSize: '13.5px', fontWeight: '800', color: hikingPlanSummary.weatherScore >= 85 ? '#166534' : hikingPlanSummary.weatherScore >= 70 ? '#d97706' : '#dc2626', marginTop: '2px' }}>
+                  {hikingPlanSummary.weatherScore}점 · {hikingPlanSummary.weatherAssessmentStatus || '기상 조건 참고 판단'}
                 </div>
               </div>
               <div>
@@ -121,8 +121,18 @@ function WeatherOutlook({
                   : hikingPlanSummary.summitForecast?.reason}
               </div>
               <div style={{ marginTop: '4px' }}>
-                <strong>🚨 안전 출발 마감:</strong> 일몰({weatherData?.sunset}) 전 안전 하산({weatherData?.safeDescentTime})을 위해 늦어도 <strong>{hikingPlanSummary.recommendedDepDeadlineStr} 이전</strong> 출발 권장
+                <strong>🚨 권장 하산 시작:</strong> {weatherData?.isFuture
+                  ? '선택한 날짜의 일몰 정보가 없어 날짜별 일몰 시각과 탐방로 운영시간을 확인해야 합니다.'
+                  : <>정상에서 {hikingPlanSummary.safeDescentStartTime} 이전 하산을 시작하도록 늦어도 <strong>{hikingPlanSummary.recommendedDepDeadlineStr}</strong> 출발 권장. 예상 하산 완료는 {hikingPlanSummary.descentFinishTimeStr}입니다.</>}
               </div>
+              <div style={{ marginTop: '4px', color: hikingPlanSummary.timeSafetyColor }}>
+                <strong>⏱️ 일정 판단:</strong> {hikingPlanSummary.timeSafetyStatus} (정상 도착 예상 {hikingPlanSummary.descentStartTimeStr})
+              </div>
+              {hikingPlanSummary.weatherAssessmentReasons?.length > 0 && (
+                <div style={{ marginTop: '4px' }}>
+                  <strong>🌦️ 기상 판단 근거:</strong> {hikingPlanSummary.weatherAssessmentReasons.join(' · ')}
+                </div>
+              )}
               {hikingPlanSummary.gearList?.length > 0 && (
                 <div style={{ marginTop: '4px' }}>
                   <strong>🎒 핵심 준비물:</strong> {hikingPlanSummary.gearList.slice(0, 5).join(', ')}
@@ -133,6 +143,7 @@ function WeatherOutlook({
             <div style={{ borderLeft: '3px solid #059669', paddingLeft: '12px', color: '#334155', lineHeight: '1.6', wordBreak: 'keep-all', fontWeight: '500' }}>
               {aiBriefing}
             </div>
+            <div style={{ fontSize: '10.5px', color: '#64748b', lineHeight: '1.45' }}>※ 기상 점수와 일정 계산은 제공된 예보 및 입력된 코스 소요시간을 바탕으로 한 참고 정보입니다. 실제 탐방로 통제·현장 노면·체력 상태를 반드시 별도로 확인하세요.</div>
           </div>
         ) : (
           <div style={{ padding: '2px 0', color: '#334155', fontSize: '13.5px', lineHeight: '1.65', wordBreak: 'keep-all', fontWeight: '500' }}>

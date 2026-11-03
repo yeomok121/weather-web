@@ -12,6 +12,7 @@ import WeeklyForecast, { getEmojiIcon } from './components/WeeklyForecast';
 import WeatherOutlook from './components/WeatherOutlook'; 
 import { FiSearch, FiBell, FiSettings, FiClock, FiCheckCircle } from 'react-icons/fi';
 import { API } from './config';
+import { assessMountainWeather } from './components/mountainAssessment';
 
 const KOREA_REGIONS = [
   '서울특별시', '부산광역시', '대구광역시', '인천광역시', '광주광역시', '대전광역시', '울산광역시', '세종특별자치시',
@@ -244,6 +245,10 @@ function App() {
       baseTemp: c.base_temp ?? Math.round(c.temp),
       summitDrop: c.summit_drop ?? 0,
       safeDescentTime: c.safe_descent_time || '15:30',
+      safeDescentTimeLabel: c.safe_descent_time_label || '권장 하산 시작 시각(일몰 2시간 전 기준)',
+      weatherSources: c.weather_sources || null,
+      dataAsOf: c.data_as_of || null,
+      dataNote: c.data_note || '산악 정상의 일부 기상값은 고도 보정 추정값일 수 있습니다.',
       icon: <span style={{ fontSize: '70px', filter: 'drop-shadow(0px 4px 6px rgba(0,0,0,0.15))' }}>{getEmojiIcon(c.icon)}</span>,
       condition: `${c.description} (체감 ${Math.round(c.feels_like)}°C)`,
       highLow: `최고 ${Math.round(c.temp_max)}° / 최저 ${Math.round(c.temp_min)}°`,
@@ -460,32 +465,33 @@ function App() {
 
     const safeDescentMins = parseTime(activeWeather.safeDescentTime || '15:30', 930);
     const sunsetMins = parseTime(activeWeather.sunset || '18:00', 1080);
-    const recommendedDepDeadlineMins = safeDescentMins - totalMins;
+    // safeDescentTime은 '하산 완료'가 아니라 '하산을 시작하도록 권장하는 시각'입니다.
+    const descentStartMins = summitArrivalMins;
+    const recommendedDepDeadlineMins = safeDescentMins - ascentMins;
 
     const temp = Number(activeWeather.temp || 0);
     const wind = Number(activeWeather.wind_speed || 0);
     const cond = activeWeather.condition || '';
-    const isRainOrSnow = cond.includes('비') || cond.includes('소나기') || cond.includes('눈') || (activeWeather.targetPop >= 60);
     const pm25Match = (activeWeather.dust || '').match(/\d+/);
     const pm25 = pm25Match ? parseInt(pm25Match[0], 10) : 15;
+    const nextHoursPop = Array.isArray(hourlyData)
+      ? Math.max(0, ...hourlyData.slice(0, 6).map(item => Number(item?.pop || 0)))
+      : 0;
+    const weatherAssessment = assessMountainWeather({
+      temp, wind, condition: cond, targetPop: activeWeather.targetPop ?? nextHoursPop,
+      pm25, humidity: Number(activeWeather.humidity || 50)
+    });
 
-    let weatherScore = 100;
-    if (isRainOrSnow) weatherScore -= 40;
-    if (wind >= 10) weatherScore -= 30;
-    else if (wind >= 6) weatherScore -= 15;
-    if (temp <= -10 || temp >= 33) weatherScore -= 20;
-    else if (temp <= -3 || temp >= 28) weatherScore -= 10;
-    if (pm25 >= 75) weatherScore -= 15;
-    else if (pm25 >= 36) weatherScore -= 5;
-    weatherScore = Math.max(0, weatherScore);
-
-    let timeSafetyStatus = '안전 (일몰 전 하산)';
+    let timeSafetyStatus = '시간 여유 있음';
     let timeSafetyColor = '#166534';
-    if (descentFinishMins > sunsetMins) {
-      timeSafetyStatus = '위험 (일몰 후 야간 하산)';
+    if (activeWeather.isFuture) {
+      timeSafetyStatus = '날짜별 일몰 정보 확인 필요';
+      timeSafetyColor = '#d97706';
+    } else if (descentFinishMins > sunsetMins) {
+      timeSafetyStatus = '위험 (일몰 후 하산 예상)';
       timeSafetyColor = '#dc2626';
-    } else if (descentFinishMins > safeDescentMins) {
-      timeSafetyStatus = '주의 (안전 하산 권장시각 초과)';
+    } else if (descentStartMins > safeDescentMins) {
+      timeSafetyStatus = '주의 (권장 하산 시작 시각 경과)';
       timeSafetyColor = '#d97706';
     }
 
@@ -520,8 +526,12 @@ function App() {
       departureTimeStr: formatTime(depMins),
       summitArrivalTimeStr: formatTime(summitArrivalMins),
       descentFinishTimeStr: formatTime(descentFinishMins),
-      recommendedDepDeadlineStr: formatTime(recommendedDepDeadlineMins),
-      weatherScore,
+      recommendedDepDeadlineStr: activeWeather.isFuture ? '날짜별 일몰 정보 확인 필요' : formatTime(recommendedDepDeadlineMins),
+      descentStartTimeStr: formatTime(descentStartMins),
+      safeDescentStartTime: activeWeather.isFuture ? '날짜별 확인 필요' : (activeWeather.safeDescentTime || '15:30'),
+      weatherScore: weatherAssessment.score,
+      weatherAssessmentStatus: weatherAssessment.status,
+      weatherAssessmentReasons: weatherAssessment.reasons,
       timeSafetyStatus,
       timeSafetyColor,
       summitForecast,
