@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import './App.css';
 import LoginCard from './components/LoginCard';
 import HourlyForecast, { PACE_OPTIONS } from './components/HourlyForecast';
 import NoticeModal from './components/NoticeModal';
@@ -8,6 +9,7 @@ import SignUpModal from './components/SignUpModal';
 import FindPasswordModal from './components/FindPasswordModal';
 import AddRegionModal from './components/AddRegionModal';
 import AdminPage from './components/AdminPage';
+import FishingPage from './components/FishingPage';
 import WeeklyForecast, { getEmojiIcon } from './components/WeeklyForecast'; 
 import WeatherOutlook from './components/WeatherOutlook'; 
 import { FiSearch, FiBell, FiSettings, FiClock, FiCheckCircle } from 'react-icons/fi';
@@ -91,6 +93,7 @@ function App() {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
 
   const [isMountainMode, setIsMountainMode] = useState(false);
+  const [isFishingPage, setIsFishingPage] = useState(false);
   const [mountainInfo, setMountainInfo] = useState(null);
   const [selectedDateIdx, setSelectedDateIdx] = useState(0); 
 
@@ -842,13 +845,18 @@ function App() {
             )}
           </div>
           
-          <button type="button" onClick={() => setIsNoticeOpen(true)} style={{ backgroundColor: 'rgba(0,0,0,0.2)', backdropFilter: 'blur(10px)', color: 'white', border: '1px solid rgba(255,255,255,0.4)', borderRadius: '20px', padding: '6px 14px', cursor: 'pointer', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '6px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <button type="button" onClick={() => setIsFishingPage(value => !value)} style={{ backgroundColor: isFishingPage ? 'rgba(20,184,166,0.88)' : 'rgba(0,0,0,0.2)', backdropFilter: 'blur(10px)', color: 'white', border: '1px solid rgba(255,255,255,0.4)', borderRadius: '20px', padding: '7px 14px', cursor: 'pointer', fontWeight: 'bold', whiteSpace: 'nowrap' }}>
+            {isFishingPage ? '☀️ 날씨 홈' : '🎣 바다 낚시'}
+          </button>
+          <button type="button" onClick={() => setIsNoticeOpen(true)} style={{ backgroundColor: 'rgba(0,0,0,0.2)', backdropFilter: 'blur(10px)', color: 'white', border: '1px solid rgba(255,255,255,0.4)', borderRadius: '20px', padding: '6px 14px', cursor: 'pointer', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '6px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)', whiteSpace: 'nowrap' }}>
             <FiBell size={14} /> 공지사항
           </button>
+          </div>
         </div>
       </nav>
 
-      <main className={`main-container ${isMountainMode ? 'is-mountain-mode' : ''}`} style={{ flexGrow: 1, maxWidth: '1320px', margin: '0 auto', width: '100%', zIndex: 1, padding: '28px 24px' }}>
+      {isFishingPage ? <FishingPage /> : <main className={`main-container ${isMountainMode ? 'is-mountain-mode' : ''}`} style={{ flexGrow: 1, maxWidth: '1320px', margin: '0 auto', width: '100%', zIndex: 1, padding: '28px 24px' }}>
         <div className="main-primary-column" style={{ display: 'flex', flexDirection: 'column', gap: '16px', minWidth: 0 }}>
           
           <WeatherMain 
@@ -948,7 +956,7 @@ function App() {
             <WeeklyForecast weeklyData={weeklyData} isLoading={isAiLoading} />
           </div>
         </div>
-      </main>
+      </main>}
 
       <footer className="app-footer glass-card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 40px', color: '#1e293b', fontSize: '12px', borderRadius: '0', border: 'none', borderTop: '1px solid rgba(255,255,255,0.4)' }}>
         <div>
