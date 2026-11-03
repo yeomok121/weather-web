@@ -62,10 +62,17 @@ function WeatherMain({
     const dustStr = weatherData.dust || '';
     const pm25Match = dustStr.match(/\d+/);
     const pm25 = pm25Match ? parseInt(pm25Match[0], 10) : 15;
-    const maxPop = Array.isArray(hourlyData) && hourlyData.length > 0 ? Math.round(Math.max(...hourlyData.slice(0, 6).map(h => Number(h.pop || 0))) * 100) : 0;
+    const nextHours = Array.isArray(hourlyData) ? hourlyData.slice(0, 6) : [];
+    const peakRainHour = nextHours.reduce((peak, hour) => {
+      const probability = Math.round(Math.max(0, Math.min(1, Number(hour?.pop || 0))) * 100);
+      return probability > (peak?.probability ?? -1) ? { probability, time: hour?.time } : peak;
+    }, null);
 
     if (cond.includes('비') || cond.includes('소나기') || cond.includes('눈')) return { text: '☔ 현재 비/눈이 내립니다. 우산을 챙기세요!', bg: 'rgba(37,99,235,0.15)', color: '#2563eb' };
-    if (maxPop >= 60) return { text: `🌂 곧 비 소식이 있습니다 (강수확률 ${maxPop}%).`, bg: 'rgba(37,99,235,0.15)', color: '#2563eb' };
+    if (peakRainHour?.probability >= 60) {
+      const timeLabel = peakRainHour.time && peakRainHour.time !== '시간 없음' ? ` · ${peakRainHour.time}` : '';
+      return { text: `🌂 시간별 예보에 강수 가능성이 있습니다${timeLabel} (강수확률 ${peakRainHour.probability}%).`, bg: 'rgba(37,99,235,0.15)', color: '#2563eb' };
+    }
     if (pm25 >= 36) return { text: `😷 미세먼지가 높습니다. 마스크를 착용하세요!`, bg: 'rgba(234,88,12,0.15)', color: '#ea580c' }; // 주황
     if (wind >= 8) return { text: `💨 강풍 주의! 바람이 강하게 붑니다 (${wind}m/s).`, bg: 'rgba(234,88,12,0.15)', color: '#ea580c' };
     if (temp >= 33) return { text: '🥵 폭염 주의! 야외 활동 자제 및 수분 섭취', bg: 'rgba(220,38,38,0.15)', color: '#dc2626' }; // 빨간색(경고)
@@ -182,7 +189,7 @@ function WeatherMain({
       </div>
       
       {/* 💡 우측 명산 목록 패딩 및 아이템 크기 최적화 */}
-      <div className="weather-main-right" style={{ flex: 1, padding: '16px', borderLeft: '1px solid rgba(255,255,255,0.4)', color: '#333', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', backgroundColor: 'rgba(255,255,255,0.15)', minWidth: 0 }}>
+      <div className="weather-main-right" style={{ flex: 1, padding: '16px', borderLeft: '1px solid rgba(255,255,255,0.4)', color: '#333', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', backgroundColor: 'rgba(255,255,255,0.15)', minWidth: 0 }}>
         {isMountainMode ? (
           <div style={{ minWidth: 0 }}>
             <h4 style={{ fontSize: '11.5px', color: '#166534', fontWeight: 'bold', margin: '0 0 6px 0' }}>📌 핵심 산행 팁</h4>
@@ -226,11 +233,15 @@ function WeatherMain({
             </ul>
           </div>
         ) : (
-          <div>
-            <h4 style={{ fontSize: '11.5px', color: '#475569', margin: '0 0 12px 0', fontWeight: 'bold' }}>관심 지역 관리 ({favorites.length}/5)</h4>
-            <ul style={{ listStyle: 'none', padding: '0', margin: '0', fontSize: '12.5px', lineHeight: '2.2' }}>
-              <li onClick={onCurrentLocationClick} style={{ cursor: 'pointer', color: '#ea580c', fontWeight: 'bold' }}>📍 현재 위치 날씨</li>
-              {favorites.length < 5 && <li onClick={onAddClick} style={{ cursor: 'pointer', color: '#2563eb', fontWeight: '600' }}>➕ 새 지역 추가하기</li>}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
+              <h4 style={{ fontSize: '11.5px', color: '#475569', margin: 0, fontWeight: 'bold' }}>관심 지역</h4>
+              <span style={{ fontSize: '10.5px', color: '#64748b' }}>{favorites.length}/5</span>
+            </div>
+            <button type="button" onClick={onCurrentLocationClick} style={{ cursor: 'pointer', color: '#1d4ed8', fontWeight: '700', textAlign: 'left', padding: '8px 10px', borderRadius: '8px', border: '1px solid rgba(37,99,235,0.2)', background: 'rgba(255,255,255,0.55)', fontSize: '11.5px' }}>📍 현재 위치 날씨 보기</button>
+            {favorites.length < 5 && <button type="button" onClick={onAddClick} style={{ cursor: 'pointer', color: '#166534', fontWeight: '700', textAlign: 'left', padding: '8px 10px', borderRadius: '8px', border: '1px dashed rgba(22,101,52,0.35)', background: 'rgba(240,253,244,0.45)', fontSize: '11.5px' }}>＋ 지역 추가 · 최대 5곳 비교</button>}
+            {favorites.length === 0 && <p style={{ margin: 0, color: '#64748b', fontSize: '11px', lineHeight: 1.45 }}>자주 확인하는 지역을 저장하면 다음 방문 때 바로 날씨를 비교할 수 있어요.</p>}
+            <ul style={{ listStyle: 'none', padding: '0', margin: '0', fontSize: '12px', lineHeight: '1.5' }}>
               {favorites.map((fav, index) => (
                 <li key={index} onMouseEnter={() => setHoveredIndex(index)} onMouseLeave={() => setHoveredIndex(null)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: index === 0 ? '8px' : '0', padding: '4px 6px', borderRadius: '6px', backgroundColor: weatherData.region === fav.name ? 'rgba(255,255,255,0.5)' : 'transparent' }}>
                   <span onClick={() => onFavoriteClick(fav)} style={{ cursor: 'pointer', flex: 1, color: weatherData.region === fav.name ? '#0f172a' : '#475569', fontWeight: weatherData.region === fav.name ? 'bold' : '500' }}>
