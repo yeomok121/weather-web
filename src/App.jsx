@@ -575,11 +575,11 @@ function App() {
       
       <style>{`
         .weather-bg { background-size: auto; animation: none; }
-        .clear-day { background: radial-gradient(ellipse at 12% 0%, rgba(194, 219, 255, 0.52), transparent 42%), #f4f7fb; }
-        .clear-night { background: radial-gradient(ellipse at 88% 0%, rgba(202, 217, 242, 0.42), transparent 40%), #f4f7fb; }
-        .cloudy-day, .cloudy-night { background: radial-gradient(ellipse at 50% 0%, rgba(213, 226, 236, 0.58), transparent 44%), #f4f7fb; }
-        .rain { background: radial-gradient(ellipse at 8% 0%, rgba(191, 219, 254, 0.48), transparent 42%), #f4f7fb; }
-        .snow { background: radial-gradient(ellipse at 82% 0%, rgba(224, 231, 255, 0.5), transparent 42%), #f4f7fb; }
+        .clear-day { background: radial-gradient(ellipse at 12% 0%, rgba(125, 211, 252, 0.28), transparent 42%), radial-gradient(ellipse at 88% 70%, rgba(167, 243, 208, 0.2), transparent 35%), #eef4fa; }
+        .clear-night { background: radial-gradient(ellipse at 88% 0%, rgba(165, 180, 252, 0.25), transparent 40%), radial-gradient(ellipse at 12% 72%, rgba(125, 211, 252, 0.16), transparent 35%), #eef3fa; }
+        .cloudy-day, .cloudy-night { background: radial-gradient(ellipse at 50% 0%, rgba(203, 213, 225, 0.38), transparent 44%), radial-gradient(ellipse at 90% 70%, rgba(186, 230, 253, 0.2), transparent 36%), #eff4f8; }
+        .rain { background: radial-gradient(ellipse at 8% 0%, rgba(96, 165, 250, 0.22), transparent 42%), radial-gradient(ellipse at 88% 72%, rgba(165, 180, 252, 0.2), transparent 38%), #edf3fa; }
+        .snow { background: radial-gradient(ellipse at 82% 0%, rgba(196, 181, 253, 0.22), transparent 42%), radial-gradient(ellipse at 12% 75%, rgba(186, 230, 253, 0.23), transparent 38%), #f1f4fb; }
 
         .snow-flake { position: absolute; width: 6px; height: 6px; background: #cbd5e1; border-radius: 50%; top: -10px; animation: snowFall linear infinite; opacity: 0.18; }
         .rain-drop { position: absolute; width: 2px; height: 15px; background: rgba(100,116,139,0.16); top: -20px; animation: rainFall linear infinite; }
@@ -587,25 +587,25 @@ function App() {
         @keyframes rainFall { to { transform: translateY(110vh) rotate(15deg); opacity: 0; } }
 
         .glass-card {
-          background: #ffffff !important;
-          backdrop-filter: blur(8px);
-          -webkit-backdrop-filter: blur(8px);
-          border: 1px solid #e5ebf2 !important;
-          box-shadow: 0 10px 28px rgba(15, 23, 42, 0.055) !important;
+          background: linear-gradient(145deg, rgba(255,255,255,0.84), rgba(248,251,255,0.66)) !important;
+          backdrop-filter: blur(22px) saturate(155%);
+          -webkit-backdrop-filter: blur(22px) saturate(155%);
+          border: 1px solid rgba(255,255,255,0.88) !important;
+          box-shadow: 0 16px 38px rgba(31, 48, 76, 0.085), inset 0 1px 0 rgba(255,255,255,0.95), inset 0 -1px 0 rgba(255,255,255,0.35) !important;
           border-radius: 20px !important;
         }
 
-        .top-nav { background: rgba(255,255,255,0.92) !important; border-bottom: 1px solid #e5ebf2 !important; box-shadow: 0 4px 18px rgba(15,23,42,0.035); padding: 12px 24px !important; }
+        .top-nav { background: rgba(246,250,255,0.68) !important; backdrop-filter: blur(26px) saturate(165%) !important; -webkit-backdrop-filter: blur(26px) saturate(165%) !important; border-bottom: 1px solid rgba(255,255,255,0.82) !important; box-shadow: 0 8px 24px rgba(31,48,76,0.055), inset 0 1px 0 rgba(255,255,255,0.9); padding: 12px 24px !important; }
         .top-nav-inner { max-width: 1320px !important; }
-        .search-wrapper > div:first-child { background: #f5f7fa !important; border: 1px solid #e2e8f0 !important; border-radius: 14px !important; box-shadow: none !important; padding: 7px 12px !important; }
-        .search-wrapper > div:first-child:focus-within { border-color: #8ab8b0 !important; box-shadow: 0 0 0 3px rgba(23,107,99,0.1) !important; }
-        .top-nav > div > button { background: #f5f7fa !important; color: #334155 !important; border: 1px solid #e2e8f0 !important; border-radius: 12px !important; box-shadow: none !important; padding: 9px 14px !important; }
+        .search-wrapper > div:first-child { background: rgba(255,255,255,0.62) !important; backdrop-filter: blur(18px) saturate(150%); -webkit-backdrop-filter: blur(18px) saturate(150%); border: 1px solid rgba(255,255,255,0.92) !important; border-radius: 15px !important; box-shadow: 0 6px 20px rgba(31,48,76,0.06), inset 0 1px 0 rgba(255,255,255,0.95) !important; padding: 7px 12px !important; }
+        .search-wrapper > div:first-child:focus-within { border-color: rgba(23,107,99,0.35) !important; box-shadow: 0 0 0 3px rgba(23,107,99,0.1), 0 8px 22px rgba(31,48,76,0.08) !important; }
+        .top-nav > div > button { background: rgba(255,255,255,0.54) !important; color: #334155 !important; backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.88) !important; border-radius: 13px !important; box-shadow: 0 5px 16px rgba(31,48,76,0.05), inset 0 1px 0 rgba(255,255,255,0.9) !important; padding: 9px 14px !important; }
         .main-container { max-width: 1320px !important; gap: 24px !important; padding: 28px 24px !important; }
         .main-container > div { gap: 20px !important; }
-        .weather-main-card { border-radius: 22px !important; box-shadow: 0 12px 32px rgba(15,23,42,0.065) !important; }
-        .weather-main-card > div:first-child { background: linear-gradient(145deg, #f7fbff, #f1f7fb) !important; }
-        .weather-main-right { background: #f8fafc !important; border-color: #e8edf3 !important; }
-        .app-footer { background: #ffffff !important; border-top: 1px solid #e5ebf2 !important; border-radius: 0 !important; }
+        .weather-main-card { border-radius: 22px !important; box-shadow: 0 20px 46px rgba(31,48,76,0.1), inset 0 1px 0 rgba(255,255,255,0.95) !important; }
+        .weather-main-card > div:first-child { background: linear-gradient(145deg, rgba(255,255,255,0.55), rgba(236,246,255,0.48)) !important; }
+        .weather-main-right { background: linear-gradient(145deg, rgba(244,249,255,0.6), rgba(235,246,245,0.48)) !important; border-color: rgba(255,255,255,0.78) !important; backdrop-filter: blur(18px); }
+        .app-footer { background: rgba(248,251,255,0.72) !important; backdrop-filter: blur(20px); border-top: 1px solid rgba(255,255,255,0.85) !important; border-radius: 0 !important; }
         .main-container .glass-card { transition: box-shadow 180ms ease; }
         .main-container .glass-card:hover { box-shadow: 0 14px 34px rgba(15,23,42,0.075) !important; }
         .main-container button:not(:disabled) { transition: transform 160ms ease, box-shadow 160ms ease, background-color 160ms ease; }
