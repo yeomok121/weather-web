@@ -603,6 +603,14 @@ function App() {
           .mobile-mtn-pills { display: flex !important; }
           .desktop-mtn-list { display: none !important; }
         }
+        @media (max-width: 640px) {
+          .main-container { padding: 8px !important; gap: 10px !important; }
+          .main-container > div { gap: 10px !important; }
+          .main-container button, .main-container input, .main-container select { min-height: 40px; }
+          .main-container input[type="checkbox"] { min-height: 18px; min-width: 18px; }
+          .hourly-chart-wrapper { min-width: 0; }
+          .app-footer { font-size: 11px !important; }
+        }
       `}</style>
 
       <WeatherBackground theme={bgTheme} />

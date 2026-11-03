@@ -132,6 +132,20 @@ function HourlyForecast({
   };
   const nutrition = getNutritionGuide();
 
+  const courseRiskNotes = [];
+  if (selectedCourse.diff?.includes('상')) {
+    courseRiskNotes.push(`선택 코스 난이도 ${selectedCourse.diff}: 소요시간은 체력과 노면에 따라 늘어날 수 있어 여유를 두세요.`);
+  }
+  if (isRainOrSnow) {
+    courseRiskNotes.push(terrain.includes('암릉') || terrain.includes('바위')
+      ? `강수·강설 예보가 있습니다. ${terrain} 구간의 실제 노면과 접지력을 현장에서 확인하세요.`
+      : '강수·강설 예보가 있습니다. 탐방로 노면 상태와 미끄럼 위험을 확인하세요.');
+  }
+  if (wind >= 6) courseRiskNotes.push(`정상 풍속 ${wind}m/s입니다. 능선 체류를 줄이고 방풍 의류를 준비하세요.`);
+  if (temp <= 0 && (isRainOrSnow || humidity >= 75)) {
+    courseRiskNotes.push('영하 기온과 습한 조건이 겹쳐 결빙 가능성이 있습니다. 현장 노면을 확인하세요.');
+  }
+
   const getTrailheadQuery = () => {
     if (selectedCourse.trailhead) return selectedCourse.trailhead;
     const mName = weatherData?.region || mountainInfo?.name || '북한산';
@@ -448,12 +462,17 @@ function HourlyForecast({
     const shareText = [
       `⛰️ [${mName} ${peak} 산행 기상 브리핑]`,
       `📅 일자: ${weatherData.date}`,
+      `📊 데이터 구분: 기온 ${weatherData?.weatherSources?.temperature || '고도 보정 추정값'} · 바람 ${weatherData?.weatherSources?.wind || '고도 보정 추정값'} · 습도 ${weatherData?.weatherSources?.humidity || '고도 보정 추정값'}`,
+      ...(weatherData?.dataAsOf ? [`🕒 응답 생성 시각: ${weatherData.dataAsOf.replace('T', ' ')}`] : []),
       `🌤️ 기상 조건 점수(참고): ${weatherScore}점 (${weatherAssessment.status}) / 🔭 조망 환경 참고 점수: ${viewEstimate.score}점 (${viewEstimate.gradeText})`,
       `⏱️ 시간 안전 판정: ${timeline.safetyBadge} (권장 하산 시작 ${safeDescentTime})`,
       `🥾 선택 코스: ${selectedCourse.name} (${selectedCourse.distance} · ${currentPaceObj.label} 총 ${Math.floor(adjustedTimeMins / 60)}시간 ${adjustedTimeMins % 60}분)`,
       `🕒 일정: ${timeline.depTimeStr} 출발 → ${timeline.summitArrivalStr} 정상 → ${timeline.descentFinishStr} 하산 완료`,
+      'ℹ️ 정상 도착 시각은 전체 코스 시간의 55%를 오름 시간으로 가정한 참고 추정치입니다.',
       arrivalWeatherLine,
+      ...courseRiskNotes.slice(0, 2).map(note => `⚠️ ${note}`),
       `📍 들머리 검색: ${getTrailheadQuery()}`,
+      ...(officialTrailInfo ? [`🏞️ 공식 탐방 안내: ${officialTrailInfo.url}`] : []),
       `💧 권장 식수/열량: ${nutrition.waterText} / ${nutrition.kcalText}`,
       `🎒 맞춤 배낭 체크리스트:\n  ${formattedGear}`,
       `🔗 날씨 대시보드: ${window.location.href}`
@@ -509,6 +528,9 @@ function HourlyForecast({
                   </div>
                   <span style={{ fontSize: '10.5px', color: '#0f172a', marginTop: '6px', fontWeight: 'bold', whiteSpace: 'nowrap' }}>
                     {weatherAssessment.status}
+                  </span>
+                  <span style={{ fontSize: '9px', color: '#475569', marginTop: '3px', textAlign: 'center', lineHeight: '1.3' }}>
+                    {weatherAssessment.reasons.slice(0, 2).join(' · ')}
                   </span>
                 </div>
 
@@ -673,7 +695,7 @@ function HourlyForecast({
                     ⛰️ 정상 도착 예보 ({timeline.summitArrivalStr})
                   </span>
                   <span style={{ fontSize: '10px', color: '#475569', fontWeight: '600' }}>
-                    편도 약 {Math.floor(ascentTimeMins / 60)}h {ascentTimeMins % 60}m · 하산 시작 권장 {safeDescentTime}
+                    편도 추정 {Math.floor(ascentTimeMins / 60)}h {ascentTimeMins % 60}m · 하산 시작 권장 {safeDescentTime}
                   </span>
                 </div>
                 {timeline.arrivalWeather.available ? (
@@ -697,6 +719,15 @@ function HourlyForecast({
               }}>
                 {timeline.msg}
               </div>
+              <div style={{ margin: '-3px 0 8px', color: '#64748b', fontSize: '9.5px', lineHeight: '1.4' }}>
+                ※ 정상 도착 시각은 전체 코스 시간의 55%를 오름 시간으로 계산한 참고 추정치입니다.
+              </div>
+              {courseRiskNotes.length > 0 && (
+                <div style={{ backgroundColor: 'rgba(255,247,237,0.8)', border: '1px solid rgba(249,115,22,0.22)', borderRadius: '8px', padding: '7px 9px', marginBottom: '8px', color: '#9a3412', fontSize: '10px', lineHeight: '1.45' }}>
+                  <strong>코스·기상 유의사항</strong>
+                  {courseRiskNotes.slice(0, 2).map((note, index) => <div key={index}>• {note}</div>)}
+                </div>
+              )}
 
               <div style={{ display: 'flex', gap: '6px', marginTop: 'auto' }}>
                 <button
