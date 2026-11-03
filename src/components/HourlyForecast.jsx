@@ -67,7 +67,6 @@ function HourlyForecast({
   const [startX, setStartX] = useState(0);
   const [scrollLeft, setScrollLeft] = useState(0);
 
-  // 💡 부모 상태(State)와 로컬 임시 상태를 추상화해둔 도구
   const activeCourseIdx = onSelectCourseIdx ? selectedCourseIdx : localCourseIdx;
   const setCourseIdx = onSelectCourseIdx || setLocalCourseIdx;
   const activePace = onSelectPaceType ? paceType : localPaceType;
@@ -168,7 +167,6 @@ function HourlyForecast({
     setCurrentIndex(0);
   }, [hourlyData]);
 
-  // 💡 [수정] setSelectedCourseIdx(0)를 올바른 바인딩 함수 setCourseIdx(0)로 변경하여 ReferenceError 해결
   useEffect(() => {
     setCourseIdx(0);
   }, [mountainInfo?.name]);
@@ -516,7 +514,15 @@ function HourlyForecast({
 
   return (
     <div className="glass-card" style={{ borderRadius: '16px', padding: '20px', display: 'flex', flexDirection: 'column', color: '#1e293b', width: '100%', boxSizing: 'border-box' }}>
-      
+      <style>{`
+        .hourly-chart-wrapper .recharts-surface { overflow: visible !important; }
+        @media (max-width: 640px) {
+          .mtn-score-altitude-box { flex-direction: column !important; }
+          .mtn-left-top-row { flex-direction: column !important; }
+          .mtn-dual-score-row { flex-direction: row !important; }
+        }
+      `}</style>
+
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '12px' }}>
         <h4 style={{ margin: 0, fontSize: '16px', fontWeight: '800', color: isMountainMode ? '#166534' : '#1e293b' }}>
           {isMountainMode ? '⛰️ 산악 기상 & 등산 환경 대시보드' : '시간대별 예보 (기온 변화)'}
@@ -599,23 +605,23 @@ function HourlyForecast({
 
             <div style={{ flex: '1.15 1 290px', backgroundColor: 'rgba(255,255,255,0.6)', borderRadius: '12px', padding: '16px', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
               
-              <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '6px', marginBottom: '8px' }}>
-                <span style={{ whiteSpace: 'nowrap', fontWeight: '800', fontSize: '13.5px', color: '#1e293b' }}>⏱️ 코스 & 정상 도착 기상 예측</span>
-                <div style={{ display: 'flex', backgroundColor: 'rgba(255,255,255,0.6)', padding: '2px', borderRadius: '6px', border: '1px solid rgba(0,0,0,0.05)' }}>
+              <h4 style={{ margin: '0 0 10px 0', fontSize: '14px', color: '#1e293b', display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
+                <span style={{ whiteSpace: 'nowrap', fontWeight: '800' }}>⏱️ 코스별 타임라인</span>
+                <div style={{ display: 'flex', backgroundColor: 'rgba(255,255,255,0.6)', padding: '2px', borderRadius: '8px', border: '1px solid rgba(0,0,0,0.05)' }}>
                   <button
                     onClick={() => setTimelineMode('descent')}
-                    style={{ padding: '4px 8px', fontSize: '10.5px', fontWeight: 'bold', border: 'none', borderRadius: '4px', cursor: 'pointer', backgroundColor: timelineMode === 'descent' ? '#ffffff' : 'transparent', color: timelineMode === 'descent' ? '#1d4ed8' : '#64748b', boxShadow: timelineMode === 'descent' ? '0 1px 2px rgba(0,0,0,0.1)' : 'none', transition: 'all 0.2s' }}
+                    style={{ padding: '4px 10px', fontSize: '11px', fontWeight: 'bold', border: 'none', borderRadius: '6px', cursor: 'pointer', backgroundColor: timelineMode === 'descent' ? '#ffffff' : 'transparent', color: timelineMode === 'descent' ? '#1d4ed8' : '#64748b', boxShadow: timelineMode === 'descent' ? '0 1px 2px rgba(0,0,0,0.1)' : 'none', transition: 'all 0.2s' }}
                   >
                     🌇 일몰/하산
                   </button>
                   <button
                     onClick={() => setTimelineMode('ascent')}
-                    style={{ padding: '4px 8px', fontSize: '10.5px', fontWeight: 'bold', border: 'none', borderRadius: '4px', cursor: 'pointer', backgroundColor: timelineMode === 'ascent' ? '#ffffff' : 'transparent', color: timelineMode === 'ascent' ? '#c2410c' : '#64748b', boxShadow: timelineMode === 'ascent' ? '0 1px 2px rgba(0,0,0,0.1)' : 'none', transition: 'all 0.2s' }}
+                    style={{ padding: '4px 10px', fontSize: '11px', fontWeight: 'bold', border: 'none', borderRadius: '6px', cursor: 'pointer', backgroundColor: timelineMode === 'ascent' ? '#ffffff' : 'transparent', color: timelineMode === 'ascent' ? '#c2410c' : '#64748b', boxShadow: timelineMode === 'ascent' ? '0 1px 2px rgba(0,0,0,0.1)' : 'none', transition: 'all 0.2s' }}
                   >
                     🌅 일출/등산
                   </button>
                 </div>
-              </div>
+              </h4>
               
               <div 
                 ref={scrollRef}
@@ -623,7 +629,7 @@ function HourlyForecast({
                 onMouseLeave={handleMouseLeave}
                 onMouseUp={handleMouseUp}
                 onMouseMove={handleMouseMove}
-                style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '6px', marginBottom: '6px', cursor: isDragging ? 'grabbing' : 'grab', userSelect: 'none', WebkitOverflowScrolling: 'touch' }} 
+                style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '8px', marginBottom: '8px', cursor: isDragging ? 'grabbing' : 'grab', userSelect: 'none', WebkitOverflowScrolling: 'touch' }} 
                 className="no-scrollbar"
               >
                 {courses.map((c, idx) => (
@@ -634,7 +640,7 @@ function HourlyForecast({
                       setCourseIdx(idx);
                     }}
                     style={{
-                      flexShrink: 0, padding: '6px 10px', borderRadius: '6px', fontSize: '11.5px', fontWeight: 'bold', cursor: 'pointer',
+                      flexShrink: 0, padding: '7px 12px', borderRadius: '8px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer',
                       border: activeCourseIdx === idx ? '1px solid #2563eb' : '1px solid rgba(0,0,0,0.1)',
                       background: activeCourseIdx === idx ? '#eff6ff' : 'rgba(255,255,255,0.8)',
                       color: activeCourseIdx === idx ? '#1d4ed8' : '#475569',
@@ -646,33 +652,39 @@ function HourlyForecast({
                 ))}
               </div>
 
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '8px', backgroundColor: 'rgba(255,255,255,0.5)', padding: '6px', borderRadius: '8px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flex: 1, minWidth: '130px' }}>
-                  <span style={{ fontSize: '10.5px', fontWeight: 'bold', color: '#475569', whiteSpace: 'nowrap' }}>속도:</span>
-                  {PACE_OPTIONS.map((p) => (
-                    <button
-                      key={p.key}
-                      type="button"
-                      onClick={() => setPace(p.key)}
-                      style={{
-                        flex: 1, padding: '4px 2px', fontSize: '10.5px', fontWeight: 'bold', borderRadius: '4px', cursor: 'pointer',
-                        border: activePace === p.key ? '1px solid #16a34a' : '1px solid transparent',
-                        backgroundColor: activePace === p.key ? '#dcfce7' : 'rgba(255,255,255,0.7)',
-                        color: activePace === p.key ? '#166534' : '#64748b',
-                        transition: 'all 0.15s', whiteSpace: 'nowrap', letterSpacing: '-0.3px'
-                      }}
-                    >
-                      {p.label.split('(')[0]}
-                    </button>
-                  ))}
+              {/* 💡 [핵심 수정] 속도 & 출발시간을 위아래 두 줄로 분리하여 텍스트 깨짐 해결 */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '8px', backgroundColor: 'rgba(255,255,255,0.5)', padding: '8px', borderRadius: '8px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ fontSize: '11px', fontWeight: 'bold', color: '#475569', whiteSpace: 'nowrap', width: '36px' }}>속도:</span>
+                  <div style={{ display: 'flex', gap: '4px', flex: 1 }}>
+                    {PACE_OPTIONS.map((p) => (
+                      <button
+                        key={p.key}
+                        type="button"
+                        onClick={() => setPace(p.key)}
+                        style={{
+                          flex: 1, padding: '5px 2px', fontSize: '11px', fontWeight: 'bold', borderRadius: '6px', cursor: 'pointer',
+                          border: activePace === p.key ? '1px solid #16a34a' : '1px solid transparent',
+                          backgroundColor: activePace === p.key ? '#dcfce7' : 'rgba(255,255,255,0.7)',
+                          color: activePace === p.key ? '#166534' : '#64748b',
+                          transition: 'all 0.15s', whiteSpace: 'nowrap', letterSpacing: '-0.3px'
+                        }}
+                      >
+                        {p.label.split('(')[0]}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flex: 1, minWidth: '130px' }}>
-                  <span style={{ fontSize: '10.5px', fontWeight: 'bold', color: '#475569', whiteSpace: 'nowrap' }}><FiClock size={10} />출발:</span>
+                
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ fontSize: '11px', fontWeight: 'bold', color: '#475569', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '2px', width: '36px' }}>
+                    <FiClock size={11} />출발:
+                  </span>
                   <select
                     value={activeDepOffset}
                     onChange={(e) => setDepOffset(Number(e.target.value))}
                     style={{
-                      flex: 1, padding: '3px 4px', fontSize: '11px', fontWeight: 'bold', borderRadius: '4px',
+                      flex: 1, padding: '5px 8px', fontSize: '11.5px', fontWeight: 'bold', borderRadius: '6px',
                       border: '1px solid rgba(0,0,0,0.12)', backgroundColor: '#ffffff', color: '#1e293b', cursor: 'pointer', outline: 'none'
                     }}
                   >
@@ -727,10 +739,28 @@ function HourlyForecast({
               </div>
 
               <div style={{ display: 'flex', gap: '6px', marginTop: 'auto' }}>
-                <button type="button" onPointerDown={(e) => handleOpenMap('kakao', e)} style={{ flex: 1, padding: '6px 8px', borderRadius: '6px', border: '1px solid #eab308', backgroundColor: '#fef9c3', color: '#854d0e', fontSize: '11px', fontWeight: '800', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', whiteSpace: 'nowrap' }}>
+                <button
+                  type="button"
+                  onPointerDown={(e) => handleOpenMap('kakao', e)}
+                  style={{
+                    flex: 1, padding: '7px 8px', borderRadius: '8px', border: '1px solid #eab308',
+                    backgroundColor: '#fef9c3', color: '#854d0e', fontSize: '11.5px', fontWeight: '800',
+                    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px',
+                    whiteSpace: 'nowrap'
+                  }}
+                >
                   <FiMapPin size={12} /> 카카오맵 들머리
                 </button>
-                <button type="button" onPointerDown={(e) => handleOpenMap('naver', e)} style={{ flex: 1, padding: '6px 8px', borderRadius: '6px', border: '1px solid #22c55e', backgroundColor: '#dcfce7', color: '#166534', fontSize: '11px', fontWeight: '800', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', whiteSpace: 'nowrap' }}>
+                <button
+                  type="button"
+                  onPointerDown={(e) => handleOpenMap('naver', e)}
+                  style={{
+                    flex: 1, padding: '7px 8px', borderRadius: '8px', border: '1px solid #22c55e',
+                    backgroundColor: '#dcfce7', color: '#166534', fontSize: '11.5px', fontWeight: '800',
+                    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px',
+                    whiteSpace: 'nowrap'
+                  }}
+                >
                   <FiMapPin size={12} /> 네이버지도 들머리
                 </button>
               </div>
