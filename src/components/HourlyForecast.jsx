@@ -24,6 +24,11 @@ const DEPARTURE_OFFSETS = [
   { value: 12, label: '+12시간 뒤' },
 ];
 
+const KNPS_MOUNTAINS = new Set([
+  '북한산', '설악산', '지리산', '계룡산', '덕유산', '소백산', '태백산', '오대산',
+  '치악산', '월악산', '속리산', '가야산', '무등산', '주왕산', '내장산',
+]);
+
 function toNumber(value) {
   if (value === null || value === undefined || value === '') return null;
   const number = Number(value);
@@ -148,6 +153,12 @@ function HourlyForecast({
       : `https://map.naver.com/p/search/${query}`;
     window.open(url, '_blank', 'noopener,noreferrer');
   };
+
+  const officialTrailInfo = mountainInfo?.name === '한라산'
+    ? { label: '한라산 공식 탐방 안내', url: 'https://visithalla.jeju.go.kr/contents/contents.do?id=49' }
+    : KNPS_MOUNTAINS.has(mountainInfo?.name)
+      ? { label: '국립공원 통제정보 확인', url: 'https://www.knps.or.kr/front/portal/safe/acsCtrList.do?menuNo=8000340' }
+      : null;
 
   const buildWeatherGearList = () => {
     const items = [
@@ -713,6 +724,26 @@ function HourlyForecast({
                   <FiMapPin size={12} /> 네이버지도 들머리
                 </button>
               </div>
+              {officialTrailInfo && (
+                <div style={{ marginTop: '7px' }}>
+                  <a
+                    href={officialTrailInfo.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{
+                      display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '4px',
+                      padding: '7px 8px', borderRadius: '8px', border: '1px solid #94a3b8',
+                      backgroundColor: 'rgba(248,250,252,0.9)', color: '#334155',
+                      fontSize: '11px', fontWeight: '800', textDecoration: 'none',
+                    }}
+                  >
+                    {officialTrailInfo.label} ↗
+                  </a>
+                  <div style={{ marginTop: '4px', color: '#64748b', fontSize: '9.5px', lineHeight: '1.4', textAlign: 'center' }}>
+                    통제 상태는 공식 페이지에서 출발 전에 확인하세요.
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
