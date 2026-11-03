@@ -55,6 +55,9 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
   const terrain = mountainInfo?.terrain || '';
   const isFuture = weatherData?.isFuture || false;
 
+  // 💡 정상 풍속을 반영한 실제 체감온도 계산
+  const summitFeelsLike = temp <= 15 ? Math.round(temp - (wind * 0.7)) : temp;
+
   const courses = mountainInfo?.courses || [{ name: '기본 탐방로', distance: '5km', time: 180, diff: '중' }];
   const selectedCourse = courses[selectedCourseIdx] || courses[0];
 
@@ -96,7 +99,6 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
     return `${mName} ${firstPart}`;
   };
 
-  // 💡 모바일/PC 모두 작동하도록 이벤트 처리 개선
   const handleOpenMap = (provider, e) => {
     e.preventDefault(); 
     e.stopPropagation();
@@ -330,6 +332,7 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
         .hourly-chart-wrapper .recharts-surface { overflow: visible !important; }
         @media (max-width: 640px) {
           .mtn-score-altitude-box { flex-direction: column !important; }
+          .mtn-left-top-row { flex-direction: column !important; }
           .mtn-score-card { width: 100% !important; flex-direction: row !important; justify-content: space-around !important; padding: 12px !important; }
         }
       `}</style>
@@ -349,41 +352,70 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
       {isMountainMode && !isLoading && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '24px' }}>
           
-          {/* 💡 Flexbox의 align-items 속성을 flex-start로 변경하여 자식 요소들이 늘어나는 것을 방지합니다. */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', alignItems: 'flex-start' }}>
+          {/* 💡 Flexbox의 억지 늘어남(stretch)을 없애서 자연스럽게 채워지도록 함 */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px' }}>
             
-            <div className="mtn-score-altitude-box" style={{ flex: '1 1 250px', display: 'flex', gap: '12px', height: 'fit-content' }}>
-              <div className="mtn-score-card" style={{ width: '105px', flexShrink: 0, backgroundColor: 'rgba(240,253,244,0.7)', borderRadius: '12px', padding: '16px 8px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                <span style={{ fontSize: '11.5px', color: '#166534', fontWeight: 'bold', marginBottom: '10px', whiteSpace: 'nowrap' }}>{isFuture ? '예상 산행 지수' : '오늘 산행 지수'}</span>
-                <div style={{ position: 'relative', width: '60px', height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <svg viewBox="0 0 36 36" style={{ width: '100%', height: '100%', transform: 'rotate(-90deg)' }}>
-                    <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="rgba(22,163,74,0.2)" strokeWidth="4" />
-                    <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke={score >= 70 ? "#16a34a" : score >= 40 ? "#eab308" : "#dc2626"} strokeWidth="4" strokeDasharray={`${score}, 100`} />
-                  </svg>
-                  <span style={{ position: 'absolute', fontSize: '18px', fontWeight: 'bold', color: '#064e3b' }}>{score}</span>
+            {/* 💡 빈 공간을 완벽히 채워줄 컬럼 레이아웃 (위: 지수/고도, 아래: 체감기상) */}
+            <div className="mtn-score-altitude-box" style={{ flex: '1 1 250px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              
+              <div className="mtn-left-top-row" style={{ display: 'flex', gap: '12px', flex: 1 }}>
+                <div className="mtn-score-card" style={{ width: '105px', flexShrink: 0, backgroundColor: 'rgba(240,253,244,0.7)', borderRadius: '12px', padding: '16px 8px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                  <span style={{ fontSize: '11.5px', color: '#166534', fontWeight: 'bold', marginBottom: '10px', whiteSpace: 'nowrap' }}>{isFuture ? '예상 산행 지수' : '오늘 산행 지수'}</span>
+                  <div style={{ position: 'relative', width: '60px', height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <svg viewBox="0 0 36 36" style={{ width: '100%', height: '100%', transform: 'rotate(-90deg)' }}>
+                      <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="rgba(22,163,74,0.2)" strokeWidth="4" />
+                      <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke={score >= 70 ? "#16a34a" : score >= 40 ? "#eab308" : "#dc2626"} strokeWidth="4" strokeDasharray={`${score}, 100`} />
+                    </svg>
+                    <span style={{ position: 'absolute', fontSize: '18px', fontWeight: 'bold', color: '#064e3b' }}>{score}</span>
+                  </div>
+                  <span style={{ fontSize: '11.5px', color: '#0f172a', marginTop: '12px', fontWeight: 'bold', whiteSpace: 'nowrap' }}>
+                    {score >= 80 ? '아주 쾌적함' : score >= 60 ? '산행 무난함' : score >= 40 ? '주의 필요' : '입산 자제'}
+                  </span>
                 </div>
-                <span style={{ fontSize: '11.5px', color: '#0f172a', marginTop: '12px', fontWeight: 'bold', whiteSpace: 'nowrap' }}>
-                  {score >= 80 ? '아주 쾌적함' : score >= 60 ? '산행 무난함' : score >= 40 ? '주의 필요' : '입산 자제'}
-                </span>
+
+                <div style={{ flex: 1, backgroundColor: 'rgba(255,255,255,0.5)', borderRadius: '12px', padding: '16px', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '12px', fontSize: '12.5px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '4px', paddingBottom: '6px', borderBottom: '1px dashed rgba(0,0,0,0.1)' }}>
+                    <span style={{ fontWeight: '800', color: '#1e293b', whiteSpace: 'nowrap' }}>⛰️ 정상 <span style={{fontSize:'10px', color:'#475569', fontWeight:'normal'}}>({mountainInfo?.elevation}m)</span></span>
+                    <span style={{ color: '#0f172a', fontWeight: '800' }}>{temp}°C <span style={{fontSize:'10.5px', color:'#475569', fontWeight:'normal'}}>(풍속 {wind}m/s)</span></span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '4px', padding: '6px 0', borderBottom: '1px dashed rgba(0,0,0,0.1)' }}>
+                    <span style={{ color: '#475569', whiteSpace: 'nowrap', fontWeight: 'bold' }}>🌲 중턱 <span style={{fontSize:'10px', color:'#64748b', fontWeight:'normal'}}>({Math.round(mountainInfo?.elevation / 2)}m)</span></span>
+                    <span style={{ color: '#334155', fontWeight: '600' }}>{Math.round((temp + baseTemp) / 2)}°C</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '4px', paddingTop: '6px' }}>
+                    <span style={{ color: '#475569', whiteSpace: 'nowrap', fontWeight: 'bold' }}>👟 들머리 <span style={{fontSize:'10px', color:'#64748b', fontWeight:'normal'}}>(입구)</span></span>
+                    <span style={{ color: '#334155', fontWeight: '600' }}>{baseTemp}°C</span>
+                  </div>
+                </div>
               </div>
 
-              <div style={{ flex: 1, backgroundColor: 'rgba(255,255,255,0.5)', borderRadius: '12px', padding: '16px', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '12px', fontSize: '12.5px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '4px', paddingBottom: '6px', borderBottom: '1px dashed rgba(0,0,0,0.1)' }}>
-                  <span style={{ fontWeight: '800', color: '#1e293b', whiteSpace: 'nowrap' }}>⛰️ 정상 <span style={{fontSize:'10px', color:'#475569', fontWeight:'normal'}}>({mountainInfo?.elevation}m)</span></span>
-                  <span style={{ color: '#0f172a', fontWeight: '800' }}>{temp}°C <span style={{fontSize:'10.5px', color:'#475569', fontWeight:'normal'}}>(풍속 {wind}m/s)</span></span>
+              {/* 💡 빈 공간을 꽉 채워주는 신규 '체감 기상 및 노면 상태' 정보 카드 */}
+              <div style={{ flex: 1, backgroundColor: 'rgba(255,255,255,0.5)', borderRadius: '12px', padding: '16px', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '10px' }}>
+                <h4 style={{ margin: '0 0 4px 0', fontSize: '13.5px', color: '#166534', fontWeight: '800' }}>🌡️ 체감 기상 및 노면 상태</h4>
+                
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px dashed rgba(0,0,0,0.1)', paddingBottom: '6px' }}>
+                  <span style={{ fontSize: '12.5px', color: '#475569', fontWeight: 'bold' }}>정상 체감 온도</span>
+                  <span style={{ fontSize: '13.5px', fontWeight: '800', color: summitFeelsLike < 0 ? '#2563eb' : '#b45309' }}>{summitFeelsLike}°C</span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '4px', padding: '6px 0', borderBottom: '1px dashed rgba(0,0,0,0.1)' }}>
-                  <span style={{ color: '#475569', whiteSpace: 'nowrap', fontWeight: 'bold' }}>🌲 중턱 <span style={{fontSize:'10px', color:'#64748b', fontWeight:'normal'}}>({Math.round(mountainInfo?.elevation / 2)}m)</span></span>
-                  <span style={{ color: '#334155', fontWeight: '600' }}>{Math.round((temp + baseTemp) / 2)}°C</span>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px dashed rgba(0,0,0,0.1)', paddingBottom: '6px' }}>
+                  <span style={{ fontSize: '12.5px', color: '#475569', fontWeight: 'bold' }}>풍속 상태</span>
+                  <span style={{ fontSize: '12.5px', fontWeight: '800', color: wind >= 10 ? '#dc2626' : wind >= 6 ? '#ea580c' : '#16a34a' }}>
+                    {wind >= 10 ? '태풍급 강풍' : wind >= 6 ? '거센 칼바람' : wind >= 3 ? '적당한 바람' : '바람 잔잔함'} ({wind}m/s)
+                  </span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '4px', paddingTop: '6px' }}>
-                  <span style={{ color: '#475569', whiteSpace: 'nowrap', fontWeight: 'bold' }}>👟 들머리 <span style={{fontSize:'10px', color:'#64748b', fontWeight:'normal'}}>(입구)</span></span>
-                  <span style={{ color: '#334155', fontWeight: '600' }}>{baseTemp}°C</span>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '12.5px', color: '#475569', fontWeight: 'bold' }}>탐방로 노면</span>
+                  <span style={{ fontSize: '12.5px', fontWeight: '800', color: (temp <= 2 && (isRainOrSnow || isSnow)) ? '#2563eb' : isRainOrSnow ? '#ea580c' : '#16a34a' }}>
+                    {(temp <= 2 && (isRainOrSnow || isSnow)) ? '🧊 결빙·아이스' : isRainOrSnow ? '⚠️ 미끄럼 주의' : '🥾 뽀송한 흙길'}
+                  </span>
                 </div>
               </div>
+
             </div>
 
-            <div style={{ flex: '1 1 290px', backgroundColor: 'rgba(255,255,255,0.6)', borderRadius: '12px', padding: '16px', display: 'flex', flexDirection: 'column', overflow: 'hidden', height: 'fit-content' }}>
+            <div style={{ flex: '1 1 290px', backgroundColor: 'rgba(255,255,255,0.6)', borderRadius: '12px', padding: '16px', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
               
               <h4 style={{ margin: '0 0 10px 0', fontSize: '14px', color: '#1e293b', display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
                 <span style={{ whiteSpace: 'nowrap', fontWeight: '800' }}>⏱️ 코스별 타임라인</span>
@@ -471,7 +503,6 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
                 {timeline.msg}
               </div>
 
-              {/* 💡 onPointerDown 사용해 모바일 클릭/PC 클릭 이슈 대응 */}
               <div style={{ display: 'flex', gap: '6px', marginTop: 'auto' }}>
                 <button
                   type="button"
