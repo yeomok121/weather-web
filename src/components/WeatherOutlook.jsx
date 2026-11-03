@@ -141,8 +141,8 @@ function WeatherOutlook({
             </div>
 
             <div style={{ borderLeft: '3px solid #059669', paddingLeft: '12px', color: '#334155', lineHeight: '1.6', wordBreak: 'keep-all', fontWeight: '500' }}>
-              {weatherData?.isFuture
-                ? '선택 날짜는 주간 예보만 제공됩니다. 현재 날씨에 대한 AI 분석은 이 날짜의 산행 브리핑으로 표시하지 않습니다.'
+              {weatherData?.isFuture || hikingPlanSummary?.isNextDayPlan
+                ? '선택한 날짜의 주간 예보 또는 다음 날 출발 일정입니다. 현재 날씨에 대한 AI 분석은 해당 일정의 산행 브리핑으로 표시하지 않습니다.'
                 : <><div style={{ fontSize: '10.5px', color: '#64748b', fontWeight: '700', marginBottom: '3px' }}>현재 산악 기상 AI 브리핑 · 코스 일정 계산과 별도</div>{aiBriefing}</>}
             </div>
             <div style={{ fontSize: '10.5px', color: '#64748b', lineHeight: '1.45' }}>※ 기상 점수와 일정 계산은 제공된 예보 및 입력된 코스 소요시간을 바탕으로 한 참고 정보입니다. 정상 도착 시각은 코스 시간 비율로 추정하며, 실제 탐방로 통제·현장 노면·체력 상태는 별도로 확인하세요.</div>

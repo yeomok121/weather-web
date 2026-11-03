@@ -358,6 +358,24 @@ function HourlyForecast({
       }
     }
 
+    const isNextDayPlan = !isFuture && Math.floor(depMins / 1440) > 0;
+    if (isFuture || isNextDayPlan) {
+      return {
+        status: 'planning',
+        safetyBadge: '🗓️ 날짜별 일몰 확인 필요',
+        safetyColor: '#b45309',
+        safetyBg: 'rgba(254,252,232,0.9)',
+        deadlineStr: '날짜별 일몰 정보 확인 필요',
+        depTimeStr,
+        summitArrivalStr,
+        descentFinishStr,
+        arrivalWeather,
+        msg: isFuture
+          ? `🗓️ ${weatherData.date}: 주간 예보 기준 일정입니다. 날짜별 일출·일몰과 탐방로 운영시간을 확인해야 하산 안전을 판단할 수 있습니다.`
+          : `🗓️ 다음 날 ${depTimeStr} 출발 일정입니다. 날짜별 일출·일몰과 탐방로 운영시간을 확인해야 하산 안전을 판단할 수 있습니다.`
+      };
+    }
+
     if (timelineMode === 'ascent') {
       const sunriseMins = parseTime(sunrise, 390);
       let reqDepMins = sunriseMins - ascentTimeMins;
@@ -388,21 +406,6 @@ function HourlyForecast({
     const deadlineMins = safeDescentMins - ascentTimeMins;
     const deadlineStr = formatTime(deadlineMins);
 
-    if (isFuture) {
-      return {
-        status: 'planning',
-        safetyBadge: '🗓️ 일정 사전 계획',
-        safetyColor: '#b45309',
-        safetyBg: 'rgba(254,252,232,0.9)',
-        deadlineStr: '날짜별 일몰 정보 확인 필요',
-        depTimeStr,
-        summitArrivalStr,
-        descentFinishStr,
-        arrivalWeather,
-        msg: `🗓️ ${weatherData.date}: 코스 소요시간을 기준으로 일정을 미리 계산했습니다. 날짜별 일몰 시각이 제공되지 않아 권장 하산 시작·출발 마감은 현지 일몰 정보를 확인한 뒤 판단하세요.`
-      };
-    }
-
     if (descentFinishMins > sunsetMins) {
       return {
         status: 'danger',
@@ -414,7 +417,7 @@ function HourlyForecast({
         summitArrivalStr,
         descentFinishStr,
         arrivalWeather,
-        msg: `🚨 [시간 위험] ${depTimeStr} 출발 시 하산 완료(${descentFinishStr})가 일몰(${sunset}) 이후입니다. 주간 산행 비추천!`
+        msg: `🚨 [시간 위험] ${depTimeStr} 출발 시 하산 완료(${descentFinishStr})가 일몰(${sunset}) 이후로 예상됩니다. 출발을 앞당기거나 코스를 줄이세요.`
       };
     }
 
@@ -447,6 +450,15 @@ function HourlyForecast({
     };
   };
   const timeline = getTimelineAndSummitArrival();
+  const decisionSummary = timeline.status === 'danger'
+    ? `출발 ${timeline.depTimeStr} → 예상 하산 ${timeline.descentFinishStr}. 일몰 이후 하산이 예상됩니다.`
+    : timeline.status === 'warning'
+      ? `정상 도착 예상 ${timeline.summitArrivalStr}이 권장 하산 시작 시각 ${safeDescentTime}보다 늦습니다.`
+      : timeline.status === 'planning'
+        ? '선택 날짜의 일출·일몰과 탐방로 운영시간 확인이 필요합니다.'
+        : timeline.status === 'sunrise'
+          ? timeline.msg
+          : `출발 ${timeline.depTimeStr} → 예상 하산 ${timeline.descentFinishStr}. 실제 통제와 노면 상태도 확인하세요.`;
 
   const handleSharePlan = async () => {
     const mName = weatherData.region || mountainInfo?.name || '명산';
@@ -508,6 +520,17 @@ function HourlyForecast({
           </div>
         )}
       </div>
+
+      {isMountainMode && !isLoading && (
+        <div role={timeline.status === 'danger' ? 'alert' : 'status'} aria-live="polite" style={{
+          display: 'flex', alignItems: 'flex-start', gap: '8px', padding: '10px 12px', marginBottom: '12px',
+          borderRadius: '10px', border: `1px solid ${timeline.safetyColor}55`,
+          backgroundColor: timeline.safetyBg, color: timeline.safetyColor,
+        }}>
+          <strong style={{ flexShrink: 0, fontSize: '12px' }}>{timeline.safetyBadge}</strong>
+          <span style={{ fontSize: '12px', lineHeight: '1.45', fontWeight: '700', wordBreak: 'keep-all' }}>{decisionSummary}</span>
+        </div>
+      )}
 
       {isMountainMode && !isLoading && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '20px' }}>

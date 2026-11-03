@@ -475,6 +475,7 @@ function App() {
 
     const summitArrivalMins = depMins + ascentMins;
     const descentFinishMins = depMins + totalMins;
+    const isNextDayPlan = !activeWeather.isFuture && Math.floor(depMins / 1440) > 0;
 
     const safeDescentMins = parseTime(activeWeather.safeDescentTime || '15:30', 930);
     const sunsetMins = parseTime(activeWeather.sunset || '18:00', 1080);
@@ -497,7 +498,7 @@ function App() {
 
     let timeSafetyStatus = '시간 여유 있음';
     let timeSafetyColor = '#166534';
-    if (activeWeather.isFuture) {
+    if (activeWeather.isFuture || isNextDayPlan) {
       timeSafetyStatus = '날짜별 일몰 정보 확인 필요';
       timeSafetyColor = '#d97706';
     } else if (descentFinishMins > sunsetMins) {
@@ -543,14 +544,15 @@ function App() {
       departureTimeStr: formatTime(depMins),
       summitArrivalTimeStr: formatTime(summitArrivalMins),
       descentFinishTimeStr: formatTime(descentFinishMins),
-      recommendedDepDeadlineStr: activeWeather.isFuture ? '날짜별 일몰 정보 확인 필요' : formatTime(recommendedDepDeadlineMins),
+      recommendedDepDeadlineStr: activeWeather.isFuture || isNextDayPlan ? '날짜별 일몰 정보 확인 필요' : formatTime(recommendedDepDeadlineMins),
       descentStartTimeStr: formatTime(descentStartMins),
-      safeDescentStartTime: activeWeather.isFuture ? '날짜별 확인 필요' : (activeWeather.safeDescentTime || '15:30'),
+      safeDescentStartTime: activeWeather.isFuture || isNextDayPlan ? '날짜별 확인 필요' : (activeWeather.safeDescentTime || '15:30'),
       weatherScore: weatherAssessment.score,
       weatherAssessmentStatus: weatherAssessment.status,
       weatherAssessmentReasons: weatherAssessment.reasons,
       timeSafetyStatus,
       timeSafetyColor,
+      isNextDayPlan,
       summitForecast,
       gearList: customGearList
     };
