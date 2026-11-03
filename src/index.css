@@ -68,6 +68,50 @@ summary:focus-visible {
   padding: 28px 24px;
 }
 
+.mountain-info-disclosure {
+  color: #475569;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.mountain-info-disclosure summary {
+  display: inline-flex;
+  min-height: 28px;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  border: 1px solid rgba(100, 116, 139, 0.22);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.58);
+  color: #334155;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 650;
+  list-style: none;
+}
+
+.mountain-info-disclosure summary::-webkit-details-marker {
+  display: none;
+}
+
+.mountain-info-disclosure summary:hover {
+  background: rgba(255, 255, 255, 0.86);
+}
+
+.mountain-info-disclosure__content {
+  display: grid;
+  gap: 5px;
+  margin-top: 7px;
+  padding: 10px 12px;
+  border: 1px solid rgba(100, 116, 139, 0.18);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.72);
+  color: #334155;
+  font-size: 12px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
 @media (max-width: 900px) {
   .main-container {
     grid-template-columns: 1fr;

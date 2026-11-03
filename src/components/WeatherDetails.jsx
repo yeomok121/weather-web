@@ -152,9 +152,9 @@ function WeatherDetails({ airQuality = {}, current = {}, isMountainMode = false,
         {isMountainMode ? '⛰️ 4대 산행 환경 지수' : '상세 날씨 정보'}
       </h3>
 
-      <details style={{ margin: '0 0 12px', padding: '8px 10px', background: 'rgba(255,255,255,0.45)', borderRadius: '8px', color: '#475569', fontSize: '10.5px', lineHeight: 1.5 }}>
-        <summary style={{ cursor: 'pointer', fontWeight: 700, color: '#334155' }}>자료 출처·산출 기준</summary>
-        <div style={{ marginTop: '6px' }}>
+      <details style={{ margin: '0 0 12px', padding: '9px 10px', background: 'rgba(255,255,255,0.45)', borderRadius: '8px', color: '#475569', fontSize: '12px', lineHeight: 1.6 }}>
+        <summary style={{ cursor: 'pointer', fontWeight: 700, color: '#334155', minHeight: '24px' }}>ⓘ 자료 출처·산출 기준</summary>
+        <div style={{ marginTop: '8px' }}>
           <div>이 화면에서 자료를 받은 시각: {fetchedAtLabel}</div>
           {(isMountainMode ? mountainSources : citySources).map((source, index) => <div key={index}>· {source}</div>)}
           {isMountainMode && <div style={{ marginTop: '4px' }}>{current.dataNote || '일부 정상 기상값은 고도 보정 추정값일 수 있습니다.'}</div>}
@@ -168,7 +168,7 @@ function WeatherDetails({ airQuality = {}, current = {}, isMountainMode = false,
           <span style={{ fontWeight: '800', color: '#1e293b' }}>{pm25 === null ? '자료 없음' : `${airQuality.level || '확인 필요'} · ${pm25} µg/m³`}</span>
         </div>
         {pm25 === null
-          ? <div style={{ fontSize: '10px', color: '#64748b' }}>대기질 자료를 받지 못해 농도와 등급을 표시하지 않습니다.</div>
+          ? <div style={{ fontSize: '12px', color: '#475569' }}>대기질 자료를 받지 못해 농도와 등급을 표시하지 않습니다.</div>
           : <div style={{ height: '6px', borderRadius: '3px', background: 'linear-gradient(to right, #38bdf8, #22c55e, #eab308, #ef4444)', position: 'relative' }}><div style={{ position: 'absolute', top: '-3px', left: `${Math.min(100, Math.max(0, (pm25 / 100) * 100))}%`, width: '12px', height: '12px', borderRadius: '50%', background: '#ffffff', border: '2px solid #0f172a' }} /></div>}
       </div>
 
@@ -215,10 +215,13 @@ function WeatherDetails({ airQuality = {}, current = {}, isMountainMode = false,
         <div style={{ background: isMountainMode ? 'rgba(240,253,244,0.7)' : 'rgba(255,255,255,0.5)', padding: '8px 10px', borderRadius: '8px', fontSize: '11px', color: '#1e293b', display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center', lineHeight: '1.4', wordBreak: 'keep-all' }}>
           <span style={{ fontWeight: 'bold' }}>{mainRecommendation}</span>
         </div>
-        {!isMountainMode && <div style={{ fontSize: '10px', color: '#64748b', lineHeight: 1.4 }}>
-          참고 기준: 체감 {feelsLike}°C · 향후 6시간 최대 강수확률 {current.nextHoursRainPop ?? '—'}% · 풍속 {wind}m/s
-          {pm25 === null ? ' · 대기질 자료 확인 필요' : ` · PM2.5 ${pm25}`}
-        </div>}
+        {!isMountainMode && <details style={{ fontSize: '12px', color: '#475569', lineHeight: 1.6 }}>
+          <summary style={{ cursor: 'pointer', minHeight: '24px' }}>추천 판단 기준</summary>
+          <div style={{ marginTop: '4px' }}>
+            체감 {feelsLike}°C · 향후 6시간 최대 강수확률 {current.nextHoursRainPop ?? '—'}% · 풍속 {wind}m/s
+            {pm25 === null ? ' · 대기질 자료 확인 필요' : ` · PM2.5 ${pm25}`}
+          </div>
+        </details>}
         
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
           {activeBadges.map((badge, idx) => {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { FiChevronLeft, FiChevronRight, FiShare2, FiPlus, FiX, FiRotateCcw, FiMapPin, FiClock, FiEye } from 'react-icons/fi';
+import { FiChevronLeft, FiChevronRight, FiShare2, FiPlus, FiX, FiRotateCcw, FiMapPin, FiClock, FiEye, FiInfo } from 'react-icons/fi';
 import { LineChart, Line, YAxis, ResponsiveContainer } from 'recharts';
 import { getEmojiIcon } from './WeeklyForecast';
 import { assessMountainWeather, estimateSummitView, getHourlyForecastIndex } from './mountainAssessment';
@@ -40,6 +40,15 @@ const CustomLabel = ({ x, y, value }) => (
     {value}°
   </text>
 );
+
+function MountainInfo({ label, children }) {
+  return (
+    <details className="mountain-info-disclosure">
+      <summary><FiInfo size={14} aria-hidden="true" /><span>{label}</span></summary>
+      <div className="mountain-info-disclosure__content">{children}</div>
+    </details>
+  );
+}
 
 function HourlyForecast({
   hourlyData = EMPTY_HOURLY,
@@ -567,7 +576,7 @@ function HourlyForecast({
               
               <div className="mtn-dual-score-row" style={{ display: 'flex', gap: '8px' }}>
                 <div style={{ flex: 1, backgroundColor: 'rgba(240,253,244,0.75)', borderRadius: '12px', padding: '10px 8px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(22,163,74,0.2)' }}>
-                  <span style={{ fontSize: '10.5px', color: '#166534', fontWeight: '800', marginBottom: '4px', whiteSpace: 'nowrap' }}>🌤️ 기상 조건 점수(참고)</span>
+                  <span style={{ fontSize: '12px', color: '#166534', fontWeight: '800', marginBottom: '4px', whiteSpace: 'nowrap' }}>🌤️ 기상 조건 점수</span>
                   <div style={{ position: 'relative', width: '44px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <svg viewBox="0 0 36 36" style={{ width: '100%', height: '100%', transform: 'rotate(-90deg)' }}>
                       <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="rgba(22,163,74,0.2)" strokeWidth="4" />
@@ -575,11 +584,8 @@ function HourlyForecast({
                     </svg>
                     <span style={{ position: 'absolute', fontSize: '14px', fontWeight: '800', color: '#064e3b' }}>{weatherScore}</span>
                   </div>
-                  <span style={{ fontSize: '10.5px', color: '#0f172a', marginTop: '6px', fontWeight: 'bold', whiteSpace: 'nowrap' }}>
+                  <span style={{ fontSize: '12px', color: '#0f172a', marginTop: '6px', fontWeight: 'bold', whiteSpace: 'nowrap' }}>
                     {weatherAssessment.status}
-                  </span>
-                  <span style={{ fontSize: '9px', color: '#475569', marginTop: '3px', textAlign: 'center', lineHeight: '1.3' }}>
-                    {weatherAssessment.reasons.slice(0, 2).join(' · ')}
                   </span>
                 </div>
 
@@ -594,23 +600,21 @@ function HourlyForecast({
                     </svg>
                     <span style={{ position: 'absolute', fontSize: '14px', fontWeight: '800', color: '#0c4a6e' }}>{viewEstimate.score}</span>
                   </div>
-                  <span style={{ fontSize: '10.5px', color: viewEstimate.gradeColor, marginTop: '6px', fontWeight: '800', whiteSpace: 'nowrap' }}>
+                  <span style={{ fontSize: '12px', color: viewEstimate.gradeColor, marginTop: '6px', fontWeight: '800', whiteSpace: 'nowrap' }}>
                     {viewEstimate.gradeText}
-                  </span>
-                  <span style={{ fontSize: '9.5px', color: '#475569', marginTop: '2px', textAlign: 'center', wordBreak: 'keep-all' }}>
-                    {viewEstimate.summaryReason}
                   </span>
                 </div>
               </div>
 
-              <div style={{ backgroundColor: 'rgba(255,255,255,0.55)', borderRadius: '8px', padding: '6px 8px', fontSize: '10px', color: '#475569', lineHeight: '1.4', wordBreak: 'keep-all' }}>
-                {viewEstimate.seaOfCloudsHint && (
-                  <div style={{ color: '#0369a1', fontWeight: 'bold', marginBottom: '2px' }}>{viewEstimate.seaOfCloudsHint}</div>
-                )}
-                <span>※ 점수는 산행 허가·안전 보증 또는 조망 확률이 아닙니다. 운고·실측 시정·노면 상태가 반영되지 않은 기상요소 기반 참고 지표입니다.</span>
-              </div>
+              {viewEstimate.seaOfCloudsHint && <div style={{ color: '#0369a1', fontSize: '12px', fontWeight: '700', textAlign: 'center' }}>{viewEstimate.seaOfCloudsHint}</div>}
+              <MountainInfo label="점수 판단 근거와 한계">
+                <div><strong>기상 조건:</strong> {weatherAssessment.reasons.join(' · ') || weatherAssessment.status}</div>
+                <div><strong>조망 참고:</strong> {viewEstimate.summaryReason}</div>
+                <div>두 점수는 기상 요소를 바탕으로 한 참고 지표입니다. 산행 허가나 안전을 보증하지 않으며, 조망 점수도 실제 조망 확률이 아닙니다. 운고·실측 시정·노면 상태는 반영되지 않을 수 있습니다.</div>
+              </MountainInfo>
 
               <div style={{ backgroundColor: 'rgba(255,255,255,0.55)', borderRadius: '12px', padding: '12px', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '6px', fontSize: '11.5px' }}>
+                <strong style={{ fontSize: '12px', color: '#334155' }}>고도별 예상 기온</strong>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '4px', borderBottom: '1px dashed rgba(0,0,0,0.1)' }}>
                   <span style={{ fontWeight: '800', color: '#1e293b' }}>⛰️ 정상 <span style={{fontSize:'10px', color:'#475569', fontWeight:'normal'}}>({mountainInfo?.elevation}m)</span></span>
                   <span style={{ color: '#0f172a', fontWeight: '800' }}>{temp}°C <span style={{fontSize:'10px', color:'#475569', fontWeight:'normal'}}>(체감 {summitFeelsLike}°C)</span></span>
@@ -623,14 +627,12 @@ function HourlyForecast({
                   <span style={{ color: '#475569', fontWeight: 'bold' }}>👟 들머리 <span style={{fontSize:'10px', color:'#64748b', fontWeight:'normal'}}>(입구)</span></span>
                   <span style={{ color: '#334155', fontWeight: '600' }}>{baseTemp}°C</span>
                 </div>
-                <div style={{ fontSize: '10px', color: '#64748b', backgroundColor: 'rgba(255,255,255,0.6)', padding: '4px 6px', borderRadius: '6px', marginTop: '2px', wordBreak: 'keep-all' }}>
-                  💡 기온 감률(100m당 -0.65°C) 및 정상 풍속({wind}m/s) 반영
-                </div>
-                <div style={{ fontSize: '9.5px', color: '#64748b', lineHeight: '1.45', borderTop: '1px dashed rgba(0,0,0,0.1)', paddingTop: '5px' }}>
-                  <strong>데이터 구분:</strong> 기온 {weatherData?.weatherSources?.temperature || '고도 보정 추정값'} · 바람 {weatherData?.weatherSources?.wind || '고도 보정 추정값'} · 습도 {weatherData?.weatherSources?.humidity || '고도 보정 추정값'}
-                  {weatherData?.dataAsOf && <div>응답 생성 시각: {weatherData.dataAsOf.replace('T', ' ')}</div>}
+                <MountainInfo label="출처·고도 보정 방식">
+                  <div>기온은 고도 100m당 약 0.65°C 하강하는 기준을 반영하고, 정상 풍속은 {wind}m/s입니다.</div>
+                  <div>기온: {weatherData?.weatherSources?.temperature || '고도 보정 추정값'} · 바람: {weatherData?.weatherSources?.wind || '고도 보정 추정값'} · 습도: {weatherData?.weatherSources?.humidity || '고도 보정 추정값'}</div>
+                  {weatherData?.dataAsOf && <div>자료 응답 시각: {weatherData.dataAsOf.replace('T', ' ')}</div>}
                   <div>{weatherData?.dataNote || '정상 실측값이 없는 항목은 고도 보정 추정값일 수 있습니다.'}</div>
-                </div>
+                </MountainInfo>
               </div>
             </div>
 
@@ -768,12 +770,12 @@ function HourlyForecast({
               }}>
                 {timeline.msg}
               </div>
-              <div style={{ margin: '-3px 0 8px', color: '#64748b', fontSize: '9.5px', lineHeight: '1.4' }}>
-                ※ 정상 도착 시각은 전체 코스 시간의 55%를 오름 시간으로 계산한 참고 추정치입니다.
-              </div>
+              <MountainInfo label="정상 도착 시각 산정 기준">
+                정상 도착 시각은 전체 코스 시간의 55%를 오름 시간으로 계산한 참고 추정치입니다. 실제 소요 시간은 체력, 휴식, 노면과 코스 상황에 따라 달라집니다.
+              </MountainInfo>
               {courseRiskNotes.length > 0 && (
-                <div style={{ backgroundColor: 'rgba(255,247,237,0.8)', border: '1px solid rgba(249,115,22,0.22)', borderRadius: '8px', padding: '7px 9px', marginBottom: '8px', color: '#9a3412', fontSize: '10px', lineHeight: '1.45' }}>
-                  <strong>코스·기상 유의사항</strong>
+                <div style={{ backgroundColor: 'rgba(255,247,237,0.8)', border: '1px solid rgba(249,115,22,0.22)', borderRadius: '8px', padding: '9px 10px', marginBottom: '8px', color: '#9a3412', fontSize: '12px', lineHeight: '1.5' }}>
+                  <strong style={{ display: 'block', marginBottom: '3px' }}>코스·기상 유의사항</strong>
                   {courseRiskNotes.slice(0, 2).map((note, index) => <div key={index}>• {note}</div>)}
                 </div>
               )}
