@@ -27,8 +27,8 @@ const CustomLabel = ({ x, y, value }) => (
 function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = '', isMountainMode = false, mountainInfo = null, weatherData = {}, onShowToast }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedCourseIdx, setSelectedCourseIdx] = useState(0);
-  const [timelineMode, setTimelineMode] = useState('descent'); // 'descent' | 'ascent'
-  const [paceType, setPaceType] = useState('normal'); // 💡 'slow' | 'normal' | 'fast'
+  const [timelineMode, setTimelineMode] = useState('descent'); 
+  const [paceType, setPaceType] = useState('normal'); 
   
   const [gearList, setGearList] = useState([]);
   const [checklist, setChecklist] = useState({});
@@ -58,14 +58,12 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
   const courses = mountainInfo?.courses || [{ name: '기본 탐방로', distance: '5km', time: 180, diff: '중' }];
   const selectedCourse = courses[selectedCourseIdx] || courses[0];
 
-  // 💡 1. 걸음 속도(초보/보통/숙련)에 따른 보정 소요 시간 계산 (10분 단위 반올림)
   const currentPaceObj = PACE_OPTIONS.find(p => p.key === paceType) || PACE_OPTIONS[1];
   const adjustedTimeMins = Math.max(20, Math.round((selectedCourse.time * currentPaceObj.multiplier) / 10) * 10);
 
-  // 💡 2. 산행 시간 + 기온 기반 '권장 식수량 & 행동식 열량' 자동 계산
   const getNutritionGuide = () => {
     const hours = adjustedTimeMins / 60;
-    let waterPerHour = 0.35; // 기본 시간당 350ml
+    let waterPerHour = 0.35; 
     if (temp >= 25) waterPerHour = 0.55;
     else if (temp >= 18) waterPerHour = 0.45;
     else if (temp <= 2) waterPerHour = 0.3;
@@ -86,7 +84,6 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
   };
   const nutrition = getNutritionGuide();
 
-  // 💡 3. 들머리(입구) 검색어 추출 및 카카오맵/네이버지도 길찾기 연동
   const getTrailheadQuery = () => {
     if (selectedCourse.trailhead) return selectedCourse.trailhead;
     const mName = weatherData?.region || mountainInfo?.name || '북한산';
@@ -99,7 +96,10 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
     return `${mName} ${firstPart}`;
   };
 
-  const handleOpenMap = (provider) => {
+  // 💡 모바일/PC 모두 작동하도록 이벤트 처리 개선
+  const handleOpenMap = (provider, e) => {
+    e.preventDefault(); 
+    e.stopPropagation();
     const query = encodeURIComponent(getTrailheadQuery());
     const url = provider === 'kakao'
       ? `https://map.kakao.com/link/search/${query}`
@@ -242,7 +242,6 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
   };
   const score = getMountainScore();
 
-  // 💡 보정된 소요 시간(adjustedTimeMins)을 기준으로 일출/일몰 출발 마감 시각 계산
   const getTimelineStatus = () => {
     const parseTime = (str) => {
       if (!str || !str.includes(':')) return 1080;
@@ -253,7 +252,6 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
     const requiredMins = adjustedTimeMins;
 
     if (timelineMode === 'ascent') {
-      // 일출 산행은 정상까지 편도(왕복 시간의 약 55%) 소요 시간을 기준으로 출발 시각 역산
       const ascentMins = Math.max(20, Math.round((requiredMins * 0.55) / 5) * 5);
       const sunriseMins = parseTime(sunrise);
       let depMins = sunriseMins - ascentMins;
@@ -351,9 +349,10 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
       {isMountainMode && !isLoading && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '24px' }}>
           
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px' }}>
+          {/* 💡 Flexbox의 align-items 속성을 flex-start로 변경하여 자식 요소들이 늘어나는 것을 방지합니다. */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', alignItems: 'flex-start' }}>
             
-            <div className="mtn-score-altitude-box" style={{ flex: '1 1 250px', display: 'flex', gap: '12px' }}>
+            <div className="mtn-score-altitude-box" style={{ flex: '1 1 250px', display: 'flex', gap: '12px', height: 'fit-content' }}>
               <div className="mtn-score-card" style={{ width: '105px', flexShrink: 0, backgroundColor: 'rgba(240,253,244,0.7)', borderRadius: '12px', padding: '16px 8px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
                 <span style={{ fontSize: '11.5px', color: '#166534', fontWeight: 'bold', marginBottom: '10px', whiteSpace: 'nowrap' }}>{isFuture ? '예상 산행 지수' : '오늘 산행 지수'}</span>
                 <div style={{ position: 'relative', width: '60px', height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -384,7 +383,7 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
               </div>
             </div>
 
-            <div style={{ flex: '1 1 290px', backgroundColor: 'rgba(255,255,255,0.6)', borderRadius: '12px', padding: '16px', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            <div style={{ flex: '1 1 290px', backgroundColor: 'rgba(255,255,255,0.6)', borderRadius: '12px', padding: '16px', display: 'flex', flexDirection: 'column', overflow: 'hidden', height: 'fit-content' }}>
               
               <h4 style={{ margin: '0 0 10px 0', fontSize: '14px', color: '#1e293b', display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
                 <span style={{ whiteSpace: 'nowrap', fontWeight: '800' }}>⏱️ 코스별 타임라인</span>
@@ -433,7 +432,6 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
                 ))}
               </div>
 
-              {/* 💡 걸음 속도(체력) 보정 스위치 */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px', marginBottom: '8px', backgroundColor: 'rgba(255,255,255,0.5)', padding: '5px 8px', borderRadius: '8px' }}>
                 <span style={{ fontSize: '11px', fontWeight: 'bold', color: '#475569', whiteSpace: 'nowrap' }}>걸음 속도:</span>
                 <div style={{ display: 'flex', gap: '4px', flex: 1 }}>
@@ -456,7 +454,6 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
                 </div>
               </div>
 
-              {/* 💡 코스 상세 스펙 + 식수량/열량 자동 계산기 */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', fontSize: '11.5px', color: '#1e293b', backgroundColor: 'rgba(255,255,255,0.7)', padding: '10px 12px', borderRadius: '8px', marginBottom: '8px' }}>
                 <span>거리: <strong>{selectedCourse.distance}</strong></span>
                 <span>소요: <strong>{Math.floor(adjustedTimeMins / 60)}시간 {adjustedTimeMins % 60 > 0 ? `${adjustedTimeMins % 60}분` : ''}</strong></span>
@@ -474,11 +471,11 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
                 {timeline.msg}
               </div>
 
-              {/* 💡 들머리(입구) 카카오맵 / 네이버지도 원클릭 길찾기 버튼 */}
+              {/* 💡 onPointerDown 사용해 모바일 클릭/PC 클릭 이슈 대응 */}
               <div style={{ display: 'flex', gap: '6px', marginTop: 'auto' }}>
                 <button
                   type="button"
-                  onClick={() => handleOpenMap('kakao')}
+                  onPointerDown={(e) => handleOpenMap('kakao', e)}
                   style={{
                     flex: 1, padding: '7px 8px', borderRadius: '8px', border: '1px solid #eab308',
                     backgroundColor: '#fef9c3', color: '#854d0e', fontSize: '11.5px', fontWeight: '800',
@@ -489,7 +486,7 @@ function HourlyForecast({ hourlyData = EMPTY_HOURLY, isLoading = false, error = 
                 </button>
                 <button
                   type="button"
-                  onClick={() => handleOpenMap('naver')}
+                  onPointerDown={(e) => handleOpenMap('naver', e)}
                   style={{
                     flex: 1, padding: '7px 8px', borderRadius: '8px', border: '1px solid #22c55e',
                     backgroundColor: '#dcfce7', color: '#166534', fontSize: '11.5px', fontWeight: '800',
