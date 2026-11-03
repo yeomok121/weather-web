@@ -19,91 +19,78 @@ function WeatherDetails({ airQuality = {}, current = {}, isMountainMode = false,
 
   const getClothingRecommendation = () => {
     let base = '';
-    if (temp >= 28) base = '👕 민소매, 린넨, 반바지';
-    else if (temp >= 23) base = '👕 반팔, 얇은 셔츠, 면바지';
-    else if (temp >= 20) base = '👔 얇은 가디건, 긴팔, 청바지';
-    else if (temp >= 17) base = '🧥 얇은 니트, 맨투맨, 가디건';
-    else if (temp >= 12) base = '🧥 자켓, 기모 맨투맨, 야상';
-    else if (temp >= 9) base = '🧥 트렌치코트, 니트, 청바지';
-    else if (temp >= 5) base = '🧣 코트, 가죽자켓, 히트텍';
-    else base = '🧣 패딩, 두꺼운 코트, 목도리';
+    if (temp >= 28) base = '👕 민소매, 반바지';
+    else if (temp >= 23) base = '👕 반팔, 얇은 셔츠';
+    else if (temp >= 20) base = '👔 긴팔, 청바지';
+    else if (temp >= 17) base = '🧥 얇은 가디건';
+    else if (temp >= 12) base = '🧥 자켓, 야상';
+    else if (temp >= 9) base = '🧥 트렌치코트, 니트';
+    else if (temp >= 5) base = '🧣 코트, 히트텍';
+    else base = '🧣 패딩, 두꺼운 코트';
 
-    if (isRainOrSnow) return `${base} (☔ 우산·방수 신발)`;
-    if (wind >= 7 && temp < 20) return `${base} (💨 바람막이 권장)`;
+    if (isRainOrSnow) return `${base} (☔ 우산)`;
+    if (wind >= 7 && temp < 20) return `${base} (💨 바람막이)`;
     return `${base} 추천`;
   };
 
   const getHikingGearRecommendation = () => {
     let layering = '';
-    if (temp >= 22) layering = '👕 흡습속건 기능성 반팔 + 얇은 방풍 재킷';
-    else if (temp >= 14) layering = '🧥 기능성 긴팔 베이스 + 바람막이(방풍) 재킷';
-    else if (temp >= 6) layering = '🧥 기능성 내의 + 플리스(미드레이어) + 방풍 재킷';
-    else if (temp >= 0) layering = '🧣 동계 베이스 + 경량패딩 + 고어텍스 방풍 재킷';
-    else layering = '🧣 헤비 다운패딩 + 방풍 자켓 + 넥워머·방한모·장갑';
+    if (temp >= 22) layering = '👕 반팔 + 얇은 방풍 재킷';
+    else if (temp >= 14) layering = '🧥 긴팔 베이스 + 바람막이';
+    else if (temp >= 6) layering = '🧥 내의 + 플리스 + 방풍 재킷';
+    else if (temp >= 0) layering = '🧣 경량패딩 + 고어텍스 재킷';
+    else layering = '🧣 헤비 다운패딩 + 넥워머·장갑';
 
-    const gears = ['🦯 등산 스틱'];
-    if (temp <= 2 || isSnow) gears.push('⛓️ 아이젠 필수');
-    else if (isRainOrSnow) gears.push('☔ 판초우의·스패츠');
-    else if (terrain.includes('암릉') || terrain.includes('바위')) gears.push('🧤 반장갑·릿지화');
-    else gears.push('🔦 헤드랜턴');
+    const gears = ['🦯 스틱'];
+    if (temp <= 2 || isSnow) gears.push('⛓️ 아이젠');
+    else if (isRainOrSnow) gears.push('☔ 판초우의');
+    else if (terrain.includes('암릉') || terrain.includes('바위')) gears.push('🧤 릿지화');
+    else gears.push('🔦 랜턴');
 
-    return `${layering} (${gears.join(' · ')})`;
+    return `${layering} (${gears.join('·')})`;
   };
 
-  // 💡 노란색 계열 색상 코드를 짙은 색(b45309, c2410c 등)으로 변경하여 가독성 개선
   const getLifeIndices = () => {
     const badges = [];
-    if (isRainOrSnow) badges.push({ text: isSnow ? '🧘 눈길 조심·실내 운동' : '🧘 실내 스트레칭 추천', color: '#6366f1' });
-    else if (pm25 >= 50) badges.push({ text: '😷 야외 러닝 자제 (먼지)', color: '#ef4444' });
-    else if (wind >= 8) badges.push({ text: '💨 강풍 주의·실내 운동', color: '#c2410c' });
-    else if (temp >= 31) badges.push({ text: '🥵 무더위 야외 운동 자제', color: '#ef4444' });
-    else if (temp <= -3) badges.push({ text: '🥶 한파 주의·실내 운동', color: '#3b82f6' });
-    else if (temp >= 27 || temp <= 6) badges.push({ text: '👟 가벼운 산책·조깅 적합', color: '#b45309' }); // 노란색 개선
-    else badges.push({ text: '🏃 달리기 완벽한 날씨', color: '#22c55e' });
+    if (isRainOrSnow) badges.push({ text: isSnow ? '눈길 실내 운동' : '실내 스트레칭', color: '#6366f1' });
+    else if (pm25 >= 50) badges.push({ text: '러닝 자제 (먼지)', color: '#ef4444' });
+    else if (wind >= 8) badges.push({ text: '강풍 실내 운동', color: '#c2410c' });
+    else if (temp >= 31) badges.push({ text: '무더위 운동 자제', color: '#ef4444' });
+    else if (temp <= -3) badges.push({ text: '한파 실내 운동', color: '#3b82f6' });
+    else if (temp >= 27 || temp <= 6) badges.push({ text: '가벼운 산책 적합', color: '#b45309' }); 
+    else badges.push({ text: '달리기 완벽한 날씨', color: '#22c55e' });
 
-    if (isRainOrSnow) badges.push({ text: '🚫 세차 비추천 (비/눈)', color: '#ef4444' });
-    else if (pm25 >= 36) badges.push({ text: '🌫️ 세차 비추천 (미세먼지)', color: '#c2410c' });
-    else if (temp <= -2) badges.push({ text: '🧊 세차 주의 (결빙 우려)', color: '#b45309' }); // 노란색 개선
-    else badges.push({ text: '✨ 세차하기 좋은 날', color: '#3b82f6' });
+    if (isRainOrSnow) badges.push({ text: '세차 비추천', color: '#ef4444' });
+    else if (pm25 >= 36) badges.push({ text: '세차 보류 (먼지)', color: '#c2410c' });
+    else if (temp <= -2) badges.push({ text: '세차 주의 (결빙)', color: '#b45309' }); 
+    else badges.push({ text: '세차하기 좋은 날', color: '#3b82f6' });
 
-    if (isRainOrSnow || humidity >= 80) badges.push({ text: '👕 실내 건조·제습기 권장', color: '#64748b' });
-    else if (humidity <= 55 && desc.includes('맑음') && pm25 < 36) badges.push({ text: '☀️ 빨래 바짝 마르는 날', color: '#0ea5e9' });
-    else badges.push({ text: '🧺 빨래 건조 무난함', color: '#10b981' });
-
-    if (isRainOrSnow) badges.push({ text: '☔ 외출 시 우산 필수!', color: '#2563eb' });
-    else if (pm25 >= 36) badges.push({ text: '🪟 환기 자제·마스크 착용', color: '#ef4444' });
-    else if (!celestial.isNight && desc.includes('맑음') && temp >= 23) badges.push({ text: '🕶️ 자외선 차단제 권장', color: '#b45309' }); // 노란색 개선
-    else if (humidity <= 35) badges.push({ text: '💧 건조 주의·수분 섭취', color: '#0284c7' });
-    else badges.push({ text: '🍃 창문 열고 환기하기 좋음', color: '#14b8a6' });
+    if (isRainOrSnow || humidity >= 80) badges.push({ text: '실내 제습 권장', color: '#64748b' });
+    else if (humidity <= 55 && desc.includes('맑음') && pm25 < 36) badges.push({ text: '빨래 바짝 마름', color: '#0ea5e9' });
+    else badges.push({ text: '빨래 건조 무난', color: '#10b981' });
 
     return badges;
   };
 
   const getMountainIndices = () => {
     const badges = [];
+    if (isRainOrSnow) badges.push({ text: '🌫️ 곰탕 시야 불량', color: '#64748b' });
+    else if (temp <= -2 && humidity >= 75) badges.push({ text: '❄️ 눈꽃 절경 기대', color: '#0ea5e9' });
+    else if (humidity >= 80 && wind <= 3.5) badges.push({ text: '🌊 운해 확률 높음', color: '#8b5cf6' });
+    else if (humidity >= 85) badges.push({ text: '🌫️ 산안개 시야 주의', color: '#c2410c' });
+    else if (pm25 <= 25 && desc.includes('맑음')) badges.push({ text: '🔭 탁 트인 뻥뷰', color: '#0ea5e9' });
+    else badges.push({ text: '🏞️ 조망 양호', color: '#10b981' });
 
-    if (isRainOrSnow) badges.push({ text: '🌫️ 시야 불량 (곰탕 주의)', color: '#64748b' });
-    else if (temp <= -2 && humidity >= 75) badges.push({ text: '❄️ 눈꽃·상고대 절경 기대', color: '#0ea5e9' });
-    else if (humidity >= 80 && wind <= 3.5) badges.push({ text: '🌊 운해(구름바다) 확률 높음', color: '#8b5cf6' });
-    else if (humidity >= 85) badges.push({ text: '🌫️ 산안개(곰탕) 시야 주의', color: '#c2410c' });
-    else if (pm25 <= 25 && desc.includes('맑음')) badges.push({ text: '🔭 쾌청! 탁 트인 정상 뻥뷰', color: '#0ea5e9' });
-    else badges.push({ text: '🏞️ 조망 양호·산행 무난', color: '#10b981' });
+    if (temp <= 2 && (isRainOrSnow || humidity >= 70)) badges.push({ text: '🧊 블랙아이스 주의', color: '#dc2626' });
+    else if (isRainOrSnow) badges.push({ text: '⚠️ 젖은 바위 조심', color: '#ea580c' });
+    else if (temp <= 0) badges.push({ text: '❄️ 그늘 서리·결빙', color: '#2563eb' });
+    else if (terrain.includes('암릉') || terrain.includes('바위')) badges.push({ text: '🪨 암릉 접지력 주의', color: '#b45309' }); 
+    else badges.push({ text: '🥾 노면 건조 쾌적', color: '#16a34a' });
 
-    if (temp <= 2 && (isRainOrSnow || humidity >= 70)) badges.push({ text: '🧊 결빙·블랙아이스 주의', color: '#dc2626' });
-    else if (isRainOrSnow) badges.push({ text: '⚠️ 젖은 바위·진흙 미끄럼', color: '#ea580c' });
-    else if (temp <= 0) badges.push({ text: '❄️ 그늘 구간 서리·결빙', color: '#2563eb' });
-    else if (terrain.includes('암릉') || terrain.includes('바위')) badges.push({ text: '🪨 암릉 구간 접지력 주의', color: '#b45309' }); // 노란색 개선
-    else badges.push({ text: '🥾 노면 건조·보행 쾌적', color: '#16a34a' });
-
-    if (wind >= 10) badges.push({ text: '🌪️ 강풍 특보 (체류 자제)', color: '#dc2626' });
-    else if (wind >= 6) badges.push({ text: '💨 능선 칼바람 (방풍 필수)', color: '#ea580c' });
-    else if (temp <= 3) badges.push({ text: '🥶 정상 한기 (보온병 지참)', color: '#0284c7' });
-    else badges.push({ text: '🍃 능선 바람 잔잔·쾌적', color: '#0d9488' });
-
-    if (isRainOrSnow || wind >= 10) badges.push({ text: '🚫 악천후 입산 자제 권장', color: '#dc2626' });
-    else if (celestial.isNight && !isFuture) badges.push({ text: '🔦 야간 산행 주의 (랜턴)', color: '#475569' });
-    else if (temp <= -5 || wind >= 7 || pm25 >= 55) badges.push({ text: '⚠️ 초보자 주의·방한 철저', color: '#b45309' }); // 노란색 개선
-    else badges.push({ text: '🧗 등산 가기 완벽한 날씨!', color: '#15803d' });
+    if (wind >= 10) badges.push({ text: '🌪️ 강풍 체류 자제', color: '#dc2626' });
+    else if (wind >= 6) badges.push({ text: '💨 능선 칼바람 주의', color: '#ea580c' });
+    else if (temp <= 3) badges.push({ text: '🥶 정상 한기 보온', color: '#0284c7' });
+    else badges.push({ text: '🍃 능선 바람 잔잔', color: '#0d9488' });
 
     return badges;
   };
@@ -146,22 +133,13 @@ function WeatherDetails({ airQuality = {}, current = {}, isMountainMode = false,
   }, [sunrise, sunset]);
 
   return (
-    <div
-      className="glass-card detail-info-card"
-      style={{
-        borderRadius: '16px',
-        padding: '24px',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
-        height: 'fit-content',
-        boxSizing: 'border-box',
-      }}
-    >
-      <h3 style={{ margin: '0 0 16px 0', fontSize: '17px', fontWeight: '800', color: isMountainMode ? '#166534' : '#1e293b' }}>
+    <div className="glass-card detail-info-card" style={{ borderRadius: '16px', padding: '20px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', height: 'fit-content', boxSizing: 'border-box' }}>
+      <h3 style={{ margin: '0 0 12px 0', fontSize: '15px', fontWeight: '800', color: isMountainMode ? '#166534' : '#1e293b' }}>
         {isMountainMode ? '⛰️ 4대 산행 환경 지수' : '상세 날씨 정보'}
       </h3>
 
-      <div style={{ marginBottom: '20px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: '6px' }}>
+      <div style={{ marginBottom: '16px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', marginBottom: '6px' }}>
           <span style={{ color: '#475569', fontWeight: '600' }}>미세먼지 (PM2.5)</span>
           <span style={{ fontWeight: '800', color: '#1e293b' }}>
             {airQuality.level || '보통'} ({pm25})
@@ -172,8 +150,8 @@ function WeatherDetails({ airQuality = {}, current = {}, isMountainMode = false,
         </div>
       </div>
 
-      <div style={{ marginTop: '20px', marginBottom: isMountainMode ? '16px' : '10px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#475569', fontWeight: 'bold' }}>
+      <div style={{ marginTop: '16px', marginBottom: isMountainMode ? '12px' : '10px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#475569', fontWeight: 'bold' }}>
           {celestial.isNight ? (
             <>
               <span>🌇 일몰 {sunset}</span>
@@ -186,71 +164,43 @@ function WeatherDetails({ airQuality = {}, current = {}, isMountainMode = false,
             </>
           )}
         </div>
-        <div style={{ position: 'relative', height: '45px', marginTop: '4px', display: 'flex', justifyContent: 'center' }}>
-          <svg width="100%" height="45" viewBox="0 0 180 45" preserveAspectRatio="none">
-            <path d="M 10 5 Q 90 65 170 5" fill="none" stroke={celestial.isNight ? "rgba(0,0,0,0.4)" : "rgba(0,0,0,0.2)"} strokeWidth="1.5" strokeDasharray="4 4" />
+        <div style={{ position: 'relative', height: '40px', marginTop: '4px', display: 'flex', justifyContent: 'center' }}>
+          <svg width="100%" height="40" viewBox="0 0 180 40" preserveAspectRatio="none">
+            <path d="M 10 5 Q 90 60 170 5" fill="none" stroke={celestial.isNight ? "rgba(0,0,0,0.4)" : "rgba(0,0,0,0.2)"} strokeWidth="1.5" strokeDasharray="4 4" />
           </svg>
-          <span style={{ 
-            position: 'absolute', 
-            bottom: '6px', 
-            left: `calc(${celestial.position}% - 12px)`, 
-            fontSize: '16px', 
-            background: 'rgba(255,255,255,0.8)', 
-            borderRadius: '50%', 
-            padding: '4px', 
-            boxShadow: '0 2px 6px rgba(0,0,0,0.1)', 
-            lineHeight: 1, 
-            transition: 'left 0.8s ease-in-out' 
-          }}>
+          <span style={{ position: 'absolute', bottom: '6px', left: `calc(${celestial.position}% - 10px)`, fontSize: '14px', background: 'rgba(255,255,255,0.8)', borderRadius: '50%', padding: '3px', boxShadow: '0 2px 6px rgba(0,0,0,0.1)', lineHeight: 1, transition: 'left 0.8s ease-in-out' }}>
             {celestial.icon}
           </span>
         </div>
 
         {isMountainMode && (
-          <div style={{ marginTop: '6px', backgroundColor: 'rgba(255,247,237,0.7)', border: '1px solid rgba(254,215,170,0.5)', color: '#c2410c', borderRadius: '8px', padding: '6px 10px', fontSize: '12.5px', fontWeight: 'bold', textAlign: 'center' }}>
-            🚨 안전 하산 마감 권장: {safeDescentTime} 이전
+          <div style={{ marginTop: '4px', backgroundColor: 'rgba(255,247,237,0.7)', border: '1px solid rgba(254,215,170,0.5)', color: '#c2410c', borderRadius: '8px', padding: '4px 8px', fontSize: '11.5px', fontWeight: 'bold', textAlign: 'center' }}>
+            🚨 안전 하산 마감: {safeDescentTime} 이전
           </div>
         )}
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#1e293b', marginTop: '12px', paddingTop: '14px', borderTop: '1px solid rgba(0,0,0,0.1)' }}>
-        <span style={{ fontWeight: '600' }}>{isMountainMode ? '예상 정상 습도:' : '습도:'} <strong>{humidity}%</strong></span>
-        <span style={{ fontWeight: '600' }}>{isMountainMode ? '예상 능선 풍속:' : '풍속:'} <strong>{wind} m/s</strong></span>
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#1e293b', marginTop: '10px', paddingTop: '10px', borderTop: '1px solid rgba(0,0,0,0.1)' }}>
+        <span style={{ fontWeight: '600' }}>{isMountainMode ? '정상 습도:' : '습도:'} <strong>{humidity}%</strong></span>
+        <span style={{ fontWeight: '600' }}>{isMountainMode ? '능선 풍속:' : '풍속:'} <strong>{wind} m/s</strong></span>
       </div>
 
-      <div style={{ marginTop: '14px', paddingTop: '14px', borderTop: '1px solid rgba(0,0,0,0.1)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-        <h4 style={{ margin: '0 0 4px 0', fontSize: '13px', color: isMountainMode ? '#166534' : '#475569', fontWeight: 'bold' }}>
+      <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px solid rgba(0,0,0,0.1)', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+        <h4 style={{ margin: '0 0 4px 0', fontSize: '12px', color: isMountainMode ? '#166534' : '#475569', fontWeight: 'bold' }}>
           {isMountainMode ? '🎒 기온 기반 레이어링' : '생활 지수 추천'}
         </h4>
         
-        <div style={{ background: isMountainMode ? 'rgba(240,253,244,0.7)' : 'rgba(255,255,255,0.5)', padding: '10px 12px', borderRadius: '8px', fontSize: '12.5px', color: '#1e293b', display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center', lineHeight: '1.45', wordBreak: 'keep-all' }}>
+        <div style={{ background: isMountainMode ? 'rgba(240,253,244,0.7)' : 'rgba(255,255,255,0.5)', padding: '8px 10px', borderRadius: '8px', fontSize: '11px', color: '#1e293b', display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center', lineHeight: '1.4', wordBreak: 'keep-all' }}>
           <span style={{ fontWeight: 'bold' }}>{mainRecommendation}</span>
         </div>
         
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
           {activeBadges.map((badge, idx) => {
-             // 💡 뱃지 색상을 반투명하게 변환하여 투명 테마에 맞춤
              let bgAlpha = badge.color.replace(')', ', 0.15)').replace('rgb', 'rgba');
              if(badge.color.startsWith('#')) bgAlpha = `${badge.color}25`;
 
              return (
-              <div 
-                key={idx} 
-                style={{ 
-                  background: bgAlpha, 
-                  border: `1px solid ${badge.color}40`, 
-                  color: badge.color, 
-                  padding: '10px 6px', 
-                  borderRadius: '8px', 
-                  fontSize: '12px', 
-                  fontWeight: '800', 
-                  textAlign: 'center',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  wordBreak: 'keep-all'
-                }}
-              >
+              <div key={idx} style={{ background: bgAlpha, border: `1px solid ${badge.color}40`, color: badge.color, padding: '6px 4px', borderRadius: '6px', fontSize: '11px', fontWeight: '800', textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', wordBreak: 'keep-all' }}>
                 {badge.text}
               </div>
             );

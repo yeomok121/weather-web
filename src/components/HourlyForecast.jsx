@@ -13,14 +13,14 @@ export const PACE_OPTIONS = [
 ];
 
 const DEPARTURE_OFFSETS = [
-  { value: 0, label: '지금 바로 출발' },
-  { value: 1, label: '1시간 뒤 출발' },
-  { value: 2, label: '2시간 뒤 출발' },
-  { value: 3, label: '3시간 뒤 출발' },
-  { value: 4, label: '4시간 뒤 출발' },
-  { value: 6, label: '6시간 뒤 출발' },
-  { value: 9, label: '9시간 뒤 출발' },
-  { value: 12, label: '12시간 뒤 출발' },
+  { value: 0, label: '지금 출발' },
+  { value: 1, label: '+1시간 뒤' },
+  { value: 2, label: '+2시간 뒤' },
+  { value: 3, label: '+3시간 뒤' },
+  { value: 4, label: '+4시간 뒤' },
+  { value: 6, label: '+6시간 뒤' },
+  { value: 9, label: '+9시간 뒤' },
+  { value: 12, label: '+12시간 뒤' },
 ];
 
 function toNumber(value) {
@@ -30,7 +30,7 @@ function toNumber(value) {
 }
 
 const CustomLabel = ({ x, y, value }) => (
-  <text x={x} y={y - 12} fill="#1e293b" fontSize="14" fontWeight="bold" textAnchor="middle">
+  <text x={x} y={y - 10} fill="#1e293b" fontSize="13" fontWeight="bold" textAnchor="middle">
     {value}°
   </text>
 );
@@ -107,7 +107,7 @@ function HourlyForecast({
     else if (temp <= 2) waterPerHour = 0.3;
 
     const totalWaterL = Math.max(0.5, Math.min(3.5, Math.round(hours * waterPerHour * 2) / 2));
-    const waterNote = temp <= 5 ? ' (보온병 온수 500ml 포함)' : temp >= 24 ? ' (이온음료·얼음물 권장)' : '';
+    const waterNote = temp <= 5 ? ' (보온 500ml 포함)' : temp >= 24 ? ' (이온음료 권장)' : '';
 
     let kcalPerHour = 220;
     if (selectedCourse.diff.includes('상')) kcalPerHour = 270;
@@ -166,6 +166,10 @@ function HourlyForecast({
   useEffect(() => {
     setCurrentIndex(0);
   }, [hourlyData]);
+
+  useEffect(() => {
+    setSelectedCourseIdx(0);
+  }, [mountainInfo?.name]);
 
   useEffect(() => {
     const defaultGears = buildWeatherGearList();
@@ -265,11 +269,10 @@ function HourlyForecast({
   const nextDisabled = isLoading || visibleIndex >= maxIndex;
 
   const buttonStyle = {
-    background: 'rgba(255,255,255,0.5)', border: 'none', borderRadius: '50%', width: '32px', height: '32px',
+    background: 'rgba(255,255,255,0.5)', border: 'none', borderRadius: '50%', width: '28px', height: '28px',
     display: 'flex', justifyContent: 'center', alignItems: 'center', color: '#1e293b', transition: 'background-color 0.2s',
   };
 
-  // 💡 [원칙 1] 기상 적합도는 순수 기상 데이터(강수·풍속·기온·미세먼지)만으로 산출
   const getWeatherSuitabilityScore = () => {
     let s = 100;
     if (isRainOrSnow) s -= 40;
@@ -283,7 +286,6 @@ function HourlyForecast({
   };
   const weatherScore = getWeatherSuitabilityScore();
 
-  // 💡 [원칙 3] 확보 가능한 데이터(하늘상태, 강수확률, 습도, PM2.5, 풍속)만 활용한 정상 조망 추정 지수
   const getSummitViewEstimate = () => {
     let vScore = 95;
     const reasons = [];
@@ -323,9 +325,8 @@ function HourlyForecast({
 
     vScore = Math.max(10, Math.min(100, vScore));
 
-    // 운해 가능성 보조 판단 (습도 80% 이상 + 바람 3.5m/s 이하 + 비 안 옴)
     const seaOfCloudsHint = (!isRainOrSnow && humidity >= 80 && wind <= 3.5)
-      ? '🌊 고습도·약풍 조건으로 이른 아침 운해 형성 가능성 있음'
+      ? '🌊 고습도·약풍: 운해 발생 가능성 있음'
       : null;
 
     let gradeText = '조망 양호 추정';
@@ -348,7 +349,6 @@ function HourlyForecast({
   };
   const viewEstimate = getSummitViewEstimate();
 
-  // 💡 [원칙 1 & 2] 시간 안전 판정 및 정상 도착 시점의 시간별 예보 매칭
   const getTimelineAndSummitArrival = () => {
     const parseTime = (str, fallback = 1080) => {
       if (!str || !str.includes(':')) return fallback;
@@ -370,10 +370,9 @@ function HourlyForecast({
     const summitArrivalStr = formatTime(summitArrivalMins);
     const descentFinishStr = formatTime(descentFinishMins);
 
-    // 정상 도착 시점의 시간별 예보 매칭 (오늘 + 24시간 이내일 때만 실제 매칭)
-    let arrivalWeather = { available: false, reason: '예측 불가 (상세 시간별 예보 범위 초과)' };
+    let arrivalWeather = { available: false, reason: '예측 불가 (상세 예보 범위 초과)' };
     if (isFuture) {
-      arrivalWeather = { available: false, reason: '예측 불가 (미래 일자는 시간별 예보 미제공 · 주간 예보 참고)' };
+      arrivalWeather = { available: false, reason: '예측 불가 (미래 일자는 주간 예보 참고)' };
     } else if (Array.isArray(rawForecastData) && rawForecastData.length > 0) {
       const hoursUntilSummit = activeDepOffset + Math.round(ascentTimeMins / 60);
       if (hoursUntilSummit >= 0 && hoursUntilSummit < rawForecastData.length) {
@@ -411,7 +410,7 @@ function HourlyForecast({
         summitArrivalStr,
         descentFinishStr,
         arrivalWeather,
-        msg: `🌅 일출(${sunrise}) 정상 조망 목표: 늦어도 ${reqDepStr}에 들머리에서 출발하세요. (정상 등정 약 ${Math.floor(ascentTimeMins / 60)}시간 ${ascentTimeMins % 60}분 소요)`
+        msg: `🌅 일출(${sunrise}) 조망: 늦어도 ${reqDepStr} 출발 권장. (등정 약 ${Math.floor(ascentTimeMins / 60)}시간 ${ascentTimeMins % 60}분)`
       };
     }
 
@@ -431,7 +430,7 @@ function HourlyForecast({
         summitArrivalStr,
         descentFinishStr,
         arrivalWeather,
-        msg: `🗓️ ${weatherData.date} 안전 하산 권장 출발 마감: 늦어도 ${deadlineStr} 이전 출발 (안전 하산 완료 ${safeDescentTime} 기준)`
+        msg: `🗓️ ${weatherData.date}: 늦어도 ${deadlineStr} 출발 권장 (안전 하산 마감 ${safeDescentTime})`
       };
     }
 
@@ -446,14 +445,14 @@ function HourlyForecast({
         summitArrivalStr,
         descentFinishStr,
         arrivalWeather,
-        msg: `🚨 [시간 안전 경고] ${depTimeStr} 출발 시 하산 완료(${descentFinishStr})가 일몰(${sunset}) 이후입니다. 기상이 좋아도 주간 산행은 비추천합니다.`
+        msg: `🚨 [시간 위험] ${depTimeStr} 출발 시 하산 완료(${descentFinishStr})가 일몰(${sunset}) 이후입니다. 주간 산행 비추천!`
       };
     }
 
     if (descentFinishMins > safeDescentMins) {
       return {
         status: 'warning',
-        safetyBadge: '⚠️ 시간 안전: 주의 (권장 마감 경과)',
+        safetyBadge: '⚠️ 시간 안전: 주의 (마감 경과)',
         safetyColor: '#b45309',
         safetyBg: 'rgba(254,252,232,0.9)',
         deadlineStr,
@@ -461,13 +460,13 @@ function HourlyForecast({
         summitArrivalStr,
         descentFinishStr,
         arrivalWeather,
-        msg: `⚠️ [시간 주의] ${depTimeStr} 출발 시 예상 하산 완료는 ${descentFinishStr}입니다. 권장 출발 마감(${deadlineStr})이 지났으니 헤드랜턴을 필히 지참하세요.`
+        msg: `⚠️ [시간 주의] 예상 하산 완료: ${descentFinishStr}. 권장 출발 마감(${deadlineStr})이 지났으니 헤드랜턴을 필히 지참하세요.`
       };
     }
 
     return {
       status: 'safe',
-      safetyBadge: '✅ 시간 안전: 양호 (일몰 전 하산)',
+      safetyBadge: '✅ 시간 안전: 양호',
       safetyColor: '#166534',
       safetyBg: 'rgba(240,253,244,0.9)',
       deadlineStr,
@@ -475,7 +474,7 @@ function HourlyForecast({
       summitArrivalStr,
       descentFinishStr,
       arrivalWeather,
-      msg: `✅ [시간 안전 확인] ${depTimeStr} 출발 시 약 ${summitArrivalStr} 정상 도착, 일몰(${sunset}) 전인 ${descentFinishStr}경 안전 하산 가능합니다.`
+      msg: `✅ [시간 양호] ${depTimeStr} 출발 시 약 ${summitArrivalStr} 정상 도착, 일몰(${sunset}) 전 ${descentFinishStr}경 안전 하산 가능합니다.`
     };
   };
   const timeline = getTimelineAndSummitArrival();
@@ -514,119 +513,105 @@ function HourlyForecast({
   };
 
   return (
-    <div className="glass-card" style={{ borderRadius: '16px', padding: '24px', display: 'flex', flexDirection: 'column', color: '#1e293b', width: '100%', boxSizing: 'border-box' }}>
-      <style>{`
-        .hourly-chart-wrapper .recharts-surface { overflow: visible !important; }
-        @media (max-width: 640px) {
-          .mtn-score-altitude-box { flex-direction: column !important; }
-          .mtn-left-top-row { flex-direction: column !important; }
-          .mtn-dual-score-row { flex-direction: row !important; }
-        }
-      `}</style>
-
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '16px' }}>
-        <h4 style={{ margin: 0, fontSize: '17px', fontWeight: '800', color: isMountainMode ? '#166534' : '#1e293b' }}>
+    // 💡 전체 패딩 24px -> 20px 축소
+    <div className="glass-card" style={{ borderRadius: '16px', padding: '20px', display: 'flex', flexDirection: 'column', color: '#1e293b', width: '100%', boxSizing: 'border-box' }}>
+      
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '12px' }}>
+        <h4 style={{ margin: 0, fontSize: '16px', fontWeight: '800', color: isMountainMode ? '#166534' : '#1e293b' }}>
           {isMountainMode ? '⛰️ 산악 기상 & 등산 환경 대시보드' : '시간대별 예보 (기온 변화)'}
         </h4>
         {!isMountainMode && (
           <div style={{ display: 'flex', gap: '8px' }}>
-            <button type="button" onClick={handlePrev} disabled={prevDisabled} style={{ ...buttonStyle, opacity: prevDisabled ? 0.3 : 1, cursor: prevDisabled ? 'default' : 'pointer' }}><FiChevronLeft size={20} /></button>
-            <button type="button" onClick={handleNext} disabled={nextDisabled} style={{ ...buttonStyle, opacity: nextDisabled ? 0.3 : 1, cursor: nextDisabled ? 'default' : 'pointer' }}><FiChevronRight size={20} /></button>
+            <button type="button" onClick={handlePrev} disabled={prevDisabled} style={{ ...buttonStyle, opacity: prevDisabled ? 0.3 : 1, cursor: prevDisabled ? 'default' : 'pointer' }}><FiChevronLeft size={16} /></button>
+            <button type="button" onClick={handleNext} disabled={nextDisabled} style={{ ...buttonStyle, opacity: nextDisabled ? 0.3 : 1, cursor: nextDisabled ? 'default' : 'pointer' }}><FiChevronRight size={16} /></button>
           </div>
         )}
       </div>
 
       {isMountainMode && !isLoading && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '24px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '20px' }}>
           
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', alignItems: 'stretch' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'stretch' }}>
             
-            {/* 좌측 컬럼: ① 기상 적합도 & 정상 조망 추정 지수 + ② 고도별 기온(기온감률 설명) + ③ 체감/노면 */}
-            <div className="mtn-score-altitude-box" style={{ flex: '1 1 280px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {/* 좌측 컬럼 패딩 축소 및 밀도 증가 */}
+            <div className="mtn-score-altitude-box" style={{ flex: '1 1 250px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
               
-              {/* 💡 기상 적합도(순수 날씨) + 정상 조망 추정 지수 듀얼 카드 */}
-              <div className="mtn-dual-score-row" style={{ display: 'flex', gap: '10px' }}>
-                <div style={{ flex: 1, backgroundColor: 'rgba(240,253,244,0.75)', borderRadius: '12px', padding: '12px 10px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(22,163,74,0.2)' }}>
-                  <span style={{ fontSize: '11px', color: '#166534', fontWeight: '800', marginBottom: '6px', whiteSpace: 'nowrap' }}>🌤️ 기상 적합도 (날씨만)</span>
-                  <div style={{ position: 'relative', width: '52px', height: '52px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div className="mtn-dual-score-row" style={{ display: 'flex', gap: '8px' }}>
+                <div style={{ flex: 1, backgroundColor: 'rgba(240,253,244,0.75)', borderRadius: '12px', padding: '10px 8px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(22,163,74,0.2)' }}>
+                  <span style={{ fontSize: '10.5px', color: '#166534', fontWeight: '800', marginBottom: '4px', whiteSpace: 'nowrap' }}>🌤️ 기상 적합도</span>
+                  <div style={{ position: 'relative', width: '44px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <svg viewBox="0 0 36 36" style={{ width: '100%', height: '100%', transform: 'rotate(-90deg)' }}>
                       <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="rgba(22,163,74,0.2)" strokeWidth="4" />
                       <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke={weatherScore >= 70 ? "#16a34a" : weatherScore >= 40 ? "#eab308" : "#dc2626"} strokeWidth="4" strokeDasharray={`${weatherScore}, 100`} />
                     </svg>
-                    <span style={{ position: 'absolute', fontSize: '16px', fontWeight: '800', color: '#064e3b' }}>{weatherScore}</span>
+                    <span style={{ position: 'absolute', fontSize: '14px', fontWeight: '800', color: '#064e3b' }}>{weatherScore}</span>
                   </div>
-                  <span style={{ fontSize: '11px', color: '#0f172a', marginTop: '6px', fontWeight: 'bold', whiteSpace: 'nowrap' }}>
+                  <span style={{ fontSize: '10.5px', color: '#0f172a', marginTop: '6px', fontWeight: 'bold', whiteSpace: 'nowrap' }}>
                     {weatherScore >= 80 ? '기상 매우 쾌적' : weatherScore >= 60 ? '기상 무난함' : '악천후 주의'}
-                  </span>
-                  <span style={{ fontSize: '9.5px', color: '#64748b', marginTop: '2px', textAlign: 'center' }}>
-                    *하산 시간 조건 별도
                   </span>
                 </div>
 
-                {/* 💡 정상 조망 추정 지수 카드 */}
-                <div style={{ flex: 1.25, backgroundColor: 'rgba(240,249,255,0.8)', borderRadius: '12px', padding: '12px 10px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(2,132,199,0.2)' }}>
-                  <span style={{ fontSize: '11px', color: '#0369a1', fontWeight: '800', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }}>
-                    <FiEye size={12} /> 정상 조망 추정 지수
+                <div style={{ flex: 1.25, backgroundColor: 'rgba(240,249,255,0.8)', borderRadius: '12px', padding: '10px 8px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(2,132,199,0.2)' }}>
+                  <span style={{ fontSize: '10.5px', color: '#0369a1', fontWeight: '800', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }}>
+                    <FiEye size={12} /> 조망 추정 지수
                   </span>
-                  <div style={{ position: 'relative', width: '52px', height: '52px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div style={{ position: 'relative', width: '44px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <svg viewBox="0 0 36 36" style={{ width: '100%', height: '100%', transform: 'rotate(-90deg)' }}>
                       <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="rgba(2,132,199,0.2)" strokeWidth="4" />
                       <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke={viewEstimate.gradeColor} strokeWidth="4" strokeDasharray={`${viewEstimate.score}, 100`} />
                     </svg>
-                    <span style={{ position: 'absolute', fontSize: '16px', fontWeight: '800', color: '#0c4a6e' }}>{viewEstimate.score}</span>
+                    <span style={{ position: 'absolute', fontSize: '14px', fontWeight: '800', color: '#0c4a6e' }}>{viewEstimate.score}</span>
                   </div>
-                  <span style={{ fontSize: '11px', color: viewEstimate.gradeColor, marginTop: '6px', fontWeight: '800', whiteSpace: 'nowrap' }}>
+                  <span style={{ fontSize: '10.5px', color: viewEstimate.gradeColor, marginTop: '6px', fontWeight: '800', whiteSpace: 'nowrap' }}>
                     {viewEstimate.gradeText}
                   </span>
-                  <span style={{ fontSize: '10px', color: '#475569', marginTop: '2px', textAlign: 'center', wordBreak: 'keep-all' }}>
+                  <span style={{ fontSize: '9.5px', color: '#475569', marginTop: '2px', textAlign: 'center', wordBreak: 'keep-all' }}>
                     {viewEstimate.summaryReason}
                   </span>
                 </div>
               </div>
 
-              {/* 💡 조망 추정치 데이터 한계 고지 & 운해 힌트 */}
-              <div style={{ backgroundColor: 'rgba(255,255,255,0.55)', borderRadius: '10px', padding: '8px 10px', fontSize: '10.5px', color: '#475569', lineHeight: '1.4', wordBreak: 'keep-all' }}>
+              <div style={{ backgroundColor: 'rgba(255,255,255,0.55)', borderRadius: '8px', padding: '6px 8px', fontSize: '10px', color: '#475569', lineHeight: '1.4', wordBreak: 'keep-all' }}>
                 {viewEstimate.seaOfCloudsHint && (
-                  <div style={{ color: '#0369a1', fontWeight: 'bold', marginBottom: '3px' }}>{viewEstimate.seaOfCloudsHint}</div>
+                  <div style={{ color: '#0369a1', fontWeight: 'bold', marginBottom: '2px' }}>{viewEstimate.seaOfCloudsHint}</div>
                 )}
-                <span>※ 본 조망 지수는 운고(구름 높이)·실측 가시거리 데이터가 제외된 <strong>습도·하늘상태·미세먼지(PM2.5) 기반 추정치</strong>로 실제 정상 시야와 다를 수 있습니다.</span>
+                <span>※ 운고(구름 높이)·실측 시정이 제외된 기상(습도/대기질) 기반 추정치입니다.</span>
               </div>
 
-              {/* 💡 고도별 3단 기온 비교 + 기온 감률 설명 */}
-              <div style={{ backgroundColor: 'rgba(255,255,255,0.55)', borderRadius: '12px', padding: '14px', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '8px', fontSize: '12px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '5px', borderBottom: '1px dashed rgba(0,0,0,0.1)' }}>
-                  <span style={{ fontWeight: '800', color: '#1e293b' }}>⛰️ 정상 <span style={{fontSize:'10.5px', color:'#475569', fontWeight:'normal'}}>({mountainInfo?.elevation}m)</span></span>
-                  <span style={{ color: '#0f172a', fontWeight: '800' }}>{temp}°C <span style={{fontSize:'10.5px', color:'#475569', fontWeight:'normal'}}>(체감 {summitFeelsLike}°C)</span></span>
+              <div style={{ backgroundColor: 'rgba(255,255,255,0.55)', borderRadius: '12px', padding: '12px', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '6px', fontSize: '11.5px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '4px', borderBottom: '1px dashed rgba(0,0,0,0.1)' }}>
+                  <span style={{ fontWeight: '800', color: '#1e293b' }}>⛰️ 정상 <span style={{fontSize:'10px', color:'#475569', fontWeight:'normal'}}>({mountainInfo?.elevation}m)</span></span>
+                  <span style={{ color: '#0f172a', fontWeight: '800' }}>{temp}°C <span style={{fontSize:'10px', color:'#475569', fontWeight:'normal'}}>(체감 {summitFeelsLike}°C)</span></span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '3px 0', borderBottom: '1px dashed rgba(0,0,0,0.1)' }}>
-                  <span style={{ color: '#475569', fontWeight: 'bold' }}>🌲 중턱 <span style={{fontSize:'10.5px', color:'#64748b', fontWeight:'normal'}}>({Math.round((mountainInfo?.elevation || 800) / 2)}m)</span></span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '2px 0', borderBottom: '1px dashed rgba(0,0,0,0.1)' }}>
+                  <span style={{ color: '#475569', fontWeight: 'bold' }}>🌲 중턱 <span style={{fontSize:'10px', color:'#64748b', fontWeight:'normal'}}>({Math.round((mountainInfo?.elevation || 800) / 2)}m)</span></span>
                   <span style={{ color: '#334155', fontWeight: '600' }}>{Math.round((temp + baseTemp) / 2)}°C</span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '3px' }}>
-                  <span style={{ color: '#475569', fontWeight: 'bold' }}>👟 들머리 <span style={{fontSize:'10.5px', color:'#64748b', fontWeight:'normal'}}>(평지 입구)</span></span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '2px' }}>
+                  <span style={{ color: '#475569', fontWeight: 'bold' }}>👟 들머리 <span style={{fontSize:'10px', color:'#64748b', fontWeight:'normal'}}>(입구)</span></span>
                   <span style={{ color: '#334155', fontWeight: '600' }}>{baseTemp}°C</span>
                 </div>
-                <div style={{ fontSize: '10.5px', color: '#64748b', backgroundColor: 'rgba(255,255,255,0.6)', padding: '5px 8px', borderRadius: '6px', marginTop: '2px', wordBreak: 'keep-all' }}>
-                  💡 고도가 100m 높아질 때마다 기온이 약 0.65°C씩 하강하며, 정상 능선 풍속({wind}m/s)으로 인해 체감온도는 평지보다 훨씬 낮습니다.
+                <div style={{ fontSize: '10px', color: '#64748b', backgroundColor: 'rgba(255,255,255,0.6)', padding: '4px 6px', borderRadius: '6px', marginTop: '2px', wordBreak: 'keep-all' }}>
+                  💡 기온 감률(100m당 -0.65°C) 및 정상 풍속({wind}m/s) 반영
                 </div>
               </div>
             </div>
 
-            {/* 우측 컬럼: 코스별 타임라인 + 출발 시간 선택 + 정상 도착 시점 기상 예측 */}
-            <div style={{ flex: '1.15 1 310px', backgroundColor: 'rgba(255,255,255,0.6)', borderRadius: '12px', padding: '16px', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            {/* 우측 컬럼 패딩 축소 및 요소 압축 */}
+            <div style={{ flex: '1.15 1 290px', backgroundColor: 'rgba(255,255,255,0.6)', borderRadius: '12px', padding: '16px', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
               
-              <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '6px', marginBottom: '10px' }}>
-                <span style={{ whiteSpace: 'nowrap', fontWeight: '800', fontSize: '14px', color: '#1e293b' }}>⏱️ 코스 & 정상 도착 기상 예측</span>
-                <div style={{ display: 'flex', backgroundColor: 'rgba(255,255,255,0.6)', padding: '2px', borderRadius: '8px', border: '1px solid rgba(0,0,0,0.05)' }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '6px', marginBottom: '8px' }}>
+                <span style={{ whiteSpace: 'nowrap', fontWeight: '800', fontSize: '13.5px', color: '#1e293b' }}>⏱️ 코스 & 정상 도착 기상 예측</span>
+                <div style={{ display: 'flex', backgroundColor: 'rgba(255,255,255,0.6)', padding: '2px', borderRadius: '6px', border: '1px solid rgba(0,0,0,0.05)' }}>
                   <button
                     onClick={() => setTimelineMode('descent')}
-                    style={{ padding: '4px 10px', fontSize: '11px', fontWeight: 'bold', border: 'none', borderRadius: '6px', cursor: 'pointer', backgroundColor: timelineMode === 'descent' ? '#ffffff' : 'transparent', color: timelineMode === 'descent' ? '#1d4ed8' : '#64748b', boxShadow: timelineMode === 'descent' ? '0 1px 2px rgba(0,0,0,0.1)' : 'none', transition: 'all 0.2s' }}
+                    style={{ padding: '4px 8px', fontSize: '10.5px', fontWeight: 'bold', border: 'none', borderRadius: '4px', cursor: 'pointer', backgroundColor: timelineMode === 'descent' ? '#ffffff' : 'transparent', color: timelineMode === 'descent' ? '#1d4ed8' : '#64748b', boxShadow: timelineMode === 'descent' ? '0 1px 2px rgba(0,0,0,0.1)' : 'none', transition: 'all 0.2s' }}
                   >
                     🌇 일몰/하산
                   </button>
                   <button
                     onClick={() => setTimelineMode('ascent')}
-                    style={{ padding: '4px 10px', fontSize: '11px', fontWeight: 'bold', border: 'none', borderRadius: '6px', cursor: 'pointer', backgroundColor: timelineMode === 'ascent' ? '#ffffff' : 'transparent', color: timelineMode === 'ascent' ? '#c2410c' : '#64748b', boxShadow: timelineMode === 'ascent' ? '0 1px 2px rgba(0,0,0,0.1)' : 'none', transition: 'all 0.2s' }}
+                    style={{ padding: '4px 8px', fontSize: '10.5px', fontWeight: 'bold', border: 'none', borderRadius: '4px', cursor: 'pointer', backgroundColor: timelineMode === 'ascent' ? '#ffffff' : 'transparent', color: timelineMode === 'ascent' ? '#c2410c' : '#64748b', boxShadow: timelineMode === 'ascent' ? '0 1px 2px rgba(0,0,0,0.1)' : 'none', transition: 'all 0.2s' }}
                   >
                     🌅 일출/등산
                   </button>
@@ -639,7 +624,7 @@ function HourlyForecast({
                 onMouseLeave={handleMouseLeave}
                 onMouseUp={handleMouseUp}
                 onMouseMove={handleMouseMove}
-                style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '8px', marginBottom: '8px', cursor: isDragging ? 'grabbing' : 'grab', userSelect: 'none', WebkitOverflowScrolling: 'touch' }} 
+                style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '6px', marginBottom: '6px', cursor: isDragging ? 'grabbing' : 'grab', userSelect: 'none', WebkitOverflowScrolling: 'touch' }} 
                 className="no-scrollbar"
               >
                 {courses.map((c, idx) => (
@@ -650,7 +635,7 @@ function HourlyForecast({
                       setCourseIdx(idx);
                     }}
                     style={{
-                      flexShrink: 0, padding: '7px 12px', borderRadius: '8px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer',
+                      flexShrink: 0, padding: '6px 10px', borderRadius: '6px', fontSize: '11.5px', fontWeight: 'bold', cursor: 'pointer',
                       border: activeCourseIdx === idx ? '1px solid #2563eb' : '1px solid rgba(0,0,0,0.1)',
                       background: activeCourseIdx === idx ? '#eff6ff' : 'rgba(255,255,255,0.8)',
                       color: activeCourseIdx === idx ? '#1d4ed8' : '#475569',
@@ -662,55 +647,49 @@ function HourlyForecast({
                 ))}
               </div>
 
-              {/* 걸음 속도 & 출발 예정 시각 선택 바 */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '8px', backgroundColor: 'rgba(255,255,255,0.5)', padding: '8px', borderRadius: '8px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
-                  <span style={{ fontSize: '11px', fontWeight: 'bold', color: '#475569', whiteSpace: 'nowrap' }}>걸음 속도:</span>
-                  <div style={{ display: 'flex', gap: '4px', flex: 1 }}>
-                    {PACE_OPTIONS.map((p) => (
-                      <button
-                        key={p.key}
-                        type="button"
-                        onClick={() => setPace(p.key)}
-                        style={{
-                          flex: 1, padding: '4px 2px', fontSize: '11px', fontWeight: 'bold', borderRadius: '6px', cursor: 'pointer',
-                          border: activePace === p.key ? '1px solid #16a34a' : '1px solid transparent',
-                          backgroundColor: activePace === p.key ? '#dcfce7' : 'rgba(255,255,255,0.7)',
-                          color: activePace === p.key ? '#166534' : '#64748b',
-                          transition: 'all 0.15s', whiteSpace: 'nowrap', letterSpacing: '-0.3px'
-                        }}
-                      >
-                        {p.label}
-                      </button>
-                    ))}
-                  </div>
+              {/* 속도 & 출발시간: 한 줄에 컴팩트하게 배치 */}
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '8px', backgroundColor: 'rgba(255,255,255,0.5)', padding: '6px', borderRadius: '8px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flex: 1, minWidth: '130px' }}>
+                  <span style={{ fontSize: '10.5px', fontWeight: 'bold', color: '#475569', whiteSpace: 'nowrap' }}>속도:</span>
+                  {PACE_OPTIONS.map((p) => (
+                    <button
+                      key={p.key}
+                      type="button"
+                      onClick={() => setPace(p.key)}
+                      style={{
+                        flex: 1, padding: '4px 2px', fontSize: '10.5px', fontWeight: 'bold', borderRadius: '4px', cursor: 'pointer',
+                        border: activePace === p.key ? '1px solid #16a34a' : '1px solid transparent',
+                        backgroundColor: activePace === p.key ? '#dcfce7' : 'rgba(255,255,255,0.7)',
+                        color: activePace === p.key ? '#166534' : '#64748b',
+                        transition: 'all 0.15s', whiteSpace: 'nowrap', letterSpacing: '-0.3px'
+                      }}
+                    >
+                      {p.label.split('(')[0]}
+                    </button>
+                  ))}
                 </div>
-
-                {/* 💡 출발 예정 시각 선택 드롭다운 */}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
-                  <span style={{ fontSize: '11px', fontWeight: 'bold', color: '#475569', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '3px' }}>
-                    <FiClock size={11} /> 출발 시각:
-                  </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flex: 1, minWidth: '130px' }}>
+                  <span style={{ fontSize: '10.5px', fontWeight: 'bold', color: '#475569', whiteSpace: 'nowrap' }}><FiClock size={10} />출발:</span>
                   <select
                     value={activeDepOffset}
                     onChange={(e) => setDepOffset(Number(e.target.value))}
                     style={{
-                      flex: 1, padding: '4px 8px', fontSize: '11.5px', fontWeight: 'bold', borderRadius: '6px',
+                      flex: 1, padding: '3px 4px', fontSize: '11px', fontWeight: 'bold', borderRadius: '4px',
                       border: '1px solid rgba(0,0,0,0.12)', backgroundColor: '#ffffff', color: '#1e293b', cursor: 'pointer', outline: 'none'
                     }}
                   >
                     {DEPARTURE_OFFSETS.map(opt => (
                       <option key={opt.value} value={opt.value}>
-                        {isFuture ? `오전 08:00 기준 +${opt.value}시간 뒤` : opt.label} ({timeline.depTimeStr} 출발)
+                        {isFuture ? `+${opt.value}시간 뒤` : opt.label} ({timeline.depTimeStr})
                       </option>
                     ))}
                   </select>
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '5px', fontSize: '11.5px', color: '#1e293b', backgroundColor: 'rgba(255,255,255,0.7)', padding: '9px 12px', borderRadius: '8px', marginBottom: '8px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', fontSize: '11px', color: '#1e293b', backgroundColor: 'rgba(255,255,255,0.7)', padding: '8px 10px', borderRadius: '8px', marginBottom: '8px' }}>
                 <span>거리: <strong>{selectedCourse.distance}</strong></span>
-                <span>총 소요: <strong>{Math.floor(adjustedTimeMins / 60)}시간 {adjustedTimeMins % 60 > 0 ? `${adjustedTimeMins % 60}분` : ''}</strong></span>
+                <span>총 소요: <strong>{Math.floor(adjustedTimeMins / 60)}h {adjustedTimeMins % 60 > 0 ? `${adjustedTimeMins % 60}m` : ''}</strong></span>
                 <span>난이도: <strong style={{ color: selectedCourse.diff.includes('상') ? '#dc2626' : '#16a34a' }}>{selectedCourse.diff}</strong></span>
                 <span>열량: <strong>🍫 {nutrition.kcalText}</strong></span>
                 <span style={{ gridColumn: 'span 2', color: '#0369a1', fontWeight: '600' }}>
@@ -718,162 +697,89 @@ function HourlyForecast({
                 </span>
               </div>
 
-              {/* 💡 [원칙 2] 정상 도착 예상 시점의 시간별 예보 매칭 박스 */}
-              <div style={{ backgroundColor: 'rgba(239,246,255,0.85)', border: '1px solid rgba(59,130,246,0.25)', borderRadius: '8px', padding: '9px 11px', marginBottom: '8px', fontSize: '11.5px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+              <div style={{ backgroundColor: 'rgba(239,246,255,0.85)', border: '1px solid rgba(59,130,246,0.25)', borderRadius: '8px', padding: '8px 10px', marginBottom: '8px', fontSize: '11px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2px' }}>
                   <span style={{ fontWeight: '800', color: '#1e3a8a' }}>
-                    ⛰️ 정상 도착 시점 예보 ({timeline.summitArrivalStr}경)
+                    ⛰️ 정상 도착 예보 ({timeline.summitArrivalStr})
                   </span>
-                  <span style={{ fontSize: '10.5px', color: '#475569', fontWeight: '600' }}>
-                    등정 편도 약 {Math.floor(ascentTimeMins / 60)}시간 {ascentTimeMins % 60}분
+                  <span style={{ fontSize: '10px', color: '#475569', fontWeight: '600' }}>
+                    편도 약 {Math.floor(ascentTimeMins / 60)}h {ascentTimeMins % 60}m
                   </span>
                 </div>
                 {timeline.arrivalWeather.available ? (
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '4px', color: '#1e293b', fontWeight: '700' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '2px', color: '#1e293b', fontWeight: '700' }}>
                     <span>
-                      {getEmojiIcon(timeline.arrivalWeather.icon)} {timeline.arrivalWeather.forecastHour} 예보: <strong>{timeline.arrivalWeather.temp}°C</strong> (체감 {timeline.arrivalWeather.feelsLike}°C)
+                      {getEmojiIcon(timeline.arrivalWeather.icon)} {timeline.arrivalWeather.forecastHour}: <strong>{timeline.arrivalWeather.temp}°C</strong> (체감 {timeline.arrivalWeather.feelsLike}°C)
                     </span>
                     <span style={{ color: timeline.arrivalWeather.pop >= 30 ? '#2563eb' : '#475569' }}>
-                      {timeline.arrivalWeather.description} · 💧강수 {timeline.arrivalWeather.pop}%
+                      {timeline.arrivalWeather.description} · 💧{timeline.arrivalWeather.pop}%
                     </span>
                   </div>
                 ) : (
-                  <div style={{ color: '#64748b', fontSize: '11px', fontWeight: '600' }}>
+                  <div style={{ color: '#64748b', fontSize: '10.5px', fontWeight: '600' }}>
                     ℹ️ {timeline.arrivalWeather.reason}
                   </div>
                 )}
               </div>
 
-              {/* 💡 [원칙 1] 기상 적합도와 분리된 시간 안전 판정 박스 */}
-              <div style={{ fontSize: '11.5px', fontWeight: 'bold', textAlign: 'center', padding: '8px 10px', borderRadius: '8px', wordBreak: 'keep-all', lineHeight: '1.4', marginBottom: '8px',
-                backgroundColor: timeline.safetyBg,
-                color: timeline.safetyColor,
-                border: `1px solid ${timeline.safetyColor}30`
+              <div style={{ fontSize: '11px', fontWeight: 'bold', textAlign: 'center', padding: '6px 8px', borderRadius: '8px', wordBreak: 'keep-all', lineHeight: '1.35', marginBottom: '8px',
+                backgroundColor: timeline.safetyBg, color: timeline.safetyColor, border: `1px solid ${timeline.safetyColor}30`
               }}>
                 {timeline.msg}
               </div>
 
               <div style={{ display: 'flex', gap: '6px', marginTop: 'auto' }}>
-                <button
-                  type="button"
-                  onPointerDown={(e) => handleOpenMap('kakao', e)}
-                  style={{
-                    flex: 1, padding: '7px 8px', borderRadius: '8px', border: '1px solid #eab308',
-                    backgroundColor: '#fef9c3', color: '#854d0e', fontSize: '11.5px', fontWeight: '800',
-                    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px',
-                    whiteSpace: 'nowrap'
-                  }}
-                >
+                <button type="button" onPointerDown={(e) => handleOpenMap('kakao', e)} style={{ flex: 1, padding: '6px 8px', borderRadius: '6px', border: '1px solid #eab308', backgroundColor: '#fef9c3', color: '#854d0e', fontSize: '11px', fontWeight: '800', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', whiteSpace: 'nowrap' }}>
                   <FiMapPin size={12} /> 카카오맵 들머리
                 </button>
-                <button
-                  type="button"
-                  onPointerDown={(e) => handleOpenMap('naver', e)}
-                  style={{
-                    flex: 1, padding: '7px 8px', borderRadius: '8px', border: '1px solid #22c55e',
-                    backgroundColor: '#dcfce7', color: '#166534', fontSize: '11.5px', fontWeight: '800',
-                    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px',
-                    whiteSpace: 'nowrap'
-                  }}
-                >
+                <button type="button" onPointerDown={(e) => handleOpenMap('naver', e)} style={{ flex: 1, padding: '6px 8px', borderRadius: '6px', border: '1px solid #22c55e', backgroundColor: '#dcfce7', color: '#166534', fontSize: '11px', fontWeight: '800', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', whiteSpace: 'nowrap' }}>
                   <FiMapPin size={12} /> 네이버지도 들머리
                 </button>
               </div>
             </div>
           </div>
 
-          <div style={{ backgroundColor: 'rgba(255,255,255,0.6)', borderRadius: '12px', padding: '20px', display: 'flex', flexDirection: 'column' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: '16px' }}>
+          <div style={{ backgroundColor: 'rgba(255,255,255,0.6)', borderRadius: '12px', padding: '16px', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '12px' }}>
               <div>
-                <h4 style={{ margin: '0 0 4px 0', fontSize: '15px', color: '#1e293b', fontWeight: '800' }}>
+                <h4 style={{ margin: '0 0 4px 0', fontSize: '14.5px', color: '#1e293b', fontWeight: '800' }}>
                   🎒 {isFuture ? '예상 기상 맞춤 배낭 체크리스트' : '오늘 기상 맞춤 배낭 체크리스트'}
                 </h4>
-                <span style={{ fontSize: '11px', color: '#475569', fontWeight: '500' }}>
-                  기온({temp}°C)·코스 시간·지형에 맞춰 자동 추천되며, 직접 추가·삭제하여 일행에게 공유할 수 있습니다.
+                <span style={{ fontSize: '10.5px', color: '#475569', fontWeight: '500' }}>
+                  기온·코스에 맞춰 자동 추천되며, 직접 편집하여 일행에게 공유할 수 있습니다.
                 </span>
               </div>
-              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                <button
-                  type="button"
-                  onClick={handleResetGear}
-                  title="기상 추천 기본값으로 초기화"
-                  style={{
-                    padding: '8px 12px', borderRadius: '8px', border: '1px solid rgba(0,0,0,0.1)',
-                    backgroundColor: 'rgba(255,255,255,0.8)', color: '#475569', fontSize: '12px', fontWeight: 'bold',
-                    cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', transition: 'all 0.2s'
-                  }}
-                >
-                  <FiRotateCcw size={14} /> 복원
+              <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                <button onClick={handleResetGear} title="초기화" style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid rgba(0,0,0,0.1)', backgroundColor: 'rgba(255,255,255,0.8)', color: '#475569', fontSize: '11.5px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <FiRotateCcw size={12} /> 복원
                 </button>
-                <button
-                  type="button"
-                  onClick={handleSharePlan}
-                  style={{
-                    padding: '8px 14px', borderRadius: '8px', border: 'none',
-                    backgroundColor: '#166534', color: '#ffffff', fontSize: '12.5px', fontWeight: 'bold',
-                    cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px',
-                    boxShadow: '0 2px 6px rgba(22,101,52,0.4)', transition: 'all 0.2s'
-                  }}
-                >
-                  <FiShare2 size={14} /> 공유하기
+                <button onClick={handleSharePlan} style={{ padding: '6px 12px', borderRadius: '6px', border: 'none', backgroundColor: '#166534', color: '#ffffff', fontSize: '11.5px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', boxShadow: '0 2px 4px rgba(22,101,52,0.3)' }}>
+                  <FiShare2 size={12} /> 공유하기
                 </button>
               </div>
             </div>
 
-            <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
-              <input
-                type="text"
-                placeholder="추가할 준비물을 입력하세요 (예: 무릎보호대, 김밥, 보조배터리)"
-                value={newGearInput}
-                onChange={(e) => setNewGearInput(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleAddGear()}
-                style={{
-                  flex: 1, padding: '10px 14px', borderRadius: '8px', border: '1px solid rgba(0,0,0,0.1)',
-                  fontSize: '13px', outline: 'none', color: '#1e293b', backgroundColor: 'rgba(255,255,255,0.8)', fontWeight: '500'
-                }}
-              />
-              <button
-                type="button"
-                onClick={handleAddGear}
-                style={{
-                  padding: '10px 16px', borderRadius: '8px', border: 'none',
-                  backgroundColor: '#15803d', color: '#ffffff', fontSize: '13px', fontWeight: 'bold',
-                  cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap'
-                }}
-              >
-                <FiPlus size={16} /> 추가
+            <div style={{ display: 'flex', gap: '6px', marginBottom: '12px' }}>
+              <input type="text" placeholder="추가할 준비물을 입력하세요 (예: 보조배터리)" value={newGearInput} onChange={(e) => setNewGearInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleAddGear()} style={{ flex: 1, padding: '8px 12px', borderRadius: '6px', border: '1px solid rgba(0,0,0,0.1)', fontSize: '12.5px', outline: 'none', color: '#1e293b', backgroundColor: 'rgba(255,255,255,0.8)', fontWeight: '500' }} />
+              <button type="button" onClick={handleAddGear} style={{ padding: '8px 14px', borderRadius: '6px', border: 'none', backgroundColor: '#15803d', color: '#ffffff', fontSize: '12.5px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <FiPlus size={14} /> 추가
               </button>
             </div>
 
             {gearList.length === 0 ? (
-              <p style={{ margin: '16px 0', fontSize: '13px', color: '#64748b', textAlign: 'center', fontWeight: '500' }}>
-                체크리스트가 비어 있습니다. 준비물을 추가하거나 [복원]을 눌러주세요.
+              <p style={{ margin: '12px 0', fontSize: '12px', color: '#64748b', textAlign: 'center', fontWeight: '500' }}>
+                체크리스트가 비어 있습니다.
               </p>
             ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '10px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '8px' }}>
                 {gearList.map((item, idx) => (
-                  <div
-                    key={idx}
-                    style={{
-                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                      padding: '8px 12px', borderRadius: '8px', backgroundColor: 'rgba(255,255,255,0.8)',
-                      boxShadow: '0 1px 2px rgba(0,0,0,0.02)'
-                    }}
-                  >
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px', color: checklist[item] ? '#94a3b8' : '#1e293b', fontWeight: '600', cursor: 'pointer', textDecoration: checklist[item] ? 'line-through' : 'none', userSelect: 'none', flex: 1, minWidth: 0 }}>
-                      <input type="checkbox" checked={!!checklist[item]} onChange={() => toggleCheck(item)} style={{ cursor: 'pointer', accentColor: '#16a34a', width: '16px', height: '16px', flexShrink: 0 }} />
+                  <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 10px', borderRadius: '6px', backgroundColor: 'rgba(255,255,255,0.8)', border: '1px solid rgba(0,0,0,0.04)' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: checklist[item] ? '#94a3b8' : '#1e293b', fontWeight: '600', cursor: 'pointer', textDecoration: checklist[item] ? 'line-through' : 'none', userSelect: 'none', flex: 1, minWidth: 0 }}>
+                      <input type="checkbox" checked={!!checklist[item]} onChange={() => toggleCheck(item)} style={{ cursor: 'pointer', accentColor: '#16a34a', width: '14px', height: '14px', flexShrink: 0 }} />
                       <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item}</span>
                     </label>
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveGear(item)}
-                      title="준비물 삭제"
-                      style={{
-                        background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer',
-                        display: 'flex', alignItems: 'center', padding: '4px', marginLeft: '4px', flexShrink: 0
-                      }}
-                    >
-                      <FiX size={16} />
+                    <button type="button" onClick={() => handleRemoveGear(item)} style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '2px', marginLeft: '4px', flexShrink: 0 }}>
+                      <FiX size={14} />
                     </button>
                   </div>
                 ))}
@@ -882,11 +788,11 @@ function HourlyForecast({
           </div>
           
           {!isFuture && (
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', borderTop: '2px dashed rgba(0,0,0,0.1)', paddingTop: '20px' }}>
-              <h4 style={{ margin: 0, fontSize: '15px', fontWeight: '800', color: '#1e293b' }}>시간대별 산 정상 기온 변화</h4>
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <button type="button" onClick={handlePrev} disabled={prevDisabled} style={{ ...buttonStyle, opacity: prevDisabled ? 0.3 : 1, cursor: prevDisabled ? 'default' : 'pointer' }}><FiChevronLeft size={20} /></button>
-                <button type="button" onClick={handleNext} disabled={nextDisabled} style={{ ...buttonStyle, opacity: nextDisabled ? 0.3 : 1, cursor: nextDisabled ? 'default' : 'pointer' }}><FiChevronRight size={20} /></button>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', borderTop: '2px dashed rgba(0,0,0,0.1)', paddingTop: '16px' }}>
+              <h4 style={{ margin: 0, fontSize: '14px', fontWeight: '800', color: '#1e293b' }}>시간대별 산 정상 기온 변화</h4>
+              <div style={{ display: 'flex', gap: '6px' }}>
+                <button type="button" onClick={handlePrev} disabled={prevDisabled} style={{ ...buttonStyle, opacity: prevDisabled ? 0.3 : 1, cursor: prevDisabled ? 'default' : 'pointer' }}><FiChevronLeft size={16} /></button>
+                <button type="button" onClick={handleNext} disabled={nextDisabled} style={{ ...buttonStyle, opacity: nextDisabled ? 0.3 : 1, cursor: nextDisabled ? 'default' : 'pointer' }}><FiChevronRight size={16} /></button>
               </div>
             </div>
           )}
@@ -894,15 +800,15 @@ function HourlyForecast({
       )}
 
       {isMountainMode && isFuture ? (
-         <div style={{ textAlign: 'center', padding: '16px 0', color: '#475569', fontSize: '13.5px', fontWeight: '600' }}>
-            미래 예보일은 시간대별 상세 기온 변화 그래프가 제공되지 않습니다.
+         <div style={{ textAlign: 'center', padding: '12px 0', color: '#475569', fontSize: '12.5px', fontWeight: '600' }}>
+            미래 예보일은 시간대별 상세 기온 변화 차트가 제공되지 않습니다.
          </div>
       ) : isLoading ? (
-        <p style={{ margin: '10px 0', fontSize: '14px', color: '#475569', fontWeight: '500' }}>예보를 불러오는 중입니다...</p>
+        <p style={{ margin: '8px 0', fontSize: '13px', color: '#475569', fontWeight: '500' }}>예보를 불러오는 중입니다...</p>
       ) : error ? (
-        <p style={{ margin: '10px 0', fontSize: '14px', color: '#dc2626' }}>{error}</p>
+        <p style={{ margin: '8px 0', fontSize: '13px', color: '#dc2626' }}>{error}</p>
       ) : forecastData.length === 0 ? (
-        <p style={{ margin: '10px 0', fontSize: '14px', color: '#475569' }}>예보 데이터가 없습니다.</p>
+        <p style={{ margin: '8px 0', fontSize: '13px', color: '#475569' }}>예보 데이터가 없습니다.</p>
       ) : (
         <div className="hourly-chart-wrapper" style={{ overflow: 'hidden', width: '100%', position: 'relative' }}>
           <div style={{ transition: 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)', transform: `translateX(-${(visibleIndex / forecastData.length) * 100}%)`, width: `${(forecastData.length / ITEMS_TO_SHOW) * 100}%`, position: 'relative' }}>
@@ -911,7 +817,7 @@ function HourlyForecast({
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={forecastData} margin={{ top: 28, bottom: 16, left: 0, right: 0 }}>
                   <YAxis domain={[yMin, yMax]} allowDataOverflow={true} hide />
-                  <Line type="monotone" dataKey="plotTemp" stroke={isMountainMode ? "#16a34a" : "#0284c7"} strokeWidth={3} dot={{ r: 5, fill: '#ffffff', stroke: isMountainMode ? "#16a34a" : "#0284c7", strokeWidth: 2 }} label={(props) => <CustomLabel {...props} value={forecastData[props.index]?.tempNum} />} isAnimationActive={false} />
+                  <Line type="monotone" dataKey="plotTemp" stroke={isMountainMode ? "#16a34a" : "#0284c7"} strokeWidth={3} dot={{ r: 4, fill: '#ffffff', stroke: isMountainMode ? "#16a34a" : "#0284c7", strokeWidth: 2 }} label={(props) => <CustomLabel {...props} value={forecastData[props.index]?.tempNum} />} isAnimationActive={false} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -919,10 +825,10 @@ function HourlyForecast({
             <div style={{ display: 'flex', width: '100%', position: 'relative', zIndex: 2 }}>
               {forecastData.map((item) => (
                 <div key={item.id} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                  <span style={{ fontSize: '13px', color: '#475569', height: '20px', lineHeight: '20px', marginBottom: '8px', fontWeight: '600' }}>{item.time}</span>
-                  <div style={{ height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '30px', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))' }}>{getEmojiIcon(item.icon)}</div>
-                  <div style={{ height: '100px', marginBottom: '8px' }}></div>
-                  <span style={{ fontSize: '12.5px', color: item.pop > 0 ? '#2563eb' : '#94a3b8', fontWeight: item.pop > 0 ? '800' : '600', minHeight: '18px' }}>💧 {item.pop ?? 0}%</span>
+                  <span style={{ fontSize: '12px', color: '#475569', height: '18px', lineHeight: '18px', marginBottom: '6px', fontWeight: '600' }}>{item.time}</span>
+                  <div style={{ height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '26px', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))' }}>{getEmojiIcon(item.icon)}</div>
+                  <div style={{ height: '100px', marginBottom: '6px' }}></div>
+                  <span style={{ fontSize: '11.5px', color: item.pop > 0 ? '#2563eb' : '#94a3b8', fontWeight: item.pop > 0 ? '800' : '600', minHeight: '16px' }}>💧 {item.pop ?? 0}%</span>
                 </div>
               ))}
             </div>

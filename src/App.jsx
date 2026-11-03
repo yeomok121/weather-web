@@ -44,7 +44,7 @@ export const MOUNTAINS_LIST = [
   { name: '주왕산', elevation: 721, peak: '주봉', region: '경북 청송', terrain: '협곡·흙길', difficulty: '하', cctv_url: 'https://www.knps.or.kr/portal/main/contents.do?menuNo=8000159', course_tip: '험한 구간이 적어 초보자 산행에 적합하며 아침 물안개가 자주 낍니다.', courses: [{ name: '대전사~주봉 코스', distance: '9km', time: 270, diff: '하', trailhead: '주왕산 상의주차장' }] },
   { name: '도봉산', elevation: 740, peak: '신선대', region: '서울/경기', terrain: '거대 화강암', difficulty: '중상', cctv_url: 'https://www.knps.or.kr/portal/main/contents.do?menuNo=8000159', course_tip: '신선대 오름길은 가파른 쇠난간을 잡아야 하므로 장갑을 권장합니다.', courses: [{ name: '도봉탐방센터~신선대', distance: '6.5km', time: 210, diff: '중상', trailhead: '도봉산탐방지원센터' }] },
   { name: '관악산', elevation: 632, peak: '연주대', region: '서울/경기과천', terrain: '바위 능선', difficulty: '중', cctv_url: 'https://www.youtube.com/results?search_query=%EA%B4%80%EC%95%85%EC%82%B0+%EC%97%B0%EC%A3%BC%EB%8C%80+%EC%8B%A4%EC%8B%9C%EA%B0%84', course_tip: '사당 코스는 노출된 바위 능선이 많아 비 온 뒤 미끄럼에 주의하세요.', courses: [{ name: '서울대~연주대 코스', distance: '6km', time: 210, diff: '중', trailhead: '관악산공원 입구' }] },
-  { name: '대둔산', elevation: 878, peak: '마천대', region: '충남/전북', terrain: '구름다리·철계단', difficulty: '중', cctv_url: 'https://www.youtube.com/results?search_query=%EB%8C%80%EB%91%94%EC%82%B0+%EB%A7%88%EC%B2%9C%EB%8C%80+%EC%8B%A4%EC%8B%9C%EA%B0%84', course_tip: '삼선계단은 경사가 매우 가파르고 일방통행이므로 고소공포증이나 강풍 시 우회 등산로를 이용하세요.', courses: [{ name: '케이블카~마천대 코스', distance: '2km', time: 90, diff: '하', trailhead: '대둔산케이블카' }, { name: '수락계곡~마천대 코스', distance: '7km', time: 240, diff: '중', trailhead: '대둔산 수락계곡주차장' }] },
+  { name: '대둔산', elevation: 878, peak: '마천대', region: '충남/전북', terrain: '구름다리·철계단', difficulty: '중', cctv_url: 'https://www.youtube.com/results?search_query=%EB%8C%80%EB%91%94%EC%82%B0+%EB%A7%88%EC%B2%9C%EB%8C%80+%EC%8B%A4%EC%8B%9C%EA%B0%84', course_tip: '삼선계단은 경사가 매우 가파르고 일방통행이므로 우회로를 체크하세요.', courses: [{ name: '케이블카~마천대 코스', distance: '2km', time: 90, diff: '하', trailhead: '대둔산케이블카' }, { name: '수락계곡~마천대 코스', distance: '7km', time: 240, diff: '중', trailhead: '대둔산 수락계곡주차장' }] },
   { name: '내장산', elevation: 763, peak: '신선봉', region: '전북 정읍', terrain: '단풍 계곡·암릉', difficulty: '중', cctv_url: 'https://www.knps.or.kr/portal/main/contents.do?menuNo=8000159', course_tip: '신선봉 정상으로 오르는 능선은 경사가 급하고 습기가 많습니다.', courses: [{ name: '일주문~신선봉 코스', distance: '8km', time: 270, diff: '중', trailhead: '내장산 일주문' }] },
   { name: '마이산', elevation: 686, peak: '암마이봉', region: '전북 진안', terrain: '역암 바위', difficulty: '중하', cctv_url: 'https://www.youtube.com/results?search_query=%EB%A7%88%EC%9D%B4%EC%82%B0+%EC%8B%A4%EC%8B%9C%EA%B0%84', course_tip: '암마이봉 구간은 겨울철 결빙 시 통제될 수 있으니 노면 상태를 꼭 확인하세요.', courses: [{ name: '탑사~암마이봉 코스', distance: '5km', time: 150, diff: '중하', trailhead: '마이산 남부주차장' }] }
 ];
@@ -93,7 +93,6 @@ function App() {
   const [mountainInfo, setMountainInfo] = useState(null);
   const [selectedDateIdx, setSelectedDateIdx] = useState(0); 
 
-  // 💡 산행 의사결정 종합 리포트 연동을 위해 끌어올린 상태 (State Lifting)
   const [selectedCourseIdx, setSelectedCourseIdx] = useState(0);
   const [paceType, setPaceType] = useState('normal');
   const [departureOffsetHours, setDepartureOffsetHours] = useState(0);
@@ -433,7 +432,6 @@ function App() {
     };
   }, [weatherData, weeklyData, selectedDateIdx, isMountainMode]);
 
-  // 💡 선택된 코스·걸음속도·출발시간·시간별예보를 종합한 산행 의사결정 데이터 계산
   const hikingPlanSummary = useMemo(() => {
     if (!isMountainMode) return null;
     const courses = mountainInfo?.courses || [{ name: '기본 탐방로', distance: '5km', time: 180, diff: '중' }];
@@ -464,7 +462,6 @@ function App() {
     const sunsetMins = parseTime(activeWeather.sunset || '18:00', 1080);
     const recommendedDepDeadlineMins = safeDescentMins - totalMins;
 
-    // 1. 기상 적합도 점수 (순수 기상 데이터만 반영)
     const temp = Number(activeWeather.temp || 0);
     const wind = Number(activeWeather.wind_speed || 0);
     const cond = activeWeather.condition || '';
@@ -482,7 +479,6 @@ function App() {
     else if (pm25 >= 36) weatherScore -= 5;
     weatherScore = Math.max(0, weatherScore);
 
-    // 2. 시간 안전 판단 (기상 적합도와 철저히 분리)
     let timeSafetyStatus = '안전 (일몰 전 하산)';
     let timeSafetyColor = '#166534';
     if (descentFinishMins > sunsetMins) {
@@ -493,7 +489,6 @@ function App() {
       timeSafetyColor = '#d97706';
     }
 
-    // 3. 정상 도착 시점의 시간별 예보 매칭
     let summitForecast = null;
     if (!activeWeather.isFuture && Array.isArray(hourlyData) && hourlyData.length > 0) {
       const elapsedHoursToSummit = departureOffsetHours + Math.round(ascentMins / 60);
@@ -569,14 +564,15 @@ function App() {
         .mobile-mtn-pills { display: none; }
         .desktop-mtn-list { display: block; }
 
+        /* 💡 레이아웃 전체 간격(gap) 축소 및 모바일 최적화 */
         @media (max-width: 900px) {
-          .main-container { grid-template-columns: 1fr !important; display: flex !important; flex-direction: column !important; padding: 16px !important; gap: 16px !important; }
-          .top-nav { padding: 12px 16px !important; }
-          .top-nav-inner { flex-direction: column !important; gap: 10px !important; }
+          .main-container { grid-template-columns: 1fr !important; display: flex !important; flex-direction: column !important; padding: 12px !important; gap: 12px !important; }
+          .top-nav { padding: 10px 16px !important; }
+          .top-nav-inner { flex-direction: column !important; gap: 8px !important; }
           .search-wrapper { width: 100% !important; max-width: 100% !important; }
           .weather-main-card { flex-direction: column !important; }
-          .weather-main-right { border-left: none !important; border-top: 1px solid rgba(255,255,255,0.5) !important; padding: 16px 20px !important; }
-          .app-footer { flex-direction: column !important; gap: 10px !important; padding: 16px !important; text-align: center !important; }
+          .weather-main-right { border-left: none !important; border-top: 1px solid rgba(255,255,255,0.5) !important; padding: 12px 16px !important; }
+          .app-footer { flex-direction: column !important; gap: 8px !important; padding: 12px !important; text-align: center !important; }
           .mobile-mtn-pills { display: flex !important; }
           .desktop-mtn-list { display: none !important; }
         }
@@ -588,93 +584,93 @@ function App() {
         <FiCheckCircle size={18} /> {toast.message}
       </div>
 
-      <nav className="top-nav" style={{ position: 'sticky', top: 0, zIndex: 100, background: 'rgba(255, 255, 255, 0.25)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(255, 255, 255, 0.3)', padding: '15px 40px', display: 'flex', justifyContent: 'center' }}>
+      <nav className="top-nav" style={{ position: 'sticky', top: 0, zIndex: 100, background: 'rgba(255, 255, 255, 0.25)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(255, 255, 255, 0.3)', padding: '12px 40px', display: 'flex', justifyContent: 'center' }}>
         <div className="top-nav-inner" style={{ display: 'flex', width: '100%', maxWidth: '1000px', justifyContent: 'space-between', alignItems: 'center' }}>
           
           <div className="search-wrapper" style={{ position: 'relative', display: 'flex', width: '44%', maxWidth: '520px' }}>
             <div style={{ display: 'flex', width: '100%', backgroundColor: 'rgba(255, 255, 255, 0.65)', backdropFilter: 'blur(10px)', borderRadius: '30px', padding: '6px 20px', alignItems: 'center', zIndex: 10, border: '1px solid rgba(255,255,255,0.8)', boxShadow: '0 2px 6px rgba(0,0,0,0.05)' }}>
               <input 
                 type="text" 
-                placeholder={isMountainMode ? "20대 명산 검색 (예: 북한산, 설악산, 한라산)" : "검색할 지역을 입력하세요"} 
+                placeholder={isMountainMode ? "20대 명산 검색 (예: 북한산...)" : "검색할 지역을 입력하세요"} 
                 value={searchInput} 
                 onChange={handleInputChange} 
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()} 
                 onFocus={() => setIsSearchFocused(true)} 
                 onBlur={() => setTimeout(() => setIsSearchFocused(false), 180)} 
-                style={{ border: 'none', outline: 'none', flex: 1, minWidth: 0, padding: '8px', fontSize: '14.5px', backgroundColor: 'transparent', color: '#1e293b', fontWeight: '500' }} 
+                style={{ border: 'none', outline: 'none', flex: 1, minWidth: 0, padding: '6px', fontSize: '14px', backgroundColor: 'transparent', color: '#1e293b', fontWeight: '500' }} 
               />
               <button type="button" onClick={handleSearch} style={{ background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', color: '#334155' }}>
-                <FiSearch size={20} />
+                <FiSearch size={18} />
               </button>
             </div>
 
             {isSearchFocused && (
-              <div className="no-scrollbar glass-card" style={{ position: 'absolute', top: '100%', left: 0, right: 0, borderRadius: '15px', marginTop: '10px', zIndex: 50, padding: '15px', maxHeight: '320px', overflowY: 'auto' }}>
+              <div className="no-scrollbar glass-card" style={{ position: 'absolute', top: '100%', left: 0, right: 0, borderRadius: '15px', marginTop: '10px', zIndex: 50, padding: '12px', maxHeight: '320px', overflowY: 'auto' }}>
                 {searchInput.trim() === '' && !isMountainMode ? (
                   <>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', paddingBottom: '10px', borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
-                      <h4 style={{ margin: 0, fontSize: '13px', color: '#64748b', display: 'flex', alignItems: 'center', gap: '5px' }}><FiClock /> 최근 검색어</h4>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', paddingBottom: '8px', borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
+                      <h4 style={{ margin: 0, fontSize: '12px', color: '#64748b', display: 'flex', alignItems: 'center', gap: '5px' }}><FiClock /> 최근 검색어</h4>
                       {recentSearches.length > 0 && (
-                        <button onMouseDown={(e) => { e.preventDefault(); setRecentSearches([]); localStorage.setItem('recentSearches', '[]'); }} style={{ background: 'none', border: 'none', color: '#64748b', fontSize: '12px', cursor: 'pointer' }}>전체 삭제</button>
+                        <button onMouseDown={(e) => { e.preventDefault(); setRecentSearches([]); localStorage.setItem('recentSearches', '[]'); }} style={{ background: 'none', border: 'none', color: '#64748b', fontSize: '11px', cursor: 'pointer' }}>전체 삭제</button>
                       )}
                     </div>
                     {recentSearches.length > 0 ? (
                       <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
                         {recentSearches.map((term, idx) => (
-                          <li key={idx} onMouseDown={(e) => { e.preventDefault(); executeSearch(term); }} style={{ padding: '10px 5px', cursor: 'pointer', color: '#333', fontSize: '15px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: idx !== recentSearches.length - 1 ? '1px solid rgba(0,0,0,0.03)' : 'none' }}>
-                            <span>{term}</span><FiSearch color="#94a3b8" size={14} />
+                          <li key={idx} onMouseDown={(e) => { e.preventDefault(); executeSearch(term); }} style={{ padding: '8px 4px', cursor: 'pointer', color: '#333', fontSize: '13.5px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: idx !== recentSearches.length - 1 ? '1px solid rgba(0,0,0,0.03)' : 'none' }}>
+                            <span>{term}</span><FiSearch color="#94a3b8" size={12} />
                           </li>
                         ))}
                       </ul>
-                    ) : <p style={{ margin: 0, fontSize: '13px', color: '#64748b', textAlign: 'center', padding: '10px 0' }}>최근 검색어가 없습니다.</p>}
+                    ) : <p style={{ margin: 0, fontSize: '12px', color: '#64748b', textAlign: 'center', padding: '8px 0' }}>최근 검색어가 없습니다.</p>}
                   </>
                 ) : searchInput.trim() === '' && isMountainMode ? (
                   <>
-                    <div style={{ marginBottom: '10px', paddingBottom: '10px', borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
-                      <h4 style={{ margin: 0, fontSize: '13px', color: '#166534', display: 'flex', alignItems: 'center', gap: '5px' }}>⛰️ 한국의 20대 명산 전체 목록 (클릭 시 이동)</h4>
+                    <div style={{ marginBottom: '8px', paddingBottom: '8px', borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
+                      <h4 style={{ margin: 0, fontSize: '12px', color: '#166534', display: 'flex', alignItems: 'center', gap: '5px' }}>⛰️ 20대 명산 목록</h4>
                     </div>
                     <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
                       {MOUNTAINS_LIST.map((m, idx) => (
-                        <li key={idx} onMouseDown={(e) => { e.preventDefault(); loadMountainWeather(m.name); setIsSearchFocused(false); }} style={{ padding: '9px 6px', cursor: 'pointer', color: '#333', fontSize: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(0,0,0,0.03)' }}>
-                          <span><strong>{m.name}</strong> <span style={{ fontSize: '12px', color: '#64748b' }}>({m.peak} · {m.region})</span></span>
-                          <span style={{ fontSize: '12px', color: '#15803d', fontWeight: 'bold' }}>해발 {m.elevation}m</span>
+                        <li key={idx} onMouseDown={(e) => { e.preventDefault(); loadMountainWeather(m.name); setIsSearchFocused(false); }} style={{ padding: '8px 4px', cursor: 'pointer', color: '#333', fontSize: '13px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(0,0,0,0.03)' }}>
+                          <span><strong>{m.name}</strong> <span style={{ fontSize: '11px', color: '#64748b' }}>({m.peak})</span></span>
+                          <span style={{ fontSize: '11px', color: '#15803d', fontWeight: 'bold' }}>해발 {m.elevation}m</span>
                         </li>
                       ))}
                     </ul>
                   </>
                 ) : (
                   <>
-                    <div style={{ marginBottom: '10px', paddingBottom: '10px', borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
-                      <h4 style={{ margin: '0', fontSize: '13px', color: '#64748b', display: 'flex', alignItems: 'center', gap: '5px' }}><FiSearch size={12}/> 일치하는 {isMountainMode ? '산 이름' : '지역명'}</h4>
+                    <div style={{ marginBottom: '8px', paddingBottom: '8px', borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
+                      <h4 style={{ margin: '0', fontSize: '12px', color: '#64748b', display: 'flex', alignItems: 'center', gap: '5px' }}><FiSearch size={12}/> 일치하는 {isMountainMode ? '산 이름' : '지역명'}</h4>
                     </div>
                     {autoCompleteList.length > 0 ? (
                       <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
                         {autoCompleteList.map((region, idx) => (
-                          <li key={idx} onMouseDown={(e) => { e.preventDefault(); executeSearch(region); }} style={{ padding: '10px 5px', cursor: 'pointer', color: '#333', fontSize: '15px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(0,0,0,0.03)' }}>
+                          <li key={idx} onMouseDown={(e) => { e.preventDefault(); executeSearch(region); }} style={{ padding: '8px 4px', cursor: 'pointer', color: '#333', fontSize: '13.5px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(0,0,0,0.03)' }}>
                             <span>
                               {region.split(new RegExp(`(${searchInput})`, 'gi')).map((part, i) => 
                                 part.toLowerCase() === searchInput.toLowerCase() ? <span key={i} style={{ color: '#3182ce', fontWeight: 'bold' }}>{part}</span> : part
                               )}
                             </span>
-                            <FiSearch color="#94a3b8" size={14} />
+                            <FiSearch color="#94a3b8" size={12} />
                           </li>
                         ))}
                       </ul>
-                    ) : <p style={{ margin: 0, fontSize: '13px', color: '#64748b', textAlign: 'center', padding: '10px 0' }}>결과가 없습니다.</p>}
+                    ) : <p style={{ margin: 0, fontSize: '12px', color: '#64748b', textAlign: 'center', padding: '8px 0' }}>결과가 없습니다.</p>}
                   </>
                 )}
               </div>
             )}
           </div>
           
-          <button type="button" onClick={() => setIsNoticeOpen(true)} style={{ backgroundColor: 'rgba(0,0,0,0.2)', backdropFilter: 'blur(10px)', color: 'white', border: '1px solid rgba(255,255,255,0.4)', borderRadius: '20px', padding: '8px 16px', cursor: 'pointer', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
-            <FiBell size={16} /> 공지사항
+          <button type="button" onClick={() => setIsNoticeOpen(true)} style={{ backgroundColor: 'rgba(0,0,0,0.2)', backdropFilter: 'blur(10px)', color: 'white', border: '1px solid rgba(255,255,255,0.4)', borderRadius: '20px', padding: '6px 14px', cursor: 'pointer', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '6px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
+            <FiBell size={14} /> 공지사항
           </button>
         </div>
       </nav>
 
-      <main className="main-container" style={{ flexGrow: 1, maxWidth: '1000px', margin: '0 auto', width: '100%', zIndex: 1, padding: '30px 0' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', minWidth: 0 }}>
+      <main className="main-container" style={{ flexGrow: 1, maxWidth: '1000px', margin: '0 auto', width: '100%', zIndex: 1, padding: '24px 0' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', minWidth: 0 }}>
           
           <WeatherMain 
             weatherData={activeWeather} 
@@ -718,14 +714,14 @@ function App() {
               weeklyData={weeklyData} 
               aiBriefing={aiBriefing} 
               isMountainMode={isMountainMode} 
-              mountainInfo={mountainInfo}
+              mountainInfo={mountainInfo} 
               weatherData={activeWeather}
               hikingPlanSummary={hikingPlanSummary}
             />
           </div>
         </div>
         
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', minWidth: 0 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', minWidth: 0 }}>
           <div className="glass-card" style={{ borderRadius: '16px', overflow: 'hidden' }}>
              <LoginCard 
               onSignUpClick={() => setIsSignUpOpen(true)} 
@@ -767,24 +763,24 @@ function App() {
         </div>
       </main>
 
-      <footer className="app-footer glass-card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 40px', color: '#1e293b', fontSize: '13px', borderRadius: '0', border: 'none', borderTop: '1px solid rgba(255,255,255,0.4)', background: 'rgba(255,255,255,0.3) !important' }}>
+      <footer className="app-footer glass-card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 40px', color: '#1e293b', fontSize: '12px', borderRadius: '0', border: 'none', borderTop: '1px solid rgba(255,255,255,0.4)', background: 'rgba(255,255,255,0.3) !important' }}>
         <div>
-          <span style={{ fontWeight: '500' }}>© 2026 Weather Web Project.</span><span style={{ margin: '0 15px', color: '#94a3b8' }}>|</span>
-          <span style={{ cursor: 'pointer' }} onClick={() => showToast('이용약관 페이지는 준비 중입니다.')}>이용약관</span><span style={{ margin: '0 15px', color: '#94a3b8' }}>|</span>
+          <span style={{ fontWeight: '500' }}>© 2026 Weather Web Project.</span><span style={{ margin: '0 12px', color: '#94a3b8' }}>|</span>
+          <span style={{ cursor: 'pointer' }} onClick={() => showToast('이용약관 페이지는 준비 중입니다.')}>이용약관</span><span style={{ margin: '0 12px', color: '#94a3b8' }}>|</span>
           <span style={{ cursor: 'pointer' }} onClick={() => showToast('개인정보처리방침 페이지는 준비 중입니다.')}>개인정보처리방침</span>
         </div>
-        <button onClick={() => setIsAdminAuthOpen(true)} style={{ background: 'none', border: 'none', color: '#1e293b', cursor: 'pointer', opacity: 0.3 }} title="Admin"><FiSettings size={18} /></button>
+        <button onClick={() => setIsAdminAuthOpen(true)} style={{ background: 'none', border: 'none', color: '#1e293b', cursor: 'pointer', opacity: 0.3 }} title="Admin"><FiSettings size={16} /></button>
       </footer>
 
       {isAdminAuthOpen && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 9999 }}>
-          <div className="glass-card" style={{ padding: '30px', borderRadius: '16px', width: '350px', textAlign: 'center' }}>
-            <h3 style={{ margin: '0 0 20px 0', color: '#333' }}>🔒 관리자 인증</h3>
-            <p style={{ margin: '0 0 20px 0', fontSize: '13px', color: '#666' }}>관리자 권한 확인을 위해 비밀번호를 입력해 주세요.</p>
-            <input type="password" placeholder="비밀번호 입력" value={adminPasswordInput} onChange={(e) => setAdminPasswordInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleAdminAuth()} style={{ width: '100%', padding: '12px', marginBottom: '20px', border: '1px solid #ccc', borderRadius: '6px', boxSizing: 'border-box' }} />
-            <div style={{ display: 'flex', gap: '10px' }}>
-              <button onClick={() => setIsAdminAuthOpen(false)} style={{ flex: 1, padding: '12px', backgroundColor: 'rgba(0,0,0,0.05)', color: '#4a5568', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>취소</button>
-              <button onClick={handleAdminAuth} style={{ flex: 1, padding: '12px', backgroundColor: '#3182ce', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>확인</button>
+          <div className="glass-card" style={{ padding: '24px', borderRadius: '16px', width: '320px', textAlign: 'center' }}>
+            <h3 style={{ margin: '0 0 16px 0', color: '#333' }}>🔒 관리자 인증</h3>
+            <p style={{ margin: '0 0 16px 0', fontSize: '12px', color: '#666' }}>관리자 권한 확인을 위해 비밀번호를 입력해 주세요.</p>
+            <input type="password" placeholder="비밀번호 입력" value={adminPasswordInput} onChange={(e) => setAdminPasswordInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleAdminAuth()} style={{ width: '100%', padding: '10px', marginBottom: '16px', border: '1px solid #ccc', borderRadius: '6px', boxSizing: 'border-box' }} />
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button onClick={() => setIsAdminAuthOpen(false)} style={{ flex: 1, padding: '10px', backgroundColor: 'rgba(0,0,0,0.05)', color: '#4a5568', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>취소</button>
+              <button onClick={handleAdminAuth} style={{ flex: 1, padding: '10px', backgroundColor: '#3182ce', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>확인</button>
             </div>
           </div>
         </div>
