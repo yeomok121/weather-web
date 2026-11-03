@@ -574,28 +574,43 @@ function App() {
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', position: 'relative' }}>
       
       <style>{`
-        .weather-bg { background-size: 400% 400%; animation: gradientMove 15s ease infinite; }
-        @keyframes gradientMove { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
-        
-        .clear-day { background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%); }
-        .clear-night { background: linear-gradient(135deg, #141e30 0%, #243b55 100%); }
-        .cloudy-day { background: linear-gradient(135deg, #8e9eab 0%, #eef2f3 100%); }
-        .cloudy-night { background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%); }
-        .rain { background: linear-gradient(135deg, #3a7bd5 0%, #3a6073 100%); }
-        .snow { background: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%); }
+        .weather-bg { background-size: auto; animation: none; }
+        .clear-day { background: radial-gradient(ellipse at 12% 0%, rgba(194, 219, 255, 0.52), transparent 42%), #f4f7fb; }
+        .clear-night { background: radial-gradient(ellipse at 88% 0%, rgba(202, 217, 242, 0.42), transparent 40%), #f4f7fb; }
+        .cloudy-day, .cloudy-night { background: radial-gradient(ellipse at 50% 0%, rgba(213, 226, 236, 0.58), transparent 44%), #f4f7fb; }
+        .rain { background: radial-gradient(ellipse at 8% 0%, rgba(191, 219, 254, 0.48), transparent 42%), #f4f7fb; }
+        .snow { background: radial-gradient(ellipse at 82% 0%, rgba(224, 231, 255, 0.5), transparent 42%), #f4f7fb; }
 
-        .snow-flake { position: absolute; width: 6px; height: 6px; background: white; border-radius: 50%; top: -10px; animation: snowFall linear infinite; opacity: 0.8; }
-        .rain-drop { position: absolute; width: 2px; height: 15px; background: rgba(255,255,255,0.5); top: -20px; animation: rainFall linear infinite; }
+        .snow-flake { position: absolute; width: 6px; height: 6px; background: #cbd5e1; border-radius: 50%; top: -10px; animation: snowFall linear infinite; opacity: 0.18; }
+        .rain-drop { position: absolute; width: 2px; height: 15px; background: rgba(100,116,139,0.16); top: -20px; animation: rainFall linear infinite; }
         @keyframes snowFall { to { transform: translateY(110vh) translateX(20px); opacity: 0; } }
         @keyframes rainFall { to { transform: translateY(110vh) rotate(15deg); opacity: 0; } }
 
         .glass-card {
-          background: rgba(255, 255, 255, 0.75) !important;
-          backdrop-filter: blur(20px) saturate(180%);
-          -webkit-backdrop-filter: blur(20px) saturate(180%);
-          border: 1px solid rgba(255, 255, 255, 0.6) !important;
-          box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.05) !important;
+          background: #ffffff !important;
+          backdrop-filter: blur(8px);
+          -webkit-backdrop-filter: blur(8px);
+          border: 1px solid #e5ebf2 !important;
+          box-shadow: 0 10px 28px rgba(15, 23, 42, 0.055) !important;
+          border-radius: 20px !important;
         }
+
+        .top-nav { background: rgba(255,255,255,0.92) !important; border-bottom: 1px solid #e5ebf2 !important; box-shadow: 0 4px 18px rgba(15,23,42,0.035); padding: 12px 24px !important; }
+        .top-nav-inner { max-width: 1320px !important; }
+        .search-wrapper > div:first-child { background: #f5f7fa !important; border: 1px solid #e2e8f0 !important; border-radius: 14px !important; box-shadow: none !important; padding: 7px 12px !important; }
+        .search-wrapper > div:first-child:focus-within { border-color: #8ab8b0 !important; box-shadow: 0 0 0 3px rgba(23,107,99,0.1) !important; }
+        .top-nav > div > button { background: #f5f7fa !important; color: #334155 !important; border: 1px solid #e2e8f0 !important; border-radius: 12px !important; box-shadow: none !important; padding: 9px 14px !important; }
+        .main-container { max-width: 1320px !important; gap: 24px !important; padding: 28px 24px !important; }
+        .main-container > div { gap: 20px !important; }
+        .weather-main-card { border-radius: 22px !important; box-shadow: 0 12px 32px rgba(15,23,42,0.065) !important; }
+        .weather-main-card > div:first-child { background: linear-gradient(145deg, #f7fbff, #f1f7fb) !important; }
+        .weather-main-right { background: #f8fafc !important; border-color: #e8edf3 !important; }
+        .app-footer { background: #ffffff !important; border-top: 1px solid #e5ebf2 !important; border-radius: 0 !important; }
+        .main-container .glass-card { transition: box-shadow 180ms ease; }
+        .main-container .glass-card:hover { box-shadow: 0 14px 34px rgba(15,23,42,0.075) !important; }
+        .main-container button:not(:disabled) { transition: transform 160ms ease, box-shadow 160ms ease, background-color 160ms ease; }
+        .main-container button:not(:disabled):hover { filter: brightness(0.985); }
+        .main-container button:active { transform: translateY(1px); }
 
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -607,19 +622,20 @@ function App() {
 
         /* 💡 레이아웃 전체 간격(gap) 축소 및 모바일 최적화 */
         @media (max-width: 900px) {
-          .main-container { grid-template-columns: 1fr !important; display: flex !important; flex-direction: column !important; padding: 12px !important; gap: 12px !important; }
+          .main-container { grid-template-columns: 1fr !important; display: flex !important; flex-direction: column !important; padding: 18px 16px !important; gap: 14px !important; }
           .top-nav { padding: 10px 16px !important; }
           .top-nav-inner { flex-direction: column !important; gap: 8px !important; }
           .search-wrapper { width: 100% !important; max-width: 100% !important; }
           .weather-main-card { flex-direction: column !important; }
-          .weather-main-right { border-left: none !important; border-top: 1px solid rgba(255,255,255,0.5) !important; padding: 12px 16px !important; }
+          .weather-main-right { border-left: none !important; border-top: 1px solid #e8edf3 !important; padding: 14px 16px !important; }
           .app-footer { flex-direction: column !important; gap: 8px !important; padding: 12px !important; text-align: center !important; }
           .mobile-mtn-pills { display: flex !important; }
           .desktop-mtn-list { display: none !important; }
         }
         @media (max-width: 640px) {
-          .main-container { padding: 8px !important; gap: 10px !important; }
-          .main-container > div { gap: 10px !important; }
+          .main-container { padding: 12px 10px !important; gap: 12px !important; }
+          .main-container > div { gap: 12px !important; }
+          .top-nav { padding: 10px 12px !important; }
           .main-container button, .main-container input, .main-container select { min-height: 40px; }
           .main-container input[type="checkbox"] { min-height: 18px; min-width: 18px; }
           .hourly-chart-wrapper { min-width: 0; }
@@ -634,7 +650,7 @@ function App() {
       </div>
 
       <nav className="top-nav" style={{ position: 'sticky', top: 0, zIndex: 100, background: 'rgba(255, 255, 255, 0.25)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(255, 255, 255, 0.3)', padding: '12px 40px', display: 'flex', justifyContent: 'center' }}>
-        <div className="top-nav-inner" style={{ display: 'flex', width: '100%', maxWidth: '1000px', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="top-nav-inner" style={{ display: 'flex', width: '100%', maxWidth: '1320px', justifyContent: 'space-between', alignItems: 'center' }}>
           
           <div className="search-wrapper" style={{ position: 'relative', display: 'flex', width: '44%', maxWidth: '520px' }}>
             <div style={{ display: 'flex', width: '100%', backgroundColor: 'rgba(255, 255, 255, 0.65)', backdropFilter: 'blur(10px)', borderRadius: '30px', padding: '6px 20px', alignItems: 'center', zIndex: 10, border: '1px solid rgba(255,255,255,0.8)', boxShadow: '0 2px 6px rgba(0,0,0,0.05)' }}>
@@ -718,7 +734,7 @@ function App() {
         </div>
       </nav>
 
-      <main className="main-container" style={{ flexGrow: 1, maxWidth: '1000px', margin: '0 auto', width: '100%', zIndex: 1, padding: '24px 0' }}>
+      <main className="main-container" style={{ flexGrow: 1, maxWidth: '1320px', margin: '0 auto', width: '100%', zIndex: 1, padding: '28px 24px' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', minWidth: 0 }}>
           
           <WeatherMain 
@@ -816,7 +832,7 @@ function App() {
         </div>
       </main>
 
-      <footer className="app-footer glass-card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 40px', color: '#1e293b', fontSize: '12px', borderRadius: '0', border: 'none', borderTop: '1px solid rgba(255,255,255,0.4)', background: 'rgba(255,255,255,0.3) !important' }}>
+      <footer className="app-footer glass-card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 40px', color: '#1e293b', fontSize: '12px', borderRadius: '0', border: 'none', borderTop: '1px solid rgba(255,255,255,0.4)' }}>
         <div>
           <span style={{ fontWeight: '500' }}>© 2026 Weather Web Project.</span><span style={{ margin: '0 12px', color: '#94a3b8' }}>|</span>
           <span style={{ cursor: 'pointer' }} onClick={() => showToast('이용약관 페이지는 준비 중입니다.')}>이용약관</span><span style={{ margin: '0 12px', color: '#94a3b8' }}>|</span>
