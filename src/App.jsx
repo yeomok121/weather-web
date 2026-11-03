@@ -138,15 +138,22 @@ function App() {
   };
 
   useEffect(() => {
-    const storedSearches = JSON.parse(localStorage.getItem('recentSearches')) || [];
+    const storedSearches = JSON.parse(localStorage.getItem('recentSearches') || '[]');
     setRecentSearches(storedSearches);
     const savedUser = JSON.parse(localStorage.getItem('loggedInUser'));
-    if (savedUser) setLoggedInUser(savedUser);
+    if (savedUser?.accessToken) setLoggedInUser(savedUser);
+    else if (savedUser) localStorage.removeItem('loggedInUser');
   }, []);
 
   const handleLogin = (user) => {
+    const guestFavorites = JSON.parse(localStorage.getItem('guestFavorites') || '[]');
+    const accountKey = `favorites_${user.id}`;
+    const accountFavorites = JSON.parse(localStorage.getItem(accountKey) || '[]');
+    const mergedFavorites = [...accountFavorites, ...guestFavorites.filter(guest => !accountFavorites.some(saved => saved.name === guest.name))].slice(0, 5);
+    if (mergedFavorites.length) localStorage.setItem(accountKey, JSON.stringify(mergedFavorites));
     setLoggedInUser(user);
     localStorage.setItem('loggedInUser', JSON.stringify(user));
+    showToast('로그인되었습니다. 관심 지역을 계정과 동기화하고 있어요.');
   };
   const handleLogout = () => {
     setLoggedInUser(null);
@@ -194,27 +201,114 @@ function App() {
 
   useEffect(() => {
     const defaultFav = [{ name: '부천시', lat: 37.5034, lon: 126.7660 }];
+    let cancelled = false;
+    const getStoredList = (key) => {
+      try {
+        const stored = JSON.parse(localStorage.getItem(key) || '[]');
+        return Array.isArray(stored) ? stored : [];
+      } catch {
+        return [];
+      }
+    };
     if (loggedInUser) {
       const userKey = `favorites_${loggedInUser.id}`;
-      const savedFavs = JSON.parse(localStorage.getItem(userKey));
-      if (savedFavs && savedFavs.length > 0) {
-        setFavorites(savedFavs);
-        loadWeather(savedFavs[0].lat, savedFavs[0].lon, savedFavs[0].name);
-      } else {
-        setFavorites(defaultFav);
-        localStorage.setItem(userKey, JSON.stringify(defaultFav));
-        loadWeather(defaultFav[0].lat, defaultFav[0].lon, defaultFav[0].name);
-      }
+      const pendingKey = `favorites_pending_${loggedInUser.id}`;
+      const localAccountFavorites = getStoredList(userKey);
+      const guestFavorites = getStoredList('guestFavorites');
+      const hasPendingSync = localStorage.getItem(pendingKey) !== null;
+      const pendingFavorites = getStoredList(pendingKey);
+      const showFallback = (items) => {
+        if (cancelled) return;
+        const visible = items.length ? items : defaultFav;
+        setFavorites(visible);
+        loadWeather(visible[0].lat, visible[0].lon, visible[0].name);
+      };
+      const syncFavorites = async () => {
+        try {
+          const response = await fetch(`${API}/api/users/me/favorites`, {
+            headers: { Authorization: `Bearer ${loggedInUser.accessToken}` },
+          });
+          if (!response.ok) {
+            const error = new Error('관심 지역을 불러오지 못했습니다.');
+            error.status = response.status;
+            throw error;
+          }
+          const serverFavorites = await response.json();
+          const serverList = serverFavorites.map(item => ({ ...item, lat: Number(item.lat), lon: Number(item.lon) }));
+          const baseFavorites = hasPendingSync ? pendingFavorites : (serverList.length ? serverList : localAccountFavorites);
+          const guestOnlyFavorites = guestFavorites.filter(guest => !baseFavorites.some(saved => saved.name === guest.name));
+          const allFavorites = [...baseFavorites, ...guestOnlyFavorites];
+          const mergedFavorites = allFavorites.slice(0, 5);
+          const remainingGuestFavorites = allFavorites.slice(5);
+          const needsUpload = hasPendingSync || guestFavorites.length > 0 || serverList.length !== mergedFavorites.length || (!serverList.length && localAccountFavorites.length > 0);
+          if (needsUpload) {
+            const saveResponse = await fetch(`${API}/api/users/me/favorites`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${loggedInUser.accessToken}` },
+              body: JSON.stringify({ favorites: mergedFavorites }),
+            });
+            if (!saveResponse.ok) throw new Error('관심 지역을 계정에 저장하지 못했습니다.');
+          }
+          if (cancelled) return;
+          localStorage.setItem(userKey, JSON.stringify(mergedFavorites));
+          localStorage.removeItem(pendingKey);
+          if (remainingGuestFavorites.length) localStorage.setItem('guestFavorites', JSON.stringify(remainingGuestFavorites));
+          else localStorage.removeItem('guestFavorites');
+          setFavorites(mergedFavorites.length ? mergedFavorites : defaultFav);
+          const first = mergedFavorites[0] || defaultFav[0];
+          loadWeather(first.lat, first.lon, first.name);
+          if (remainingGuestFavorites.length) showToast('계정에는 관심 지역 5곳을 저장했고, 나머지는 이 브라우저에 남겨뒀어요.');
+          else if (guestFavorites.length) showToast('이 기기의 관심 지역을 계정에 저장했어요.');
+        } catch (error) {
+          if (cancelled) return;
+          if (error.status === 401) {
+            const recoverable = hasPendingSync ? pendingFavorites : (localAccountFavorites.length ? localAccountFavorites : guestFavorites);
+            if (recoverable.length && !guestFavorites.length) localStorage.setItem('guestFavorites', JSON.stringify(recoverable));
+            localStorage.removeItem('loggedInUser');
+            setLoggedInUser(null);
+            showToast('로그인 정보가 만료되어 관심 지역을 이 브라우저에 보관했어요. 다시 로그인해주세요.');
+            return;
+          }
+          showFallback(hasPendingSync ? pendingFavorites : (localAccountFavorites.length ? localAccountFavorites : guestFavorites));
+          showToast('계정 동기화에 실패해 이 브라우저의 관심 지역을 표시합니다.');
+        }
+      };
+      syncFavorites();
     } else {
-      setFavorites(defaultFav);
-      loadWeather(defaultFav[0].lat, defaultFav[0].lon, defaultFav[0].name);
+      const guestFavorites = getStoredList('guestFavorites');
+      setFavorites(guestFavorites);
+      const initialLocation = guestFavorites[0] || defaultFav[0];
+      loadWeather(initialLocation.lat, initialLocation.lon, initialLocation.name);
     }
-  }, [loggedInUser?.id]);
+    return () => { cancelled = true; };
+  }, [loggedInUser?.id, loggedInUser?.accessToken]);
 
-  const saveFavorites = (newFavs) => {
-    if (!loggedInUser) return;
+  const saveFavorites = async (newFavs) => {
     setFavorites(newFavs);
-    localStorage.setItem(`favorites_${loggedInUser.id}`, JSON.stringify(newFavs));
+    localStorage.setItem(loggedInUser ? `favorites_${loggedInUser.id}` : 'guestFavorites', JSON.stringify(newFavs));
+    if (!loggedInUser?.accessToken) return true;
+    try {
+      const pendingKey = `favorites_pending_${loggedInUser.id}`;
+      const response = await fetch(`${API}/api/users/me/favorites`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${loggedInUser.accessToken}` },
+        body: JSON.stringify({ favorites: newFavs }),
+      });
+      if (response.status === 401) {
+        localStorage.setItem('guestFavorites', JSON.stringify(newFavs));
+        localStorage.setItem(pendingKey, JSON.stringify(newFavs));
+        localStorage.removeItem('loggedInUser');
+        setLoggedInUser(null);
+        showToast('로그인 정보가 만료되어 저장 목록을 이 브라우저로 옮겼어요. 다시 로그인해주세요.');
+        return false;
+      }
+      if (response.ok) localStorage.removeItem(pendingKey);
+      else localStorage.setItem(pendingKey, JSON.stringify(newFavs));
+      return response.ok;
+    } catch {
+      localStorage.setItem(`favorites_pending_${loggedInUser.id}`, JSON.stringify(newFavs));
+      return false;
+    }
   };
 
   const updateWeatherState = (data, regionName, elevation = 0, mInfo = null) => {
@@ -378,12 +472,10 @@ function App() {
   };
 
   const handleOpenAddRegion = () => {
-    if (!loggedInUser) { showToast('로그인 후 관심 지역을 관리할 수 있습니다.'); return; }
     setIsAddRegionOpen(true);
   };
 
   const handleAddFavorite = async (query) => {
-    if (!loggedInUser) { showToast('로그인이 필요한 기능입니다.'); return; }
     try {
       setIsAiLoading(true);
       const res = await fetch(`${API}/api/location/search?q=${encodeURIComponent(query)}`);
@@ -391,19 +483,21 @@ function App() {
       const loc = await res.json();
       if (favorites.some(fav => fav.name === loc.name)) { showToast('이미 관심 지역에 등록되어 있습니다.'); setIsAiLoading(false); return; }
       const newFavs = [...favorites, { name: loc.name, lat: loc.lat, lon: loc.lon }];
-      saveFavorites(newFavs);
+      if (newFavs.length > 5) { showToast('관심 지역은 최대 5곳까지 저장할 수 있어요.'); setIsAiLoading(false); return; }
+      const synced = await saveFavorites(newFavs);
       setIsAddRegionOpen(false);
-      showToast(`'${loc.name}' 지역이 성공적으로 추가되었습니다!`);
+      showToast(loggedInUser
+        ? (synced ? `'${loc.name}'을(를) 계정에 저장했어요.` : '이 브라우저에는 저장했지만 계정 동기화에 실패했어요.')
+        : `'${loc.name}'을(를) 이 브라우저에 저장했어요. 로그인하면 계정별 목록으로 관리할 수 있어요.`);
       if (isMountainMode) setIsMountainMode(false);
       await loadWeather(loc.lat, loc.lon, loc.name);
     } catch (error) { showToast('지역 추가 중 오류가 발생했습니다.'); setIsAiLoading(false); }
   };
 
-  const handleRemoveFavorite = (nameToRemove) => {
-    if (!loggedInUser) { showToast('로그인 후 관심 지역을 관리할 수 있습니다.'); return; }
+  const handleRemoveFavorite = async (nameToRemove) => {
     const newFavs = favorites.filter(fav => fav.name !== nameToRemove);
-    saveFavorites(newFavs);
-    showToast('관심 지역이 삭제되었습니다.');
+    const synced = await saveFavorites(newFavs);
+    showToast(loggedInUser && !synced ? '이 브라우저에서는 삭제했지만 계정 동기화에 실패했어요.' : '관심 지역에서 삭제했어요.');
   };
 
   const handleCurrentLocation = () => {
@@ -749,6 +843,7 @@ function App() {
             onAddClick={handleOpenAddRegion} 
             onFavoriteClick={(fav) => { if (isMountainMode) setIsMountainMode(false); loadWeather(fav.lat, fav.lon, fav.name); }} 
             onRemoveFavorite={handleRemoveFavorite} 
+            isLoggedIn={!!loggedInUser}
             onCurrentLocationClick={handleCurrentLocation}
             isMountainMode={isMountainMode}
             onToggleMountainMode={handleToggleMountainMode}
@@ -857,7 +952,7 @@ function App() {
       {isNoticeOpen && <NoticeModal onClose={() => setIsNoticeOpen(false)} />}
       {isSignUpOpen && <SignUpModal onClose={() => setIsSignUpOpen(false)} />}
       {isFindPasswordOpen && <FindPasswordModal onClose={() => setIsFindPasswordOpen(false)} />}
-      {isAddRegionOpen && <AddRegionModal onClose={() => setIsAddRegionOpen(false)} onAddRegion={handleAddFavorite} isAiLoading={isAiLoading} />}
+      {isAddRegionOpen && <AddRegionModal onClose={() => setIsAddRegionOpen(false)} onAddRegion={handleAddFavorite} isAiLoading={isAiLoading} isLoggedIn={!!loggedInUser} />}
       {isAdminPageOpen && (
         <AdminPage adminPassword={adminPw} onClose={() => { setIsAdminPageOpen(false); setAdminPw(''); }} />
       )}

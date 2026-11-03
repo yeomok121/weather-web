@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-function AddRegionModal({ onClose, onAddRegion, isAiLoading }) {
+function AddRegionModal({ onClose, onAddRegion, isAiLoading, isLoggedIn = false }) {
   const [input, setInput] = useState('');
 
   const handleAdd = () => {
@@ -22,7 +22,11 @@ function AddRegionModal({ onClose, onAddRegion, isAiLoading }) {
           <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer' }}>❌</button>
         </div>
         
-        <p style={{ fontSize: '13px', color: '#666', marginBottom: '15px' }}>추가하고 싶은 지역의 이름을 입력하세요.</p>
+        <p style={{ fontSize: '13px', color: '#526176', lineHeight: 1.5, marginBottom: '15px' }}>
+          {isLoggedIn
+            ? '관심 지역은 계정에 저장되어 로그인한 다른 기기에서도 불러올 수 있어요. 최대 5곳까지 비교할 수 있습니다.'
+            : '로그인 없이 저장할 수 있어요. 저장한 지역은 이 브라우저에 보관되며, 최대 5곳까지 비교할 수 있습니다.'}
+        </p>
         
         <input 
           type="text" 
