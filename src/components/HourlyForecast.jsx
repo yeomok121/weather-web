@@ -3,6 +3,7 @@ import { FiChevronLeft, FiChevronRight, FiShare2, FiPlus, FiX, FiRotateCcw, FiMa
 import { LineChart, Line, YAxis, ResponsiveContainer } from 'recharts';
 import { getEmojiIcon } from './WeeklyForecast';
 import { assessMountainWeather, estimateSummitView, getHourlyForecastIndex } from './mountainAssessment';
+import HikingPlannerPanel from './HikingPlannerPanel';
 
 const ITEMS_TO_SHOW = 6;
 const EMPTY_HOURLY = [];
@@ -64,7 +65,10 @@ function HourlyForecast({
   onSelectPaceType,
   departureOffsetHours = 0,
   onSelectDepartureOffset,
-  onGearListChange
+  onGearListChange,
+  loggedInUser = null,
+  selectedDateIdx = 0,
+  onApplyHikingPlan
 }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [localCourseIdx, setLocalCourseIdx] = useState(0);
@@ -77,6 +81,7 @@ function HourlyForecast({
   const [newGearInput, setNewGearInput] = useState('');
   
   const scrollRef = useRef(null);
+  const applyingSavedPlanRef = useRef(false);
   const [isDragging, setIsDragging] = useState(false);
   const [dragMoved, setDragMoved] = useState(false); 
   const [startX, setStartX] = useState(0);
@@ -228,15 +233,36 @@ function HourlyForecast({
   }, [hourlyData]);
 
   useEffect(() => {
+    if (applyingSavedPlanRef.current) return;
     setCourseIdx(0);
   }, [mountainInfo?.name]);
 
   useEffect(() => {
+    if (applyingSavedPlanRef.current) {
+      applyingSavedPlanRef.current = false;
+      return;
+    }
     const defaultGears = buildWeatherGearList();
     setGearList(defaultGears);
     setChecklist({});
     if (onGearListChange) onGearListChange(defaultGears);
   }, [mountainInfo?.name, weatherData?.date, temp, wind, isRainOrSnow, terrain, timelineMode, activeCourseIdx, activePace]);
+
+  const handleApplySavedPlan = (plan) => {
+    const mountainWillChange = plan.mountain_name !== mountainInfo?.name;
+    const controlsWillChange = Number(plan.course_index || 0) !== Number(activeCourseIdx)
+      || (plan.pace || 'normal') !== activePace
+      || Number(plan.departure_offset_hours || 0) !== Number(activeDepOffset);
+    applyingSavedPlanRef.current = mountainWillChange || controlsWillChange;
+    const names = (plan.items || []).map(item => item.name).filter(Boolean);
+    setGearList(names);
+    setChecklist(Object.fromEntries((plan.items || []).map(item => [item.name, !!item.checked])));
+    setCourseIdx(Number(plan.course_index) || 0);
+    setPace(plan.pace || 'normal');
+    setDepOffset(Number(plan.departure_offset_hours) || 0);
+    onGearListChange?.(names);
+    onApplyHikingPlan?.(plan);
+  };
 
   const updateGears = (nextGears) => {
     setGearList(nextGears);
@@ -876,6 +902,24 @@ function HourlyForecast({
               </div>
             )}
           </div>
+
+          {isMountainMode && (
+            <HikingPlannerPanel
+              user={loggedInUser}
+              mountainInfo={mountainInfo}
+              selectedCourse={courses[activeCourseIdx]}
+              courseIndex={activeCourseIdx}
+              weatherDate={weatherData}
+              selectedDateIdx={selectedDateIdx}
+              pace={activePace}
+              departureOffsetHours={activeDepOffset}
+              departureTime={timeline.depTimeStr}
+              gearList={gearList}
+              checklist={checklist}
+              onApplyPlan={handleApplySavedPlan}
+              onShowToast={onShowToast}
+            />
+          )}
           
           {!isFuture && (
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', borderTop: '2px dashed rgba(0,0,0,0.1)', paddingTop: '16px' }}>

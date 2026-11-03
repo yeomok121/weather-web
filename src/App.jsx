@@ -420,6 +420,18 @@ function App() {
     } catch (error) { setForecastError('서버 상태를 확인해주세요.'); setIsAiLoading(false); }
   };
 
+  const handleApplyHikingPlan = async (plan) => {
+    setIsMountainMode(true);
+    if (plan.mountain_name && plan.mountain_name !== mountainInfo?.name) {
+      await loadMountainWeather(plan.mountain_name);
+    }
+    setSelectedDateIdx(Number(plan.selected_date_idx) || 0);
+    setSelectedCourseIdx(Number(plan.course_index) || 0);
+    setPaceType(plan.pace || 'normal');
+    setDepartureOffsetHours(Number(plan.departure_offset_hours) || 0);
+    showToast('저장한 산행 계획을 불러왔습니다.');
+  };
+
   const handleToggleMountainMode = () => {
     const nextMode = !isMountainMode;
     setIsMountainMode(nextMode);
@@ -867,6 +879,9 @@ function App() {
             departureOffsetHours={departureOffsetHours}
             onSelectDepartureOffset={setDepartureOffsetHours}
             onGearListChange={setCustomGearList}
+            loggedInUser={loggedInUser}
+            selectedDateIdx={selectedDateIdx}
+            onApplyHikingPlan={handleApplyHikingPlan}
           />
           
           <div style={{ display: 'flex', flexDirection: 'column' }}>
