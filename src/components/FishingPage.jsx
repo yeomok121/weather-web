@@ -9,7 +9,7 @@ const prettyKey = (key = '') => ({
   TM_EF: '예보 시각', TM_FC: '발표 시각', W1: '풍향 시작', W2: '풍향 종료', ST: '강수 확률', SKY: '하늘 상태', PREP: '강수 형태', WF: '날씨',
   LON: '경도', LAT: '위도', TP: '관측 종류', WS2: '풍속 범위', WH1: '파고 시작', WH2: '파고 범위',
   obsvtrNm: '기준 관측소', obsrvnDt: '예측 시각', obsrvnHgt: '예측 조위',
-  distance_km: '선택 위치와 거리',
+  distance_km: '기준 위치와 거리',
 })[key] || key.replaceAll('_', ' ');
 
 function formatKmaTime(value = '') {
@@ -84,7 +84,9 @@ export default function FishingPage() {
   const firstBuoy = buoyRows[0] || {};
   const buoyEntries = Object.entries(firstBuoy).filter(([key]) => key !== 'fields');
   const tideItems = sources.tide?.data?.body?.items?.item || [];
-  const tideRows = (Array.isArray(tideItems) ? tideItems : [tideItems]).slice(0, 6);
+  const tideRows = (Array.isArray(tideItems) ? tideItems : [tideItems])
+    .filter((item) => Date.parse(`${String(item.obsrvnDt || '').replace(' ', 'T')}:00+09:00`) >= Date.now())
+    .slice(0, 6);
   const metrics = ['WH', 'WS', 'WD', 'TW', 'TA', 'HM'].filter((key) => firstBuoy[key] != null).slice(0, 4);
 
   return <main className="fishing-page">
@@ -93,17 +95,17 @@ export default function FishingPage() {
         <span className="fish-eyebrow"><FiAnchor /> WEATHER+ · 바다</span>
         <h1>오늘, 바다에 나가도 될까?</h1>
         <p>해상예보와 부이 실황, 조위 흐름을 한 화면에서 확인하세요.</p>
-        <div className="fish-place"><FiMapPin /> {data?.place || '추자도 해상'} <span>· 관측은 선택 위치에서 가까운 부이, 조위는 인근 TideBED 관측소 기준</span></div>
+        <div className="fish-place"><FiMapPin /> {data?.place || '추자도 해상'} <span>· 관측은 기준 위치에 가까운 부이, 조위는 인근 TideBED 관측소 기준</span></div>
         <button className="fish-refresh" onClick={load} disabled={loading}><FiRefreshCw className={loading ? 'fish-spin' : ''} /> {loading ? '자료 확인 중' : '최신 자료 불러오기'}</button>
       </div>
       <div className="fish-hero-art"><div className="fish-orb"><FiAnchor /></div><span>CHECK THE SEA</span></div>
     </section>
 
     {error && <div className="fish-error" role="alert"><FiInfo /> {error}<button onClick={load}>다시 시도</button></div>}
-    <div className="fish-data-meta"><FiClock /> 기준 자료 갱신 {data?.updated_at || '확인 전'} <span>· 기관 원자료 기준</span></div>
+    <div className="fish-data-meta"><FiClock /> 자료 조회 시각 {data?.updated_at || '확인 전'} <span>· 관측·예보 시각은 각 항목에 표시</span></div>
 
     <section className="fish-metrics">
-      <article className="fish-panel fish-metric-panel"><div className="fish-panel-title"><FiActivity /><div><h2>바다 실황</h2><p>선택 위치에서 가까운 기상청 해양 부이 관측</p></div></div>
+      <article className="fish-panel fish-metric-panel"><div className="fish-panel-title"><FiActivity /><div><h2>바다 실황</h2><p>추자도 해상 기준 가까운 기상청 부이 관측</p></div></div>
         <div className="fish-metric-grid">
           {metrics.map((key) => <div className="fish-metric" key={key}><span>{prettyKey(key)}</span><strong>{firstBuoy[key] || '—'}<small>{({WH:' m',WH_SIG:' m',WS:' m/s',WS1:' m/s',TW:'°C',TA:'°C',HM:'%'})[key] || ''}</small></strong></div>)}
           {!buoyEntries.length && <p className="fish-empty">관측 자료를 불러오면 파고와 바람을 이곳에 표시합니다.</p>}
@@ -113,8 +115,8 @@ export default function FishingPage() {
         {data?.errors?.buoy && <p className="fish-inline-error">{data.errors.buoy}</p>}
       </article>
 
-      <article className="fish-panel fish-tide-panel"><div className="fish-panel-title"><FiDroplet /><div><h2>오늘의 조위</h2><p>TideBED 예측 · 선택 위치 인근 관측소 기준</p></div></div>
-        {tideRows.length ? <div className="fish-tide-values">{tideRows.map((item, index) => <div className="fish-tide-item" key={`${item.obsrvnDt}-${index}`}><span>{prettyKey('obsrvnDt')}</span><b>{item.obsrvnDt || '—'}</b><span>{prettyKey('obsrvnHgt')}</span><b>{item.obsrvnHgt ?? '—'}</b></div>)}</div> : <p className="fish-empty">조위 자료를 불러오면 예측 정보를 표시합니다.</p>}
+      <article className="fish-panel fish-tide-panel"><div className="fish-panel-title"><FiDroplet /><div><h2>앞으로의 조위</h2><p>TideBED 예측 · 추자도 인근 기준항 · 단위 cm</p></div></div>
+        {tideRows.length ? <div className="fish-tide-values">{tideRows.map((item, index) => <div className="fish-tide-item" key={`${item.obsrvnDt}-${index}`}><span>{prettyKey('obsrvnDt')}</span><b>{item.obsrvnDt || '—'}</b><span>{prettyKey('obsrvnHgt')}</span><b>{item.obsrvnHgt ?? '—'} cm</b></div>)}</div> : <p className="fish-empty">앞으로의 조위 자료가 없습니다. 잠시 뒤 새로고침해 주세요.</p>}
         {data?.errors?.tide && <p className="fish-inline-error">{data.errors.tide}</p>}
       </article>
     </section>
