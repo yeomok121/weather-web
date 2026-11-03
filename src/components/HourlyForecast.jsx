@@ -79,6 +79,27 @@ function HourlyForecast({
   const setPace = onSelectPaceType || setLocalPaceType;
   const activeDepOffset = onSelectDepartureOffset ? departureOffsetHours : localDepOffset;
   const setDepOffset = onSelectDepartureOffset || setLocalDepOffset;
+  const departureReferenceTime = new Date();
+
+  const getDepartureTimeForOffset = (offsetHours) => {
+    const totalMinutes = isFuture
+      ? (8 + offsetHours) * 60
+      : (departureReferenceTime.getHours() * 60 + departureReferenceTime.getMinutes()) + (offsetHours * 60);
+    const normalizedMinutes = ((totalMinutes % 1440) + 1440) % 1440;
+    return {
+      time: `${String(Math.floor(normalizedMinutes / 60)).padStart(2, '0')}:${String(normalizedMinutes % 60).padStart(2, '0')}`,
+      dayOffset: Math.floor(totalMinutes / 1440),
+    };
+  };
+
+  const getDepartureOptionLabel = (option) => {
+    const { time, dayOffset } = getDepartureTimeForOffset(option.value);
+    const dayPrefix = !isFuture && dayOffset > 0 ? '다음 날 ' : '';
+    const offsetLabel = isFuture
+      ? (option.value === 0 ? '선택 날짜' : `+${option.value}시간 뒤`)
+      : (option.value === 0 ? '지금 출발' : `+${option.value}시간 뒤`);
+    return `${offsetLabel} (${dayPrefix}${time})`;
+  };
 
   const temp = Number(weatherData?.temp || 0);
   const baseTemp = Number(weatherData?.baseTemp ?? (temp + 5));
@@ -323,7 +344,7 @@ function HourlyForecast({
       return `${String(Math.floor(normalized / 60)).padStart(2, '0')}:${String(normalized % 60).padStart(2, '0')}`;
     };
 
-    const now = new Date();
+    const now = departureReferenceTime;
     const baseNowMins = now.getHours() * 60 + now.getMinutes();
     const depMins = isFuture ? (8 + activeDepOffset) * 60 : baseNowMins + (activeDepOffset * 60);
     const summitArrivalMins = depMins + ascentTimeMins;
@@ -700,7 +721,7 @@ function HourlyForecast({
                   >
                     {DEPARTURE_OFFSETS.map(opt => (
                       <option key={opt.value} value={opt.value}>
-                        {isFuture ? `+${opt.value}시간 뒤` : opt.label} ({timeline.depTimeStr})
+                        {getDepartureOptionLabel(opt)}
                       </option>
                     ))}
                   </select>
