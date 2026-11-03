@@ -950,7 +950,7 @@ function App() {
         </div>
       )}
       {isNoticeOpen && <NoticeModal onClose={() => setIsNoticeOpen(false)} />}
-      {isSignUpOpen && <SignUpModal onClose={() => setIsSignUpOpen(false)} />}
+      {isSignUpOpen && <SignUpModal onClose={() => setIsSignUpOpen(false)} onLogin={handleLogin} />}
       {isFindPasswordOpen && <FindPasswordModal onClose={() => setIsFindPasswordOpen(false)} />}
       {isAddRegionOpen && <AddRegionModal onClose={() => setIsAddRegionOpen(false)} onAddRegion={handleAddFavorite} isAiLoading={isAiLoading} isLoggedIn={!!loggedInUser} />}
       {isAdminPageOpen && (

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { API } from '../config';
 
-function SignUpModal({ onClose }) {
+function SignUpModal({ onClose, onLogin }) {
   const [id, setId] = useState('');
   const [pw, setPw] = useState('');
   const [pwConfirm, setPwConfirm] = useState('');
@@ -39,7 +39,21 @@ function SignUpModal({ onClose }) {
       const defaultFav = [{ name: '부천시', lat: 37.5034, lon: 126.7660 }];
       localStorage.setItem(`favorites_${id}`, JSON.stringify(defaultFav));
 
-      alert(`${name}님, 환영합니다! 회원가입이 완료되었습니다.`);
+      // Sign in immediately so the new account can use cross-device favorites at once.
+      const loginRes = await fetch(`${API}/api/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: id, password: pw }),
+      });
+      const loginData = await loginRes.json();
+      if (!loginRes.ok) {
+        alert('회원가입은 완료됐지만 자동 로그인에 실패했습니다. 로그인 화면에서 다시 시도해 주세요.');
+        onClose();
+        return;
+      }
+
+      onLogin({ id: loginData.username, name: loginData.name, accessToken: loginData.access_token });
+      alert(`${name}님, 환영합니다! 회원가입과 로그인이 완료되었습니다.`);
       onClose();
     } catch (e) {
       alert('서버에 연결할 수 없습니다. 백엔드 서버가 켜져 있는지 확인해 주세요.');
