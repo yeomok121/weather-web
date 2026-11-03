@@ -158,7 +158,7 @@ function WeatherMain({
                     onClick={() => { onSelectDate(i); setIsDatePickerOpen(false); }}
                     style={{ padding: '8px 12px', fontSize: '11.5px', cursor: 'pointer', backgroundColor: selectedDateIdx === i ? 'rgba(0,0,0,0.05)' : 'transparent', color: selectedDateIdx === i ? '#0f172a' : '#475569', fontWeight: selectedDateIdx === i ? 'bold' : '500', borderBottom: i !== weeklyData.length - 1 ? '1px solid rgba(0,0,0,0.05)' : 'none' }}
                   >
-                    {d.date} ({d.day}) {i === 0 ? ' - 실시간' : ''}
+                    {d.date} ({d.day}) {i === 0 ? ' - 오늘' : ''}
                   </div>
                 ))}
               </div>
@@ -183,7 +183,8 @@ function WeatherMain({
           </span>
         </div>
         
-        <div style={{ marginTop: '10px', padding: '8px 12px', background: 'rgba(255,255,255,0.4)', borderRadius: '8px', display: 'flex', justifyContent: 'center', alignItems: 'center', fontSize: '11.5px', border: '1px solid rgba(255,255,255,0.5)', textAlign: 'center', minHeight: '36px' }}>
+        <div style={{ marginTop: '10px', padding: '8px 12px', background: 'rgba(255,255,255,0.4)', borderRadius: '8px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: '3px', fontSize: '11.5px', border: '1px solid rgba(255,255,255,0.5)', textAlign: 'center', minHeight: '36px' }}>
+          <span style={{ color: '#64748b', fontSize: '9.5px', fontWeight: '700' }}>{weatherData.isFuture ? '예보 기반 안내 · 참고용' : 'AI 참고 안내 · 예보 자료 요약'}</span>
           <span style={{ fontWeight: '600', color: '#1e293b', lineHeight: '1.4', wordBreak: 'keep-all' }}>{displayGuideMessage}</span>
         </div>
       </div>

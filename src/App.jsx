@@ -117,6 +117,7 @@ function App() {
   const [hourlyData, setHourlyData] = useState([]);
   const [weeklyData, setWeeklyData] = useState([]);
   const [forecastError, setForecastError] = useState('');
+  const [weatherFetchedAt, setWeatherFetchedAt] = useState(null);
   const [bgTheme, setBgTheme] = useState('clear-day');
 
   const [loggedInUser, setLoggedInUser] = useState(null);
@@ -231,6 +232,7 @@ function App() {
     setBgTheme(theme);
 
     setMountainInfo(mInfo);
+    setWeatherFetchedAt(new Date());
     setSelectedDateIdx(0);
     setSelectedCourseIdx(0);
     setDepartureOffsetHours(0);
@@ -254,7 +256,9 @@ function App() {
       highLow: `최고 ${Math.round(c.temp_max)}° / 최저 ${Math.round(c.temp_min)}°`,
       humidity: c.humidity, 
       wind_speed: c.wind_speed,
-      dust: aqi ? `${aqi.level} (${aqi.pm25})` : (prev.dust || '보통 (15)'),
+      dust: aqi && aqi.level !== '점검중' && Number.isFinite(Number(aqi.pm25))
+        ? `${aqi.level} (${aqi.pm25})`
+        : '확인 불가',
       sunrise: c.sunrise || '06:00',
       sunset: c.sunset || '18:00',
       elevation: elevation
@@ -274,16 +278,20 @@ function App() {
       
       updateWeatherState(data, regionName, 0, null);
       setIsAiLoading(false);
-      setAiMessage('✨ AI가 실시간 날씨를 분석 중이에요...');
+      setAiMessage('✨ 현재 날씨와 예보 정보를 분석 중이에요...');
       
-      const aiRes = await fetch(`${API}/api/weather/ai`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ current: data.current, forecast: data.hourly, air_quality: data.air_quality, mountain_info: null })
-      });
-      if (aiRes.ok) {
+      try {
+        const aiRes = await fetch(`${API}/api/weather/ai`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ current: data.current, forecast: data.hourly, air_quality: data.air_quality, mountain_info: null })
+        });
+        if (!aiRes.ok) throw new Error('AI 안내 요청 실패');
         const aiData = await aiRes.json();
-        setAiMessage(aiData.advice?.[0] || '오늘도 좋은 하루 보내세요!');
-        setAiBriefing(aiData.ai_briefing || 'AI 날씨 전망을 불러오지 못했습니다.');
+        setAiMessage(aiData.advice?.[0] || '현재 제공된 예보에서 별도 주의 신호가 없습니다. 외출 전 시간별 강수와 체감온도를 확인하세요.');
+        setAiBriefing(aiData.ai_briefing || 'AI 브리핑을 불러오지 못했습니다. 시간별 예보와 주간 전망을 확인하세요.');
+      } catch {
+        setAiMessage('AI 안내를 불러오지 못했습니다. 아래 수치 예보를 확인해 주세요.');
+        setAiBriefing('AI 브리핑을 불러오지 못했습니다. 시간별 예보와 주간 전망을 확인해 주세요.');
       }
     } catch (error) { setForecastError('서버 상태를 확인해주세요.'); setIsAiLoading(false); }
   };
@@ -302,14 +310,18 @@ function App() {
       setIsAiLoading(false);
       setAiMessage(`🧗 AI 산악 가이드가 ${data.mountain_name} 등산 환경을 분석 중이에요...`);
       
-      const aiRes = await fetch(`${API}/api/weather/ai`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ current: data.current, forecast: data.hourly, air_quality: data.air_quality || { level: '좋음', pm25: 10 }, mountain_info: mergedMInfo })
-      });
-      if (aiRes.ok) {
+      try {
+        const aiRes = await fetch(`${API}/api/weather/ai`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ current: data.current, forecast: data.hourly, air_quality: data.air_quality || { level: '점검중', pm25: null }, mountain_info: mergedMInfo })
+        });
+        if (!aiRes.ok) throw new Error('AI 안내 요청 실패');
         const aiData = await aiRes.json();
-        setAiMessage(aiData.advice?.[0] || '안전한 산행 되세요!');
-        setAiBriefing(aiData.ai_briefing || '산악 전망을 불러오지 못했습니다.');
+        setAiMessage(aiData.advice?.[0] || '현재 제공된 산악 예보와 하산 시각을 확인해 주세요.');
+        setAiBriefing(aiData.ai_briefing || '산악 AI 브리핑을 불러오지 못했습니다. 수치 예보와 공식 통제 정보를 확인하세요.');
+      } catch {
+        setAiMessage('AI 산악 안내를 불러오지 못했습니다. 기상 수치와 공식 탐방 정보를 확인해 주세요.');
+        setAiBriefing('AI 브리핑을 불러오지 못했습니다. 기상 수치와 공식 탐방 통제 정보를 확인해 주세요.');
       }
     } catch (error) { setForecastError('서버 상태를 확인해주세요.'); setIsAiLoading(false); }
   };
@@ -439,9 +451,9 @@ function App() {
         wind: '주간 예보 기반 고도·지형 보정 추정값',
         humidity: '주간 예보 기반 추정값',
       } : {
-        temperature: '기상청 주간 예보',
-        wind: '기상청 주간 예보',
-        humidity: '기상청 주간 예보',
+        temperature: 'OpenWeather 주간 예보',
+        wind: 'OpenWeather 주간 예보',
+        humidity: 'OpenWeather 주간 예보',
       },
       dataAsOf: null,
       dataNote: isMountainMode
@@ -784,14 +796,18 @@ function App() {
               safeDescentTime: activeWeather.safeDescentTime,
               elevation: activeWeather.elevation,
               targetPop: activeWeather.targetPop,
-              isFuture: activeWeather.isFuture
+              isFuture: activeWeather.isFuture,
+              weatherSources: activeWeather.weatherSources,
+              dataNote: activeWeather.dataNote,
+              nextHoursRainPop: Math.round(Math.max(0, ...hourlyData.slice(0, 6).map(item => Number(item?.pop || 0))) * 100)
             }} 
             airQuality={{ 
-              level: (activeWeather.dust && activeWeather.dust.split(' ')[0]) || '보통', 
-              pm25: (activeWeather.dust && activeWeather.dust.match(/\d+/)) ? parseInt(activeWeather.dust.match(/\d+/)[0]) : 15 
+              level: activeWeather.dust === '확인 불가' ? '확인 불가' : (activeWeather.dust && activeWeather.dust.split(' ')[0]) || '확인 불가',
+              pm25: (activeWeather.dust && activeWeather.dust.match(/\d+/)) ? parseInt(activeWeather.dust.match(/\d+/)[0], 10) : null
             }}
             isMountainMode={isMountainMode}
             mountainInfo={mountainInfo}
+            weatherFetchedAt={weatherFetchedAt}
           />
           
           <div style={{ display: 'flex', flexDirection: 'column' }}>

@@ -510,9 +510,14 @@ function HourlyForecast({
       `}</style>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '12px' }}>
-        <h4 style={{ margin: 0, fontSize: '16px', fontWeight: '800', color: isMountainMode ? '#166534' : '#1e293b' }}>
-          {isMountainMode ? '⛰️ 산악 기상 & 등산 환경 대시보드' : '시간대별 예보 (기온 변화)'}
-        </h4>
+        <div>
+          <h4 style={{ margin: 0, fontSize: '16px', fontWeight: '800', color: isMountainMode ? '#166534' : '#1e293b' }}>
+            {isMountainMode ? '⛰️ 산악 기상 & 등산 환경 대시보드' : '시간별 날씨 · 기온과 강수확률'}
+          </h4>
+          <div style={{ marginTop: '3px', fontSize: '10.5px', color: '#64748b' }}>
+            {isMountainMode ? '기상청 시간별 예보를 고도 보정한 산악 참고 추정값' : '기상청 동네예보 기준 · 강수확률은 시간대별 비 가능성입니다'}
+          </div>
+        </div>
         {!isMountainMode && (
           <div style={{ display: 'flex', gap: '8px' }}>
             <button type="button" onClick={handlePrev} disabled={prevDisabled} style={{ ...buttonStyle, opacity: prevDisabled ? 0.3 : 1, cursor: prevDisabled ? 'default' : 'pointer' }}><FiChevronLeft size={16} /></button>

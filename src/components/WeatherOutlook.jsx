@@ -21,29 +21,20 @@ function WeatherOutlook({
   const allMinTemps = weeklyData.map(d => d.temp_min);
   const minTemp = Math.min(...allMinTemps);
   const maxTemp = Math.max(...allMaxTemps);
-  const rainyDays = weeklyData.filter(d => d.pop > 30).length;
+  const possibleRainDays = weeklyData.filter(d => Number(d.pop) > 0);
+  const highRainDays = possibleRainDays.filter(d => Number(d.pop) >= 60);
+  const hasRainProbabilityData = weeklyData.some(d => d.pop !== null && d.pop !== undefined && Number.isFinite(Number(d.pop)));
+  const rainDayLabels = (days) => days.map(d => `${d.date || '날짜 미상'}${d.day ? `(${d.day})` : ''} ${Math.round(Number(d.pop))}%`).join(', ');
   
-  let briefingText = '';
-  if (isMountainMode) {
-    const mName = mountainInfo?.name || '산 정상';
-    briefingText = `이번 주 ${mName} 능선 및 정상 부근은 고도의 영향으로 평지보다 쌀쌀한 기온(최저 ${minTemp}℃ ~ 최고 ${maxTemp}℃) 분포를 보이겠습니다. `;
-    if (rainyDays > 2) {
-      briefingText += `강수 예보가 잦아 바위나 등산로가 매우 미끄러울 수 있으니 우천 산행 장비(아이젠, 등산화)를 철저히 준비하시고, 기상 악화 시 무리한 산행을 자제하세요.`;
-    } else if (rainyDays > 0) {
-      briefingText += `대체로 기상은 양호하나 일시적으로 비나 눈이 내릴 수 있으니, 배낭에 방수 재킷과 배낭 커버를 필히 챙기시기 바랍니다.`;
-    } else {
-      briefingText += `비 소식 없이 맑은 날이 이어져 산행하기 좋은 주간입니다. 다만 능선부의 강풍과 큰 일교차에 대비해 방풍·보온 의류를 꼭 지참하세요.`;
-    }
-  } else {
-    briefingText = `이번 주는 평년과 비슷하거나 조금 높은 기온(최저 ${minTemp}℃ ~ 최고 ${maxTemp}℃) 분포를 보이겠습니다. `;
-    if (rainyDays > 2) {
-      briefingText += `저기압의 영향을 자주 받아 흐리거나 비(☔)가 오는 날이 많겠습니다. 우산을 꼭 챙기시길 바랍니다.`;
-    } else if (rainyDays > 0) {
-      briefingText += `이동성 고기압의 영향을 주로 받겠으나, 일시적인 기압골의 영향으로 비가 오는 날이 있겠습니다.`;
-    } else {
-      briefingText += `고기압의 영향으로 대체로 맑고(☀️) 건조한 날이 지속되겠습니다. 야외 활동하기 좋은 한 주가 될 것으로 예상됩니다.`;
-    }
-  }
+  const temperatureSummary = `표시 기간 ${startDate}~${endDate} 기온 범위는 ${minTemp}~${maxTemp}°C입니다.`;
+  const rainSummary = highRainDays.length > 0
+    ? `강수확률 60% 이상 날짜: ${rainDayLabels(highRainDays)}. 해당 날짜에는 시간별 예보를 확인하고 우산을 고려하세요.`
+    : possibleRainDays.length > 0
+      ? `강수확률이 표시된 날짜: ${rainDayLabels(possibleRainDays)}. 외출 전 해당 날짜의 시간별 예보를 확인하세요.`
+      : hasRainProbabilityData
+        ? '표시된 기간의 강수확률은 모두 0%입니다. 예보는 갱신될 수 있으니 외출 전 다시 확인하세요.'
+        : '표시된 기간에 강수확률 자료가 없습니다. 예보 제공 범위를 확인하세요.';
+  const briefingText = `${temperatureSummary} ${isMountainMode ? '산악 기온은 평지 예보를 고도 보정한 참고 추정값입니다. ' : ''}${rainSummary}`;
 
   return (
     <div className="glass-card" style={{ borderRadius: '16px', padding: '24px', color: '#1e293b', width: '100%', boxSizing: 'border-box', height: 'fit-content', display: 'flex', flexDirection: 'column' }}>
@@ -69,11 +60,14 @@ function WeatherOutlook({
             <div style={{ borderLeft: isMountainMode ? '3px solid #bbf7d0' : '3px solid #cbd5e1', paddingLeft: '14px', marginBottom: '14px', fontSize: '13.5px', lineHeight: '1.6', color: '#1e293b', fontWeight: '500' }}>
               <div style={{ display: 'flex', marginBottom: '4px' }}><span style={{ color: '#64748b', width: '64px', fontWeight: '600' }}>기간</span> <span>{startDate}. ~ {endDate}.</span></div>
               <div style={{ display: 'flex', marginBottom: '4px' }}><span style={{ color: '#64748b', width: '64px', fontWeight: '600' }}>{isMountainMode ? '정상기온' : '예상기온'}</span> <span>최저 {minTemp}℃ / 최고 {maxTemp}℃</span></div>
-              <div style={{ display: 'flex' }}><span style={{ color: '#64748b', width: '64px', fontWeight: '600' }}>강수경향</span> <span>{rainyDays > 0 ? '비/눈 오는 날 있음' : '대체로 맑음'}</span></div>
+              <div style={{ display: 'flex' }}><span style={{ color: '#64748b', width: '64px', fontWeight: '600' }}>강수 안내</span> <span>{highRainDays.length > 0 ? `${highRainDays.length}일 강수확률 60% 이상` : possibleRainDays.length > 0 ? `${possibleRainDays.length}일 강수확률 표시` : hasRainProbabilityData ? '예보상 강수확률 0%' : '강수확률 자료 없음'}</span></div>
             </div>
             <p style={{ margin: 0, fontSize: '13.5px', lineHeight: '1.55', color: '#334155', wordBreak: 'keep-all', fontWeight: '500' }}>
               {briefingText}
             </p>
+            <div style={{ marginTop: '10px', fontSize: '10.5px', color: '#64748b' }}>
+              {isMountainMode ? '주간 예보 기반 고도 보정 참고치' : '주간 예보: OpenWeather 5일 예보를 날짜별 요약'} · 강수확률은 강수 발생 가능성이며 확정 예보가 아닙니다.
+            </div>
           </>
         ) : isMountainMode && hikingPlanSummary ? (
           /* 💡 [원칙 4] 실제 날씨·코스·시간·준비물 데이터에 근거한 AI 산행 의사결정 종합 리포트 */
@@ -157,6 +151,9 @@ function WeatherOutlook({
             <p style={{ margin: 0 }}>
               {aiBriefing}
             </p>
+            <div style={{ marginTop: '10px', fontSize: '10.5px', color: '#64748b', lineHeight: 1.45 }}>
+              AI가 예보 자료를 요약한 참고 안내입니다. 수치 예보와 공식 특보·통제 정보를 우선 확인하세요.
+            </div>
           </div>
         )}
       </div>
