@@ -18,48 +18,66 @@ function AdminPage({ onClose, adminPassword }) {
   const [editingUserId, setEditingUserId] = useState(null);
   const [editUserForm, setEditUserForm] = useState({ id: '', pw: '', name: '' });
 
-  // 초기 데이터 불러오기 (공지사항 + 회원 목록)
+  // 초기 데이터 불러오기 (공지사항 + 회원 목록) - 둘 다 서버(MySQL)에서 가져옴
   useEffect(() => {
-    const defaultNotices = [
-      { id: 1, type: '긴급', title: '태풍 북상에 따른 기상 특보 연동 안내', date: '2026.10.07', color: '#e53e3e' },
-      { id: 2, type: '점검', title: '기상청 API 서버 정기 점검 안내 (10/10)', date: '2026.10.03', color: '#3182ce' },
-      { id: 3, type: '안내', title: '관심 지역 등록이 최대 5개로 확장되었습니다.', date: '2026.09.28', color: '#3182ce' }
-    ];
-    const storedNotices = JSON.parse(localStorage.getItem('notices')) || defaultNotices;
-    setNotices(storedNotices);
-
+    loadNotices();
     loadUsers();
   }, []);
 
-  // ----------------- 공지사항 관련 함수 -----------------
-  const handleSaveNotice = () => {
-    if (!form.title || !form.date) {
+  // ----------------- 공지사항 관련 함수 (MySQL 연동) -----------------
+  const noticeHeaders = { 'Content-Type': 'application/json', 'x-admin-password': adminPassword || '' };
+
+  const loadNotices = async () => {
+    try {
+      const res = await fetch(`${API}/api/notices`);
+      if (!res.ok) throw new Error('failed');
+      setNotices(await res.json());
+    } catch (e) {
+      alert('공지사항을 불러오지 못했습니다.');
+    }
+  };
+
+  const handleSaveNotice = async () => {
+    if (!form.title.trim() || !form.date.trim()) {
       alert('제목과 날짜를 입력해 주세요.');
       return;
     }
-    
-    let updatedNotices;
-    const color = form.type === '긴급' ? '#e53e3e' : '#3182ce';
-
-    if (editId) {
-      updatedNotices = notices.map(n => n.id === editId ? { ...n, ...form, color } : n);
+    const wasEditing = !!editId;
+    try {
+      const res = await fetch(
+        wasEditing ? `${API}/api/admin/notices/${editId}` : `${API}/api/admin/notices`,
+        {
+          method: wasEditing ? 'PUT' : 'POST',
+          headers: noticeHeaders,
+          body: JSON.stringify({ type: form.type, title: form.title, date: form.date }),
+        }
+      );
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.detail || '공지사항 저장에 실패했습니다.');
+        return;
+      }
       setEditId(null);
-    } else {
-      const newId = notices.length > 0 ? Math.max(...notices.map(n => n.id)) + 1 : 1;
-      updatedNotices = [{ id: newId, ...form, color }, ...notices];
+      setForm({ type: '안내', title: '', date: '' });
+      await loadNotices();
+      alert(wasEditing ? '공지사항이 수정되었습니다.' : '새 공지사항이 추가되었습니다.');
+    } catch (e) {
+      alert('서버에 연결할 수 없습니다.');
     }
-    
-    setNotices(updatedNotices);
-    localStorage.setItem('notices', JSON.stringify(updatedNotices));
-    setForm({ type: '안내', title: '', date: '' });
-    alert(editId ? '공지사항이 수정되었습니다.' : '새 공지사항이 추가되었습니다.');
   };
 
-  const handleDeleteNotice = (id) => {
-    if (window.confirm('정말 이 공지사항을 삭제하시겠습니까?')) {
-      const updatedNotices = notices.filter(n => n.id !== id);
-      setNotices(updatedNotices);
-      localStorage.setItem('notices', JSON.stringify(updatedNotices));
+  const handleDeleteNotice = async (id) => {
+    if (!window.confirm('정말 이 공지사항을 삭제하시겠습니까?')) return;
+    try {
+      const res = await fetch(`${API}/api/admin/notices/${id}`, { method: 'DELETE', headers: noticeHeaders });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.detail || '삭제에 실패했습니다.');
+        return;
+      }
+      await loadNotices();
+    } catch (e) {
+      alert('서버에 연결할 수 없습니다.');
     }
   };
 
