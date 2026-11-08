@@ -939,7 +939,12 @@ function HourlyForecast({
             미래 예보일은 시간대별 상세 기온 변화 차트가 제공되지 않습니다.
          </div>
       ) : isLoading ? (
-        <p style={{ margin: '8px 0', fontSize: '13px', color: '#475569', fontWeight: '500' }}>예보를 불러오는 중입니다...</p>
+        <div role="status" aria-live="polite" style={{ margin: '8px 0', color: '#475569' }}>
+          <p style={{ margin: 0, fontSize: '13px', fontWeight: '600' }}>예보를 불러오는 중입니다...</p>
+          <p style={{ margin: '4px 0 0', fontSize: '12px', lineHeight: 1.5, color: '#64748b' }}>
+            서버가 절전 상태였다면 첫 응답에 50초 이상 걸릴 수 있어요. 잠시 기다려 주세요.
+          </p>
+        </div>
       ) : error ? (
         <div role="alert" style={{ margin: '8px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', flexWrap: 'wrap', color: '#b42318', background: 'rgba(254,242,242,.85)', border: '1px solid rgba(248,113,113,.35)', borderRadius: '10px', padding: '10px 12px' }}>
           <span style={{ fontSize: '13px', lineHeight: 1.5 }}>{error}</span>

@@ -16,7 +16,8 @@ import { FiSearch, FiBell, FiSettings, FiClock, FiCheckCircle } from 'react-icon
 import { API } from './config';
 import { assessMountainWeather, getHourlyForecastIndex } from './components/mountainAssessment';
 
-const WEATHER_REQUEST_TIMEOUT_MS = 20000;
+// Render free instances can take 50+ seconds to wake after inactivity.
+const WEATHER_REQUEST_TIMEOUT_MS = 90000;
 
 async function fetchWithTimeout(url, options = {}) {
   const controller = new AbortController();
@@ -406,7 +407,7 @@ function App() {
       }
     } catch (error) {
       const message = error?.name === 'AbortError'
-        ? '날씨 서버 응답이 20초 이상 지연되고 있습니다. 잠시 후 다시 시도해 주세요.'
+        ? '날씨 서버 응답이 90초 이상 지연되고 있습니다. 잠시 후 다시 시도해 주세요.'
         : '날씨 정보를 불러오지 못했습니다. 서버 상태를 확인한 뒤 다시 시도해 주세요.';
       setForecastError(message);
       setAiMessage(message);
@@ -445,7 +446,7 @@ function App() {
       }
     } catch (error) {
       const message = error?.name === 'AbortError'
-        ? '산악 날씨 서버 응답이 20초 이상 지연되고 있습니다. 잠시 후 다시 시도해 주세요.'
+        ? '산악 날씨 서버 응답이 90초 이상 지연되고 있습니다. 잠시 후 다시 시도해 주세요.'
         : '산악 날씨 정보를 불러오지 못했습니다. 서버 상태를 확인한 뒤 다시 시도해 주세요.';
       setForecastError(message);
       setAiMessage(message);
