@@ -55,6 +55,7 @@ function HourlyForecast({
   hourlyData = EMPTY_HOURLY,
   isLoading = false,
   error = '',
+  onRetry,
   isMountainMode = false,
   mountainInfo = null,
   weatherData = {},
@@ -940,7 +941,10 @@ function HourlyForecast({
       ) : isLoading ? (
         <p style={{ margin: '8px 0', fontSize: '13px', color: '#475569', fontWeight: '500' }}>예보를 불러오는 중입니다...</p>
       ) : error ? (
-        <p style={{ margin: '8px 0', fontSize: '13px', color: '#dc2626' }}>{error}</p>
+        <div role="alert" style={{ margin: '8px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', flexWrap: 'wrap', color: '#b42318', background: 'rgba(254,242,242,.85)', border: '1px solid rgba(248,113,113,.35)', borderRadius: '10px', padding: '10px 12px' }}>
+          <span style={{ fontSize: '13px', lineHeight: 1.5 }}>{error}</span>
+          {onRetry && <button type="button" onClick={onRetry} style={{ flex: 'none', border: 0, borderRadius: '8px', background: '#b42318', color: 'white', fontWeight: 700, padding: '8px 12px', cursor: 'pointer' }}>다시 시도</button>}
+        </div>
       ) : forecastData.length === 0 ? (
         <p style={{ margin: '8px 0', fontSize: '13px', color: '#475569' }}>예보 데이터가 없습니다.</p>
       ) : (

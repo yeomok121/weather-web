@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import './App.css';
 import LoginCard from './components/LoginCard';
 import HourlyForecast, { PACE_OPTIONS } from './components/HourlyForecast';
@@ -15,6 +15,18 @@ import WeatherOutlook from './components/WeatherOutlook';
 import { FiSearch, FiBell, FiSettings, FiClock, FiCheckCircle } from 'react-icons/fi';
 import { API } from './config';
 import { assessMountainWeather, getHourlyForecastIndex } from './components/mountainAssessment';
+
+const WEATHER_REQUEST_TIMEOUT_MS = 20000;
+
+async function fetchWithTimeout(url, options = {}) {
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => controller.abort(), WEATHER_REQUEST_TIMEOUT_MS);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    window.clearTimeout(timeoutId);
+  }
+}
 
 const KOREA_REGIONS = [
   '서울특별시', '부산광역시', '대구광역시', '인천광역시', '광주광역시', '대전광역시', '울산광역시', '세종특별자치시',
@@ -134,6 +146,7 @@ function App() {
     humidity: 0, dust: '확인 중...', wind_speed: 0, 
     sunrise: '06:00', sunset: '18:00', elevation: 0
   });
+  const lastWeatherRequestRef = useRef({ kind: 'weather', lat: 37.5034, lon: 126.7660, regionName: '부천시' });
 
   const showToast = (message) => {
     setToast({ visible: true, message });
@@ -366,10 +379,11 @@ function App() {
   };
 
   const loadWeather = async (lat, lon, regionName) => {
+    lastWeatherRequestRef.current = { kind: 'weather', lat, lon, regionName };
     setForecastError('');
     setIsAiLoading(true);
     try {
-      const res = await fetch(`${API}/api/weather/summary?lat=${lat}&lon=${lon}`);
+      const res = await fetchWithTimeout(`${API}/api/weather/summary?lat=${lat}&lon=${lon}`);
       if (!res.ok) throw new Error(`요청 실패`);
       const data = await res.json();
       
@@ -390,15 +404,24 @@ function App() {
         setAiMessage('AI 안내를 불러오지 못했습니다. 아래 수치 예보를 확인해 주세요.');
         setAiBriefing('AI 브리핑을 불러오지 못했습니다. 시간별 예보와 주간 전망을 확인해 주세요.');
       }
-    } catch (error) { setForecastError('서버 상태를 확인해주세요.'); setIsAiLoading(false); }
+    } catch (error) {
+      const message = error?.name === 'AbortError'
+        ? '날씨 서버 응답이 20초 이상 지연되고 있습니다. 잠시 후 다시 시도해 주세요.'
+        : '날씨 정보를 불러오지 못했습니다. 서버 상태를 확인한 뒤 다시 시도해 주세요.';
+      setForecastError(message);
+      setAiMessage(message);
+      setAiBriefing(message);
+      setIsAiLoading(false);
+    }
   };
 
   const loadMountainWeather = async (mountainName) => {
+    lastWeatherRequestRef.current = { kind: 'mountain', mountainName };
     setForecastError('');
     const localMInfo = MOUNTAINS_LIST.find(m => m.name === mountainName) || MOUNTAINS_LIST[0];
     setIsAiLoading(true);
     try {
-      const res = await fetch(`${API}/api/mountain/summary?name=${encodeURIComponent(mountainName)}`);
+      const res = await fetchWithTimeout(`${API}/api/mountain/summary?name=${encodeURIComponent(mountainName)}`);
       if (!res.ok) { showToast('해당 산의 날씨 데이터를 찾을 수 없습니다.'); setIsAiLoading(false); return; }
       const data = await res.json();
       const mergedMInfo = { ...localMInfo, ...data.mountain_info, courses: localMInfo.courses };
@@ -420,7 +443,15 @@ function App() {
         setAiMessage('AI 산악 안내를 불러오지 못했습니다. 기상 수치와 공식 탐방 정보를 확인해 주세요.');
         setAiBriefing('AI 브리핑을 불러오지 못했습니다. 기상 수치와 공식 탐방 통제 정보를 확인해 주세요.');
       }
-    } catch (error) { setForecastError('서버 상태를 확인해주세요.'); setIsAiLoading(false); }
+    } catch (error) {
+      const message = error?.name === 'AbortError'
+        ? '산악 날씨 서버 응답이 20초 이상 지연되고 있습니다. 잠시 후 다시 시도해 주세요.'
+        : '산악 날씨 정보를 불러오지 못했습니다. 서버 상태를 확인한 뒤 다시 시도해 주세요.';
+      setForecastError(message);
+      setAiMessage(message);
+      setAiBriefing(message);
+      setIsAiLoading(false);
+    }
   };
 
   const handleApplyHikingPlan = async (plan) => {
@@ -884,6 +915,11 @@ function App() {
             hourlyData={hourlyData} 
             isLoading={isAiLoading} 
             error={forecastError} 
+            onRetry={() => {
+              const request = lastWeatherRequestRef.current;
+              if (request.kind === 'mountain') loadMountainWeather(request.mountainName);
+              else loadWeather(request.lat, request.lon, request.regionName);
+            }}
             isMountainMode={isMountainMode}
             mountainInfo={mountainInfo}
             weatherData={activeWeather}
