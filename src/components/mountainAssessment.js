@@ -71,3 +71,116 @@ export function estimateSummitView({ condition = '', humidity = 50, pm25 = 15, w
     : null;
   return { score, gradeText, gradeColor, summaryReason: reasons.slice(0, 2).join(' · '), seaOfCloudsHint };
 }
+
+const asNumber = (value, fallback) => {
+  if (value === null || value === undefined || value === '') return fallback;
+  const number = Number(value);
+  return Number.isFinite(number) ? number : fallback;
+};
+
+/**
+ * Rate conditions across the selected hiking itinerary. The lowest hourly
+ * score is used so a short adverse period is not hidden by better hours.
+ * Daily forecasts and hours outside the supplied forecast window are clearly
+ * identified as estimates based on the best available fallback conditions.
+ */
+export function assessHikingForecastWindow({
+  hourlyData = [],
+  now = new Date(),
+  departureOffsetHours = 0,
+  durationMinutes = 180,
+  fallbackWeather = {},
+  isFuture = false,
+} = {}) {
+  const fallback = {
+    temp: asNumber(fallbackWeather.temp, 0),
+    wind: asNumber(fallbackWeather.wind, 0),
+    condition: fallbackWeather.condition || '',
+    targetPop: asNumber(fallbackWeather.targetPop, 0),
+    pm25: asNumber(fallbackWeather.pm25, 15),
+    humidity: asNumber(fallbackWeather.humidity, 50),
+  };
+  const fallbackWeatherAssessment = assessMountainWeather(fallback);
+  const fallbackViewEstimate = estimateSummitView({
+    condition: fallback.condition,
+    humidity: fallback.humidity,
+    pm25: fallback.pm25,
+    wind: fallback.wind,
+  });
+
+  if (isFuture) {
+    return {
+      weatherAssessment: fallbackWeatherAssessment,
+      viewEstimate: fallbackViewEstimate,
+      mode: 'daily_summary',
+      sampleCount: 0,
+      coverageComplete: false,
+      weatherWorstTime: null,
+      viewWorstTime: null,
+    };
+  }
+
+  const safeHourlyData = Array.isArray(hourlyData) ? hourlyData : [];
+  const startIndex = getHourlyForecastIndex({ now, departureOffsetHours });
+  const endIndex = getHourlyForecastIndex({
+    now,
+    departureOffsetHours,
+    ascentMinutes: Math.max(0, Number(durationMinutes) || 0),
+  });
+  const samples = [];
+
+  // For an immediate departure, include observed current conditions before
+  // the next hourly forecast starts.
+  if (Number(departureOffsetHours) === 0) {
+    samples.push({ time: '현재', source: 'current', weather: fallback });
+  }
+
+  const lastForecastIndex = Math.min(endIndex, safeHourlyData.length - 1);
+  for (let index = startIndex; index <= lastForecastIndex; index += 1) {
+    const row = safeHourlyData[index];
+    if (!row || typeof row !== 'object') continue;
+    samples.push({
+      time: row.time || `${index}시간 뒤`,
+      source: 'forecast',
+      weather: {
+        temp: asNumber(row.temp, fallback.temp),
+        wind: asNumber(row.wind_speed, fallback.wind),
+        condition: row.description || fallback.condition,
+        targetPop: asNumber(row.pop, fallback.targetPop),
+        pm25: fallback.pm25,
+        humidity: asNumber(row.humidity, fallback.humidity),
+      },
+    });
+  }
+
+  const assessedSamples = samples.map(sample => ({
+    ...sample,
+    weatherAssessment: assessMountainWeather(sample.weather),
+    viewEstimate: estimateSummitView({
+      condition: sample.weather.condition,
+      humidity: sample.weather.humidity,
+      pm25: sample.weather.pm25,
+      wind: sample.weather.wind,
+    }),
+  }));
+  const lowestBy = (key) => assessedSamples.reduce((lowest, sample) => (
+    !lowest || sample[key].score < lowest[key].score ? sample : lowest
+  ), null);
+  const weatherWorst = lowestBy('weatherAssessment');
+  const viewWorst = lowestBy('viewEstimate');
+  const forecastSampleCount = assessedSamples.filter(sample => sample.source === 'forecast').length;
+  const coverageComplete = safeHourlyData.length > 0 && endIndex < safeHourlyData.length;
+  const mode = forecastSampleCount === 0
+    ? 'current_only'
+    : coverageComplete ? 'course_window' : 'partial_window';
+
+  return {
+    weatherAssessment: weatherWorst?.weatherAssessment || fallbackWeatherAssessment,
+    viewEstimate: viewWorst?.viewEstimate || fallbackViewEstimate,
+    mode,
+    sampleCount: assessedSamples.length,
+    coverageComplete,
+    weatherWorstTime: weatherWorst?.time || null,
+    viewWorstTime: viewWorst?.time || null,
+  };
+}

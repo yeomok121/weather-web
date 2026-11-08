@@ -69,6 +69,7 @@ function HourlyForecast({
   onGearListChange,
   loggedInUser = null,
   selectedDateIdx = 0,
+  hikingPlanSummary = null,
   onApplyHikingPlan
 }) {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -362,12 +363,17 @@ function HourlyForecast({
 
   const pm25Value = Number.isFinite(pm25) ? pm25 : 15;
   const nextHoursPop = Math.max(0, ...rawForecastData.slice(0, 6).map(item => item.pop));
-  const weatherAssessment = assessMountainWeather({
+  const fallbackWeatherAssessment = assessMountainWeather({
     temp, wind, condition: desc, targetPop: weatherData?.targetPop ?? nextHoursPop,
     pm25: pm25Value, humidity
   });
+  const weatherAssessment = isMountainMode && hikingPlanSummary?.weatherAssessment
+    ? hikingPlanSummary.weatherAssessment
+    : fallbackWeatherAssessment;
   const weatherScore = weatherAssessment.score;
-  const viewEstimate = estimateSummitView({ condition: desc, humidity, pm25: pm25Value, wind });
+  const viewEstimate = isMountainMode && hikingPlanSummary?.viewEstimate
+    ? hikingPlanSummary.viewEstimate
+    : estimateSummitView({ condition: desc, humidity, pm25: pm25Value, wind });
 
   const getTimelineAndSummitArrival = () => {
     const parseTime = (str, fallback = 1080) => {
@@ -633,10 +639,21 @@ function HourlyForecast({
                 </div>
               </div>
 
+              {hikingPlanSummary?.scoreBasisLabel && (
+                <div style={{ width: '100%', color: '#64748b', fontSize: '10.5px', lineHeight: 1.45, textAlign: 'center', padding: '0 4px' }}>
+                  ⏱️ {hikingPlanSummary.scoreBasisLabel}
+                  {(hikingPlanSummary.weatherWorstTime || hikingPlanSummary.viewWorstTime) && (
+                    <span> · 기상 최저 {hikingPlanSummary.weatherWorstTime || '—'} / 조망 최저 {hikingPlanSummary.viewWorstTime || '—'}</span>
+                  )}
+                </div>
+              )}
+
               {viewEstimate.seaOfCloudsHint && <div style={{ color: '#0369a1', fontSize: '12px', fontWeight: '700', textAlign: 'center' }}>{viewEstimate.seaOfCloudsHint}</div>}
               <MountainInfo label="점수 판단 근거와 한계">
+                {hikingPlanSummary?.scoreBasisLabel && <div><strong>선택 일정 반영:</strong> {hikingPlanSummary.scoreBasisLabel}</div>}
                 <div><strong>기상 조건:</strong> {weatherAssessment.reasons.join(' · ') || weatherAssessment.status}</div>
                 <div><strong>조망 참고:</strong> {viewEstimate.summaryReason}</div>
+                <div>오늘 산행은 출발부터 예상 하산까지 시간별 예보 중 가장 낮은 점수를 표시합니다. 시간별 예보가 부족하면 사용 가능한 구간만 반영합니다. 선택일이 미래면 일 단위 예보만 반영되어 출발 시각별 차이는 계산하지 않습니다.</div>
                 <div>두 점수는 기상 요소를 바탕으로 한 참고 지표입니다. 산행 허가나 안전을 보증하지 않으며, 조망 점수도 실제 조망 확률이 아닙니다. 운고·실측 시정·노면 상태는 반영되지 않을 수 있습니다.</div>
               </MountainInfo>
 

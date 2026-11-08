@@ -14,7 +14,7 @@ import WeeklyForecast, { getEmojiIcon } from './components/WeeklyForecast';
 import WeatherOutlook from './components/WeatherOutlook'; 
 import { FiSearch, FiBell, FiSettings, FiClock, FiCheckCircle } from 'react-icons/fi';
 import { API } from './config';
-import { assessMountainWeather, getHourlyForecastIndex } from './components/mountainAssessment';
+import { assessHikingForecastWindow, getHourlyForecastIndex } from './components/mountainAssessment';
 
 // Render free instances can take 50+ seconds to wake after inactivity.
 const WEATHER_REQUEST_TIMEOUT_MS = 90000;
@@ -641,13 +641,36 @@ function App() {
     const cond = activeWeather.condition || '';
     const pm25Match = (activeWeather.dust || '').match(/\d+/);
     const pm25 = pm25Match ? parseInt(pm25Match[0], 10) : 15;
-    const nextHoursPop = Array.isArray(hourlyData)
-      ? Math.max(0, ...hourlyData.slice(0, 6).map(item => Number(item?.pop || 0)))
-      : 0;
-    const weatherAssessment = assessMountainWeather({
-      temp, wind, condition: cond, targetPop: activeWeather.targetPop ?? nextHoursPop,
-      pm25, humidity: Number(activeWeather.humidity || 50)
+    const scheduleAssessment = assessHikingForecastWindow({
+      hourlyData,
+      now,
+      departureOffsetHours,
+      durationMinutes: totalMins,
+      isFuture: !!activeWeather.isFuture,
+      fallbackWeather: {
+        temp,
+        wind,
+        condition: cond,
+        targetPop: activeWeather.targetPop,
+        pm25,
+        humidity: Number(activeWeather.humidity ?? 50),
+      },
     });
+    const weatherAssessment = scheduleAssessment.weatherAssessment;
+    const viewEstimate = scheduleAssessment.viewEstimate;
+
+    let scoreBasisLabel;
+    if (activeWeather.isFuture) {
+      scoreBasisLabel = '선택일 요약 예보 기준 · 출발 시각별 차이는 미반영';
+    } else if (scheduleAssessment.mode === 'course_window') {
+      scoreBasisLabel = `${formatTime(depMins)}–${formatTime(descentFinishMins)} 산행 시간대 ${scheduleAssessment.sampleCount}개 시점 중 최저`;
+    } else if (scheduleAssessment.mode === 'partial_window') {
+      scoreBasisLabel = `${formatTime(depMins)}–${formatTime(descentFinishMins)} 중 시간별 예보 제공 구간만 반영 (${scheduleAssessment.sampleCount}개 시점)`;
+    } else if (departureOffsetHours === 0) {
+      scoreBasisLabel = '현재 조건 기준 · 산행 시간대 예보 자료 없음';
+    } else {
+      scoreBasisLabel = '선택 시간대가 시간별 예보 범위 밖 · 현재 조건 참고';
+    }
 
     let timeSafetyStatus = '시간 여유 있음';
     let timeSafetyColor = '#166534';
@@ -703,6 +726,11 @@ function App() {
       weatherScore: weatherAssessment.score,
       weatherAssessmentStatus: weatherAssessment.status,
       weatherAssessmentReasons: weatherAssessment.reasons,
+      weatherAssessment,
+      viewEstimate,
+      scoreBasisLabel,
+      weatherWorstTime: scheduleAssessment.weatherWorstTime,
+      viewWorstTime: scheduleAssessment.viewWorstTime,
       timeSafetyStatus,
       timeSafetyColor,
       isNextDayPlan,
@@ -934,6 +962,7 @@ function App() {
             onGearListChange={setCustomGearList}
             loggedInUser={loggedInUser}
             selectedDateIdx={selectedDateIdx}
+            hikingPlanSummary={hikingPlanSummary}
             onApplyHikingPlan={handleApplyHikingPlan}
           />
           
