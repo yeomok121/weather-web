@@ -8,6 +8,11 @@ function LoginCard({ loginPrompt = 0, onSignUpClick, onFindPasswordClick, logged
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isEditMode, setIsEditMode] = useState(false);
+  const [isDeleteMode, setIsDeleteMode] = useState(false);
+  const [deletePassword, setDeletePassword] = useState('');
+  const [deleteAccepted, setDeleteAccepted] = useState(false);
+  const [deleteBusy, setDeleteBusy] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
   
   const [editName, setEditName] = useState('');
   const [editCurrentPassword, setEditCurrentPassword] = useState('');
@@ -84,11 +89,37 @@ function LoginCard({ loginPrompt = 0, onSignUpClick, onFindPasswordClick, logged
     setIsEditMode(true);
   };
 
+  const handleDeleteSubmit = async event => {
+    event.preventDefault();
+    if (deleteBusy || !deletePassword || !deleteAccepted) return;
+    setDeleteBusy(true); setDeleteError('');
+    try {
+      await onDeleteAccount(deletePassword);
+      setDeletePassword(''); setDeleteAccepted(false); setIsDeleteMode(false); setIsEditMode(false);
+    } catch (error) {
+      setDeleteError(error.status ? error.message : '서버 응답을 확인하지 못했습니다. 탈퇴 여부를 확인한 뒤 다시 시도해 주세요.');
+    } finally { setDeleteBusy(false); }
+  };
+
   // 💡 기존의 background: '#ffffff' 제거, transparent 적용
   if (loggedInUser) {
     return (
       <div style={{ padding: '24px', boxSizing: 'border-box', height: '100%', background: 'transparent' }}>
-        {!isEditMode ? (
+        {isDeleteMode ? (
+          <form onSubmit={handleDeleteSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <h3 style={{ margin: 0, color: '#9b1c1c', fontSize: '17px' }}>회원 탈퇴</h3>
+            <p style={{ margin: 0, fontSize: '13px', color: '#475569', lineHeight: 1.6 }}>탈퇴하면 계정과 관심 지역, 저장한 산행 계획이 삭제됩니다. 직접 만든 파티와 공동 준비물도 삭제되며 복구할 수 없습니다.</p>
+            <label style={{ color: '#334155', fontSize: '13px', fontWeight: 700 }}>현재 비밀번호
+              <input type="password" autoComplete="current-password" required value={deletePassword} onChange={event => setDeletePassword(event.target.value)} style={{ display: 'block', width: '100%', boxSizing: 'border-box', padding: '11px', marginTop: '6px', border: '1px solid #cbd5e1', borderRadius: '8px' }} />
+            </label>
+            <label style={{ color: '#334155', fontSize: '13px', lineHeight: 1.5 }}><input type="checkbox" checked={deleteAccepted} onChange={event => setDeleteAccepted(event.target.checked)} /> 삭제 내용을 확인했습니다.</label>
+            {deleteError && <p role="alert" style={{ margin: 0, color: '#b91c1c', fontSize: '13px', lineHeight: 1.5 }}>{deleteError}</p>}
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button type="button" disabled={deleteBusy} onClick={() => { setIsDeleteMode(false); setDeletePassword(''); setDeleteAccepted(false); setDeleteError(''); }} style={{ flex: 1, padding: '10px', border: '1px solid #cbd5e1', borderRadius: '8px', background: '#fff', cursor: 'pointer' }}>취소</button>
+              <button type="submit" disabled={deleteBusy || !deletePassword || !deleteAccepted} style={{ flex: 1, padding: '10px', border: 0, borderRadius: '8px', background: '#b91c1c', color: '#fff', cursor: 'pointer' }}>{deleteBusy ? '처리 중...' : '탈퇴하기'}</button>
+            </div>
+          </form>
+        ) : !isEditMode ? (
           <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
             <h3 style={{ margin: '0 0 16px 0', fontSize: '17px', fontWeight: '800', color: '#1e293b' }}>내 정보</h3>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px', padding: '16px', backgroundColor: 'rgba(255,255,255,0.5)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.6)' }}>
@@ -122,7 +153,7 @@ function LoginCard({ loginPrompt = 0, onSignUpClick, onFindPasswordClick, logged
               <button type="button" onClick={() => setIsEditMode(false)} style={{ flex: 1, padding: '10px', backgroundColor: 'rgba(0,0,0,0.05)', color: '#475569', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px' }}>취소</button>
               <button type="submit" disabled={loginBusy} style={{ flex: 1, padding: '10px', backgroundColor: '#3182ce', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px' }}>저장</button>
             </div>
-            <button type="button" onClick={onDeleteAccount} style={{ marginTop: '12px', background: 'none', border: 'none', color: '#e53e3e', fontSize: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+            <button type="button" onClick={() => { setDeletePassword(''); setDeleteAccepted(false); setDeleteError(''); setIsDeleteMode(true); }} style={{ marginTop: '12px', background: 'none', border: 'none', color: '#e53e3e', fontSize: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
               <FiTrash2 size={12} /> 회원 탈퇴
             </button>
           </form>

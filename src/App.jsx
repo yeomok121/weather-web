@@ -197,24 +197,23 @@ function App() {
     }
   };
 
-  const handleDeleteAccount = async () => {
-    if (!loggedInUser) return;
-    if (!window.confirm('정말 회원 탈퇴하시겠습니까? 저장된 관심 지역 정보도 함께 삭제됩니다.')) return;
-    const password = window.prompt('본인 확인을 위해 비밀번호를 입력해 주세요.');
-    if (!password) return;
-
+  const handleDeleteAccount = async (password) => {
+    if (!loggedInUser) throw new Error('로그인 상태를 확인해 주세요.');
+    const account = loggedInUser;
+    await requestJson('/api/users/delete', {
+      method: 'POST', timeoutMs: 20000, headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: account.id, password }),
+    });
     try {
-      const res = await fetch(`${API}/api/users/delete`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: loggedInUser.id, password }),
-      });
-      const data = await res.json();
-      if (!res.ok) { alert(data.detail || '회원 탈퇴에 실패했습니다.'); return; }
-      localStorage.removeItem(`favorites_${loggedInUser.id}`);
-      localStorage.removeItem('loggedInUser');
-      setLoggedInUser(null);
-      showToast('회원 탈퇴가 완료되었습니다.');
-    } catch (e) { alert('서버에 연결할 수 없습니다.'); }
+      localStorage.removeItem(`favorites_${account.id}`);
+      localStorage.removeItem(`favorites_pending_${account.id}`);
+      localStorage.removeItem(`hiking:last-party:${account.id}`);
+      Object.keys(localStorage).filter(key => key.startsWith(`hiking:draft:${account.id}:`)).forEach(key => localStorage.removeItem(key));
+      const saved = readStoredJson('loggedInUser', null);
+      if (saved?.accessToken === account.accessToken) localStorage.removeItem('loggedInUser');
+    } catch { /* Account deletion has already succeeded on the server. */ }
+    setLoggedInUser(current => current?.accessToken === account.accessToken ? null : current);
+    showToast('회원 탈퇴가 완료되었습니다.');
   };
 
   useEffect(() => {
