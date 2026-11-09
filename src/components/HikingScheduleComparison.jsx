@@ -4,10 +4,10 @@ import { assessHikingForecastWindow } from './mountainAssessment';
 export default function HikingScheduleComparison({ hourlyData, weatherData, durationMinutes, activeOffset, onSelectOffset, restoredDepartureAt, onSelectDeparture }) {
   const now = new Date();
   const selected = restoredDepartureAt ? new Date(restoredDepartureAt) : new Date(now.getTime() + Number(activeOffset) * 3600000);
-  const candidates = [-2, -1, 0, 1, 2].map(hours => ({ hours, date: new Date(selected.getTime() + hours * 3600000) })).filter(item => item.date >= now);
+  const candidates = [-2, -1, 0, 1, 2].map(hours => ({ hours, date: new Date(selected.getTime() + hours * 3600000) })).filter(item => item.hours === 0 || item.date >= now);
   const format = date => new Intl.DateTimeFormat('ko-KR', { timeZone: 'Asia/Seoul', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(date);
   const pm25 = (weatherData.dust || '').match(/\d+/);
-  return <section id="hike-schedule" className="hike-schedule" aria-label="출발 시간별 일정 비교">
+  return <section className="schedule-comparison" aria-label="출발 시간별 일정 비교">
     <div className="planner-heading"><div><span className="eyebrow">출발 시간별 비교</span><h3>선택한 일정과 앞뒤 시간을 비교하세요</h3><p>선택한 코스와 속도를 기준으로 비교합니다.</p></div></div>
     <div className="schedule-options">{candidates.map(({ hours, date }) => {
       const offset = (date.getTime() - now.getTime()) / 3600000;

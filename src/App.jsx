@@ -687,9 +687,12 @@ function App() {
 
     let timeSafetyStatus = '시간 여유 있음';
     let timeSafetyColor = '#166534';
-    if (activeWeather.isFuture || isNextDayPlan || !activeWeather.sunset || !activeWeather.safeDescentTime) {
-      timeSafetyStatus = '날짜별 일몰 정보 확인 필요';
+    if (activeWeather.isFuture || isNextDayPlan || !activeWeather.sunset || !activeWeather.sunrise || !activeWeather.safeDescentTime) {
+      timeSafetyStatus = '날짜별 일출·일몰 정보 확인 필요';
       timeSafetyColor = '#d97706';
+    } else if (depMins < parseTime(activeWeather.sunrise, 390)) {
+      timeSafetyStatus = '일출 전 출발 · 야간 산행 주의';
+      timeSafetyColor = '#b45309';
     } else if (descentFinishMins > sunsetMins) {
       timeSafetyStatus = '위험 (일몰 후 하산 예상)';
       timeSafetyColor = '#dc2626';

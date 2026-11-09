@@ -80,6 +80,7 @@ function HourlyForecast({
   const [hydratedDraftKey, setHydratedDraftKey] = useState('');
   const [departureDraft, setDepartureDraft] = useState('');
   const [departureError, setDepartureError] = useState('');
+  const [compareOpen, setCompareOpen] = useState(false);
   const previousDraftOwner = useRef(null);
   const hasWeatherData = weatherData.hasData === true;
   useEffect(() => { setDepartureDraft(departureInputValue(departureAt)); setDepartureError(''); }, [departureAt]);
@@ -440,7 +441,7 @@ function HourlyForecast({
     }
 
     const isNextDayPlan = !isFuture && Math.floor(depMins / 1440) > 0;
-    if (isFuture || isNextDayPlan || !weatherData.sunset || !safeDescentTime || (timelineMode === 'ascent' && !weatherData.sunrise)) {
+    if (isFuture || isNextDayPlan || !weatherData.sunset || !weatherData.sunrise || !safeDescentTime) {
       return {
         status: 'planning',
         safetyBadge: '🗓️ 날짜별 일몰 확인 필요',
@@ -454,6 +455,15 @@ function HourlyForecast({
         msg: isFuture
           ? `🗓️ ${weatherData.date}: 주간 예보 기준 일정입니다. 날짜별 일출·일몰과 탐방로 운영시간을 확인해야 하산 안전을 판단할 수 있습니다.`
           : `🗓️ 다음 날 ${depTimeStr} 출발 일정입니다. 날짜별 일출·일몰과 탐방로 운영시간을 확인해야 하산 안전을 판단할 수 있습니다.`
+      };
+    }
+
+    if (depMins < parseTime(weatherData.sunrise, 390)) {
+      return {
+        status: 'night', safetyBadge: '🌙 일출 전 출발 · 야간 산행 주의',
+        safetyColor: '#b45309', safetyBg: 'rgba(254,252,232,0.9)',
+        deadlineStr: '일출 전 출발', depTimeStr, summitArrivalStr, descentFinishStr, arrivalWeather,
+        msg: `🌙 ${depTimeStr} 출발은 일출(${weatherData.sunrise}) 전입니다. 어두운 구간과 탐방로 입산 가능 시간을 확인하세요.`
       };
     }
 
@@ -519,7 +529,7 @@ function HourlyForecast({
 
     return {
       status: 'safe',
-      safetyBadge: '✅ 시간 안전: 양호',
+      safetyBadge: '✅ 일몰 전 하산 예상',
       safetyColor: '#166534',
       safetyBg: 'rgba(240,253,244,0.9)',
       deadlineStr,
@@ -527,7 +537,7 @@ function HourlyForecast({
       summitArrivalStr,
       descentFinishStr,
       arrivalWeather,
-      msg: `✅ [시간 양호] ${depTimeStr} 출발 시 약 ${summitArrivalStr} 정상 도착, 일몰(${sunset}) 전 ${descentFinishStr}경 안전 하산 가능합니다.`
+      msg: `✅ ${depTimeStr} 출발 시 약 ${summitArrivalStr} 정상 도착, 일몰(${sunset}) 전 ${descentFinishStr}경 하산이 예상됩니다. 실제 통제와 현장 상황을 확인하세요.`
     };
   };
   const timeline = getTimelineAndSummitArrival();
@@ -537,7 +547,7 @@ function HourlyForecast({
       ? `정상 도착 예상 ${timeline.summitArrivalStr}이 권장 하산 시작 시각 ${safeDescentTime}보다 늦습니다.`
       : timeline.status === 'planning'
         ? '선택 날짜의 일출·일몰과 탐방로 운영시간 확인이 필요합니다.'
-        : timeline.status === 'sunrise'
+        : timeline.status === 'sunrise' || timeline.status === 'night'
           ? timeline.msg
           : `출발 ${timeline.depTimeStr} → 예상 하산 ${timeline.descentFinishStr}. 실제 통제와 노면 상태도 확인하세요.`;
 
@@ -581,6 +591,7 @@ function HourlyForecast({
 
   const jumpTo = id => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   const jumpPlanner = section => { setPlannerSection(section); jumpTo('hiking-planner'); };
+  const openComparison = () => { setCompareOpen(true); jumpTo('hike-schedule'); };
 
   return (
     <div className="glass-card hourly-forecast-card" style={{ borderRadius: '16px', padding: '20px', display: 'flex', flexDirection: 'column', color: '#1e293b', width: '100%', boxSizing: 'border-box' }}>
@@ -610,21 +621,19 @@ function HourlyForecast({
         )}
       </div>
 
-      {isMountainMode && <nav className="hike-flowbar" aria-label="산행 준비 순서"><button type="button" onClick={() => jumpTo('mountain-picker')}>① 산 선택</button><button type="button" disabled={!hasWeatherData} onClick={() => jumpTo('hike-schedule')}>② 일정 비교</button><button type="button" onClick={() => jumpPlanner('plan')}>③ 저장·일행 초대</button></nav>}
-      {isMountainMode && hikingPlanSummary && <section className="hike-schedule" aria-label="선택한 산행 요약">
+      {isMountainMode && <nav className="hike-flowbar" aria-label="산행 준비 순서"><button type="button" onClick={() => jumpTo('mountain-picker')}>① 산 선택</button><button type="button" disabled={!hasWeatherData} onClick={openComparison}>② 일정 비교</button><button type="button" onClick={() => jumpPlanner('plan')}>③ 저장·일행 초대</button></nav>}
+      {isMountainMode && hikingPlanSummary && <section id="hike-schedule" className="hike-schedule hike-planning" aria-label="산행 일정 설정">
         <div className="planner-heading"><div><span className="eyebrow">선택한 산행</span><h3>{mountainInfo?.name} · {hikingPlanSummary.course?.name}</h3><p>{new Date(hikingPlanSummary.departureAt).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })} 출발 · 총 {Math.floor(hikingPlanSummary.totalMins / 60)}시간 {hikingPlanSummary.totalMins % 60}분</p></div></div>
         <p><strong style={{ color: hikingPlanSummary.timeSafetyColor }}>{hikingPlanSummary.timeSafetyStatus}</strong> · 예상 하산 {new Date(Date.parse(hikingPlanSummary.departureAt) + hikingPlanSummary.totalMins * 60000).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
         <p className="muted">{hikingPlanSummary.scoreBasisLabel}</p><p className="muted">준비물 {gearList.length}개{gearList.length ? ` · ${gearList.slice(0, 3).join(', ')}${gearList.length > 3 ? ' 외' : ''}` : ''}</p>
-        <div className="planner-actions"><button type="button" onClick={() => jumpTo('hike-schedule')}>일정 비교</button><button type="button" onClick={() => jumpPlanner('plan')}>계획 저장·일행 초대</button></div>
-      </section>}
-      {isMountainMode && hasWeatherData && departureAt && <section className="hike-schedule" aria-label="산행 출발 날짜와 시간">
-        <h3>산행 출발 날짜와 시간</h3>
+        <div className="hike-planning-controls">
         <label>출발 날짜와 시간 (한국 시간) <input type="datetime-local" aria-invalid={!!departureError} value={departureDraft} onChange={event => { const value = event.target.value; setDepartureDraft(value); const when = Date.parse(`${value}:00+09:00`); if (!value || !Number.isFinite(when) || when <= Date.now()) { setDepartureError('현재 이후의 출발 날짜와 시간을 선택해 주세요.'); return; } setDepartureError(''); onRestoreDeparture?.(new Date(when).toISOString()); }} /></label>
         {departureError && <p role="alert" style={{ color: '#b91c1c', fontSize: '13px' }}>{departureError}</p>}
         <div className="planner-actions">{[6, 8, 10].map(hour => <button type="button" key={hour} onClick={() => { const tomorrow = koreanDate(Date.now() + 86400000); const value = new Date(`${tomorrow}T${String(hour).padStart(2, '0')}:00:00+09:00`).toISOString(); setDepartureDraft(departureInputValue(value)); setDepartureError(''); onRestoreDeparture?.(value); }}>내일 {hour}시</button>)}</div>
-        <p className="muted">시간별 예보가 제공되지 않는 구간은 점수를 계산하지 않습니다.</p>
+        </div>
+        <details className="hike-compare-disclosure" open={compareOpen} onToggle={event => setCompareOpen(event.currentTarget.open)}><summary>출발 시각 비교</summary><HikingScheduleComparison hourlyData={hourlyData} weatherData={weatherData} durationMinutes={adjustedTimeMins} activeOffset={activeDepOffset} onSelectOffset={setDepOffset} restoredDepartureAt={departureAt} onSelectDeparture={onRestoreDeparture} /></details>
+        <button type="button" className="hike-plan-action" onClick={() => jumpPlanner('plan')}>계획 저장·일행 초대</button>
       </section>}
-      {isMountainMode && hasWeatherData && !isLoading && <HikingScheduleComparison hourlyData={hourlyData} weatherData={weatherData} durationMinutes={adjustedTimeMins} activeOffset={activeDepOffset} onSelectOffset={setDepOffset} restoredDepartureAt={departureAt} onSelectDeparture={onRestoreDeparture} />}
       {isMountainMode && (!hasWeatherData || isLoading) && <HikingPlannerPanel user={loggedInUser} mountainInfo={mountainInfo} selectedCourse={selectedCourse} courseIndex={activeCourseIdx} weatherDate={weatherData} selectedDateIdx={selectedDateIdx} pace={activePace} departureOffsetHours={activeDepOffset} departureTime="" gearList={[]} checklist={{}} canSave={false} onApplyPlan={handleApplySavedPlan} onRequireLogin={onRequireLogin} onShowToast={onShowToast} focusSection={plannerSection} />}
 
       {isMountainMode && hasWeatherData && !isLoading && (
