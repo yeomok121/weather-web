@@ -21,6 +21,9 @@ function AdminPage({ onClose, adminPassword }) {
   // ================= 2. 회원 관리 상태 =================
   const [users, setUsers] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [userDetail, setUserDetail] = useState(null);
+  const [userDetailError, setUserDetailError] = useState('');
+  const [userDetailLoading, setUserDetailLoading] = useState(false);
   const [newUserForm, setNewUserForm] = useState({ id: '', pw: '', name: '' });
   const [editingUserId, setEditingUserId] = useState(null);
   const [editUserForm, setEditUserForm] = useState({ id: '', pw: '', name: '' });
@@ -109,10 +112,24 @@ function AdminPage({ onClose, adminPassword }) {
         alert(data.detail || '회원 목록을 불러오지 못했습니다.');
         return;
       }
-      setUsers(data.map(u => ({ dbId: u.id, id: u.username, name: u.name })));
+      setUsers(data.map(u => ({ dbId: u.id, id: u.username, name: u.name, createdAt: u.created_at })));
     } catch (e) {
       alert('서버에 연결할 수 없습니다.');
     }
+  };
+
+  const openUserDetail = async user => {
+    setUserDetail({ ...user, loading: true });
+    setUserDetailError('');
+    setUserDetailLoading(true);
+    try {
+      const res = await fetch(`${API}/api/admin/users/${user.dbId}/summary`, { headers: authHeaders });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || '회원 상세 정보를 불러오지 못했습니다.');
+      setUserDetail({ ...user, ...data });
+    } catch (error) {
+      setUserDetailError(error.message || '회원 상세 정보를 불러오지 못했습니다.');
+    } finally { setUserDetailLoading(false); }
   };
 
   // 1) 관리자 직접 회원 추가
@@ -321,6 +338,7 @@ function AdminPage({ onClose, adminPassword }) {
                       <th style={{ padding: '12px 10px', width: '60px', textAlign: 'center' }}>번호</th>
                       <th style={{ padding: '12px 10px' }}>아이디</th>
                       <th style={{ padding: '12px 10px' }}>이름</th>
+                      <th style={{ padding: '12px 10px' }}>가입일</th>
                       <th style={{ padding: '12px 10px', width: '110px', textAlign: 'center' }}>관리</th>
                     </tr>
                   </thead>
@@ -339,7 +357,7 @@ function AdminPage({ onClose, adminPassword }) {
                                 onChange={e => setEditUserForm({...editUserForm, id: e.target.value})}
                                 style={{ width: '90%', padding: '6px 8px', borderRadius: '4px', border: '1px solid #3182ce' }}
                               />
-                            ) : user.id}
+                            ) : <button type="button" onClick={() => openUserDetail(user)} style={{ border: 0, background: 'none', color: '#2563a5', cursor: 'pointer', fontWeight: 'bold' }}>{user.id}</button>}
                           </td>
                           <td style={{ padding: '14px 10px', color: '#334155' }}>
                             {isEditing ? (
@@ -352,6 +370,7 @@ function AdminPage({ onClose, adminPassword }) {
                             ) : user.name}
                             {isEditing && <input aria-label="새 비밀번호" type="password" placeholder="비밀번호 변경 시 입력" value={editUserForm.pw} onChange={e => setEditUserForm({...editUserForm, pw: e.target.value})} style={{ width: '90%', marginTop: '8px', padding: '6px 8px', borderRadius: '4px', border: '1px solid #3182ce' }} />}
                           </td>
+                          <td style={{ padding: '14px 10px', color: '#475569' }}>{user.createdAt ? String(user.createdAt).slice(0, 10) : '확인 불가'}</td>
                           <td style={{ padding: '14px 10px', textAlign: 'center' }}>
                             {isEditing ? (
                               <div style={{ display: 'flex', justifyContent: 'center', gap: '8px' }}>
@@ -386,6 +405,14 @@ function AdminPage({ onClose, adminPassword }) {
                 )}
               </div>
             </div>
+            {userDetail && <section aria-label="회원 상세 정보" style={{ background: 'white', padding: '25px 30px', borderRadius: '12px', marginTop: '20px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px' }}><h3>회원 상세 정보</h3><button type="button" onClick={() => setUserDetail(null)}>닫기</button></div>
+              <p><strong>{userDetail.name}</strong> ({userDetail.id})</p>
+              <p>가입일: {userDetail.createdAt ? String(userDetail.createdAt).slice(0, 10) : '확인 불가'}</p>
+              {userDetailLoading ? <p role="status">산행 활동을 확인하고 있습니다.</p> : userDetailError ? <p role="alert">{userDetailError}</p> : <p>저장한 산행 계획 {userDetail.plan_count}개 · 참여 중인 파티 {userDetail.party_count}개</p>}
+              <p style={{ color: '#64748b', fontSize: '13px' }}>회원의 산행 계획이나 준비물 내용은 표시하지 않습니다.</p>
+              <button type="button" onClick={() => { startEditUser(userDetail); setUserDetail(null); }}>회원 정보 수정</button>
+            </section>}
           </>
         ) : (
           /* ================= [탭 2] 기존 공지사항 관리 화면 ================= */
