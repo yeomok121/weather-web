@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { FiUser, FiLock, FiLogOut, FiSettings, FiTrash2 } from 'react-icons/fi';
 import { requestJson } from '../lib/apiClient';
 
+const roleLabels = { member: '일반 회원', superadmin: '최고 관리자', member_manager: '회원 관리자', notice_manager: '공지 관리자' };
+
 function LoginCard({ loginPrompt = 0, onSignUpClick, onFindPasswordClick, loggedInUser, onLogin, onLogout, onUpdateUser, onDeleteAccount }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -13,7 +15,27 @@ function LoginCard({ loginPrompt = 0, onSignUpClick, onFindPasswordClick, logged
   const [showLoginForm, setShowLoginForm] = useState(false);
   const [loginBusy, setLoginBusy] = useState(false);
   const [loginError, setLoginError] = useState('');
+  const [roleState, setRoleState] = useState({ token: '', label: '' });
   useEffect(() => { if (loginPrompt > 0) setShowLoginForm(true); }, [loginPrompt]);
+  useEffect(() => {
+    const token = loggedInUser?.accessToken;
+    if (!token) return undefined;
+    let active = true;
+    let controller;
+    const refreshRole = async () => {
+      controller?.abort();
+      controller = new AbortController();
+      try {
+        const data = await requestJson('/api/users/me/role', { headers: { Authorization: `Bearer ${token}` }, signal: controller.signal, timeoutMs: 20000 });
+        if (active) setRoleState({ token, label: roleLabels[data.role] || '권한 확인 필요' });
+      } catch (error) {
+        if (active && error.name !== 'AbortError') setRoleState({ token, label: '권한 확인 불가' });
+      }
+    };
+    refreshRole();
+    window.addEventListener('focus', refreshRole);
+    return () => { active = false; controller?.abort(); window.removeEventListener('focus', refreshRole); };
+  }, [loggedInUser?.accessToken]);
 
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
@@ -75,7 +97,7 @@ function LoginCard({ loginPrompt = 0, onSignUpClick, onFindPasswordClick, logged
               </div>
               <div>
                 <p style={{ margin: '0 0 4px 0', fontWeight: 'bold', fontSize: '15px', color: '#0f172a' }}>{loggedInUser.name} 님</p>
-                <p style={{ margin: 0, fontSize: '12.5px', color: '#475569' }}>환영합니다!</p>
+                <p role="status" style={{ margin: 0, fontSize: '12.5px', color: '#315b76', fontWeight: 700 }}>{roleState.token === loggedInUser.accessToken ? roleState.label : '권한 확인 중'}</p>
               </div>
             </div>
             
