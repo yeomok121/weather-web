@@ -8,7 +8,7 @@ export default function HikingScheduleComparison({ hourlyData, weatherData, dura
   const format = date => new Intl.DateTimeFormat('ko-KR', { timeZone: 'Asia/Seoul', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(date);
   const pm25 = (weatherData.dust || '').match(/\d+/);
   return <section className="schedule-comparison" aria-label="출발 시간별 일정 비교">
-    <div className="planner-heading"><div><span className="eyebrow">출발 시간별 비교</span><h3>선택한 일정과 앞뒤 시간을 비교하세요</h3><p>선택한 코스와 속도를 기준으로 비교합니다.</p></div></div>
+    <p>선택한 코스와 속도로 앞뒤 시간을 비교합니다.</p>
     <div className="schedule-options">{candidates.map(({ hours, date }) => {
       const offset = (date.getTime() - now.getTime()) / 3600000;
       const assessment = assessHikingForecastWindow({ hourlyData, now, departureOffsetHours: offset, durationMinutes,

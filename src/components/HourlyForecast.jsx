@@ -623,16 +623,19 @@ function HourlyForecast({
 
       {isMountainMode && <nav className="hike-flowbar" aria-label="산행 준비 순서"><button type="button" onClick={() => jumpTo('mountain-picker')}>① 산 선택</button><button type="button" disabled={!hasWeatherData} onClick={openComparison}>② 일정 비교</button><button type="button" onClick={() => jumpPlanner('plan')}>③ 저장·일행 초대</button></nav>}
       {isMountainMode && hikingPlanSummary && <section id="hike-schedule" className="hike-schedule hike-planning" aria-label="산행 일정 설정">
-        <div className="planner-heading"><div><span className="eyebrow">선택한 산행</span><h3>{mountainInfo?.name} · {hikingPlanSummary.course?.name}</h3><p>{new Date(hikingPlanSummary.departureAt).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })} 출발 · 총 {Math.floor(hikingPlanSummary.totalMins / 60)}시간 {hikingPlanSummary.totalMins % 60}분</p></div></div>
-        <p><strong style={{ color: hikingPlanSummary.timeSafetyColor }}>{hikingPlanSummary.timeSafetyStatus}</strong> · 예상 하산 {new Date(Date.parse(hikingPlanSummary.departureAt) + hikingPlanSummary.totalMins * 60000).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
-        <p className="muted">{hikingPlanSummary.scoreBasisLabel}</p><p className="muted">준비물 {gearList.length}개{gearList.length ? ` · ${gearList.slice(0, 3).join(', ')}${gearList.length > 3 ? ' 외' : ''}` : ''}</p>
+        <div className="planner-heading"><div><span className="eyebrow">산행 일정</span><h3>출발 시간 선택</h3></div></div>
         <div className="hike-planning-controls">
         <label>출발 날짜와 시간 (한국 시간) <input type="datetime-local" aria-invalid={!!departureError} value={departureDraft} onChange={event => { const value = event.target.value; setDepartureDraft(value); const when = Date.parse(`${value}:00+09:00`); if (!value || !Number.isFinite(when) || when <= Date.now()) { setDepartureError('현재 이후의 출발 날짜와 시간을 선택해 주세요.'); return; } setDepartureError(''); onRestoreDeparture?.(new Date(when).toISOString()); }} /></label>
         {departureError && <p role="alert" style={{ color: '#b91c1c', fontSize: '13px' }}>{departureError}</p>}
         <div className="planner-actions">{[6, 8, 10].map(hour => <button type="button" key={hour} onClick={() => { const tomorrow = koreanDate(Date.now() + 86400000); const value = new Date(`${tomorrow}T${String(hour).padStart(2, '0')}:00:00+09:00`).toISOString(); setDepartureDraft(departureInputValue(value)); setDepartureError(''); onRestoreDeparture?.(value); }}>내일 {hour}시</button>)}</div>
         </div>
+        <details className="hike-offset-disclosure"><summary>시간 간격으로 선택</summary>
+          <label>출발 시간 <select aria-label="시간 간격으로 산행 출발 시각 선택" value={activeDepOffset} onChange={event => setDepOffset(Number(event.target.value))}>
+            {DEPARTURE_OFFSETS.map(opt => <option key={opt.value} value={opt.value}>{restoredDepartureAt && opt.value === 0 ? '직접 선택한 일정' : getDepartureOptionLabel(opt)}</option>)}
+          </select></label>
+          {restoredDepartureAt && <button type="button" className="subtle-button" onClick={() => setDepOffset(0)}>지금 출발로 설정</button>}
+        </details>
         <details className="hike-compare-disclosure" open={compareOpen} onToggle={event => setCompareOpen(event.currentTarget.open)}><summary>출발 시각 비교</summary><HikingScheduleComparison hourlyData={hourlyData} weatherData={weatherData} durationMinutes={adjustedTimeMins} activeOffset={activeDepOffset} onSelectOffset={setDepOffset} restoredDepartureAt={departureAt} onSelectDeparture={onRestoreDeparture} /></details>
-        <button type="button" className="hike-plan-action" onClick={() => jumpPlanner('plan')}>계획 저장·일행 초대</button>
       </section>}
       {isMountainMode && (!hasWeatherData || isLoading) && <HikingPlannerPanel user={loggedInUser} mountainInfo={mountainInfo} selectedCourse={selectedCourse} courseIndex={activeCourseIdx} weatherDate={weatherData} selectedDateIdx={selectedDateIdx} pace={activePace} departureOffsetHours={activeDepOffset} departureTime="" gearList={[]} checklist={{}} canSave={false} onApplyPlan={handleApplySavedPlan} onRequireLogin={onRequireLogin} onShowToast={onShowToast} focusSection={plannerSection} />}
 
@@ -800,29 +803,8 @@ function HourlyForecast({
                   </div>
                 </div>
                 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span style={{ fontSize: '11px', fontWeight: 'bold', color: '#475569', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '2px', width: '36px' }}>
-                    <FiClock size={11} />출발:
-                  </span>
-                  <select
-                    aria-label="산행 출발 시각"
-                    value={activeDepOffset}
-                    onChange={(e) => setDepOffset(Number(e.target.value))}
-                    style={{
-                      flex: 1, padding: '5px 8px', fontSize: '11.5px', fontWeight: 'bold', borderRadius: '6px',
-                      border: '1px solid rgba(0,0,0,0.12)', backgroundColor: '#ffffff', color: '#1e293b', cursor: 'pointer', outline: 'none'
-                    }}
-                  >
-                    {DEPARTURE_OFFSETS.map(opt => (
-                      <option key={opt.value} value={opt.value}>
-                        {restoredDepartureAt && opt.value === 0 ? `저장 일정 (${new Date(restoredDepartureAt).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })})` : getDepartureOptionLabel(opt)}
-                      </option>
-                    ))}
-                  </select>
-                </div>
               </div>
 
-              {restoredDepartureAt && <button type="button" className="subtle-button" onClick={() => setDepOffset(0)}>저장 시각 대신 지금 출발로 설정</button>}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', fontSize: '11px', color: '#1e293b', backgroundColor: 'rgba(255,255,255,0.7)', padding: '8px 10px', borderRadius: '8px', marginBottom: '8px' }}>
                 <span>거리: <strong>{selectedCourse.distance}</strong></span>
                 <span>총 소요: <strong>{Math.floor(adjustedTimeMins / 60)}h {adjustedTimeMins % 60 > 0 ? `${adjustedTimeMins % 60}m` : ''}</strong></span>
@@ -858,11 +840,6 @@ function HourlyForecast({
                 )}
               </div>
 
-              <div style={{ fontSize: '11px', fontWeight: 'bold', textAlign: 'center', padding: '6px 8px', borderRadius: '8px', wordBreak: 'keep-all', lineHeight: '1.35', marginBottom: '8px',
-                backgroundColor: timeline.safetyBg, color: timeline.safetyColor, border: `1px solid ${timeline.safetyColor}30`
-              }}>
-                {timeline.msg}
-              </div>
               <MountainInfo label="정상 도착 시각 산정 기준">
                 정상 도착 시각은 전체 코스 시간의 55%를 오름 시간으로 계산한 참고 추정치입니다. 실제 소요 시간은 체력, 휴식, 노면과 코스 상황에 따라 달라집니다.
               </MountainInfo>

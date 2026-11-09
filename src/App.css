@@ -274,6 +274,10 @@ button:disabled { cursor:wait; opacity:.65; }
 .hike-planning-controls label { display:grid; gap:4px; flex:1 1 235px; font-size:12px; font-weight:700; color:#39574e; }
 .hike-planning-controls input { box-sizing:border-box; width:100%; min-height:42px; padding:8px 10px; border:1px solid #c5d6d2; border-radius:8px; background:#fff; color:#24364a; font:inherit; }
 .hike-planning-controls .planner-actions { flex-wrap:wrap; }
+.hike-offset-disclosure { margin-top:10px; }
+.hike-offset-disclosure > summary { cursor:pointer; color:#176b59; font-size:13px; font-weight:700; padding:8px 0; }
+.hike-offset-disclosure label { display:inline-flex; align-items:center; gap:8px; font-size:13px; }
+.hike-offset-disclosure select { min-height:42px; padding:8px; border:1px solid #c5d6d2; border-radius:8px; background:#fff; color:#24364a; }
 .hike-planning-controls button, .hike-plan-action { min-height:42px; padding:8px 12px; border:1px solid #c5d6d2; border-radius:8px; background:#fff; color:#24574f; font-weight:700; cursor:pointer; }
 .hike-compare-disclosure { margin-top:10px; border-top:1px solid #d9e6e2; }
 .hike-compare-disclosure > summary { cursor:pointer; padding:10px 0; color:#176b59; font-size:13px; font-weight:700; }
