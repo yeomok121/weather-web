@@ -635,7 +635,7 @@ function App() {
       isFuture: activeWeather.isFuture, offsetHours: departureOffsetHours, restoredAt: restoredDepartureAt });
     const departureDate = new Date(departureAt);
     const todayMidnight = Date.parse(`${koreanDate(now)}T00:00:00+09:00`);
-    const depMins = Math.round((departureDate.getTime() - todayMidnight) / 60000);
+    const depMins = Math.floor((departureDate.getTime() - todayMidnight) / 60000);
     const forecastOffsetHours = (departureDate.getTime() - now.getTime()) / 3600000;
 
     const summitArrivalMins = depMins + ascentMins;

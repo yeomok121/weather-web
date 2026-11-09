@@ -369,7 +369,7 @@ function HourlyForecast({
     const baseNowMins = now.getHours() * 60 + now.getMinutes();
     const actualDeparture = departureAt ? new Date(departureAt) : null;
     const midnight = Date.parse(`${koreanDate(now)}T00:00:00+09:00`);
-    const depMins = actualDeparture ? Math.round((actualDeparture.getTime() - midnight) / 60000) : (isFuture ? (8 + activeDepOffset) * 60 : baseNowMins + activeDepOffset * 60);
+    const depMins = actualDeparture ? Math.floor((actualDeparture.getTime() - midnight) / 60000) : (isFuture ? (8 + activeDepOffset) * 60 : baseNowMins + activeDepOffset * 60);
     const summitArrivalMins = depMins + ascentTimeMins;
     const descentFinishMins = depMins + adjustedTimeMins;
 
