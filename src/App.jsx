@@ -126,6 +126,7 @@ function App() {
   const [adminPasswordInput, setAdminPasswordInput] = useState('');
   const [isAdminPageOpen, setIsAdminPageOpen] = useState(false);
   const [adminPw, setAdminPw] = useState('');
+  const [adminRole, setAdminRole] = useState('');
 
   const [toast, setToast] = useState({ visible: false, message: '' });
   const [aiMessage, setAiMessage] = useState('✨ 날씨 정보를 불러오는 중입니다...');
@@ -563,8 +564,20 @@ function App() {
     try {
       const res = await fetch(`${API}/api/admin/verify`, { method: 'POST', headers: { 'x-admin-password': adminPasswordInput } });
       if (!res.ok) { alert('비밀번호가 틀렸습니다. 접근 권한이 없습니다.'); setAdminPasswordInput(''); return; }
-      setAdminPw(adminPasswordInput); setIsAdminAuthOpen(false); setAdminPasswordInput(''); setIsAdminPageOpen(true);
+      const data = await res.json();
+      setAdminRole(data.role || 'superadmin'); setAdminPw(adminPasswordInput); setIsAdminAuthOpen(false); setAdminPasswordInput(''); setIsAdminPageOpen(true);
     } catch (e) { alert('서버에 연결할 수 없습니다.'); }
+  };
+
+  const openAdmin = async () => {
+    if (!loggedInUser?.accessToken) { setIsAdminAuthOpen(true); return; }
+    try {
+      const res = await fetch(`${API}/api/admin/verify`, { method: 'POST', headers: { Authorization: `Bearer ${loggedInUser.accessToken}` } });
+      if (res.status === 403) { alert('관리자 권한이 없는 계정입니다.'); return; }
+      if (!res.ok) { alert('로그인 상태를 확인할 수 없습니다. 다시 로그인해 주세요.'); return; }
+      const data = await res.json();
+      setAdminPw(''); setAdminRole(data.role); setIsAdminPageOpen(true);
+    } catch { alert('관리자 권한을 확인하지 못했습니다. 잠시 후 다시 시도해 주세요.'); }
   };
 
   const activeWeather = useMemo(() => {
@@ -1043,7 +1056,7 @@ function App() {
           <span style={{ cursor: 'pointer' }} onClick={() => showToast('이용약관 페이지는 준비 중입니다.')}>이용약관</span><span style={{ margin: '0 12px', color: '#94a3b8' }}>|</span>
           <span style={{ cursor: 'pointer' }} onClick={() => showToast('개인정보처리방침 페이지는 준비 중입니다.')}>개인정보처리방침</span>
         </div>
-        <button onClick={() => setIsAdminAuthOpen(true)} style={{ background: 'none', border: 'none', color: '#1e293b', cursor: 'pointer', opacity: 0.3 }} title="Admin"><FiSettings size={16} /></button>
+        <button onClick={openAdmin} style={{ background: 'none', border: 'none', color: '#1e293b', cursor: 'pointer', opacity: 0.3 }} title="Admin"><FiSettings size={16} /></button>
       </footer>
 
       {isAdminAuthOpen && (
@@ -1064,7 +1077,7 @@ function App() {
       {isFindPasswordOpen && <FindPasswordModal onClose={() => setIsFindPasswordOpen(false)} />}
       {isAddRegionOpen && <AddRegionModal onClose={() => setIsAddRegionOpen(false)} onAddRegion={handleAddFavorite} isAiLoading={isAiLoading} isLoggedIn={!!loggedInUser} />}
       {isAdminPageOpen && (
-        <AdminPage adminPassword={adminPw} onClose={() => { setIsAdminPageOpen(false); setAdminPw(''); }} />
+        <AdminPage adminPassword={adminPw} adminToken={adminPw ? '' : loggedInUser?.accessToken} adminRole={adminRole} onClose={() => { setIsAdminPageOpen(false); setAdminPw(''); setAdminRole(''); }} />
       )}
     </div>
   );

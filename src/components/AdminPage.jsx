@@ -5,9 +5,14 @@ import { koreanDate } from '../lib/hikingPlan';
 
 const newNotice = () => ({ type: '안내', title: '', date: koreanDate() });
 
-function AdminPage({ onClose, adminPassword }) {
+function AdminPage({ onClose, adminPassword, adminToken, adminRole }) {
   // 상단 탭 상태 ('notices' | 'users')
-  const [activeTab, setActiveTab] = useState('users');
+  const [activeTab, setActiveTab] = useState(adminRole === 'notice_manager' ? 'notices' : 'users');
+  const canMembers = adminRole === 'superadmin' || adminRole === 'member_manager';
+  const canNotices = adminRole === 'superadmin' || adminRole === 'notice_manager';
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [audit, setAudit] = useState([]);
+  const [auditError, setAuditError] = useState('');
 
   // ================= 1. 공지사항 관리 상태 =================
   const [notices, setNotices] = useState([]);
@@ -31,11 +36,11 @@ function AdminPage({ onClose, adminPassword }) {
   // 초기 데이터 불러오기 (공지사항 + 회원 목록) - 둘 다 서버(MySQL)에서 가져옴
   useEffect(() => {
     loadNotices();
-    loadUsers();
+    if (canMembers) { loadUsers(); loadAudit(); }
   }, []);
 
   // ----------------- 공지사항 관련 함수 (MySQL 연동) -----------------
-  const noticeHeaders = { 'Content-Type': 'application/json', 'x-admin-password': adminPassword || '' };
+  const noticeHeaders = { 'Content-Type': 'application/json', ...(adminToken ? { Authorization: `Bearer ${adminToken}` } : { 'x-admin-password': adminPassword || '' }) };
 
   const loadNotices = async () => {
     try {
@@ -101,7 +106,26 @@ function AdminPage({ onClose, adminPassword }) {
   };
 
   // ----------------- 회원 관리 관련 함수 (MySQL 연동) -----------------
-  const authHeaders = { 'Content-Type': 'application/json', 'x-admin-password': adminPassword || '' };
+  const authHeaders = noticeHeaders;
+
+  const loadAudit = async () => {
+    try {
+      const res = await fetch(`${API}/api/admin/audit`, { headers: authHeaders });
+      if (!res.ok) throw new Error('관리 기록을 불러오지 못했습니다.');
+      setAudit(await res.json()); setAuditError('');
+    } catch (error) { setAuditError(error.message); }
+  };
+
+  const changeUserState = async (user, changes) => {
+    const description = changes.role ? '관리 권한을 변경' : changes.suspended ? '계정을 정지' : '계정 정지를 해제';
+    if (!window.confirm(`${user.name}(${user.id}) 회원의 ${description}하시겠습니까?`)) return;
+    try {
+      const res = await fetch(`${API}/api/admin/users/${user.dbId}/state`, { method: 'PATCH', headers: authHeaders, body: JSON.stringify(changes) });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || '변경하지 못했습니다.');
+      setUserDetail(null); await loadUsers(); await loadAudit();
+    } catch (error) { alert(error.message || '서버에 연결하지 못했습니다.'); }
+  };
 
   // 회원 목록 불러오기
   const loadUsers = async () => {
@@ -112,7 +136,7 @@ function AdminPage({ onClose, adminPassword }) {
         alert(data.detail || '회원 목록을 불러오지 못했습니다.');
         return;
       }
-      setUsers(data.map(u => ({ dbId: u.id, id: u.username, name: u.name, createdAt: u.created_at })));
+      setUsers(data.map(u => ({ dbId: u.id, id: u.username, name: u.name, createdAt: u.created_at, suspended: !!u.suspended, role: u.role || 'member' })));
     } catch (e) {
       alert('서버에 연결할 수 없습니다.');
     }
@@ -126,7 +150,7 @@ function AdminPage({ onClose, adminPassword }) {
       const res = await fetch(`${API}/api/admin/users/${user.dbId}/summary`, { headers: authHeaders });
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail || '회원 상세 정보를 불러오지 못했습니다.');
-      setUserDetail({ ...user, ...data });
+      setUserDetail({ ...user, plan_count: data.plan_count, party_count: data.party_count });
     } catch (error) {
       setUserDetailError(error.message || '회원 상세 정보를 불러오지 못했습니다.');
     } finally { setUserDetailLoading(false); }
@@ -166,7 +190,7 @@ function AdminPage({ onClose, adminPassword }) {
       }
 
       setNewUserForm({ id: '', pw: '', name: '' });
-      await loadUsers();
+      await loadUsers(); await loadAudit();
       alert(`'${name}(${id})' 회원이 추가되었습니다.`);
     } catch (e) {
       alert('서버에 연결할 수 없습니다.');
@@ -219,7 +243,7 @@ function AdminPage({ onClose, adminPassword }) {
       }
 
       setEditingUserId(null);
-      await loadUsers();
+      await loadUsers(); await loadAudit();
       alert('회원 정보가 수정되었습니다.');
     } catch (e) {
       alert('서버에 연결할 수 없습니다.');
@@ -228,7 +252,7 @@ function AdminPage({ onClose, adminPassword }) {
 
   // 4) 회원 삭제 (강제 탈퇴)
   const handleDeleteUser = async (targetId, targetName) => {
-    if (!window.confirm(`정말 '${targetName}(${targetId})' 회원을 삭제하시겠습니까?`)) return;
+    if (!window.confirm(`'${targetName}(${targetId})' 회원을 삭제하시겠습니까? 저장한 계획과 해당 회원이 만든 파티도 삭제될 수 있으며 복구할 수 없습니다.`)) return;
     const target = users.find(u => u.id === targetId);
     if (!target) return;
 
@@ -243,16 +267,16 @@ function AdminPage({ onClose, adminPassword }) {
         return;
       }
       localStorage.removeItem(`favorites_${targetId}`);
-      await loadUsers();
+      await loadUsers(); await loadAudit();
     } catch (e) {
       alert('서버에 연결할 수 없습니다.');
     }
   };
 
   // 검색어로 필터링된 회원 목록
-  const filteredUsers = users.filter(u => 
-    u.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    u.name.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredUsers = users.filter(u =>
+    (statusFilter === 'all' || (statusFilter === 'suspended') === u.suspended) &&
+    (u.id.toLowerCase().includes(searchQuery.toLowerCase()) || u.name.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   return (
@@ -267,18 +291,18 @@ function AdminPage({ onClose, adminPassword }) {
         
         {/* 상단 탭 전환 버튼 */}
         <div style={{ display: 'flex', gap: '10px', marginBottom: '25px' }}>
-          <button 
+          {canMembers && <button 
             onClick={() => setActiveTab('users')}
             style={{ flex: 1, padding: '14px', borderRadius: '10px', border: 'none', fontWeight: 'bold', fontSize: '15px', cursor: 'pointer', backgroundColor: activeTab === 'users' ? '#3182ce' : 'white', color: activeTab === 'users' ? 'white' : '#64748b', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', transition: 'all 0.2s' }}
           >
             👥 회원 관리 ({users.length}명)
-          </button>
-          <button 
+          </button>}
+          {canNotices && <button 
             onClick={() => setActiveTab('notices')}
             style={{ flex: 1, padding: '14px', borderRadius: '10px', border: 'none', fontWeight: 'bold', fontSize: '15px', cursor: 'pointer', backgroundColor: activeTab === 'notices' ? '#3182ce' : 'white', color: activeTab === 'notices' ? 'white' : '#64748b', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', transition: 'all 0.2s' }}
           >
             📢 공지사항 관리 ({notices.length}건)
-          </button>
+          </button>}
         </div>
 
         {/* ================= [탭 1] 회원 관리 화면 ================= */}
@@ -319,6 +343,7 @@ function AdminPage({ onClose, adminPassword }) {
             <div style={{ backgroundColor: 'white', padding: '30px', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '10px' }}>
                 <h3 style={{ margin: 0, fontSize: '16px' }}>📋 가입된 회원 목록 (총 {filteredUsers.length}명)</h3>
+                <label>상태 <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}><option value="all">전체</option><option value="active">정상</option><option value="suspended">정지</option></select></label>
                 
                 {/* 회원 검색창 */}
                 <div style={{ display: 'flex', alignItems: 'center', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '6px 12px', width: '240px' }}>
@@ -339,6 +364,7 @@ function AdminPage({ onClose, adminPassword }) {
                       <th style={{ padding: '12px 10px' }}>아이디</th>
                       <th style={{ padding: '12px 10px' }}>이름</th>
                       <th style={{ padding: '12px 10px' }}>가입일</th>
+                      <th style={{ padding: '12px 10px' }}>상태</th>
                       <th style={{ padding: '12px 10px', width: '110px', textAlign: 'center' }}>관리</th>
                     </tr>
                   </thead>
@@ -371,6 +397,7 @@ function AdminPage({ onClose, adminPassword }) {
                             {isEditing && <input aria-label="새 비밀번호" type="password" placeholder="비밀번호 변경 시 입력" value={editUserForm.pw} onChange={e => setEditUserForm({...editUserForm, pw: e.target.value})} style={{ width: '90%', marginTop: '8px', padding: '6px 8px', borderRadius: '4px', border: '1px solid #3182ce' }} />}
                           </td>
                           <td style={{ padding: '14px 10px', color: '#475569' }}>{user.createdAt ? String(user.createdAt).slice(0, 10) : '확인 불가'}</td>
+                          <td>{user.suspended ? '정지' : '정상'}</td>
                           <td style={{ padding: '14px 10px', textAlign: 'center' }}>
                             {isEditing ? (
                               <div style={{ display: 'flex', justifyContent: 'center', gap: '8px' }}>
@@ -409,10 +436,14 @@ function AdminPage({ onClose, adminPassword }) {
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px' }}><h3>회원 상세 정보</h3><button type="button" onClick={() => setUserDetail(null)}>닫기</button></div>
               <p><strong>{userDetail.name}</strong> ({userDetail.id})</p>
               <p>가입일: {userDetail.createdAt ? String(userDetail.createdAt).slice(0, 10) : '확인 불가'}</p>
+              <p>계정 상태: {userDetail.suspended ? '정지' : '정상'} · 권한: {({member:'일반 회원', member_manager:'회원 관리자', notice_manager:'공지 관리자', superadmin:'최고 관리자'})[userDetail.role]}</p>
               {userDetailLoading ? <p role="status">산행 활동을 확인하고 있습니다.</p> : userDetailError ? <p role="alert">{userDetailError}</p> : <p>저장한 산행 계획 {userDetail.plan_count}개 · 참여 중인 파티 {userDetail.party_count}개</p>}
               <p style={{ color: '#64748b', fontSize: '13px' }}>회원의 산행 계획이나 준비물 내용은 표시하지 않습니다.</p>
               <button type="button" onClick={() => { startEditUser(userDetail); setUserDetail(null); }}>회원 정보 수정</button>
+              <button type="button" style={{ marginLeft: '8px' }} onClick={() => changeUserState(userDetail, { suspended: !userDetail.suspended })}>{userDetail.suspended ? '정지 해제' : '계정 정지'}</button>
+              {adminRole === 'superadmin' && <label style={{ display: 'block', marginTop: '14px' }}>관리 권한 변경 <select value={userDetail.role} onChange={e => { const role = e.target.value; e.target.value = userDetail.role; if (role !== userDetail.role) changeUserState(userDetail, { role }); }}><option value="member">일반 회원</option><option value="member_manager">회원 관리자</option><option value="notice_manager">공지 관리자</option><option value="superadmin">최고 관리자</option></select></label>}
             </section>}
+            <section style={{ background: 'white', padding: '25px 30px', borderRadius: '12px', marginTop: '20px', overflowX: 'auto' }}><h3>최근 회원 관리 기록</h3><p style={{ color: '#64748b' }}>최근 100건 · 공용 비밀번호로 수행한 작업은 개별 관리자를 구분할 수 없습니다.</p><button type="button" onClick={loadAudit}>기록 새로고침</button>{auditError && <p role="alert">{auditError}</p>}<ul>{audit.map(row => <li key={row.id}>{String(row.created_at).replace('T', ' ').slice(0, 19)} · {row.actor} · {row.target_username} · {({create:'회원 추가',update:'회원 수정',update_password:'비밀번호 변경',delete:'회원 삭제',suspend:'정지',restore:'정지 해제'})[row.action] || row.action}</li>)}</ul>{!audit.length && !auditError && <p>기록이 없습니다.</p>}</section>
           </>
         ) : (
           /* ================= [탭 2] 기존 공지사항 관리 화면 ================= */
