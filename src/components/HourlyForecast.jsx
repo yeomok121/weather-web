@@ -613,7 +613,7 @@ function HourlyForecast({
         <div className="planner-actions">{[6, 8, 10].map(hour => <button type="button" key={hour} onClick={() => { const tomorrow = koreanDate(Date.now() + 86400000); onRestoreDeparture?.(new Date(`${tomorrow}T${String(hour).padStart(2, '0')}:00:00+09:00`).toISOString()); }}>내일 {hour}시</button>)}</div>
         <p className="muted">시간별 예보가 제공되지 않는 구간은 점수를 계산하지 않습니다.</p>
       </section>}
-      {isMountainMode && hasWeatherData && !isLoading && <HikingScheduleComparison hourlyData={hourlyData} weatherData={weatherData} durationMinutes={adjustedTimeMins} activeOffset={activeDepOffset} onSelectOffset={setDepOffset} restoredDepartureAt={restoredDepartureAt} />}
+      {isMountainMode && hasWeatherData && !isLoading && <HikingScheduleComparison hourlyData={hourlyData} weatherData={weatherData} durationMinutes={adjustedTimeMins} activeOffset={activeDepOffset} onSelectOffset={setDepOffset} restoredDepartureAt={departureAt} onSelectDeparture={onRestoreDeparture} />}
       {isMountainMode && (!hasWeatherData || isLoading) && <HikingPlannerPanel user={loggedInUser} mountainInfo={mountainInfo} selectedCourse={selectedCourse} courseIndex={activeCourseIdx} weatherDate={weatherData} selectedDateIdx={selectedDateIdx} pace={activePace} departureOffsetHours={activeDepOffset} departureTime="" gearList={[]} checklist={{}} canSave={false} onApplyPlan={handleApplySavedPlan} onRequireLogin={onRequireLogin} onShowToast={onShowToast} focusSection={plannerSection} />}
 
       {isMountainMode && hasWeatherData && !isLoading && (

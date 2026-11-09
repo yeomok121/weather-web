@@ -178,7 +178,14 @@ export function assessHikingForecastWindow({
   const weatherWorst = lowestBy('weatherAssessment');
   const viewWorst = lowestBy('viewEstimate');
   const forecastSampleCount = assessedSamples.filter(sample => sample.source === 'forecast').length;
-  const coverageComplete = safeHourlyData.length > 0 && endIndex < safeHourlyData.length;
+  const datedTimes = safeHourlyData.map(row => Date.parse(row?.valid_at)).filter(Number.isFinite);
+  const startTime = now.getTime() + Number(departureOffsetHours) * 3600000;
+  const endTime = startTime + Math.max(0, Number(durationMinutes) || 0) * 60000;
+  const relevantTimes = datedTimes.filter(time => time >= startTime - 30 * 60000 && time <= endTime + 30 * 60000);
+  const noGaps = relevantTimes.every((time, index) => index === 0 || time - relevantTimes[index - 1] <= 90 * 60000);
+  const coverageComplete = datedTimes.length > 0
+    ? relevantTimes.length > 0 && startTime >= datedTimes[0] - 30 * 60000 && endTime <= datedTimes[datedTimes.length - 1] + 30 * 60000 && noGaps
+    : safeHourlyData.length > 0 && endIndex < safeHourlyData.length;
   const mode = forecastSampleCount === 0
     ? 'current_only'
     : coverageComplete ? 'course_window' : 'partial_window';
