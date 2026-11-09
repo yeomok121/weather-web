@@ -446,13 +446,13 @@ function App() {
   const handleApplyHikingPlan = async (plan) => {
     setIsMountainMode(true);
     if (plan.mountain_name && plan.mountain_name !== mountainInfo?.name) {
-      await loadMountainWeather(plan.mountain_name);
+      const loaded = await loadMountainWeather(plan.mountain_name);
+      if (!loaded) throw new Error('산악 예보를 불러오지 못했습니다. 연결을 확인한 뒤 다시 시도해 주세요.');
     }
     const parsedDeparture = Date.parse(plan.departure_at);
     const isUpcoming = Number.isFinite(parsedDeparture) && parsedDeparture >= Date.now();
-    const dateIndex = isUpcoming ? weeklyData.findIndex(day => day.full_date === koreanDate(parsedDeparture)) : -1;
-    const validDeparture = isUpcoming && (dateIndex >= 0 || koreanDate(parsedDeparture) === koreanDate());
-    setSelectedDateIdx(dateIndex >= 0 ? dateIndex : 0);
+    const validDeparture = isUpcoming;
+    setSelectedDateIdx(0);
     const mountain = MOUNTAINS_LIST.find(item => item.name === plan.mountain_name);
     const namedCourseIndex = mountain?.courses.findIndex(course => course.name === plan.course_name) ?? -1;
     setSelectedCourseIdx(namedCourseIndex >= 0 ? namedCourseIndex : Number(plan.course_index) || 0);
@@ -460,9 +460,7 @@ function App() {
     setDepartureOffsetHours(0);
     setRestoredDepartureAt(validDeparture ? new Date(parsedDeparture).toISOString() : null);
     setPlanReferenceAt(Date.now());
-    showToast(validDeparture ? '저장한 날짜·출발 시각과 준비물을 불러왔어요.' : isUpcoming
-      ? '저장한 날짜가 예보 범위 밖입니다. 코스와 준비물을 불러왔으니 비교 가능한 새 일정을 선택해 주세요.'
-      : '지난 출발 일정입니다. 코스와 준비물을 불러왔으니 새 출발 시각을 선택해 주세요.');
+    showToast(validDeparture ? '저장한 날짜·출발 시각과 준비물을 불러왔어요. 예보 제공 범위를 확인해 주세요.' : '지난 출발 일정입니다. 코스와 준비물을 불러왔으니 새 출발 시각을 선택해 주세요.');
   };
 
   const handleToggleMountainMode = () => {
@@ -681,7 +679,7 @@ function App() {
       scoreBasisLabel = `${formatTime(depMins)}–${formatTime(descentFinishMins)} 산행 시간대 ${scheduleAssessment.sampleCount}개 시점 중 최저`;
     } else if (scheduleAssessment.mode === 'partial_window') {
       scoreBasisLabel = `${formatTime(depMins)}–${formatTime(descentFinishMins)} 중 시간별 예보 제공 구간만 반영 (${scheduleAssessment.sampleCount}개 시점)`;
-    } else if (departureOffsetHours === 0) {
+    } else if (forecastOffsetHours <= 0.5) {
       scoreBasisLabel = '현재 조건 기준 · 산행 시간대 예보 자료 없음';
     } else {
       scoreBasisLabel = '선택 시간대의 예보가 없어 점수를 표시하지 않습니다';
@@ -722,7 +720,7 @@ function App() {
           icon: matched.icon
         };
       } else {
-        summitForecast = { available: false, reason: '예측 불가 (24시간 예보 범위 초과)' };
+        summitForecast = { available: false, reason: '예측 불가 (제공된 시간별 예보 범위 밖)' };
       }
     } else {
       summitForecast = { available: false, reason: '예측 불가 (미래 일자는 시간별 상세 예보 미제공)' };

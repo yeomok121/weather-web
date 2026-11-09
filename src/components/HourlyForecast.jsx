@@ -9,6 +9,7 @@ import { readHikingDraft, writeHikingDraft, koreanDate } from '../lib/hikingPlan
 
 const ITEMS_TO_SHOW = 6;
 const EMPTY_HOURLY = [];
+const departureInputValue = value => value && Number.isFinite(Date.parse(value)) ? new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date(value)).replace(' ', 'T') : '';
 
 export const PACE_OPTIONS = [
   { key: 'slow', label: '🐢 초보(여유)', multiplier: 1.3 },
@@ -77,8 +78,11 @@ function HourlyForecast({
   const [timelineMode, setTimelineMode] = useState('descent');
   const [plannerSection, setPlannerSection] = useState('plan');
   const [hydratedDraftKey, setHydratedDraftKey] = useState('');
+  const [departureDraft, setDepartureDraft] = useState('');
+  const [departureError, setDepartureError] = useState('');
   const previousDraftOwner = useRef(null);
   const hasWeatherData = weatherData.hasData === true;
+  useEffect(() => { setDepartureDraft(departureInputValue(departureAt)); setDepartureError(''); }, [departureAt]);
   
   const [gearList, setGearList] = useState([]);
   const [checklist, setChecklist] = useState({});
@@ -607,10 +611,17 @@ function HourlyForecast({
       </div>
 
       {isMountainMode && <nav className="hike-flowbar" aria-label="산행 준비 순서"><button type="button" onClick={() => jumpTo('mountain-picker')}>① 산 선택</button><button type="button" disabled={!hasWeatherData} onClick={() => jumpTo('hike-schedule')}>② 일정 비교</button><button type="button" onClick={() => jumpPlanner('plan')}>③ 저장·일행 초대</button></nav>}
+      {isMountainMode && hikingPlanSummary && <section className="hike-schedule" aria-label="선택한 산행 요약">
+        <div className="planner-heading"><div><span className="eyebrow">선택한 산행</span><h3>{mountainInfo?.name} · {hikingPlanSummary.course?.name}</h3><p>{new Date(hikingPlanSummary.departureAt).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })} 출발 · 총 {Math.floor(hikingPlanSummary.totalMins / 60)}시간 {hikingPlanSummary.totalMins % 60}분</p></div></div>
+        <p><strong style={{ color: hikingPlanSummary.timeSafetyColor }}>{hikingPlanSummary.timeSafetyStatus}</strong> · 예상 하산 {new Date(Date.parse(hikingPlanSummary.departureAt) + hikingPlanSummary.totalMins * 60000).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
+        <p className="muted">{hikingPlanSummary.scoreBasisLabel}</p><p className="muted">준비물 {gearList.length}개{gearList.length ? ` · ${gearList.slice(0, 3).join(', ')}${gearList.length > 3 ? ' 외' : ''}` : ''}</p>
+        <div className="planner-actions"><button type="button" onClick={() => jumpTo('hike-schedule')}>일정 비교</button><button type="button" onClick={() => jumpPlanner('plan')}>계획 저장·일행 초대</button></div>
+      </section>}
       {isMountainMode && hasWeatherData && departureAt && <section className="hike-schedule" aria-label="산행 출발 날짜와 시간">
         <h3>산행 출발 날짜와 시간</h3>
-        <label>출발 날짜와 시간 (한국 시간) <input type="datetime-local" value={new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date(departureAt)).replace(' ', 'T')} onChange={event => { const value = event.target.value; const when = Date.parse(`${value}:00+09:00`); if (value && Number.isFinite(when) && when > Date.now()) onRestoreDeparture?.(new Date(when).toISOString()); }} /></label>
-        <div className="planner-actions">{[6, 8, 10].map(hour => <button type="button" key={hour} onClick={() => { const tomorrow = koreanDate(Date.now() + 86400000); onRestoreDeparture?.(new Date(`${tomorrow}T${String(hour).padStart(2, '0')}:00:00+09:00`).toISOString()); }}>내일 {hour}시</button>)}</div>
+        <label>출발 날짜와 시간 (한국 시간) <input type="datetime-local" aria-invalid={!!departureError} value={departureDraft} onChange={event => { const value = event.target.value; setDepartureDraft(value); const when = Date.parse(`${value}:00+09:00`); if (!value || !Number.isFinite(when) || when <= Date.now()) { setDepartureError('현재 이후의 출발 날짜와 시간을 선택해 주세요.'); return; } setDepartureError(''); onRestoreDeparture?.(new Date(when).toISOString()); }} /></label>
+        {departureError && <p role="alert" style={{ color: '#b91c1c', fontSize: '13px' }}>{departureError}</p>}
+        <div className="planner-actions">{[6, 8, 10].map(hour => <button type="button" key={hour} onClick={() => { const tomorrow = koreanDate(Date.now() + 86400000); const value = new Date(`${tomorrow}T${String(hour).padStart(2, '0')}:00:00+09:00`).toISOString(); setDepartureDraft(departureInputValue(value)); setDepartureError(''); onRestoreDeparture?.(value); }}>내일 {hour}시</button>)}</div>
         <p className="muted">시간별 예보가 제공되지 않는 구간은 점수를 계산하지 않습니다.</p>
       </section>}
       {isMountainMode && hasWeatherData && !isLoading && <HikingScheduleComparison hourlyData={hourlyData} weatherData={weatherData} durationMinutes={adjustedTimeMins} activeOffset={activeDepOffset} onSelectOffset={setDepOffset} restoredDepartureAt={departureAt} onSelectDeparture={onRestoreDeparture} />}
@@ -966,7 +977,7 @@ function HourlyForecast({
               onApplyPlan={handleApplySavedPlan}
               onShowToast={onShowToast}
               onRequireLogin={onRequireLogin}
-              canSave={hasWeatherData && !isStale}
+              canSave={hasWeatherData && !isStale && !departureError}
               focusSection={plannerSection}
               departureAt={departureAt}
             />

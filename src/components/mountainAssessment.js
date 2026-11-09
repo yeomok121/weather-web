@@ -9,7 +9,8 @@ export function getHourlyForecastIndex({ now = new Date(), departureOffsetHours 
   if (dated.length) {
     if (target < dated[0].time - 30 * 60000) return -1;
     if (target > dated[dated.length - 1].time + 30 * 60000) return hourlyData.length;
-    return dated.reduce((closest, row) => Math.abs(row.time - target) < Math.abs(closest.time - target) ? row : closest).index;
+    const closest = dated.reduce((best, row) => Math.abs(row.time - target) < Math.abs(best.time - target) ? row : best);
+    return Math.abs(closest.time - target) <= 30 * 60000 ? closest.index : -1;
   }
   const minutesFromForecastStart = now.getMinutes() + (departureOffsetHours * 60) + ascentMinutes;
   return Math.max(0, Math.round(minutesFromForecastStart / 60));
@@ -135,13 +136,19 @@ export function assessHikingForecastWindow({
   }
 
   const safeHourlyData = Array.isArray(hourlyData) ? hourlyData : [];
-  const startIndex = Math.max(0, getHourlyForecastIndex({ now, departureOffsetHours, hourlyData: safeHourlyData }));
-  const endIndex = getHourlyForecastIndex({
+  const rawStartIndex = getHourlyForecastIndex({ now, departureOffsetHours, hourlyData: safeHourlyData });
+  const startTimestamp = now.getTime() + Number(departureOffsetHours) * 3600000;
+  const firstAvailable = safeHourlyData.findIndex(row => Date.parse(row?.valid_at) >= startTimestamp - 30 * 60000);
+  const startIndex = rawStartIndex < 0 ? (firstAvailable < 0 ? safeHourlyData.length : firstAvailable) : rawStartIndex;
+  const rawEndIndex = getHourlyForecastIndex({
     now,
     departureOffsetHours,
     hourlyData: safeHourlyData,
     ascentMinutes: Math.max(0, Number(durationMinutes) || 0),
   });
+  const endTimestamp = startTimestamp + Math.max(0, Number(durationMinutes) || 0) * 60000;
+  const eligibleEnd = safeHourlyData.map(row => Date.parse(row?.valid_at)).reduce((last, time, index) => Number.isFinite(time) && time <= endTimestamp + 30 * 60000 ? index : last, -1);
+  const endIndex = rawEndIndex < 0 ? eligibleEnd : rawEndIndex;
   const samples = [];
 
   // For an immediate departure, include observed current conditions before
@@ -159,11 +166,11 @@ export function assessHikingForecastWindow({
       source: 'forecast',
       weather: {
         temp: asNumber(row.temp, fallback.temp),
-        wind: asNumber(row.wind_speed, fallback.wind),
+        wind: asNumber(row.wind_speed, null),
         condition: row.description || fallback.condition,
         targetPop: asNumber(row.pop, fallback.targetPop),
         pm25: fallback.pm25,
-        humidity: asNumber(row.humidity, fallback.humidity),
+        humidity: asNumber(row.humidity, null),
       },
     });
   }
@@ -184,7 +191,7 @@ export function assessHikingForecastWindow({
   const relevantTimes = datedTimes.filter(time => time >= startTime - 30 * 60000 && time <= endTime + 30 * 60000);
   const noGaps = relevantTimes.every((time, index) => index === 0 || time - relevantTimes[index - 1] <= 90 * 60000);
   const coverageComplete = datedTimes.length > 0
-    ? relevantTimes.length > 0 && startTime >= datedTimes[0] - 30 * 60000 && endTime <= datedTimes[datedTimes.length - 1] + 30 * 60000 && noGaps
+    ? relevantTimes.length > 0 && relevantTimes[0] <= startTime + 30 * 60000 && relevantTimes[relevantTimes.length - 1] >= endTime - 30 * 60000 && noGaps
     : safeHourlyData.length > 0 && endIndex < safeHourlyData.length;
   const mode = forecastSampleCount === 0
     ? 'current_only'
