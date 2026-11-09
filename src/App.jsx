@@ -670,8 +670,9 @@ function App() {
         humidity: activeWeather.humidity,
       },
     });
-    const weatherAssessment = scheduleAssessment.weatherAssessment;
-    const viewEstimate = scheduleAssessment.viewEstimate;
+    const unavailableWindow = !activeWeather.isFuture && scheduleAssessment.mode === 'current_only' && forecastOffsetHours > 0.5;
+    const weatherAssessment = unavailableWindow ? { ...scheduleAssessment.weatherAssessment, score: null, status: '선택 시간대 자료 없음', color: '#64748b', reasons: ['해당 시간의 예보를 확인할 수 없습니다'] } : scheduleAssessment.weatherAssessment;
+    const viewEstimate = unavailableWindow ? { ...scheduleAssessment.viewEstimate, score: null, gradeText: '선택 시간대 자료 없음', gradeColor: '#64748b', summaryReason: '해당 시간의 예보를 확인할 수 없습니다', seaOfCloudsHint: null } : scheduleAssessment.viewEstimate;
 
     let scoreBasisLabel;
     if (activeWeather.isFuture) {
@@ -683,7 +684,7 @@ function App() {
     } else if (departureOffsetHours === 0) {
       scoreBasisLabel = '현재 조건 기준 · 산행 시간대 예보 자료 없음';
     } else {
-      scoreBasisLabel = '선택 시간대가 시간별 예보 범위 밖 · 현재 조건 참고';
+      scoreBasisLabel = '선택 시간대의 예보가 없어 점수를 표시하지 않습니다';
     }
 
     let timeSafetyStatus = '시간 여유 있음';

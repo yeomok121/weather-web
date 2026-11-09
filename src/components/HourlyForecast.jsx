@@ -16,16 +16,7 @@ export const PACE_OPTIONS = [
   { key: 'fast', label: '⚡ 숙련(빠름)', multiplier: 0.85 },
 ];
 
-const DEPARTURE_OFFSETS = [
-  { value: 0, label: '지금 출발' },
-  { value: 1, label: '+1시간 뒤' },
-  { value: 2, label: '+2시간 뒤' },
-  { value: 3, label: '+3시간 뒤' },
-  { value: 4, label: '+4시간 뒤' },
-  { value: 6, label: '+6시간 뒤' },
-  { value: 9, label: '+9시간 뒤' },
-  { value: 12, label: '+12시간 뒤' },
-];
+const DEPARTURE_OFFSETS = Array.from({ length: 25 }, (_, value) => ({ value, label: value === 0 ? '지금 출발' : `+${value}시간 뒤` }));
 
 const KNPS_MOUNTAINS = new Set([
   '북한산', '설악산', '지리산', '계룡산', '덕유산', '소백산', '태백산', '오대산',

@@ -7,7 +7,7 @@ export default function HikingScheduleComparison({ hourlyData, weatherData, dura
   const baseMinutes = weatherData.isFuture ? 8 * 60 : now.getHours() * 60 + now.getMinutes();
   const pm25 = (weatherData.dust || '').match(/\d+/);
   const selectedDelay = restoredDepartureAt ? Math.max(0, (Date.parse(restoredDepartureAt) - now.getTime()) / 3600000) : Number(activeOffset);
-  const offsets = [...new Set([0, 2, 4, 6, Number(activeOffset), ...(restoredDepartureAt && selectedDelay <= 12 ? [Math.round(selectedDelay)] : [])])].sort((a, b) => a - b);
+  const offsets = [...new Set([0, 6, 12, 18, 24, Number(activeOffset), ...(restoredDepartureAt && selectedDelay <= 24 ? [Math.round(selectedDelay)] : [])])].sort((a, b) => a - b);
   const selectedOffset = offsets.reduce((closest, offset) => Math.abs(offset - selectedDelay) < Math.abs(closest - selectedDelay) ? offset : closest);
   const sunsetParts = weatherData.sunset?.split(':').map(Number);
   const sunset = sunsetParts ? sunsetParts[0] * 60 + sunsetParts[1] : null;
@@ -22,14 +22,14 @@ export default function HikingScheduleComparison({ hourlyData, weatherData, dura
           humidity: weatherData.humidity, pm25: pm25 ? Number(pm25[0]) : 15, targetPop: weatherData.targetPop },
       });
       const covered = assessment.mode === 'course_window' || assessment.mode === 'partial_window';
-      const dayPrefix = start >= 1440 ? '다음 날 ' : '';
+      const dayPrefix = start >= 2880 ? '모레 ' : start >= 1440 ? '다음 날 ' : '';
       const needsSunset = weatherData.isFuture || start >= 1440 || sunset === null;
       const late = !needsSunset && finish > sunset;
       return <button key={offset} type="button" aria-pressed={selectedOffset === offset} onClick={() => onSelectOffset(offset)}>
         <span className="schedule-start">{offset === 0 ? (weatherData.isFuture ? '오전 8시' : '지금 출발') : `+${offset}시간`}<strong>{dayPrefix}{format(start)}</strong></span>
         <span className="schedule-score">기상 <strong style={{ color: assessment.weatherAssessment.color }}>{covered && assessment.weatherAssessment.score !== null ? `${assessment.weatherAssessment.score}점` : '자료 부족'}</strong></span>
         <span className="schedule-score">조망 <strong style={{ color: assessment.viewEstimate.gradeColor }}>{covered && assessment.viewEstimate.score !== null ? `${assessment.viewEstimate.score}점` : '—'}</strong></span>
-        <span className={late ? 'schedule-late' : 'schedule-finish'}>하산 {finish >= 1440 ? '다음 날 ' : ''}{format(finish)}{late ? ' · 일몰 후 예상' : needsSunset ? ' · 해당일 일몰 확인' : ''}</span>
+        <span className={late ? 'schedule-late' : 'schedule-finish'}>하산 {finish >= 2880 ? '모레 ' : finish >= 1440 ? '다음 날 ' : ''}{format(finish)}{late ? ' · 일몰 후 예상' : needsSunset ? ' · 해당일 일몰 확인' : ''}</span>
       </button>;
     })}</div>
     <p className="muted">{weatherData.isFuture ? '선택일은 일 단위 예보만 있어 출발 시각별 기상 차이를 비교할 수 없습니다.' : '기상·조망은 산행 시간대 중 최저 참고 점수입니다. 예보가 같으면 점수도 같을 수 있습니다.'}</p>
