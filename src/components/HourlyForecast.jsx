@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { FiChevronLeft, FiChevronRight, FiShare2, FiPlus, FiX, FiRotateCcw, FiMapPin, FiClock, FiEye, FiInfo } from 'react-icons/fi';
+import { FiChevronLeft, FiChevronRight, FiShare2, FiPlus, FiX, FiRotateCcw, FiMapPin, FiEye, FiInfo } from 'react-icons/fi';
 import { LineChart, Line, YAxis, ResponsiveContainer } from 'recharts';
 import { getEmojiIcon } from './WeeklyForecast';
 import { assessMountainWeather, estimateSummitView, getHourlyForecastIndex } from './mountainAssessment';
 import HikingPlannerPanel from './HikingPlannerPanel';
-import HikingScheduleComparison from './HikingScheduleComparison';
+import MountainPlanControls from './MountainPlanControls';
+import './MountainJourney.css';
 import { readHikingDraft, writeHikingDraft, koreanDate } from '../lib/hikingPlan';
 
 const ITEMS_TO_SHOW = 6;
@@ -75,12 +76,13 @@ function HourlyForecast({
   const [localCourseIdx, setLocalCourseIdx] = useState(0);
   const [localPaceType, setLocalPaceType] = useState('normal');
   const [localDepOffset, setLocalDepOffset] = useState(0);
-  const [timelineMode, setTimelineMode] = useState('descent');
+  const [preparationTab, setPreparationTab] = useState(() => new URLSearchParams(window.location.search).has('party') ? 'account' : 'gear');
   const [plannerSection, setPlannerSection] = useState('plan');
   const [hydratedDraftKey, setHydratedDraftKey] = useState('');
   const [departureDraft, setDepartureDraft] = useState('');
   const [departureError, setDepartureError] = useState('');
   const [compareOpen, setCompareOpen] = useState(false);
+  const [invitationCount, setInvitationCount] = useState(0);
   const previousDraftOwner = useRef(null);
   const hasWeatherData = weatherData.hasData === true;
   useEffect(() => { setDepartureDraft(departureInputValue(departureAt)); setDepartureError(''); }, [departureAt]);
@@ -89,12 +91,7 @@ function HourlyForecast({
   const [checklist, setChecklist] = useState({});
   const [newGearInput, setNewGearInput] = useState('');
   
-  const scrollRef = useRef(null);
   const applyingSavedPlanRef = useRef(false);
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragMoved, setDragMoved] = useState(false); 
-  const [startX, setStartX] = useState(0);
-  const [scrollLeft, setScrollLeft] = useState(0);
 
   const activeCourseIdx = onSelectCourseIdx ? selectedCourseIdx : localCourseIdx;
   const setCourseIdx = onSelectCourseIdx || setLocalCourseIdx;
@@ -104,24 +101,13 @@ function HourlyForecast({
   const setDepOffset = onSelectDepartureOffset || setLocalDepOffset;
   const departureReferenceTime = new Date();
 
-  const getDepartureTimeForOffset = (offsetHours) => {
-    const totalMinutes = isFuture
-      ? (8 + offsetHours) * 60
-      : (departureReferenceTime.getHours() * 60 + departureReferenceTime.getMinutes()) + (offsetHours * 60);
-    const normalizedMinutes = ((totalMinutes % 1440) + 1440) % 1440;
-    return {
-      time: `${String(Math.floor(normalizedMinutes / 60)).padStart(2, '0')}:${String(normalizedMinutes % 60).padStart(2, '0')}`,
-      dayOffset: Math.floor(totalMinutes / 1440),
-    };
-  };
-
-  const getDepartureOptionLabel = (option) => {
-    const { time, dayOffset } = getDepartureTimeForOffset(option.value);
-    const dayPrefix = !isFuture && dayOffset > 0 ? '다음 날 ' : '';
-    const offsetLabel = isFuture
-      ? (option.value === 0 ? '선택 날짜' : `+${option.value}시간 뒤`)
-      : (option.value === 0 ? '지금 출발' : `+${option.value}시간 뒤`);
-    return `${offsetLabel} (${dayPrefix}${time})`;
+  const getDepartureOptionLabel = option => {
+    const reference = departureAt && !restoredDepartureAt
+      ? Date.parse(departureAt) - activeDepOffset * 3600000
+      : isFuture && weatherData.forecastDate
+        ? Date.parse(`${weatherData.forecastDate}T08:00:00+09:00`) : Date.now();
+    const time = new Intl.DateTimeFormat('ko-KR', { timeZone: 'Asia/Seoul', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date(reference + option.value * 3600000));
+    return `${option.value === 0 ? (isFuture ? '선택일 오전 8시' : '지금 출발') : `+${option.value}시간`} (${time})`;
   };
 
   const temp = Number(weatherData?.temp || 0);
@@ -230,10 +216,6 @@ function HourlyForecast({
     if (terrain.includes('암릉') || terrain.includes('바위')) items.push('반장갑 (바위용)', '릿지화(암릉화)');
     items.push('등산 스틱', '비상용 헤드랜턴');
     
-    if (timelineMode === 'ascent' && isMountainMode) {
-      if (!items.includes('헤드랜턴 (여분 배터리)')) items.push('헤드랜턴 (여분 배터리)');
-      if (temp <= 10 && !items.includes('방한모 및 넥워머')) items.push('새벽 칼바람 대비 보온의류');
-    }
     return items;
   };
 
@@ -314,25 +296,6 @@ function HourlyForecast({
     updateGears(buildWeatherGearList());
     setChecklist({});
     if (onShowToast) onShowToast('🔄 현재 기상과 코스에 맞는 기본 추천 준비물로 복원되었습니다.');
-  };
-
-  const handleMouseDown = (e) => {
-    setIsDragging(true);
-    setDragMoved(false);
-    setStartX(e.pageX - scrollRef.current.offsetLeft);
-    setScrollLeft(scrollRef.current.scrollLeft);
-  };
-
-  const handleMouseLeave = () => setIsDragging(false);
-  const handleMouseUp = () => setIsDragging(false);
-
-  const handleMouseMove = (e) => {
-    if (!isDragging) return;
-    e.preventDefault();
-    const x = e.pageX - scrollRef.current.offsetLeft;
-    const walk = (x - startX) * 1.5; 
-    if (Math.abs(walk) > 5) setDragMoved(true); 
-    scrollRef.current.scrollLeft = scrollLeft - walk;
   };
 
   const rawForecastData = Array.isArray(hourlyData)
@@ -467,29 +430,6 @@ function HourlyForecast({
       };
     }
 
-    if (timelineMode === 'ascent') {
-      const sunriseMins = parseTime(sunrise, 390);
-      let reqDepMins = sunriseMins - ascentTimeMins;
-      let isPrevDay = false;
-      if (reqDepMins < 0) {
-        reqDepMins += 1440;
-        isPrevDay = true;
-      }
-      const reqDepStr = `${isPrevDay ? '전날 ' : ''}${formatTime(reqDepMins)}`;
-      return {
-        status: 'sunrise',
-        safetyBadge: '🌅 일출 산행 계획',
-        safetyColor: '#c2410c',
-        safetyBg: 'rgba(255,247,237,0.9)',
-        deadlineStr: reqDepStr,
-        depTimeStr,
-        summitArrivalStr,
-        descentFinishStr,
-        arrivalWeather,
-        msg: `🌅 일출(${sunrise}) 조망: 늦어도 ${reqDepStr} 출발 권장. (등정 약 ${Math.floor(ascentTimeMins / 60)}시간 ${ascentTimeMins % 60}분)`
-      };
-    }
-
     const safeDescentMins = parseTime(safeDescentTime, 930);
     const sunsetMins = parseTime(sunset, 1080);
     // 권장 하산 시작 시각에 정상에서 출발할 수 있도록 등정 시간만큼 역산합니다.
@@ -564,10 +504,10 @@ function HourlyForecast({
 
     const shareText = [
       `⛰️ [${mName} ${peak} 산행 기상 브리핑]`,
-      `📅 일자: ${weatherData.date}`,
+      `📅 출발: ${departureAt ? new Date(departureAt).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' }) : weatherData.date}`,
       `📊 데이터 구분: 기온 ${weatherData?.weatherSources?.temperature || '고도 보정 추정값'} · 바람 ${weatherData?.weatherSources?.wind || '고도 보정 추정값'} · 습도 ${weatherData?.weatherSources?.humidity || '고도 보정 추정값'}`,
       ...(weatherData?.dataAsOf ? [`🕒 응답 생성 시각: ${weatherData.dataAsOf.replace('T', ' ')}`] : []),
-      `🌤️ 기상 조건 점수(참고): ${weatherScore}점 (${weatherAssessment.status}) / 🔭 조망 환경 참고 점수: ${viewEstimate.score}점 (${viewEstimate.gradeText})`,
+      `🌤️ 기상 조건 점수(참고): ${weatherScore === null ? '자료 없음' : `${weatherScore}점`} (${weatherAssessment.status}) / 🔭 조망 환경 참고 점수: ${viewEstimate.score === null ? '자료 없음' : `${viewEstimate.score}점`} (${viewEstimate.gradeText})`,
       `⏱️ 시간 안전 판정: ${timeline.safetyBadge} (권장 하산 시작 ${safeDescentTime})`,
       `🥾 선택 코스: ${selectedCourse.name} (${selectedCourse.distance} · ${currentPaceObj.label} 총 ${Math.floor(adjustedTimeMins / 60)}시간 ${adjustedTimeMins % 60}분)`,
       `🕒 일정: ${timeline.depTimeStr} 출발 → ${timeline.summitArrivalStr} 정상 → ${timeline.descentFinishStr} 하산 완료`,
@@ -589,12 +529,43 @@ function HourlyForecast({
     }
   };
 
-  const jumpTo = id => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  const jumpPlanner = section => { setPlannerSection(section); jumpTo('hiking-planner'); };
-  const openComparison = () => { setCompareOpen(true); jumpTo('hike-schedule'); };
+  const jumpTo = id => {
+    const node = document.getElementById(id);
+    if (!node) return;
+    node.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+    node.focus({ preventScroll: true });
+  };
+  const jumpPlanner = section => {
+    setPlannerSection(section); setPreparationTab('account');
+    requestAnimationFrame(() => jumpTo(document.getElementById('hiking-preparation') ? 'hiking-preparation' : 'hiking-planner'));
+  };
+  useEffect(() => {
+    const open = () => { setPreparationTab('account'); requestAnimationFrame(() => jumpTo(document.getElementById('hiking-preparation') ? 'hiking-preparation' : 'hiking-planner')); };
+    window.addEventListener('weather:open-hiking-planner', open);
+    return () => window.removeEventListener('weather:open-hiking-planner', open);
+  }, []);
+  const changeDeparture = value => {
+    setDepartureDraft(departureInputValue(value)); setDepartureError(''); onRestoreDeparture?.(value);
+  };
+  const changeOffset = value => { setDepartureError(''); setDepOffset(value); };
+  const editDeparture = value => {
+    setDepartureDraft(value);
+    const when = Date.parse(`${value}:00+09:00`);
+    if (!value || !Number.isFinite(when) || when <= Date.now()) {
+      setDepartureError('현재 이후의 출발 날짜와 시간을 선택해 주세요.'); return;
+    }
+    changeDeparture(new Date(when).toISOString());
+  };
+  const packedGearCount = gearList.filter(item => checklist[item]).length;
+  const itineraryTime = minutes => {
+    if (!departureAt) return '—';
+    const date = new Date(Date.parse(departureAt) + minutes * 60000);
+    const day = koreanDate(date) === koreanDate(departureAt) ? '' : '다음 날 ';
+    return day + new Intl.DateTimeFormat('ko-KR', { timeZone: 'Asia/Seoul', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(date);
+  };
 
   return (
-    <div className="glass-card hourly-forecast-card" style={{ borderRadius: '16px', padding: '20px', display: 'flex', flexDirection: 'column', color: '#1e293b', width: '100%', boxSizing: 'border-box' }}>
+    <div className={`glass-card hourly-forecast-card ${isMountainMode ? 'mountain-journey' : ''}`} style={{ borderRadius: '16px', padding: '20px', display: 'flex', flexDirection: 'column', color: '#1e293b', width: '100%', boxSizing: 'border-box' }}>
       <style>{`
         .hourly-chart-wrapper .recharts-surface { overflow: visible !important; }
         @media (max-width: 640px) {
@@ -621,26 +592,22 @@ function HourlyForecast({
         )}
       </div>
 
-      {isMountainMode && <nav className="hike-flowbar" aria-label="산행 준비 순서"><button type="button" onClick={() => jumpTo('mountain-picker')}>① 산 선택</button><button type="button" disabled={!hasWeatherData} onClick={openComparison}>② 일정 비교</button><button type="button" onClick={() => jumpPlanner('plan')}>③ 저장·일행 초대</button></nav>}
-      {isMountainMode && hikingPlanSummary && <section id="hike-schedule" className="hike-schedule hike-planning" aria-label="산행 일정 설정">
-        <div className="planner-heading"><div><span className="eyebrow">산행 일정</span><h3>출발 시간 선택</h3></div></div>
-        <div className="hike-planning-controls">
-        <label>출발 날짜와 시간 (한국 시간) <input type="datetime-local" aria-invalid={!!departureError} value={departureDraft} onChange={event => { const value = event.target.value; setDepartureDraft(value); const when = Date.parse(`${value}:00+09:00`); if (!value || !Number.isFinite(when) || when <= Date.now()) { setDepartureError('현재 이후의 출발 날짜와 시간을 선택해 주세요.'); return; } setDepartureError(''); onRestoreDeparture?.(new Date(when).toISOString()); }} /></label>
-        {departureError && <p role="alert" style={{ color: '#b91c1c', fontSize: '13px' }}>{departureError}</p>}
-        <div className="planner-actions">{[6, 8, 10].map(hour => <button type="button" key={hour} onClick={() => { const tomorrow = koreanDate(Date.now() + 86400000); const value = new Date(`${tomorrow}T${String(hour).padStart(2, '0')}:00:00+09:00`).toISOString(); setDepartureDraft(departureInputValue(value)); setDepartureError(''); onRestoreDeparture?.(value); }}>내일 {hour}시</button>)}</div>
-        </div>
-        <details className="hike-offset-disclosure"><summary>시간 간격으로 선택</summary>
-          <label>출발 시간 <select aria-label="시간 간격으로 산행 출발 시각 선택" value={activeDepOffset} onChange={event => setDepOffset(Number(event.target.value))}>
-            {DEPARTURE_OFFSETS.map(opt => <option key={opt.value} value={opt.value}>{restoredDepartureAt && opt.value === 0 ? '직접 선택한 일정' : getDepartureOptionLabel(opt)}</option>)}
-          </select></label>
-          {restoredDepartureAt && <button type="button" className="subtle-button" onClick={() => setDepOffset(0)}>지금 출발로 설정</button>}
-        </details>
-        <details className="hike-compare-disclosure" open={compareOpen} onToggle={event => setCompareOpen(event.currentTarget.open)}><summary>출발 시각 비교</summary><HikingScheduleComparison hourlyData={hourlyData} weatherData={weatherData} durationMinutes={adjustedTimeMins} activeOffset={activeDepOffset} onSelectOffset={setDepOffset} restoredDepartureAt={departureAt} onSelectDeparture={onRestoreDeparture} /></details>
-      </section>}
+      {isMountainMode && <nav className="hike-flowbar mountain-shortcuts" aria-label="산행 준비 바로가기">
+        <button type="button" onClick={() => jumpTo('mountain-picker')}>산 바꾸기</button>
+        <button type="button" disabled={!hasWeatherData} onClick={() => jumpTo('hike-schedule')}>일정·조건</button>
+        <button type="button" onClick={() => { setPreparationTab('gear'); requestAnimationFrame(() => jumpTo('hiking-preparation')); }}>준비물</button>
+        <button type="button" onClick={() => jumpPlanner('plan')}>저장·일행</button>
+      </nav>}
+      {isMountainMode && hikingPlanSummary && <MountainPlanControls
+        courses={courses} courseIndex={activeCourseIdx} onCourse={setCourseIdx} paces={PACE_OPTIONS} pace={activePace} onPace={setPace}
+        departureDraft={departureDraft} departureError={departureError} onDepartureDraft={editDeparture} onDeparture={changeDeparture}
+        onOffset={changeOffset} activeOffset={activeDepOffset} restoredDepartureAt={restoredDepartureAt} offsets={DEPARTURE_OFFSETS} getOffsetLabel={getDepartureOptionLabel}
+        compareOpen={compareOpen} onCompareOpen={setCompareOpen} hourlyData={hourlyData} weatherData={weatherData} durationMinutes={adjustedTimeMins} departureAt={departureAt}
+      />}
       {isMountainMode && (!hasWeatherData || isLoading) && <HikingPlannerPanel user={loggedInUser} mountainInfo={mountainInfo} selectedCourse={selectedCourse} courseIndex={activeCourseIdx} weatherDate={weatherData} selectedDateIdx={selectedDateIdx} pace={activePace} departureOffsetHours={activeDepOffset} departureTime="" gearList={[]} checklist={{}} canSave={false} onApplyPlan={handleApplySavedPlan} onRequireLogin={onRequireLogin} onShowToast={onShowToast} focusSection={plannerSection} />}
 
       {isMountainMode && hasWeatherData && !isLoading && (
-        <div role={timeline.status === 'danger' ? 'alert' : 'status'} aria-live="polite" style={{
+        <div className="mountain-safety" role={timeline.status === 'danger' ? 'alert' : 'status'} aria-live="polite" style={{
           display: 'flex', alignItems: 'flex-start', gap: '8px', padding: '10px 12px', marginBottom: '12px',
           borderRadius: '10px', border: `1px solid ${timeline.safetyColor}55`,
           backgroundColor: timeline.safetyBg, color: timeline.safetyColor,
@@ -653,7 +620,7 @@ function HourlyForecast({
       {isMountainMode && hasWeatherData && !isLoading && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '20px' }}>
           
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'stretch' }}>
+          <div className="mountain-results" style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'stretch' }}>
             
             <div className="mtn-score-altitude-box" style={{ flex: '1 1 250px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
               
@@ -690,7 +657,7 @@ function HourlyForecast({
               </div>
 
               {hikingPlanSummary?.scoreBasisLabel && (
-                <div style={{ width: '100%', color: '#64748b', fontSize: '10.5px', lineHeight: 1.45, textAlign: 'center', padding: '0 4px' }}>
+                <div className="mountain-score-basis" style={{ width: '100%', color: '#64748b', fontSize: '10.5px', lineHeight: 1.45, textAlign: 'center', padding: '0 4px' }}>
                   ⏱️ {hikingPlanSummary.scoreBasisLabel}
                   {(hikingPlanSummary.weatherWorstTime || hikingPlanSummary.viewWorstTime) && (
                     <span> · 기상 최저 {hikingPlanSummary.weatherWorstTime || '—'} / 조망 최저 {hikingPlanSummary.viewWorstTime || '—'}</span>
@@ -708,7 +675,7 @@ function HourlyForecast({
               </MountainInfo>
 
               <div style={{ backgroundColor: 'rgba(255,255,255,0.55)', borderRadius: '12px', padding: '12px', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '6px', fontSize: '11.5px' }}>
-                <strong style={{ fontSize: '12px', color: '#334155' }}>고도별 예상 기온</strong>
+                <strong style={{ fontSize: '12px', color: '#334155' }}>{isFuture ? '선택일 고도별 기온' : '현재 고도별 기온'} <span className="mountain-reference-label">참고 추정</span></strong>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '4px', borderBottom: '1px dashed rgba(0,0,0,0.1)' }}>
                   <span style={{ fontWeight: '800', color: '#1e293b' }}>⛰️ 정상 <span style={{fontSize:'10px', color:'#475569', fontWeight:'normal'}}>({mountainInfo?.elevation}m)</span></span>
                   <span style={{ color: '#0f172a', fontWeight: '800' }}>{temp}°C <span style={{fontSize:'10px', color:'#475569', fontWeight:'normal'}}>(체감 {summitFeelsLike}°C)</span></span>
@@ -730,84 +697,15 @@ function HourlyForecast({
               </div>
             </div>
 
-            <div style={{ flex: '1.15 1 290px', backgroundColor: 'rgba(255,255,255,0.6)', borderRadius: '12px', padding: '16px', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-              
-              <h4 style={{ margin: '0 0 10px 0', fontSize: '14px', color: '#1e293b', display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
-                <span style={{ whiteSpace: 'nowrap', fontWeight: '800' }}>⏱️ 코스별 타임라인</span>
-                <div style={{ display: 'flex', backgroundColor: 'rgba(255,255,255,0.6)', padding: '2px', borderRadius: '8px', border: '1px solid rgba(0,0,0,0.05)' }}>
-                  <button
-                    onClick={() => setTimelineMode('descent')}
-                    style={{ padding: '4px 10px', fontSize: '11px', fontWeight: 'bold', border: 'none', borderRadius: '6px', cursor: 'pointer', backgroundColor: timelineMode === 'descent' ? '#ffffff' : 'transparent', color: timelineMode === 'descent' ? '#1d4ed8' : '#64748b', boxShadow: timelineMode === 'descent' ? '0 1px 2px rgba(0,0,0,0.1)' : 'none', transition: 'all 0.2s' }}
-                  >
-                    🌇 일몰/하산
-                  </button>
-                  <button
-                    onClick={() => setTimelineMode('ascent')}
-                    style={{ padding: '4px 10px', fontSize: '11px', fontWeight: 'bold', border: 'none', borderRadius: '6px', cursor: 'pointer', backgroundColor: timelineMode === 'ascent' ? '#ffffff' : 'transparent', color: timelineMode === 'ascent' ? '#c2410c' : '#64748b', boxShadow: timelineMode === 'ascent' ? '0 1px 2px rgba(0,0,0,0.1)' : 'none', transition: 'all 0.2s' }}
-                  >
-                    🌅 일출/등산
-                  </button>
-                </div>
-              </h4>
-              
-              <div 
-                ref={scrollRef}
-                onMouseDown={handleMouseDown}
-                onMouseLeave={handleMouseLeave}
-                onMouseUp={handleMouseUp}
-                onMouseMove={handleMouseMove}
-                style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '8px', marginBottom: '8px', cursor: isDragging ? 'grabbing' : 'grab', userSelect: 'none', WebkitOverflowScrolling: 'touch' }} 
-                className="no-scrollbar"
-              >
-                {courses.map((c, idx) => (
-                  <button 
-                    key={idx} 
-                    onClick={(e) => {
-                      if (dragMoved) { e.preventDefault(); e.stopPropagation(); return; }
-                      setCourseIdx(idx);
-                    }}
-                    style={{
-                      flexShrink: 0, padding: '7px 12px', borderRadius: '8px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer',
-                      border: activeCourseIdx === idx ? '1px solid #2563eb' : '1px solid rgba(0,0,0,0.1)',
-                      background: activeCourseIdx === idx ? '#eff6ff' : 'rgba(255,255,255,0.8)',
-                      color: activeCourseIdx === idx ? '#1d4ed8' : '#475569',
-                      transition: 'all 0.2s', userSelect: 'none'
-                    }}
-                  >
-                    {c.name}
-                  </button>
-                ))}
-              </div>
-
-              {/* 💡 [핵심 수정] 속도 & 출발시간을 위아래 두 줄로 분리하여 텍스트 깨짐 해결 */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '8px', backgroundColor: 'rgba(255,255,255,0.5)', padding: '8px', borderRadius: '8px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span style={{ fontSize: '11px', fontWeight: 'bold', color: '#475569', whiteSpace: 'nowrap', width: '36px' }}>속도:</span>
-                  <div style={{ display: 'flex', gap: '4px', flex: 1 }}>
-                    {PACE_OPTIONS.map((p) => (
-                      <button
-                        key={p.key}
-                        type="button"
-                        onClick={() => setPace(p.key)}
-                        style={{
-                          flex: 1, padding: '5px 2px', fontSize: '11px', fontWeight: 'bold', borderRadius: '6px', cursor: 'pointer',
-                          border: activePace === p.key ? '1px solid #16a34a' : '1px solid transparent',
-                          backgroundColor: activePace === p.key ? '#dcfce7' : 'rgba(255,255,255,0.7)',
-                          color: activePace === p.key ? '#166534' : '#64748b',
-                          transition: 'all 0.15s', whiteSpace: 'nowrap', letterSpacing: '-0.3px'
-                        }}
-                      >
-                        {p.label.split('(')[0]}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                
-              </div>
-
+            <div className="mountain-route-result" style={{ flex: '1.15 1 290px', backgroundColor: 'rgba(255,255,255,0.6)', borderRadius: '12px', padding: '16px', display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+              <div className="mountain-section-heading"><h3>예상 산행 일정</h3><span>총 {Math.floor(adjustedTimeMins / 60)}시간{adjustedTimeMins % 60 ? ` ${adjustedTimeMins % 60}분` : ''}</span></div>
+              <ol className="mountain-itinerary" aria-label="예상 출발·정상·하산 시간">
+                <li><span>출발</span><strong>{itineraryTime(0)}</strong></li>
+                <li><span>정상 도착</span><strong>{itineraryTime(ascentTimeMins)}</strong></li>
+                <li><span>하산 완료</span><strong>{itineraryTime(adjustedTimeMins)}</strong></li>
+              </ol>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', fontSize: '11px', color: '#1e293b', backgroundColor: 'rgba(255,255,255,0.7)', padding: '8px 10px', borderRadius: '8px', marginBottom: '8px' }}>
                 <span>거리: <strong>{selectedCourse.distance}</strong></span>
-                <span>총 소요: <strong>{Math.floor(adjustedTimeMins / 60)}h {adjustedTimeMins % 60 > 0 ? `${adjustedTimeMins % 60}m` : ''}</strong></span>
                 <span>난이도: <strong style={{ color: selectedCourse.diff.includes('상') ? '#dc2626' : '#16a34a' }}>{selectedCourse.diff}</strong></span>
                 <span>열량: <strong>🍫 {nutrition.kcalText}</strong></span>
                 <span style={{ gridColumn: 'span 2', color: '#0369a1', fontWeight: '600' }}>
@@ -818,10 +716,10 @@ function HourlyForecast({
               <div style={{ backgroundColor: 'rgba(239,246,255,0.85)', border: '1px solid rgba(59,130,246,0.25)', borderRadius: '8px', padding: '8px 10px', marginBottom: '8px', fontSize: '11px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2px' }}>
                   <span style={{ fontWeight: '800', color: '#1e3a8a' }}>
-                    ⛰️ 정상 도착 예보 ({timeline.summitArrivalStr})
+                    ⛰️ 정상 도착 무렵 예보
                   </span>
                   <span style={{ fontSize: '10px', color: '#475569', fontWeight: '600' }}>
-                    편도 추정 {Math.floor(ascentTimeMins / 60)}h {ascentTimeMins % 60}m · 하산 시작 권장 {safeDescentTime}
+                    {timeline.status !== 'planning' && safeDescentTime ? `하산 시작 권장 ${safeDescentTime}` : '날짜별 일몰 확인 필요'}
                   </span>
                 </div>
                 {timeline.arrivalWeather.available ? (
@@ -843,6 +741,10 @@ function HourlyForecast({
               <MountainInfo label="정상 도착 시각 산정 기준">
                 정상 도착 시각은 전체 코스 시간의 55%를 오름 시간으로 계산한 참고 추정치입니다. 실제 소요 시간은 체력, 휴식, 노면과 코스 상황에 따라 달라집니다.
               </MountainInfo>
+              <MountainInfo label="일출 산행을 계획한다면">
+                {timeline.status === 'planning' ? '선택한 날짜의 일출 시간과 입산 가능 시간을 먼저 확인하세요.' : `오늘 일출은 ${sunrise}입니다. 선택 코스의 정상까지 약 ${Math.floor(ascentTimeMins / 60)}시간 ${ascentTimeMins % 60}분에 휴식 여유를 더해 출발 시간을 정하세요.`}
+                <div>야간 입산 허용 여부를 확인하고 헤드랜턴·여분 배터리·보온 의류를 준비하세요. 위 시간 주의 안내는 선택한 실제 일정에 적용됩니다.</div>
+              </MountainInfo>
               {courseRiskNotes.length > 0 && (
                 <div style={{ backgroundColor: 'rgba(255,247,237,0.8)', border: '1px solid rgba(249,115,22,0.22)', borderRadius: '8px', padding: '9px 10px', marginBottom: '8px', color: '#9a3412', fontSize: '12px', lineHeight: '1.5' }}>
                   <strong style={{ display: 'block', marginBottom: '3px' }}>코스·기상 유의사항</strong>
@@ -853,7 +755,7 @@ function HourlyForecast({
               <div style={{ display: 'flex', gap: '6px', marginTop: 'auto' }}>
                 <button
                   type="button"
-                  onPointerDown={(e) => handleOpenMap('kakao', e)}
+                  onClick={(e) => handleOpenMap('kakao', e)}
                   style={{
                     flex: 1, padding: '7px 8px', borderRadius: '8px', border: '1px solid #eab308',
                     backgroundColor: '#fef9c3', color: '#854d0e', fontSize: '11.5px', fontWeight: '800',
@@ -865,7 +767,7 @@ function HourlyForecast({
                 </button>
                 <button
                   type="button"
-                  onPointerDown={(e) => handleOpenMap('naver', e)}
+                  onClick={(e) => handleOpenMap('naver', e)}
                   style={{
                     flex: 1, padding: '7px 8px', borderRadius: '8px', border: '1px solid #22c55e',
                     backgroundColor: '#dcfce7', color: '#166534', fontSize: '11.5px', fontWeight: '800',
@@ -899,18 +801,24 @@ function HourlyForecast({
             </div>
           </div>
 
+          <section id="hiking-preparation" className="mountain-preparation" tabIndex={-1} aria-label="산행 준비물과 일행 관리">
+            <div className="mountain-preparation-tabs" role="tablist" aria-label="준비 방법" onKeyDown={event => { if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return; event.preventDefault(); const next = event.key === 'Home' ? 'gear' : event.key === 'End' ? 'account' : preparationTab === 'gear' ? 'account' : 'gear'; setPreparationTab(next); document.getElementById(`${next}-tab`)?.focus(); }}>
+              <button id="gear-tab" tabIndex={preparationTab === 'gear' ? 0 : -1} type="button" role="tab" aria-selected={preparationTab === 'gear'} aria-controls="gear-panel" onClick={() => setPreparationTab('gear')}>내 준비물 <span>{packedGearCount}/{gearList.length}</span></button>
+              <button id="account-tab" tabIndex={preparationTab === 'account' ? 0 : -1} type="button" role="tab" aria-selected={preparationTab === 'account'} aria-controls="account-panel" onClick={() => setPreparationTab('account')}>계획 저장·일행{invitationCount > 0 && <span>초대 {invitationCount}</span>}</button>
+            </div>
+            <div id="gear-panel" className="mountain-gear-panel" role="tabpanel" aria-labelledby="gear-tab" hidden={preparationTab !== 'gear'}>
           <div style={{ backgroundColor: 'rgba(255,255,255,0.6)', borderRadius: '12px', padding: '16px', display: 'flex', flexDirection: 'column' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '12px' }}>
               <div>
                 <h4 style={{ margin: '0 0 4px 0', fontSize: '14.5px', color: '#1e293b', fontWeight: '800' }}>
-                  🎒 {isFuture ? '예상 기상 맞춤 배낭 체크리스트' : '오늘 기상 맞춤 배낭 체크리스트'}
+                  🎒 내 배낭 체크리스트
                 </h4>
                 <span style={{ fontSize: '10.5px', color: '#475569', fontWeight: '500' }}>
-                  기온·코스에 맞춰 자동 추천되며, 직접 편집하여 일행에게 공유할 수 있습니다.
+                  준비한 물품을 체크하세요. 수정한 목록은 이 브라우저에 보관됩니다.
                 </span>
               </div>
               <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                <button onClick={handleResetGear} title="초기화" style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid rgba(0,0,0,0.1)', backgroundColor: 'rgba(255,255,255,0.8)', color: '#475569', fontSize: '11.5px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <button type="button" onClick={() => { if (window.confirm('추가한 물품과 체크 상태를 지우고 기본 추천 목록으로 복원할까요?')) handleResetGear(); }} title="추천 목록으로 복원" style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid rgba(0,0,0,0.1)', backgroundColor: 'rgba(255,255,255,0.8)', color: '#475569', fontSize: '11.5px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}>
                   <FiRotateCcw size={12} /> 복원
                 </button>
                 <button onClick={handleSharePlan} style={{ padding: '6px 12px', borderRadius: '6px', border: 'none', backgroundColor: '#166534', color: '#ffffff', fontSize: '11.5px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', boxShadow: '0 2px 4px rgba(22,101,52,0.3)' }}>
@@ -920,7 +828,7 @@ function HourlyForecast({
             </div>
 
             <div style={{ display: 'flex', gap: '6px', marginBottom: '12px' }}>
-              <input type="text" placeholder="추가할 준비물을 입력하세요 (예: 보조배터리)" value={newGearInput} onChange={(e) => setNewGearInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleAddGear()} style={{ flex: 1, padding: '8px 12px', borderRadius: '6px', border: '1px solid rgba(0,0,0,0.1)', fontSize: '12.5px', outline: 'none', color: '#1e293b', backgroundColor: 'rgba(255,255,255,0.8)', fontWeight: '500' }} />
+              <input type="text" aria-label="추가할 준비물" maxLength={120} placeholder="준비물 추가 (예: 보조배터리)" value={newGearInput} onChange={(e) => setNewGearInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && !e.nativeEvent.isComposing && handleAddGear()} style={{ flex: 1, padding: '8px 12px', borderRadius: '6px', border: '1px solid rgba(0,0,0,0.1)', fontSize: '12.5px', outline: 'none', color: '#1e293b', backgroundColor: 'rgba(255,255,255,0.8)', fontWeight: '500' }} />
               <button type="button" onClick={handleAddGear} style={{ padding: '8px 14px', borderRadius: '6px', border: 'none', backgroundColor: '#15803d', color: '#ffffff', fontSize: '12.5px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}>
                 <FiPlus size={14} /> 추가
               </button>
@@ -931,14 +839,14 @@ function HourlyForecast({
                 체크리스트가 비어 있습니다.
               </p>
             ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '8px' }}>
+              <div className="mountain-gear-grid">
                 {gearList.map((item, idx) => (
                   <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 10px', borderRadius: '6px', backgroundColor: 'rgba(255,255,255,0.8)', border: '1px solid rgba(0,0,0,0.04)' }}>
                     <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: checklist[item] ? '#94a3b8' : '#1e293b', fontWeight: '600', cursor: 'pointer', textDecoration: checklist[item] ? 'line-through' : 'none', userSelect: 'none', flex: 1, minWidth: 0 }}>
                       <input type="checkbox" checked={!!checklist[item]} onChange={() => toggleCheck(item)} style={{ cursor: 'pointer', accentColor: '#16a34a', width: '14px', height: '14px', flexShrink: 0 }} />
-                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item}</span>
+                      <span className="mountain-gear-name">{item}</span>
                     </label>
-                    <button type="button" onClick={() => handleRemoveGear(item)} style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '2px', marginLeft: '4px', flexShrink: 0 }}>
+                    <button type="button" aria-label={`${item} 목록에서 삭제`} onClick={() => handleRemoveGear(item)} style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '2px', marginLeft: '4px', flexShrink: 0 }}>
                       <FiX size={14} />
                     </button>
                   </div>
@@ -947,8 +855,12 @@ function HourlyForecast({
             )}
           </div>
 
+            <div className="mountain-gear-next"><span>준비 완료 {packedGearCount} / {gearList.length}</span><button type="button" onClick={() => jumpPlanner('plan')}>이 일정 저장·일행 초대 →</button></div>
+            </div>
+            <div id="account-panel" role="tabpanel" aria-labelledby="account-tab" hidden={preparationTab !== 'account'}>
           {isMountainMode && (
             <HikingPlannerPanel
+              onInvitationCountChange={setInvitationCount}
               user={loggedInUser}
               mountainInfo={mountainInfo}
               selectedCourse={courses[activeCourseIdx]}
@@ -968,7 +880,8 @@ function HourlyForecast({
               departureAt={departureAt}
             />
           )}
-          
+            </div>
+          </section>
           {!isFuture && (
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', borderTop: '2px dashed rgba(0,0,0,0.1)', paddingTop: '16px' }}>
               <h4 style={{ margin: 0, fontSize: '14px', fontWeight: '800', color: '#1e293b' }}>시간대별 산 정상 기온 변화</h4>

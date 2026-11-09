@@ -924,7 +924,7 @@ function App() {
           </div>
           
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <button type="button" className="header-hiking-button" onClick={() => { setIsFishingPage(false); if (!isMountainMode) { setIsMountainMode(true); loadMountainWeather('북한산'); } setTimeout(() => document.getElementById('hiking-planner')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100); }}>내 산행</button>
+          <button type="button" className="header-hiking-button" onClick={() => { setIsFishingPage(false); if (!isMountainMode) { setIsMountainMode(true); loadMountainWeather('북한산'); } setTimeout(() => { window.dispatchEvent(new Event('weather:open-hiking-planner')); document.getElementById('hiking-planner')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 100); }}>내 산행</button>
           <button type="button" onClick={() => setIsFishingPage(value => !value)} style={{ backgroundColor: isFishingPage ? 'rgba(20,184,166,0.88)' : 'rgba(0,0,0,0.2)', backdropFilter: 'blur(10px)', color: 'white', border: '1px solid rgba(255,255,255,0.4)', borderRadius: '20px', padding: '7px 14px', cursor: 'pointer', fontWeight: 'bold', whiteSpace: 'nowrap' }}>
             {isFishingPage ? '☀️ 날씨 홈' : '🎣 바다 낚시'}
           </button>
@@ -944,7 +944,7 @@ function App() {
             hourlyData={hourlyData}
             weeklyData={weeklyData}
             selectedDateIdx={selectedDateIdx}
-            onSelectDate={(idx) => { setSelectedDateIdx(idx); setRestoredDepartureAt(null); setPlanReferenceAt(Date.now()); }}
+            onSelectDate={(idx) => { setSelectedDateIdx(idx); setRestoredDepartureAt(null); setDepartureOffsetHours(0); setPlanReferenceAt(Date.now()); }}
             isAiLoading={isAiLoading && !weatherData.hasData}
             aiMessage={aiMessage} 
             favorites={favorites} 
