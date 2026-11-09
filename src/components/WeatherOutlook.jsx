@@ -85,7 +85,7 @@ function WeatherOutlook({
               <div>
                 <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 'bold' }}>기상 적합도 (날씨)</div>
                 <div style={{ fontSize: '13.5px', fontWeight: '800', color: hikingPlanSummary.weatherScore >= 85 ? '#166534' : hikingPlanSummary.weatherScore >= 70 ? '#d97706' : '#dc2626', marginTop: '2px' }}>
-                  {hikingPlanSummary.weatherScore}점 · {hikingPlanSummary.weatherAssessmentStatus || '기상 조건 참고 판단'}
+                  {hikingPlanSummary.weatherScore === null ? '점수 계산 보류' : `${hikingPlanSummary.weatherScore}점`} · {hikingPlanSummary.weatherAssessmentStatus || '기상 조건 참고 판단'}
                 </div>
               </div>
               <div>

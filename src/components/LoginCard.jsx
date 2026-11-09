@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FiUser, FiLock, FiLogOut, FiSettings, FiTrash2 } from 'react-icons/fi';
-import { API } from '../config';
+import { requestJson } from '../lib/apiClient';
 
-function LoginCard({ onSignUpClick, onFindPasswordClick, loggedInUser, onLogin, onLogout, onUpdateUser, onDeleteAccount }) {
+function LoginCard({ loginPrompt = 0, onSignUpClick, onFindPasswordClick, loggedInUser, onLogin, onLogout, onUpdateUser, onDeleteAccount }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isEditMode, setIsEditMode] = useState(false);
@@ -11,6 +11,9 @@ function LoginCard({ onSignUpClick, onFindPasswordClick, loggedInUser, onLogin, 
   const [editCurrentPassword, setEditCurrentPassword] = useState('');
   const [editNewPassword, setEditNewPassword] = useState('');
   const [showLoginForm, setShowLoginForm] = useState(false);
+  const [loginBusy, setLoginBusy] = useState(false);
+  const [loginError, setLoginError] = useState('');
+  useEffect(() => { if (loginPrompt > 0) setShowLoginForm(true); }, [loginPrompt]);
 
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
@@ -19,23 +22,19 @@ function LoginCard({ onSignUpClick, onFindPasswordClick, loggedInUser, onLogin, 
       return;
     }
     
+    if (loginBusy) return;
+    setLoginBusy(true); setLoginError('');
     try {
-      const res = await fetch(`${API}/api/login`, {
-        method: 'POST',
+      const data = await requestJson('/api/login', {
+        method: 'POST', timeoutMs: 20000,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
+        body: JSON.stringify({ username: username.trim(), password }),
       });
-      const data = await res.json();
-      if (res.ok) {
-        await onLogin({ id: data.username, name: data.name, accessToken: data.access_token });
-        setUsername('');
-        setPassword('');
-      } else {
-        alert(data.detail || '로그인 실패');
-      }
-    } catch (err) {
-      alert('서버에 연결할 수 없습니다.');
-    }
+      await onLogin({ id: data.username, name: data.name, accessToken: data.access_token });
+      setUsername(''); setPassword('');
+    } catch (error) {
+      setLoginError(error.message);
+    } finally { setLoginBusy(false); }
   };
 
   const handleUpdateSubmit = async (e) => {
@@ -99,7 +98,7 @@ function LoginCard({ onSignUpClick, onFindPasswordClick, loggedInUser, onLogin, 
             </div>
             <div style={{ display: 'flex', gap: '8px', marginTop: 'auto' }}>
               <button type="button" onClick={() => setIsEditMode(false)} style={{ flex: 1, padding: '10px', backgroundColor: 'rgba(0,0,0,0.05)', color: '#475569', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px' }}>취소</button>
-              <button type="submit" style={{ flex: 1, padding: '10px', backgroundColor: '#3182ce', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px' }}>저장</button>
+              <button type="submit" disabled={loginBusy} style={{ flex: 1, padding: '10px', backgroundColor: '#3182ce', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px' }}>저장</button>
             </div>
             <button type="button" onClick={onDeleteAccount} style={{ marginTop: '12px', background: 'none', border: 'none', color: '#e53e3e', fontSize: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
               <FiTrash2 size={12} /> 회원 탈퇴
@@ -120,7 +119,7 @@ function LoginCard({ onSignUpClick, onFindPasswordClick, loggedInUser, onLogin, 
         </p>
         <div style={{ display: 'grid', gap: '8px', marginBottom: '16px' }}>
           <div style={{ padding: '9px 11px', borderRadius: '10px', background: 'rgba(255,255,255,0.48)', color: '#334155', fontSize: '12px' }}>📍 관심 지역 최대 5곳을 한눈에 비교</div>
-          <div style={{ padding: '9px 11px', borderRadius: '10px', background: 'rgba(255,255,255,0.48)', color: '#334155', fontSize: '12px' }}>☁️ 로그인하면 관심 지역을 계정에 저장해 다른 기기에서도 불러오기</div>
+          <div style={{ padding: '9px 11px', borderRadius: '10px', background: 'rgba(255,255,255,0.48)', color: '#334155', fontSize: '12px' }}>☁️ 로그인하면 관심 지역과 산행 계획을 다른 기기에서도 불러오기</div>
         </div>
         <button type="button" onClick={onSignUpClick} style={{ width: '100%', padding: '11px', border: '0', borderRadius: '9px', color: '#fff', background: '#176b63', fontWeight: '750', fontSize: '13px', cursor: 'pointer' }}>무료 계정 만들기</button>
         <button type="button" onClick={() => setShowLoginForm(true)} style={{ display: 'block', margin: '11px auto 0', padding: '5px 10px', border: '0', background: 'transparent', color: '#315b99', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}>이미 계정이 있어요 · 로그인</button>
@@ -135,6 +134,7 @@ function LoginCard({ onSignUpClick, onFindPasswordClick, loggedInUser, onLogin, 
         <h3 style={{ margin: 0, fontSize: '17px', fontWeight: '800', color: '#1e293b' }}>로그인</h3>
         <button type="button" onClick={() => setShowLoginForm(false)} style={{ border: '0', background: 'transparent', color: '#315b99', fontSize: '12px', cursor: 'pointer' }}>둘러보기</button>
       </div>
+      {loginError && <p role="alert" className="planner-error">{loginError}</p>}
       <form onSubmit={handleLoginSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
         <div style={{ position: 'relative' }}>
           <FiUser style={{ position: 'absolute', left: '12px', top: '12px', color: '#94a3b8' }} />
@@ -158,12 +158,12 @@ function LoginCard({ onSignUpClick, onFindPasswordClick, loggedInUser, onLogin, 
             required 
           />
         </div>
-        <button type="submit" style={{ width: '100%', padding: '12px', backgroundColor: '#1e3a8a', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold', fontSize: '13px', cursor: 'pointer', marginTop: '4px', boxShadow: '0 2px 4px rgba(30,58,138,0.2)' }}>
+        <button type="submit" disabled={loginBusy} style={{ width: '100%', padding: '12px', backgroundColor: '#1e3a8a', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold', fontSize: '13px', cursor: 'pointer', marginTop: '4px', boxShadow: '0 2px 4px rgba(30,58,138,0.2)' }}>
           로그인
         </button>
       </form>
       <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', marginTop: '16px', fontSize: '12px', color: '#64748b' }}>
-        <span onClick={onFindPasswordClick} style={{ cursor: 'pointer', hover: { color: '#3182ce' } }}>비밀번호 찾기</span>
+        <span onClick={onFindPasswordClick} style={{ cursor: 'pointer', hover: { color: '#3182ce' } }}>비밀번호 변경</span>
         <span>|</span>
         <span onClick={onSignUpClick} style={{ cursor: 'pointer', color: '#3182ce', fontWeight: 'bold' }}>무료 회원가입</span>
       </div>

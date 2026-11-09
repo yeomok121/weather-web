@@ -1,15 +1,16 @@
 import React, { useState } from 'react';
-import { API } from '../config';
+import { requestJson } from '../lib/apiClient';
 
 function FindPasswordModal({ onClose }) {
   const [id, setId] = useState('');
-  const [name, setName] = useState('');
+  const [currentPw, setCurrentPw] = useState('');
+  const [error, setError] = useState('');
   const [newPw, setNewPw] = useState('');
   const [newPwConfirm, setNewPwConfirm] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleReset = async () => {
-    if (!id.trim() || !name.trim() || !newPw || !newPwConfirm) {
+    if (!id.trim() || !currentPw || !newPw || !newPwConfirm) {
       alert('모든 정보를 입력해 주세요.');
       return;
     }
@@ -24,20 +25,15 @@ function FindPasswordModal({ onClose }) {
 
     setLoading(true);
     try {
-      const res = await fetch(`${API}/api/password/reset`, {
-        method: 'POST',
+      await requestJson('/api/password/reset', {
+        method: 'POST', timeoutMs: 20000,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: id.trim(), name: name.trim(), new_password: newPw }),
+        body: JSON.stringify({ username: id.trim(), current_password: currentPw, new_password: newPw }),
       });
-      const data = await res.json();
-      if (!res.ok) {
-        alert(data.detail || '비밀번호 변경에 실패했습니다.');
-        return;
-      }
       alert('비밀번호가 변경되었습니다. 새 비밀번호로 로그인해 주세요.');
       onClose();
-    } catch (e) {
-      alert('서버에 연결할 수 없습니다. 백엔드 서버가 켜져 있는지 확인해 주세요.');
+    } catch (error) {
+      setError(error.message);
     } finally {
       setLoading(false);
     }
@@ -51,18 +47,19 @@ function FindPasswordModal({ onClose }) {
 
   return (
     <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
-      <div style={{ backgroundColor: 'white', padding: '30px', borderRadius: '15px', width: '400px', boxShadow: '0 10px 25px rgba(0,0,0,0.2)', color: '#333' }}>
+      <div style={{ backgroundColor: 'white', padding: '30px', borderRadius: '15px', width: 'min(400px, calc(100vw - 24px))', boxShadow: '0 10px 25px rgba(0,0,0,0.2)', color: '#333' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-          <h2 style={{ margin: 0, fontSize: '20px' }}>비밀번호 찾기</h2>
+          <h2 style={{ margin: 0, fontSize: '20px' }}>비밀번호 변경</h2>
           <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer' }}>❌</button>
         </div>
 
         <p style={{ fontSize: '14px', color: '#666', marginBottom: '20px', lineHeight: '1.5' }}>
-          가입 시 등록한 아이디와 이름이 일치하면<br />새 비밀번호로 변경할 수 있어요.
+          현재 비밀번호를 확인한 뒤 새 비밀번호로 변경합니다. 분실한 비밀번호의 복구는 본인 확인 기능이 준비되면 지원됩니다.
         </p>
 
         <input type="text" placeholder="아이디" value={id} onChange={(e) => setId(e.target.value)} style={inputStyle} />
-        <input type="text" placeholder="이름" value={name} onChange={(e) => setName(e.target.value)} style={inputStyle} />
+        <input type="password" autoComplete="current-password" placeholder="현재 비밀번호" value={currentPw} onChange={(e) => setCurrentPw(e.target.value)} style={inputStyle} />
+        {error && <p role="alert" className="planner-error">{error}</p>}
         <input type="password" placeholder="새 비밀번호 (4자 이상)" value={newPw} onChange={(e) => setNewPw(e.target.value)} style={inputStyle} />
         <input
           type="password" placeholder="새 비밀번호 확인" value={newPwConfirm}

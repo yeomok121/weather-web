@@ -1,19 +1,19 @@
 import React, { useState, useEffect } from 'react';
+import { isWeatherNumber } from '../lib/forecastCache';
 
 function WeatherDetails({ airQuality = {}, current = {}, isMountainMode = false, mountainInfo = null, weatherFetchedAt = null }) {
   const sunrise = current.sunrise || '06:00';
   const sunset = current.sunset || '18:00';
-  const safeDescentTime = current.safeDescentTime || mountainInfo?.safe_descent_time || '15:30';
   const [celestial, setCelestial] = useState({ position: 50, icon: '☀️', isNight: false });
 
-  const temp = current.temp !== undefined ? Number(current.temp) : 20;
-  const feelsLike = Number.isFinite(Number(current.feelsLike)) ? Number(current.feelsLike) : temp;
-  const humidity = current.humidity !== undefined ? Number(current.humidity) : 50;
+  const hasData = current.hasData === true && isWeatherNumber(current.temp);
+  const temp = isWeatherNumber(current.temp) ? Number(current.temp) : null;
+  const feelsLike = isWeatherNumber(current.feelsLike) ? Number(current.feelsLike) : temp;
+  const humidity = isWeatherNumber(current.humidity) ? Number(current.humidity) : null;
   const pm25 = airQuality.pm25 !== null && airQuality.pm25 !== undefined && Number.isFinite(Number(airQuality.pm25)) ? Number(airQuality.pm25) : null;
-  const wind = current.wind_speed !== undefined ? Number(current.wind_speed) : 2;
+  const wind = isWeatherNumber(current.wind_speed) ? Number(current.wind_speed) : null;
   const desc = current.description || '맑음';
   const terrain = mountainInfo?.terrain || '';
-  const isFuture = current.isFuture || false;
 
   const rainProbability = Math.max(Number(current.targetPop || 0), Number(current.nextHoursRainPop || 0));
   const isRainOrSnow = desc.includes('비') || desc.includes('소나기') || desc.includes('눈') || desc.includes('우박') || rainProbability >= 60;
@@ -100,7 +100,9 @@ function WeatherDetails({ airQuality = {}, current = {}, isMountainMode = false,
   };
 
   const mainRecommendation = isMountainMode ? getHikingGearRecommendation() : getClothingRecommendation();
-  const activeBadges = isMountainMode ? getMountainIndices() : getLifeIndices();
+  const activeBadges = humidity === null || wind === null
+    ? [{ text: '일부 기상 자료 없음 · 활동 조건 확인 필요', color: '#64748b' }]
+    : isMountainMode ? getMountainIndices() : getLifeIndices();
   const fetchedAtLabel = weatherFetchedAt instanceof Date && !Number.isNaN(weatherFetchedAt.getTime())
     ? weatherFetchedAt.toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })
     : '확인 불가';
@@ -146,6 +148,7 @@ function WeatherDetails({ airQuality = {}, current = {}, isMountainMode = false,
     return () => clearInterval(interval);
   }, [sunrise, sunset]);
 
+  if (!hasData) return <section className="glass-card detail-info-card weather-empty"><h3>상세 날씨 정보</h3><p>기상 자료를 받지 못했습니다.</p><dl className="empty-weather-values"><div><dt>습도</dt><dd>자료 없음</dd></div><div><dt>풍속</dt><dd>자료 없음</dd></div><div><dt>대기질</dt><dd>자료 없음</dd></div></dl><p>자료가 확인되면 옷차림과 활동 안내를 제공합니다.</p></section>;
   return (
     <div className="glass-card detail-info-card" style={{ borderRadius: '16px', padding: '20px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', height: 'fit-content', boxSizing: 'border-box' }}>
       <h3 style={{ margin: '0 0 12px 0', fontSize: '15px', fontWeight: '800', color: isMountainMode ? '#166534' : '#1e293b' }}>
@@ -156,7 +159,7 @@ function WeatherDetails({ airQuality = {}, current = {}, isMountainMode = false,
         <summary style={{ cursor: 'pointer', fontWeight: 700, color: '#334155', minHeight: '24px' }}>ⓘ 자료 출처·산출 기준</summary>
         <div style={{ marginTop: '8px' }}>
           <div>이 화면에서 자료를 받은 시각: {fetchedAtLabel}</div>
-          {(isMountainMode ? mountainSources : citySources).map((source, index) => <div key={index}>· {source}</div>)}
+          {(isMountainMode || current.weatherSources ? mountainSources : citySources).map((source, index) => <div key={index}>· {source}</div>)}
           {isMountainMode && <div style={{ marginTop: '4px' }}>{current.dataNote || '일부 정상 기상값은 고도 보정 추정값일 수 있습니다.'}</div>}
           {!isMountainMode && <div style={{ marginTop: '4px' }}>조회 시각은 공급 기관의 관측·예보 발표 시각과 다릅니다. {current.isFuture ? '대기질과 일출·일몰은 현재 기준 정보입니다.' : '현재 기상은 기상청 예보 기반이며 관측 실황과 다를 수 있습니다.'}</div>}
         </div>
@@ -172,7 +175,7 @@ function WeatherDetails({ airQuality = {}, current = {}, isMountainMode = false,
           : <div style={{ height: '6px', borderRadius: '3px', background: 'linear-gradient(to right, #38bdf8, #22c55e, #eab308, #ef4444)', position: 'relative' }}><div style={{ position: 'absolute', top: '-3px', left: `${Math.min(100, Math.max(0, (pm25 / 100) * 100))}%`, width: '12px', height: '12px', borderRadius: '50%', background: '#ffffff', border: '2px solid #0f172a' }} /></div>}
       </div>
 
-      <div style={{ marginTop: '16px', marginBottom: isMountainMode ? '12px' : '10px' }}>
+      {current.sunrise && current.sunset ? <div style={{ marginTop: '16px', marginBottom: isMountainMode ? '12px' : '10px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#475569', fontWeight: 'bold' }}>
           {celestial.isNight ? (
             <>
@@ -197,14 +200,15 @@ function WeatherDetails({ airQuality = {}, current = {}, isMountainMode = false,
 
         {isMountainMode && (
           <div style={{ marginTop: '4px', backgroundColor: 'rgba(255,247,237,0.7)', border: '1px solid rgba(254,215,170,0.5)', color: '#c2410c', borderRadius: '8px', padding: '4px 8px', fontSize: '11.5px', fontWeight: 'bold', textAlign: 'center' }}>
-            🚨 안전 하산 마감: {safeDescentTime} 이전
+            🚨 권장 하산 시작: {current.safeDescentTime || '일몰 자료 확인 필요'}
           </div>
         )}
       </div>
 
+      : <p className="muted">일출·일몰 자료 없음 · 날짜별 공식 정보를 확인하세요.</p>}
       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#1e293b', marginTop: '10px', paddingTop: '10px', borderTop: '1px solid rgba(0,0,0,0.1)' }}>
-        <span style={{ fontWeight: '600' }}>{isMountainMode ? '정상 습도:' : '습도:'} <strong>{humidity}%</strong></span>
-        <span style={{ fontWeight: '600' }}>{isMountainMode ? '능선 풍속:' : '풍속:'} <strong>{wind} m/s</strong></span>
+        <span style={{ fontWeight: '600' }}>{isMountainMode ? '정상 습도:' : '습도:'} <strong>{humidity === null ? '자료 없음' : `${humidity}%`}</strong></span>
+        <span style={{ fontWeight: '600' }}>{isMountainMode ? '능선 풍속:' : '풍속:'} <strong>{wind === null ? '자료 없음' : `${wind} m/s`}</strong></span>
       </div>
 
       <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px solid rgba(0,0,0,0.1)', display: 'flex', flexDirection: 'column', gap: '6px' }}>

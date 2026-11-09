@@ -19,23 +19,10 @@ function WeatherMain({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  if (isAiLoading) {
-    return (
-      <div className="weather-main-card glass-card" style={{ borderRadius: '16px', display: 'flex', flexDirection: 'row', overflow: 'hidden' }}>
-        <div style={{ flex: 2, padding: '16px 20px', textAlign: 'center' }}>
-          <div className="skeleton" style={{ width: '40%', height: '20px', margin: '0 auto 8px', borderRadius: '4px' }}></div>
-          <div className="skeleton" style={{ width: '30%', height: '14px', margin: '0 auto 12px', borderRadius: '4px' }}></div>
-          <div className="skeleton" style={{ width: '90px', height: '50px', margin: '0 auto 10px', borderRadius: '8px' }}></div>
-        </div>
-        <div className="weather-main-right" style={{ flex: 1, padding: '16px 20px', borderLeft: '1px solid rgba(255,255,255,0.4)' }}>
-          <div className="skeleton" style={{ width: '60%', height: '14px', marginBottom: '12px', borderRadius: '4px' }}></div>
-        </div>
-      </div>
-    );
-  }
-
+  const hasData = weatherData.hasData === true;
   const tempDiff = Number(weatherData.tempDiff || 0);
   const getComparisonBadge = () => {
+    if (!hasData || (!isMountainMode && weatherData.tempDiff === null)) return null;
     if (weatherData.isFuture) {
       if (isMountainMode) {
         const baseTemp = weatherData.baseTemp ?? (weatherData.temp + 5);
@@ -55,7 +42,7 @@ function WeatherMain({
   };
 
   const getWeatherAlert = () => {
-    if (weatherData.isFuture || isMountainMode) return null;
+    if (!hasData || weatherData.isFuture || isMountainMode) return null;
     const cond = weatherData.condition || '';
     const wind = Number(weatherData.wind_speed || 0);
     const temp = Number(weatherData.temp || 20);
@@ -81,6 +68,7 @@ function WeatherMain({
   };
 
   const getActiveGuideMessage = () => {
+    if (!hasData) return isAiLoading ? '기상 자료를 확인하고 있어요.' : '기상 자료를 받지 못해 수치와 활동 추천을 표시하지 않습니다.';
     if (!weatherData.isFuture) return aiMessage;
 
     const t = Number(weatherData.temp || 0);
@@ -168,20 +156,20 @@ function WeatherMain({
         
         {/* 💡 기온/아이콘 크기 적절히 축소 (50px / 42px) */}
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', margin: '4px 0' }}>
-          <h1 style={{ fontSize: '50px', margin: '0', fontWeight: '800', letterSpacing: '-1.5px' }}>{weatherData.temp}°<span style={{ fontSize: '24px', fontWeight: 'bold' }}>C</span></h1>
-          <span style={{ fontSize: '42px', filter: 'drop-shadow(0px 2px 4px rgba(0,0,0,0.1))' }}>{weatherData.icon}</span>
+          <h1 aria-label={hasData ? `기온 ${weatherData.temp}도` : '기온 자료 없음'} style={{ fontSize: '50px', margin: '0', fontWeight: '800', letterSpacing: '-1.5px' }}>{hasData ? `${weatherData.temp}°` : '—'}{hasData && <span style={{ fontSize: '24px', fontWeight: 'bold' }}>C</span>}</h1>
+          <span style={{ fontSize: '42px', filter: 'drop-shadow(0px 2px 4px rgba(0,0,0,0.1))' }}>{hasData ? weatherData.icon : null}</span>
         </div>
         
         <p style={{ margin: '4px 0 2px 0', fontWeight: 'bold', fontSize: '13px', color: '#1e293b' }}>
-          {isMountainMode ? `정상 ${weatherData.condition}` : weatherData.condition}
+          {hasData ? (isMountainMode ? `정상 ${weatherData.condition}` : weatherData.condition) : (isAiLoading ? '날씨 확인 중' : '기상 자료 없음')}
         </p>
-        <p style={{ margin: '0 0 8px 0', color: '#475569', fontSize: '12px', fontWeight: '500' }}>{weatherData.highLow}</p>
+        <p style={{ margin: '0 0 8px 0', color: '#475569', fontSize: '12px', fontWeight: '500' }}>{hasData ? weatherData.highLow : '기온 · 습도 · 바람 자료를 확인해 주세요.'}</p>
 
-        <div style={{ display: 'flex', justifyContent: 'center' }}>
+        {diffBadge && <div style={{ display: 'flex', justifyContent: 'center' }}>
           <span style={{ display: 'inline-block', backgroundColor: diffBadge.bg, color: diffBadge.color, borderRadius: '6px', padding: '4px 10px', fontSize: '11px', fontWeight: 'bold' }}>
             {diffBadge.text}
           </span>
-        </div>
+        </div>}
         
         <div style={{ marginTop: '10px', padding: '8px 12px', background: 'rgba(255,255,255,0.4)', borderRadius: '8px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: '3px', fontSize: '11.5px', border: '1px solid rgba(255,255,255,0.5)', textAlign: 'center', minHeight: '36px' }}>
           <span style={{ color: '#64748b', fontSize: '9.5px', fontWeight: '700' }}>{weatherData.isFuture ? '예보 기반 안내 · 참고용' : 'AI 참고 안내 · 예보 자료 요약'}</span>
@@ -190,7 +178,7 @@ function WeatherMain({
       </div>
       
       {/* 💡 우측 명산 목록 패딩 및 아이템 크기 최적화 */}
-      <div className="weather-main-right" style={{ flex: 1, padding: '16px', borderLeft: '1px solid rgba(255,255,255,0.4)', color: '#333', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', backgroundColor: 'rgba(255,255,255,0.15)', minWidth: 0 }}>
+      <div id="mountain-picker" className="weather-main-right" style={{ flex: 1, padding: '16px', borderLeft: '1px solid rgba(255,255,255,0.4)', color: '#333', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', backgroundColor: 'rgba(255,255,255,0.15)', minWidth: 0 }}>
         {isMountainMode ? (
           <div style={{ minWidth: 0 }}>
             <h4 style={{ fontSize: '11.5px', color: '#166534', fontWeight: 'bold', margin: '0 0 6px 0' }}>📌 핵심 산행 팁</h4>
@@ -226,7 +214,7 @@ function WeatherMain({
               {mountainsList.map((m, idx) => {
                 const isSelected = weatherData.region === m.name;
                 return (
-                  <li key={idx} onClick={() => onSelectMountain && onSelectMountain(m.name)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 8px', cursor: 'pointer', borderRadius: '6px', backgroundColor: isSelected ? 'rgba(22,163,74,0.1)' : 'transparent', color: isSelected ? '#16a34a' : '#475569', fontWeight: isSelected ? 'bold' : '500', marginBottom: '2px' }}>
+                  <li key={idx} role="button" tabIndex={0} onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onSelectMountain?.(m.name); } }} onClick={() => onSelectMountain && onSelectMountain(m.name)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 8px', cursor: 'pointer', borderRadius: '6px', backgroundColor: isSelected ? 'rgba(22,163,74,0.1)' : 'transparent', color: isSelected ? '#16a34a' : '#475569', fontWeight: isSelected ? 'bold' : '500', marginBottom: '2px' }}>
                     <span>{idx + 1}. {m.name}</span><span style={{ fontSize: '10.5px', color: isSelected ? '#16a34a' : '#94a3b8' }}>{m.elevation}m</span>
                   </li>
                 );

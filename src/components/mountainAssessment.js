@@ -3,7 +3,14 @@ const clamp = (value, min = 0, max = 100) => Math.max(min, Math.min(max, value))
 
 // Hourly forecast rows start at the current floored hour. Select the closest
 // forecast hour to the estimated summit arrival; do not invent interpolated values.
-export function getHourlyForecastIndex({ now = new Date(), departureOffsetHours = 0, ascentMinutes = 0 } = {}) {
+export function getHourlyForecastIndex({ now = new Date(), departureOffsetHours = 0, ascentMinutes = 0, hourlyData = [] } = {}) {
+  const target = now.getTime() + departureOffsetHours * 3600000 + ascentMinutes * 60000;
+  const dated = hourlyData.map((row, index) => ({ index, time: Date.parse(row?.valid_at) })).filter(row => Number.isFinite(row.time));
+  if (dated.length) {
+    if (target < dated[0].time - 30 * 60000) return -1;
+    if (target > dated[dated.length - 1].time + 30 * 60000) return hourlyData.length;
+    return dated.reduce((closest, row) => Math.abs(row.time - target) < Math.abs(closest.time - target) ? row : closest).index;
+  }
   const minutesFromForecastStart = now.getMinutes() + (departureOffsetHours * 60) + ascentMinutes;
   return Math.max(0, Math.round(minutesFromForecastStart / 60));
 }
@@ -78,6 +85,19 @@ const asNumber = (value, fallback) => {
   return Number.isFinite(number) ? number : fallback;
 };
 
+function rateAvailableConditions(weather) {
+  const weatherAssessment = assessMountainWeather(weather);
+  const viewEstimate = estimateSummitView(weather);
+  const missing = [weather.temp === null ? '기온' : null, weather.wind === null ? '풍속' : null, weather.humidity === null ? '습도' : null].filter(Boolean);
+  if (missing.length) {
+    return {
+      weatherAssessment: { ...weatherAssessment, score: null, status: '기상 자료 부족', color: '#64748b', reasons: [`${missing.join('·')} 자료가 없어 점수를 계산하지 않습니다`] },
+      viewEstimate: { ...viewEstimate, score: null, gradeText: '조망 자료 확인 필요', gradeColor: '#64748b', summaryReason: `${missing.join('·')} 자료 없음`, seaOfCloudsHint: null },
+    };
+  }
+  return { weatherAssessment, viewEstimate };
+}
+
 /**
  * Rate conditions across the selected hiking itinerary. The lowest hourly
  * score is used so a short adverse period is not hidden by better hours.
@@ -93,20 +113,14 @@ export function assessHikingForecastWindow({
   isFuture = false,
 } = {}) {
   const fallback = {
-    temp: asNumber(fallbackWeather.temp, 0),
-    wind: asNumber(fallbackWeather.wind, 0),
+    temp: asNumber(fallbackWeather.temp, null),
+    wind: asNumber(fallbackWeather.wind, null),
     condition: fallbackWeather.condition || '',
     targetPop: asNumber(fallbackWeather.targetPop, 0),
     pm25: asNumber(fallbackWeather.pm25, 15),
-    humidity: asNumber(fallbackWeather.humidity, 50),
+    humidity: asNumber(fallbackWeather.humidity, null),
   };
-  const fallbackWeatherAssessment = assessMountainWeather(fallback);
-  const fallbackViewEstimate = estimateSummitView({
-    condition: fallback.condition,
-    humidity: fallback.humidity,
-    pm25: fallback.pm25,
-    wind: fallback.wind,
-  });
+  const { weatherAssessment: fallbackWeatherAssessment, viewEstimate: fallbackViewEstimate } = rateAvailableConditions(fallback);
 
   if (isFuture) {
     return {
@@ -121,10 +135,11 @@ export function assessHikingForecastWindow({
   }
 
   const safeHourlyData = Array.isArray(hourlyData) ? hourlyData : [];
-  const startIndex = getHourlyForecastIndex({ now, departureOffsetHours });
+  const startIndex = Math.max(0, getHourlyForecastIndex({ now, departureOffsetHours, hourlyData: safeHourlyData }));
   const endIndex = getHourlyForecastIndex({
     now,
     departureOffsetHours,
+    hourlyData: safeHourlyData,
     ascentMinutes: Math.max(0, Number(durationMinutes) || 0),
   });
   const samples = [];
@@ -155,16 +170,10 @@ export function assessHikingForecastWindow({
 
   const assessedSamples = samples.map(sample => ({
     ...sample,
-    weatherAssessment: assessMountainWeather(sample.weather),
-    viewEstimate: estimateSummitView({
-      condition: sample.weather.condition,
-      humidity: sample.weather.humidity,
-      pm25: sample.weather.pm25,
-      wind: sample.weather.wind,
-    }),
+    ...rateAvailableConditions(sample.weather),
   }));
   const lowestBy = (key) => assessedSamples.reduce((lowest, sample) => (
-    !lowest || sample[key].score < lowest[key].score ? sample : lowest
+    !lowest || (sample[key].score === null && lowest[key].score !== null) || (lowest[key].score !== null && sample[key].score < lowest[key].score) ? sample : lowest
   ), null);
   const weatherWorst = lowestBy('weatherAssessment');
   const viewWorst = lowestBy('viewEstimate');

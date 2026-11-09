@@ -15,19 +15,19 @@ import WeatherOutlook from './components/WeatherOutlook';
 import { FiSearch, FiBell, FiSettings, FiClock, FiCheckCircle } from 'react-icons/fi';
 import { API } from './config';
 import { assessHikingForecastWindow, getHourlyForecastIndex } from './components/mountainAssessment';
+import { koreanDate, planDepartureAt } from './lib/hikingPlan';
+import { readStoredJson, writeStoredJson } from './lib/browserStorage';
+import WeatherConnectionStatus from './components/WeatherConnectionStatus';
+import { requestJson, requestForecastJson } from './lib/apiClient';
+import { forecastKey, isUsableForecast, isWeatherNumber, readForecastCache, writeForecastCache } from './lib/forecastCache';
 
-// Render free instances can take 50+ seconds to wake after inactivity.
-const WEATHER_REQUEST_TIMEOUT_MS = 90000;
-
-async function fetchWithTimeout(url, options = {}) {
-  const controller = new AbortController();
-  const timeoutId = window.setTimeout(() => controller.abort(), WEATHER_REQUEST_TIMEOUT_MS);
-  try {
-    return await fetch(url, { ...options, signal: controller.signal });
-  } finally {
-    window.clearTimeout(timeoutId);
-  }
-}
+const emptyWeather = (region = '부천시') => ({
+  hasData: false, region, temp: null, feelsLike: null, tempDiff: null,
+  baseTemp: null, summitDrop: null, humidity: null, wind_speed: null,
+  safeDescentTime: null, sunrise: null, sunset: null, icon: null,
+  dust: '확인 불가', condition: '기상 자료 확인 필요', highLow: '최고 · 최저 자료 없음',
+  date: getTodayDateString(), elevation: 0,
+});
 
 const KOREA_REGIONS = [
   '서울특별시', '부산광역시', '대구광역시', '인천광역시', '광주광역시', '대전광역시', '울산광역시', '세종특별자치시',
@@ -113,6 +113,8 @@ function App() {
   const [selectedCourseIdx, setSelectedCourseIdx] = useState(0);
   const [paceType, setPaceType] = useState('normal');
   const [departureOffsetHours, setDepartureOffsetHours] = useState(0);
+  const [planReferenceAt, setPlanReferenceAt] = useState(() => Date.now());
+  const [restoredDepartureAt, setRestoredDepartureAt] = useState(null);
   const [customGearList, setCustomGearList] = useState([]);
 
   const [isNoticeOpen, setIsNoticeOpen] = useState(false);
@@ -134,20 +136,19 @@ function App() {
   const [weeklyData, setWeeklyData] = useState([]);
   const [forecastError, setForecastError] = useState('');
   const [weatherFetchedAt, setWeatherFetchedAt] = useState(null);
+  const [connectionState, setConnectionState] = useState({ phase: 'connecting' });
   const [bgTheme, setBgTheme] = useState('clear-day');
 
   const [loggedInUser, setLoggedInUser] = useState(null);
+  const [loginPrompt, setLoginPrompt] = useState(0);
   const [favorites, setFavorites] = useState([]);
 
-  const [weatherData, setWeatherData] = useState({
-    region: '불러오는 중...', date: getTodayDateString(), temp: 0, feelsLike: 0, tempDiff: 0,
-    baseTemp: 0, summitDrop: 0, safeDescentTime: '15:30',
-    condition: '대기 중...', highLow: '최고 -° / 최저 -°',
-    icon: <span style={{ fontSize: '60px' }}>☀️</span>, uv: '높음',
-    humidity: 0, dust: '확인 중...', wind_speed: 0, 
-    sunrise: '06:00', sunset: '18:00', elevation: 0
-  });
+  const [weatherData, setWeatherData] = useState(() => emptyWeather());
   const lastWeatherRequestRef = useRef({ kind: 'weather', lat: 37.5034, lon: 126.7660, regionName: '부천시' });
+  const forecastControllerRef = useRef(null);
+  const displayedForecastKeyRef = useRef('');
+  const recoveryStateRef = useRef({ phase: 'connecting' });
+  const initialMountainRef = useRef(new URLSearchParams(window.location.search).get('mountain'));
 
   const showToast = (message) => {
     setToast({ visible: true, message });
@@ -155,21 +156,20 @@ function App() {
   };
 
   useEffect(() => {
-    const storedSearches = JSON.parse(localStorage.getItem('recentSearches') || '[]');
+    const storedSearches = readStoredJson('recentSearches', []).filter(value => typeof value === 'string');
     setRecentSearches(storedSearches);
-    const savedUser = JSON.parse(localStorage.getItem('loggedInUser'));
-    if (savedUser?.accessToken) setLoggedInUser(savedUser);
-    else if (savedUser) localStorage.removeItem('loggedInUser');
+    const savedUser = readStoredJson('loggedInUser', null);
+    if (typeof savedUser?.accessToken === 'string' && typeof savedUser?.id === 'string') setLoggedInUser(savedUser);
   }, []);
 
   const handleLogin = (user) => {
-    const guestFavorites = JSON.parse(localStorage.getItem('guestFavorites') || '[]');
+    const guestFavorites = readStoredJson('guestFavorites', []).filter(item => item?.name);
     const accountKey = `favorites_${user.id}`;
-    const accountFavorites = JSON.parse(localStorage.getItem(accountKey) || '[]');
+    const accountFavorites = readStoredJson(accountKey, []).filter(item => item?.name);
     const mergedFavorites = [...accountFavorites, ...guestFavorites.filter(guest => !accountFavorites.some(saved => saved.name === guest.name))].slice(0, 5);
-    if (mergedFavorites.length) localStorage.setItem(accountKey, JSON.stringify(mergedFavorites));
+    if (mergedFavorites.length) writeStoredJson(accountKey, mergedFavorites);
     setLoggedInUser(user);
-    localStorage.setItem('loggedInUser', JSON.stringify(user));
+    writeStoredJson('loggedInUser', user);
     showToast('로그인되었습니다. 관심 지역을 계정과 동기화하고 있어요.');
   };
   const handleLogout = () => {
@@ -238,19 +238,17 @@ function App() {
         if (cancelled) return;
         const visible = items.length ? items : defaultFav;
         setFavorites(visible);
-        loadWeather(visible[0].lat, visible[0].lon, visible[0].name);
+        if (initialMountainRef.current && MOUNTAINS_LIST.some(item => item.name === initialMountainRef.current)) {
+          setIsMountainMode(true);
+          loadMountainWeather(initialMountainRef.current, { initial: true });
+        } else if (!isMountainMode) loadWeather(visible[0].lat, visible[0].lon, visible[0].name);
       };
+      showFallback(hasPendingSync ? pendingFavorites : (localAccountFavorites.length ? localAccountFavorites : guestFavorites));
       const syncFavorites = async () => {
         try {
-          const response = await fetch(`${API}/api/users/me/favorites`, {
+          const serverFavorites = await requestJson('/api/users/me/favorites', {
             headers: { Authorization: `Bearer ${loggedInUser.accessToken}` },
           });
-          if (!response.ok) {
-            const error = new Error('관심 지역을 불러오지 못했습니다.');
-            error.status = response.status;
-            throw error;
-          }
-          const serverFavorites = await response.json();
           const serverList = serverFavorites.map(item => ({ ...item, lat: Number(item.lat), lon: Number(item.lon) }));
           const baseFavorites = hasPendingSync ? pendingFavorites : (serverList.length ? serverList : localAccountFavorites);
           const guestOnlyFavorites = guestFavorites.filter(guest => !baseFavorites.some(saved => saved.name === guest.name));
@@ -259,12 +257,11 @@ function App() {
           const remainingGuestFavorites = allFavorites.slice(5);
           const needsUpload = hasPendingSync || guestFavorites.length > 0 || serverList.length !== mergedFavorites.length || (!serverList.length && localAccountFavorites.length > 0);
           if (needsUpload) {
-            const saveResponse = await fetch(`${API}/api/users/me/favorites`, {
+            await requestJson('/api/users/me/favorites', {
               method: 'PUT',
               headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${loggedInUser.accessToken}` },
               body: JSON.stringify({ favorites: mergedFavorites }),
             });
-            if (!saveResponse.ok) throw new Error('관심 지역을 계정에 저장하지 못했습니다.');
           }
           if (cancelled) return;
           localStorage.setItem(userKey, JSON.stringify(mergedFavorites));
@@ -272,8 +269,7 @@ function App() {
           if (remainingGuestFavorites.length) localStorage.setItem('guestFavorites', JSON.stringify(remainingGuestFavorites));
           else localStorage.removeItem('guestFavorites');
           setFavorites(mergedFavorites.length ? mergedFavorites : defaultFav);
-          const first = mergedFavorites[0] || defaultFav[0];
-          loadWeather(first.lat, first.lon, first.name);
+          // Keep the weather the user is viewing while account sync completes.
           if (remainingGuestFavorites.length) showToast('계정에는 관심 지역 5곳을 저장했고, 나머지는 이 브라우저에 남겨뒀어요.');
           else if (guestFavorites.length) showToast('이 기기의 관심 지역을 계정에 저장했어요.');
         } catch (error) {
@@ -286,7 +282,6 @@ function App() {
             showToast('로그인 정보가 만료되어 관심 지역을 이 브라우저에 보관했어요. 다시 로그인해주세요.');
             return;
           }
-          showFallback(hasPendingSync ? pendingFavorites : (localAccountFavorites.length ? localAccountFavorites : guestFavorites));
           showToast('계정 동기화에 실패해 이 브라우저의 관심 지역을 표시합니다.');
         }
       };
@@ -295,176 +290,179 @@ function App() {
       const guestFavorites = getStoredList('guestFavorites');
       setFavorites(guestFavorites);
       const initialLocation = guestFavorites[0] || defaultFav[0];
-      loadWeather(initialLocation.lat, initialLocation.lon, initialLocation.name);
+      if (initialMountainRef.current && MOUNTAINS_LIST.some(item => item.name === initialMountainRef.current)) {
+        setIsMountainMode(true); loadMountainWeather(initialMountainRef.current, { initial: true });
+      } else if (!isMountainMode) loadWeather(initialLocation.lat, initialLocation.lon, initialLocation.name);
     }
     return () => { cancelled = true; };
   }, [loggedInUser?.id, loggedInUser?.accessToken]);
 
   const saveFavorites = async (newFavs) => {
     setFavorites(newFavs);
-    localStorage.setItem(loggedInUser ? `favorites_${loggedInUser.id}` : 'guestFavorites', JSON.stringify(newFavs));
-    if (!loggedInUser?.accessToken) return true;
+    const user = loggedInUser;
+    localStorage.setItem(user ? `favorites_${user.id}` : 'guestFavorites', JSON.stringify(newFavs));
+    if (!user?.accessToken) return true;
+    const pendingKey = `favorites_pending_${user.id}`;
     try {
-      const pendingKey = `favorites_pending_${loggedInUser.id}`;
-      const response = await fetch(`${API}/api/users/me/favorites`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${loggedInUser.accessToken}` },
+      await requestJson('/api/users/me/favorites', { method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${user.accessToken}` },
         body: JSON.stringify({ favorites: newFavs }),
       });
-      if (response.status === 401) {
+      localStorage.removeItem(pendingKey);
+      return true;
+    } catch (error) {
+      localStorage.setItem(pendingKey, JSON.stringify(newFavs));
+      if (error.status === 401) {
         localStorage.setItem('guestFavorites', JSON.stringify(newFavs));
-        localStorage.setItem(pendingKey, JSON.stringify(newFavs));
-        localStorage.removeItem('loggedInUser');
-        setLoggedInUser(null);
-        showToast('로그인 정보가 만료되어 저장 목록을 이 브라우저로 옮겼어요. 다시 로그인해주세요.');
-        return false;
+        localStorage.removeItem('loggedInUser'); setLoggedInUser(null);
+        showToast('로그인 정보가 만료되었습니다. 변경 내용은 이 브라우저에 보관했어요.');
       }
-      if (response.ok) localStorage.removeItem(pendingKey);
-      else localStorage.setItem(pendingKey, JSON.stringify(newFavs));
-      return response.ok;
-    } catch {
-      localStorage.setItem(`favorites_pending_${loggedInUser.id}`, JSON.stringify(newFavs));
       return false;
     }
   };
 
-  const updateWeatherState = (data, regionName, elevation = 0, mInfo = null) => {
+  const updateWeatherState = (data, regionName, elevation = 0, mInfo = null, { fetchedAt = Date.now(), preservePlan = false } = {}) => {
     const c = data.current;
     const aqi = data.air_quality;
-    const iconCode = c.icon || '';
-    const desc = c.description || '';
-    
-    const isNight = iconCode.includes('n');
-    let theme = 'clear-day';
-    if (desc.includes('눈')) theme = 'snow';
-    else if (desc.includes('비') || desc.includes('소나기')) theme = 'rain';
-    else if (desc.includes('구름') || desc.includes('흐림')) theme = isNight ? 'cloudy-night' : 'cloudy-day';
-    else theme = isNight ? 'clear-night' : 'clear-day';
-    setBgTheme(theme);
-
+    const desc = c.description || '하늘 상태 자료 없음';
+    const isNight = (c.icon || '').includes('n');
+    setBgTheme(desc.includes('눈') ? 'snow' : /비|소나기/.test(desc) ? 'rain' : /구름|흐림/.test(desc) ? (isNight ? 'cloudy-night' : 'cloudy-day') : (isNight ? 'clear-night' : 'clear-day'));
     setMountainInfo(mInfo);
-    setWeatherFetchedAt(new Date());
-    setSelectedDateIdx(0);
-    setSelectedCourseIdx(0);
-    setDepartureOffsetHours(0);
-
-    setWeatherData((prev) => ({
-      ...prev,
+    setWeatherFetchedAt(new Date(fetchedAt));
+    if (!preservePlan) {
+      setSelectedDateIdx(0);
+      setSelectedCourseIdx(0);
+      setDepartureOffsetHours(0); setRestoredDepartureAt(null); setPlanReferenceAt(Date.now());
+    }
+    const value = raw => isWeatherNumber(raw) ? Math.round(Number(raw)) : null;
+    const feelsLike = value(c.feels_like);
+    setWeatherData({
+      hasData: true,
       region: regionName ?? c.city ?? '위치 알 수 없음',
-      date: getTodayDateString(),
-      temp: Math.round(c.temp),
-      feelsLike: Math.round(c.feels_like),
-      tempDiff: c.temp_diff ?? 0,
-      baseTemp: c.base_temp ?? Math.round(c.temp),
-      summitDrop: c.summit_drop ?? 0,
-      safeDescentTime: c.safe_descent_time || '15:30',
-      safeDescentTimeLabel: c.safe_descent_time_label || '권장 하산 시작 시각(일몰 2시간 전 기준)',
-      weatherSources: c.weather_sources || null,
-      dataAsOf: c.data_as_of || null,
-      dataNote: c.data_note || '산악 정상의 일부 기상값은 고도 보정 추정값일 수 있습니다.',
-      icon: <span style={{ fontSize: '70px', filter: 'drop-shadow(0px 4px 6px rgba(0,0,0,0.15))' }}>{getEmojiIcon(c.icon)}</span>,
-      condition: `${c.description} (체감 ${Math.round(c.feels_like)}°C)`,
-      highLow: `최고 ${Math.round(c.temp_max)}° / 최저 ${Math.round(c.temp_min)}°`,
-      humidity: c.humidity, 
-      wind_speed: c.wind_speed,
-      dust: aqi && aqi.level !== '점검중' && Number.isFinite(Number(aqi.pm25))
-        ? `${aqi.level} (${aqi.pm25})`
-        : '확인 불가',
-      sunrise: c.sunrise || '06:00',
-      sunset: c.sunset || '18:00',
-      elevation: elevation
-    }));
-    
+      date: getTodayDateString(), forecastDate: koreanDate(fetchedAt), temp: value(c.temp), feelsLike,
+      tempDiff: value(c.temp_diff), baseTemp: value(c.base_temp ?? c.temp),
+      summitDrop: value(c.summit_drop),
+      safeDescentTime: c.safe_descent_time || null,
+      safeDescentTimeLabel: c.safe_descent_time_label || '권장 하산 시작 시각',
+      weatherSources: c.weather_sources || null, dataAsOf: c.data_as_of || data.metadata?.generated_at || null,
+      dataNote: c.data_note || '',
+      icon: c.icon ? <span style={{ fontSize: '70px' }}>{getEmojiIcon(c.icon)}</span> : null,
+      condition: feelsLike === null ? desc : `${desc} (체감 ${feelsLike}°C)`,
+      highLow: `최고 ${value(c.temp_max) ?? '—'}° / 최저 ${value(c.temp_min) ?? '—'}°`,
+      humidity: isWeatherNumber(c.humidity) ? Number(c.humidity) : null,
+      wind_speed: isWeatherNumber(c.wind_speed) ? Number(c.wind_speed) : null,
+      dust: aqi && aqi.level !== '점검중' && isWeatherNumber(aqi.pm25) ? `${aqi.level} (${aqi.pm25})` : '확인 불가',
+      sunrise: c.sunrise || null, sunset: c.sunset || null, elevation,
+    });
     setHourlyData(Array.isArray(data.hourly) ? data.hourly : []);
-    setWeeklyData(Array.isArray(data.weekly) ? data.weekly : []); 
+    setWeeklyData(Array.isArray(data.weekly) ? data.weekly : []);
   };
 
-  const loadWeather = async (lat, lon, regionName) => {
-    lastWeatherRequestRef.current = { kind: 'weather', lat, lon, regionName };
+  const loadForecast = async (request) => {
+    forecastControllerRef.current?.abort();
+    const controller = new AbortController();
+    forecastControllerRef.current = controller;
+    lastWeatherRequestRef.current = request;
+    const key = forecastKey(request);
+    const preservePlan = displayedForecastKeyRef.current === key;
+    const cached = readForecastCache(key);
+    const localMountain = request.kind === 'mountain'
+      ? MOUNTAINS_LIST.find(item => item.name === request.mountainName) : null;
+    const label = request.kind === 'mountain' ? request.mountainName : (request.regionName || '현재 위치');
+    const apply = (data, fetchedAt) => {
+      const info = localMountain ? { ...localMountain, ...data.mountain_info, courses: localMountain.courses } : null;
+      updateWeatherState(data, request.kind === 'mountain' ? data.mountain_name : request.regionName,
+        data.elevation || 0, info, { fetchedAt, preservePlan });
+      displayedForecastKeyRef.current = key;
+    };
+    if (cached) apply(cached.data, cached.savedAt);
+    else if (!preservePlan) {
+      displayedForecastKeyRef.current = '';
+      setWeatherData(emptyWeather(label)); setHourlyData([]); setWeeklyData([]);
+      setWeatherFetchedAt(null); setMountainInfo(localMountain);
+    }
     setForecastError('');
     setIsAiLoading(true);
+    setAiMessage('최신 기상 자료를 확인하고 있어요.');
+    const path = request.kind === 'mountain'
+      ? `/api/mountain/summary?name=${encodeURIComponent(request.mountainName)}`
+      : `/api/weather/summary?lat=${request.lat}&lon=${request.lon}`;
     try {
-      const res = await fetchWithTimeout(`${API}/api/weather/summary?lat=${lat}&lon=${lon}`);
-      if (!res.ok) throw new Error(`요청 실패`);
-      const data = await res.json();
-      
-      updateWeatherState(data, regionName, 0, null);
+      const data = await requestForecastJson(path, {
+        signal: controller.signal,
+        onState: state => { if (!controller.signal.aborted) setConnectionState({ ...state, cached: !!cached || preservePlan }); },
+      });
+      if (controller.signal.aborted) return false;
+      if (!isUsableForecast(data)) throw new Error('기온 자료를 받지 못했습니다. 잠시 후 다시 확인해 주세요.');
+      apply(data, Date.now());
+      writeForecastCache(key, data);
+      setConnectionState({ phase: 'success' });
       setIsAiLoading(false);
-      setAiMessage('✨ 현재 날씨와 예보 정보를 분석 중이에요...');
-      
-      try {
-        const aiRes = await fetch(`${API}/api/weather/ai`, {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ current: data.current, forecast: data.hourly, air_quality: data.air_quality, mountain_info: null })
-        });
-        if (!aiRes.ok) throw new Error('AI 안내 요청 실패');
-        const aiData = await aiRes.json();
-        setAiMessage(aiData.advice?.[0] || '현재 제공된 예보에서 별도 주의 신호가 없습니다. 외출 전 시간별 강수와 체감온도를 확인하세요.');
-        setAiBriefing(aiData.ai_briefing || 'AI 브리핑을 불러오지 못했습니다. 시간별 예보와 주간 전망을 확인하세요.');
-      } catch {
-        setAiMessage('AI 안내를 불러오지 못했습니다. 아래 수치 예보를 확인해 주세요.');
-        setAiBriefing('AI 브리핑을 불러오지 못했습니다. 시간별 예보와 주간 전망을 확인해 주세요.');
-      }
+      setAiMessage('시간별 예보와 선택한 일정을 확인해 주세요.');
+      setAiBriefing('기상 자료를 바탕으로 안내를 준비하고 있어요.');
+      // Numeric weather is usable immediately; AI failure must not hide it.
+      requestJson('/api/weather/ai', {
+        method: 'POST', timeoutMs: 18000, signal: controller.signal,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ current: data.current, forecast: data.hourly || [], air_quality: data.air_quality || {}, mountain_info: data.mountain_info || null }),
+      }).then(ai => {
+        if (controller.signal.aborted) return;
+        setAiMessage(ai.advice?.[0] || '기상 수치와 공식 통제 정보를 함께 확인하세요.');
+        setAiBriefing(ai.ai_briefing || '시간별 예보와 선택한 일정을 확인해 주세요.');
+      }).catch(() => {
+        if (controller.signal.aborted) return;
+        setAiMessage('AI 안내를 받지 못했습니다. 아래 수치 예보를 확인해 주세요.');
+        setAiBriefing('AI 안내 연결이 지연되어 수치 예보를 제공합니다.');
+      });
+      return true;
     } catch (error) {
-      const message = error?.name === 'AbortError'
-        ? '날씨 서버 응답이 90초 이상 지연되고 있습니다. 잠시 후 다시 시도해 주세요.'
-        : '날씨 정보를 불러오지 못했습니다. 서버 상태를 확인한 뒤 다시 시도해 주세요.';
+      if (controller.signal.aborted) return false;
+      const message = error.message || '날씨 서버에 연결하지 못했습니다.';
       setForecastError(message);
-      setAiMessage(message);
+      setConnectionState({ phase: cached || preservePlan ? 'stale' : 'error', message, requestId: error.requestId });
+      setAiMessage(cached || preservePlan ? '지난 자료입니다. 출발 전에 최신 날씨를 다시 확인해 주세요.' : '기상 자료를 확인한 뒤 활동 안내를 제공합니다.');
       setAiBriefing(message);
       setIsAiLoading(false);
+      return false;
     }
   };
 
-  const loadMountainWeather = async (mountainName) => {
-    lastWeatherRequestRef.current = { kind: 'mountain', mountainName };
-    setForecastError('');
-    const localMInfo = MOUNTAINS_LIST.find(m => m.name === mountainName) || MOUNTAINS_LIST[0];
-    setIsAiLoading(true);
-    try {
-      const res = await fetchWithTimeout(`${API}/api/mountain/summary?name=${encodeURIComponent(mountainName)}`);
-      if (!res.ok) { showToast('해당 산의 날씨 데이터를 찾을 수 없습니다.'); setIsAiLoading(false); return; }
-      const data = await res.json();
-      const mergedMInfo = { ...localMInfo, ...data.mountain_info, courses: localMInfo.courses };
-      
-      updateWeatherState(data, data.mountain_name, data.elevation, mergedMInfo);
-      setIsAiLoading(false);
-      setAiMessage(`🧗 AI 산악 가이드가 ${data.mountain_name} 등산 환경을 분석 중이에요...`);
-      
-      try {
-        const aiRes = await fetch(`${API}/api/weather/ai`, {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ current: data.current, forecast: data.hourly, air_quality: data.air_quality || { level: '점검중', pm25: null }, mountain_info: mergedMInfo })
-        });
-        if (!aiRes.ok) throw new Error('AI 안내 요청 실패');
-        const aiData = await aiRes.json();
-        setAiMessage(aiData.advice?.[0] || '현재 제공된 산악 예보와 하산 시각을 확인해 주세요.');
-        setAiBriefing(aiData.ai_briefing || '산악 AI 브리핑을 불러오지 못했습니다. 수치 예보와 공식 통제 정보를 확인하세요.');
-      } catch {
-        setAiMessage('AI 산악 안내를 불러오지 못했습니다. 기상 수치와 공식 탐방 정보를 확인해 주세요.');
-        setAiBriefing('AI 브리핑을 불러오지 못했습니다. 기상 수치와 공식 탐방 통제 정보를 확인해 주세요.');
+  const loadWeather = (lat, lon, regionName) => { initialMountainRef.current = null; return loadForecast({ kind: 'weather', lat, lon, regionName }); };
+  const loadMountainWeather = (mountainName, { initial = false } = {}) => { if (!initial) initialMountainRef.current = null; return loadForecast({ kind: 'mountain', mountainName }); };
+  const retryForecast = () => loadForecast(lastWeatherRequestRef.current);
+
+  useEffect(() => { recoveryStateRef.current = connectionState; }, [connectionState]);
+  useEffect(() => {
+    const recover = () => {
+      if (navigator.onLine && ['error', 'stale'].includes(recoveryStateRef.current.phase)) {
+        loadForecast(lastWeatherRequestRef.current);
       }
-    } catch (error) {
-      const message = error?.name === 'AbortError'
-        ? '산악 날씨 서버 응답이 90초 이상 지연되고 있습니다. 잠시 후 다시 시도해 주세요.'
-        : '산악 날씨 정보를 불러오지 못했습니다. 서버 상태를 확인한 뒤 다시 시도해 주세요.';
-      setForecastError(message);
-      setAiMessage(message);
-      setAiBriefing(message);
-      setIsAiLoading(false);
-    }
-  };
+    };
+    window.addEventListener('online', recover);
+    window.addEventListener('focus', recover);
+    return () => { window.removeEventListener('online', recover); window.removeEventListener('focus', recover); forecastControllerRef.current?.abort(); };
+  }, []);
 
   const handleApplyHikingPlan = async (plan) => {
     setIsMountainMode(true);
     if (plan.mountain_name && plan.mountain_name !== mountainInfo?.name) {
       await loadMountainWeather(plan.mountain_name);
     }
-    setSelectedDateIdx(Number(plan.selected_date_idx) || 0);
-    setSelectedCourseIdx(Number(plan.course_index) || 0);
+    const parsedDeparture = Date.parse(plan.departure_at);
+    const isUpcoming = Number.isFinite(parsedDeparture) && parsedDeparture >= Date.now();
+    const dateIndex = isUpcoming ? weeklyData.findIndex(day => day.full_date === koreanDate(parsedDeparture)) : -1;
+    const validDeparture = isUpcoming && (dateIndex >= 0 || koreanDate(parsedDeparture) === koreanDate());
+    setSelectedDateIdx(dateIndex >= 0 ? dateIndex : 0);
+    const mountain = MOUNTAINS_LIST.find(item => item.name === plan.mountain_name);
+    const namedCourseIndex = mountain?.courses.findIndex(course => course.name === plan.course_name) ?? -1;
+    setSelectedCourseIdx(namedCourseIndex >= 0 ? namedCourseIndex : Number(plan.course_index) || 0);
     setPaceType(plan.pace || 'normal');
-    setDepartureOffsetHours(Number(plan.departure_offset_hours) || 0);
-    showToast('저장한 산행 계획을 불러왔습니다.');
+    setDepartureOffsetHours(0);
+    setRestoredDepartureAt(validDeparture ? new Date(parsedDeparture).toISOString() : null);
+    setPlanReferenceAt(Date.now());
+    showToast(validDeparture ? '저장한 날짜·출발 시각과 준비물을 불러왔어요.' : isUpcoming
+      ? '저장한 날짜가 예보 범위 밖입니다. 코스와 준비물을 불러왔으니 비교 가능한 새 일정을 선택해 주세요.'
+      : '지난 출발 일정입니다. 코스와 준비물을 불러왔으니 새 출발 시각을 선택해 주세요.');
   };
 
   const handleToggleMountainMode = () => {
@@ -577,6 +575,7 @@ function App() {
     return {
       ...weatherData,
       date: `${target.date} (${target.day})`,
+      forecastDate: target.full_date || null,
       temp: target.temp_max,
       feelsLike: target.temp_max - (target.wind_speed >= 5 ? 3 : 0), 
       baseTemp: target.temp_max + tempDrop,
@@ -604,7 +603,7 @@ function App() {
   }, [weatherData, weeklyData, selectedDateIdx, isMountainMode]);
 
   const hikingPlanSummary = useMemo(() => {
-    if (!isMountainMode) return null;
+    if (!isMountainMode || !activeWeather.hasData) return null;
     const courses = mountainInfo?.courses || [{ name: '기본 탐방로', distance: '5km', time: 180, diff: '중' }];
     const selectedCourse = courses[selectedCourseIdx] || courses[0];
     const paceObj = PACE_OPTIONS.find(p => p.key === paceType) || PACE_OPTIONS[1];
@@ -622,9 +621,12 @@ function App() {
     };
 
     const now = new Date();
-    const depMins = activeWeather.isFuture
-      ? (8 + departureOffsetHours) * 60
-      : (now.getHours() * 60 + now.getMinutes()) + (departureOffsetHours * 60);
+    const departureAt = planDepartureAt({ referenceAt: planReferenceAt, date: activeWeather.forecastDate,
+      isFuture: activeWeather.isFuture, offsetHours: departureOffsetHours, restoredAt: restoredDepartureAt });
+    const departureDate = new Date(departureAt);
+    const todayMidnight = Date.parse(`${koreanDate(now)}T00:00:00+09:00`);
+    const depMins = Math.round((departureDate.getTime() - todayMidnight) / 60000);
+    const forecastOffsetHours = (departureDate.getTime() - now.getTime()) / 3600000;
 
     const summitArrivalMins = depMins + ascentMins;
     const descentFinishMins = depMins + totalMins;
@@ -637,14 +639,14 @@ function App() {
     const recommendedDepDeadlineMins = safeDescentMins - ascentMins;
 
     const temp = Number(activeWeather.temp || 0);
-    const wind = Number(activeWeather.wind_speed || 0);
+    const wind = isWeatherNumber(activeWeather.wind_speed) ? Number(activeWeather.wind_speed) : null;
     const cond = activeWeather.condition || '';
     const pm25Match = (activeWeather.dust || '').match(/\d+/);
     const pm25 = pm25Match ? parseInt(pm25Match[0], 10) : 15;
     const scheduleAssessment = assessHikingForecastWindow({
       hourlyData,
       now,
-      departureOffsetHours,
+      departureOffsetHours: Math.max(0, forecastOffsetHours),
       durationMinutes: totalMins,
       isFuture: !!activeWeather.isFuture,
       fallbackWeather: {
@@ -653,7 +655,7 @@ function App() {
         condition: cond,
         targetPop: activeWeather.targetPop,
         pm25,
-        humidity: Number(activeWeather.humidity ?? 50),
+        humidity: activeWeather.humidity,
       },
     });
     const weatherAssessment = scheduleAssessment.weatherAssessment;
@@ -674,7 +676,7 @@ function App() {
 
     let timeSafetyStatus = '시간 여유 있음';
     let timeSafetyColor = '#166534';
-    if (activeWeather.isFuture || isNextDayPlan) {
+    if (activeWeather.isFuture || isNextDayPlan || !activeWeather.sunset || !activeWeather.safeDescentTime) {
       timeSafetyStatus = '날짜별 일몰 정보 확인 필요';
       timeSafetyColor = '#d97706';
     } else if (descentFinishMins > sunsetMins) {
@@ -689,7 +691,8 @@ function App() {
     if (!activeWeather.isFuture && Array.isArray(hourlyData) && hourlyData.length > 0) {
       const elapsedHoursToSummit = getHourlyForecastIndex({
         now,
-        departureOffsetHours,
+        departureOffsetHours: Math.max(0, forecastOffsetHours),
+        hourlyData,
         ascentMinutes: ascentMins,
       });
       if (elapsedHoursToSummit >= 0 && elapsedHoursToSummit < hourlyData.length) {
@@ -714,15 +717,16 @@ function App() {
 
     return {
       course: selectedCourse,
+      departureAt,
       paceObj,
       totalMins,
       ascentMins,
       departureTimeStr: formatTime(depMins),
       summitArrivalTimeStr: formatTime(summitArrivalMins),
       descentFinishTimeStr: formatTime(descentFinishMins),
-      recommendedDepDeadlineStr: activeWeather.isFuture || isNextDayPlan ? '날짜별 일몰 정보 확인 필요' : formatTime(recommendedDepDeadlineMins),
+      recommendedDepDeadlineStr: activeWeather.isFuture || isNextDayPlan || !activeWeather.safeDescentTime ? '날짜별 일몰 정보 확인 필요' : formatTime(recommendedDepDeadlineMins),
       descentStartTimeStr: formatTime(descentStartMins),
-      safeDescentStartTime: activeWeather.isFuture || isNextDayPlan ? '날짜별 확인 필요' : (activeWeather.safeDescentTime || '15:30'),
+      safeDescentStartTime: activeWeather.isFuture || isNextDayPlan || !activeWeather.safeDescentTime ? '날짜별 확인 필요' : activeWeather.safeDescentTime,
       weatherScore: weatherAssessment.score,
       weatherAssessmentStatus: weatherAssessment.status,
       weatherAssessmentReasons: weatherAssessment.reasons,
@@ -737,7 +741,7 @@ function App() {
       summitForecast,
       gearList: customGearList
     };
-  }, [isMountainMode, mountainInfo, selectedCourseIdx, paceType, departureOffsetHours, activeWeather, hourlyData, customGearList]);
+  }, [isMountainMode, mountainInfo, selectedCourseIdx, paceType, departureOffsetHours, activeWeather, hourlyData, customGearList, planReferenceAt, restoredDepartureAt]);
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', position: 'relative' }}>
@@ -906,6 +910,7 @@ function App() {
           </div>
           
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <button type="button" className="header-hiking-button" onClick={() => { setIsFishingPage(false); if (!isMountainMode) { setIsMountainMode(true); loadMountainWeather('북한산'); } setTimeout(() => document.getElementById('hiking-planner')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100); }}>내 산행</button>
           <button type="button" onClick={() => setIsFishingPage(value => !value)} style={{ backgroundColor: isFishingPage ? 'rgba(20,184,166,0.88)' : 'rgba(0,0,0,0.2)', backdropFilter: 'blur(10px)', color: 'white', border: '1px solid rgba(255,255,255,0.4)', borderRadius: '20px', padding: '7px 14px', cursor: 'pointer', fontWeight: 'bold', whiteSpace: 'nowrap' }}>
             {isFishingPage ? '☀️ 날씨 홈' : '🎣 바다 낚시'}
           </button>
@@ -916,6 +921,7 @@ function App() {
         </div>
       </nav>
 
+      {!isFishingPage && <div className="weather-status-shell"><WeatherConnectionStatus state={connectionState} hasData={weatherData.hasData} fetchedAt={weatherFetchedAt} onRetry={retryForecast} /></div>}
       {isFishingPage ? <FishingPage /> : <main className={`main-container ${isMountainMode ? 'is-mountain-mode' : ''}`} style={{ flexGrow: 1, maxWidth: '1320px', margin: '0 auto', width: '100%', zIndex: 1, padding: '28px 24px' }}>
         <div className="main-primary-column" style={{ display: 'flex', flexDirection: 'column', gap: '16px', minWidth: 0 }}>
           
@@ -924,8 +930,8 @@ function App() {
             hourlyData={hourlyData}
             weeklyData={weeklyData}
             selectedDateIdx={selectedDateIdx}
-            onSelectDate={(idx) => setSelectedDateIdx(idx)}
-            isAiLoading={isAiLoading} 
+            onSelectDate={(idx) => { setSelectedDateIdx(idx); setRestoredDepartureAt(null); setPlanReferenceAt(Date.now()); }}
+            isAiLoading={isAiLoading && !weatherData.hasData}
             aiMessage={aiMessage} 
             favorites={favorites} 
             onAddClick={handleOpenAddRegion} 
@@ -942,7 +948,7 @@ function App() {
           
           <HourlyForecast 
             hourlyData={hourlyData} 
-            isLoading={isAiLoading} 
+            isLoading={isAiLoading && !weatherData.hasData}
             error={forecastError} 
             onRetry={() => {
               const request = lastWeatherRequestRef.current;
@@ -958,29 +964,35 @@ function App() {
             paceType={paceType}
             onSelectPaceType={setPaceType}
             departureOffsetHours={departureOffsetHours}
-            onSelectDepartureOffset={setDepartureOffsetHours}
+            onSelectDepartureOffset={hours => { setDepartureOffsetHours(hours); setRestoredDepartureAt(null); setPlanReferenceAt(Date.now()); }}
+            departureAt={hikingPlanSummary?.departureAt}
+            restoredDepartureAt={restoredDepartureAt}
+            onRestoreDeparture={value => { setRestoredDepartureAt(value); setDepartureOffsetHours(0); }}
+            isStale={connectionState.phase !== 'success'}
             onGearListChange={setCustomGearList}
             loggedInUser={loggedInUser}
             selectedDateIdx={selectedDateIdx}
             hikingPlanSummary={hikingPlanSummary}
             onApplyHikingPlan={handleApplyHikingPlan}
+            onRequireLogin={() => { setLoginPrompt(value => value + 1); document.getElementById('member-login')?.scrollIntoView({ behavior: 'smooth', block: 'center' }); showToast('로그인하면 작성 중인 산행 계획을 이어서 저장할 수 있어요.'); }}
           />
           
           <div className="main-outlook-card" style={{ display: 'flex', flexDirection: 'column' }}>
-            <WeatherOutlook 
+            {activeWeather.hasData ? <WeatherOutlook
               weeklyData={weeklyData} 
               aiBriefing={aiBriefing} 
               isMountainMode={isMountainMode} 
               mountainInfo={mountainInfo} 
               weatherData={activeWeather}
               hikingPlanSummary={hikingPlanSummary}
-            />
+            /> : <div className="glass-card weather-empty"><strong>날씨 전망</strong><p>예보 자료가 확인되면 전망과 활동 안내를 제공합니다.</p></div>}
           </div>
         </div>
         
         <div className="main-side-column" style={{ display: 'flex', flexDirection: 'column', gap: '16px', minWidth: 0 }}>
-          <div className="glass-card main-login-card" style={{ borderRadius: '16px', overflow: 'hidden' }}>
-             <LoginCard 
+          <div id="member-login" className="glass-card main-login-card" style={{ borderRadius: '16px', overflow: 'hidden' }}>
+             <LoginCard
+              loginPrompt={loginPrompt}
               onSignUpClick={() => setIsSignUpOpen(true)} 
               onFindPasswordClick={() => setIsFindPasswordOpen(true)} 
               loggedInUser={loggedInUser} 
@@ -993,6 +1005,7 @@ function App() {
           
           <WeatherDetails 
             current={{ 
+              hasData: activeWeather.hasData,
               temp: activeWeather.temp, 
               feelsLike: activeWeather.feelsLike,
               baseTemp: activeWeather.baseTemp,

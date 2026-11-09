@@ -4,6 +4,8 @@ import { LineChart, Line, YAxis, ResponsiveContainer } from 'recharts';
 import { getEmojiIcon } from './WeeklyForecast';
 import { assessMountainWeather, estimateSummitView, getHourlyForecastIndex } from './mountainAssessment';
 import HikingPlannerPanel from './HikingPlannerPanel';
+import HikingScheduleComparison from './HikingScheduleComparison';
+import { readHikingDraft, writeHikingDraft, koreanDate } from '../lib/hikingPlan';
 
 const ITEMS_TO_SHOW = 6;
 const EMPTY_HOURLY = [];
@@ -70,6 +72,11 @@ function HourlyForecast({
   loggedInUser = null,
   selectedDateIdx = 0,
   hikingPlanSummary = null,
+  onRequireLogin,
+  departureAt = null,
+  restoredDepartureAt = null,
+  onRestoreDeparture,
+  isStale = false,
   onApplyHikingPlan
 }) {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -77,6 +84,10 @@ function HourlyForecast({
   const [localPaceType, setLocalPaceType] = useState('normal');
   const [localDepOffset, setLocalDepOffset] = useState(0);
   const [timelineMode, setTimelineMode] = useState('descent');
+  const [plannerSection, setPlannerSection] = useState('plan');
+  const [hydratedDraftKey, setHydratedDraftKey] = useState('');
+  const previousDraftOwner = useRef(null);
+  const hasWeatherData = weatherData.hasData === true;
   
   const [gearList, setGearList] = useState([]);
   const [checklist, setChecklist] = useState({});
@@ -133,7 +144,7 @@ function HourlyForecast({
   const isSnow = desc.includes('눈');
   const sunrise = weatherData?.sunrise || '06:30';
   const sunset = weatherData?.sunset || '18:00';
-  const safeDescentTime = weatherData?.safeDescentTime || mountainInfo?.safe_descent_time || '15:30';
+  const safeDescentTime = weatherData?.safeDescentTime || mountainInfo?.safe_descent_time || '';
   const terrain = mountainInfo?.terrain || '';
   const isFuture = weatherData?.isFuture || false;
 
@@ -234,36 +245,44 @@ function HourlyForecast({
     setCurrentIndex(0);
   }, [hourlyData]);
 
+  const draftOwner = loggedInUser?.id || 'guest';
+  const draftKey = `hiking:draft:${draftOwner}:${mountainInfo?.name || 'none'}:${weatherData.forecastDate || weatherData.date}`;
   useEffect(() => {
-    if (applyingSavedPlanRef.current) return;
-    setCourseIdx(0);
-  }, [mountainInfo?.name]);
-
-  useEffect(() => {
-    if (applyingSavedPlanRef.current) {
-      applyingSavedPlanRef.current = false;
-      return;
+    if (!isMountainMode || !hasWeatherData || !mountainInfo?.name) return;
+    if (applyingSavedPlanRef.current) { setHydratedDraftKey(draftKey); return; }
+    let draft = readHikingDraft(draftKey);
+    const guestKey = `hiking:draft:guest:${mountainInfo.name}:${weatherData.forecastDate || weatherData.date}`;
+    if (!draft && draftOwner !== 'guest' && previousDraftOwner.current === 'guest') {
+      draft = readHikingDraft(guestKey);
+      if (draft) { writeHikingDraft(draftKey, draft); try { localStorage.removeItem(guestKey); } catch { /* optional */ } }
     }
-    const defaultGears = buildWeatherGearList();
-    setGearList(defaultGears);
-    setChecklist({});
-    if (onGearListChange) onGearListChange(defaultGears);
-  }, [mountainInfo?.name, weatherData?.date, temp, wind, isRainOrSnow, terrain, timelineMode, activeCourseIdx, activePace]);
+    const nextGear = draft?.gearList || buildWeatherGearList();
+    setGearList(nextGear); setChecklist(draft?.checklist || {});
+    onGearListChange?.(nextGear);
+    if (draft) {
+      if (Number(draft.courseIndex) < courses.length) setCourseIdx(Number(draft.courseIndex) || 0);
+      if (PACE_OPTIONS.some(item => item.key === draft.pace)) setPace(draft.pace);
+      if (draft.departureAt && Date.parse(draft.departureAt) > Date.now()) onRestoreDeparture?.(draft.departureAt);
+    }
+    previousDraftOwner.current = draftOwner;
+    setHydratedDraftKey(draftKey);
+  }, [draftKey, hasWeatherData, isMountainMode]);
 
-  const handleApplySavedPlan = (plan) => {
-    const mountainWillChange = plan.mountain_name !== mountainInfo?.name;
-    const controlsWillChange = Number(plan.course_index || 0) !== Number(activeCourseIdx)
-      || (plan.pace || 'normal') !== activePace
-      || Number(plan.departure_offset_hours || 0) !== Number(activeDepOffset);
-    applyingSavedPlanRef.current = mountainWillChange || controlsWillChange;
-    const names = (plan.items || []).map(item => item.name).filter(Boolean);
-    setGearList(names);
-    setChecklist(Object.fromEntries((plan.items || []).map(item => [item.name, !!item.checked])));
-    setCourseIdx(Number(plan.course_index) || 0);
-    setPace(plan.pace || 'normal');
-    setDepOffset(Number(plan.departure_offset_hours) || 0);
-    onGearListChange?.(names);
-    onApplyHikingPlan?.(plan);
+  useEffect(() => {
+    if (hydratedDraftKey !== draftKey || !hasWeatherData || applyingSavedPlanRef.current) return;
+    writeHikingDraft(draftKey, { gearList, checklist, courseIndex: activeCourseIdx, pace: activePace, departureAt });
+  }, [draftKey, hydratedDraftKey, gearList, checklist, activeCourseIdx, activePace, departureAt, hasWeatherData]);
+
+  const handleApplySavedPlan = async (plan) => {
+    applyingSavedPlanRef.current = true;
+    try {
+      await onApplyHikingPlan?.(plan);
+      const names = (plan.items || []).map(item => item.name).filter(Boolean);
+      setGearList(names);
+      setChecklist(Object.fromEntries((plan.items || []).map(item => [item.name, !!item.checked])));
+      setPace(plan.pace || 'normal');
+      onGearListChange?.(names);
+    } finally { applyingSavedPlanRef.current = false; }
   };
 
   const updateGears = (nextGears) => {
@@ -327,6 +346,7 @@ function HourlyForecast({
         return {
           id: index,
           time: item.time || '시간 없음',
+          valid_at: item.valid_at,
           icon: item.icon,
           description: item.description,
           tempNum: t,
@@ -388,7 +408,9 @@ function HourlyForecast({
 
     const now = departureReferenceTime;
     const baseNowMins = now.getHours() * 60 + now.getMinutes();
-    const depMins = isFuture ? (8 + activeDepOffset) * 60 : baseNowMins + (activeDepOffset * 60);
+    const actualDeparture = departureAt ? new Date(departureAt) : null;
+    const midnight = Date.parse(`${koreanDate(now)}T00:00:00+09:00`);
+    const depMins = actualDeparture ? Math.round((actualDeparture.getTime() - midnight) / 60000) : (isFuture ? (8 + activeDepOffset) * 60 : baseNowMins + activeDepOffset * 60);
     const summitArrivalMins = depMins + ascentTimeMins;
     const descentFinishMins = depMins + adjustedTimeMins;
 
@@ -402,7 +424,8 @@ function HourlyForecast({
     } else if (Array.isArray(rawForecastData) && rawForecastData.length > 0) {
       const hoursUntilSummit = getHourlyForecastIndex({
         now,
-        departureOffsetHours: activeDepOffset,
+        departureOffsetHours: actualDeparture ? Math.max(0, (actualDeparture.getTime() - now.getTime()) / 3600000) : activeDepOffset,
+        hourlyData: rawForecastData,
         ascentMinutes: ascentTimeMins,
       });
       if (hoursUntilSummit >= 0 && hoursUntilSummit < rawForecastData.length) {
@@ -422,7 +445,7 @@ function HourlyForecast({
     }
 
     const isNextDayPlan = !isFuture && Math.floor(depMins / 1440) > 0;
-    if (isFuture || isNextDayPlan) {
+    if (isFuture || isNextDayPlan || !weatherData.sunset || !safeDescentTime || (timelineMode === 'ascent' && !weatherData.sunrise)) {
       return {
         status: 'planning',
         safetyBadge: '🗓️ 날짜별 일몰 확인 필요',
@@ -561,6 +584,9 @@ function HourlyForecast({
     }
   };
 
+  const jumpTo = id => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  const jumpPlanner = section => { setPlannerSection(section); jumpTo('hiking-planner'); };
+
   return (
     <div className="glass-card hourly-forecast-card" style={{ borderRadius: '16px', padding: '20px', display: 'flex', flexDirection: 'column', color: '#1e293b', width: '100%', boxSizing: 'border-box' }}>
       <style>{`
@@ -589,7 +615,11 @@ function HourlyForecast({
         )}
       </div>
 
-      {isMountainMode && !isLoading && (
+      {isMountainMode && <nav className="hike-flowbar" aria-label="산행 준비 순서"><button type="button" onClick={() => jumpTo('mountain-picker')}>① 산 선택</button><button type="button" disabled={!hasWeatherData} onClick={() => jumpTo('hike-schedule')}>② 일정 비교</button><button type="button" onClick={() => jumpPlanner('plan')}>③ 저장·일행 초대</button></nav>}
+      {isMountainMode && hasWeatherData && !isLoading && <HikingScheduleComparison hourlyData={hourlyData} weatherData={weatherData} durationMinutes={adjustedTimeMins} activeOffset={activeDepOffset} onSelectOffset={setDepOffset} restoredDepartureAt={restoredDepartureAt} />}
+      {isMountainMode && (!hasWeatherData || isLoading) && <HikingPlannerPanel user={loggedInUser} mountainInfo={mountainInfo} selectedCourse={selectedCourse} courseIndex={activeCourseIdx} weatherDate={weatherData} selectedDateIdx={selectedDateIdx} pace={activePace} departureOffsetHours={activeDepOffset} departureTime="" gearList={[]} checklist={{}} canSave={false} onApplyPlan={handleApplySavedPlan} onRequireLogin={onRequireLogin} onShowToast={onShowToast} focusSection={plannerSection} />}
+
+      {isMountainMode && hasWeatherData && !isLoading && (
         <div role={timeline.status === 'danger' ? 'alert' : 'status'} aria-live="polite" style={{
           display: 'flex', alignItems: 'flex-start', gap: '8px', padding: '10px 12px', marginBottom: '12px',
           borderRadius: '10px', border: `1px solid ${timeline.safetyColor}55`,
@@ -600,7 +630,7 @@ function HourlyForecast({
         </div>
       )}
 
-      {isMountainMode && !isLoading && (
+      {isMountainMode && hasWeatherData && !isLoading && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '20px' }}>
           
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'stretch' }}>
@@ -613,9 +643,9 @@ function HourlyForecast({
                   <div style={{ position: 'relative', width: '44px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <svg viewBox="0 0 36 36" style={{ width: '100%', height: '100%', transform: 'rotate(-90deg)' }}>
                       <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="rgba(22,163,74,0.2)" strokeWidth="4" />
-                      <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke={weatherAssessment.color} strokeWidth="4" strokeDasharray={`${weatherScore}, 100`} />
+                      <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke={weatherAssessment.color} strokeWidth="4" strokeDasharray={`${weatherScore ?? 0}, 100`} />
                     </svg>
-                    <span style={{ position: 'absolute', fontSize: '14px', fontWeight: '800', color: '#064e3b' }}>{weatherScore}</span>
+                    <span style={{ position: 'absolute', fontSize: '14px', fontWeight: '800', color: '#064e3b' }}>{weatherScore ?? '—'}</span>
                   </div>
                   <span style={{ fontSize: '12px', color: '#0f172a', marginTop: '6px', fontWeight: 'bold', whiteSpace: 'nowrap' }}>
                     {weatherAssessment.status}
@@ -629,9 +659,9 @@ function HourlyForecast({
                   <div style={{ position: 'relative', width: '44px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <svg viewBox="0 0 36 36" style={{ width: '100%', height: '100%', transform: 'rotate(-90deg)' }}>
                       <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="rgba(2,132,199,0.2)" strokeWidth="4" />
-                      <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke={viewEstimate.gradeColor} strokeWidth="4" strokeDasharray={`${viewEstimate.score}, 100`} />
+                      <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke={viewEstimate.gradeColor} strokeWidth="4" strokeDasharray={`${viewEstimate.score ?? 0}, 100`} />
                     </svg>
-                    <span style={{ position: 'absolute', fontSize: '14px', fontWeight: '800', color: '#0c4a6e' }}>{viewEstimate.score}</span>
+                    <span style={{ position: 'absolute', fontSize: '14px', fontWeight: '800', color: '#0c4a6e' }}>{viewEstimate.score ?? '—'}</span>
                   </div>
                   <span style={{ fontSize: '12px', color: viewEstimate.gradeColor, marginTop: '6px', fontWeight: '800', whiteSpace: 'nowrap' }}>
                     {viewEstimate.gradeText}
@@ -758,6 +788,7 @@ function HourlyForecast({
                     <FiClock size={11} />출발:
                   </span>
                   <select
+                    aria-label="산행 출발 시각"
                     value={activeDepOffset}
                     onChange={(e) => setDepOffset(Number(e.target.value))}
                     style={{
@@ -767,13 +798,14 @@ function HourlyForecast({
                   >
                     {DEPARTURE_OFFSETS.map(opt => (
                       <option key={opt.value} value={opt.value}>
-                        {getDepartureOptionLabel(opt)}
+                        {restoredDepartureAt && opt.value === 0 ? `저장 일정 (${new Date(restoredDepartureAt).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })})` : getDepartureOptionLabel(opt)}
                       </option>
                     ))}
                   </select>
                 </div>
               </div>
 
+              {restoredDepartureAt && <button type="button" className="subtle-button" onClick={() => setDepOffset(0)}>저장 시각 대신 지금 출발로 설정</button>}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', fontSize: '11px', color: '#1e293b', backgroundColor: 'rgba(255,255,255,0.7)', padding: '8px 10px', borderRadius: '8px', marginBottom: '8px' }}>
                 <span>거리: <strong>{selectedCourse.distance}</strong></span>
                 <span>총 소요: <strong>{Math.floor(adjustedTimeMins / 60)}h {adjustedTimeMins % 60 > 0 ? `${adjustedTimeMins % 60}m` : ''}</strong></span>
@@ -936,6 +968,10 @@ function HourlyForecast({
               checklist={checklist}
               onApplyPlan={handleApplySavedPlan}
               onShowToast={onShowToast}
+              onRequireLogin={onRequireLogin}
+              canSave={hasWeatherData && !isStale}
+              focusSection={plannerSection}
+              departureAt={departureAt}
             />
           )}
           

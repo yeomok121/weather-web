@@ -242,3 +242,113 @@
 .fish-source-details p { margin:10px 0 0; color:rgba(231,241,248,.76); line-height:1.7; }
 @media (max-width:720px) { #root .fishing-page { width:calc(100% - 24px); margin:16px auto 40px; gap:12px; }.fish-hero { padding:24px; min-height:0; }.fish-hero-art { width:100px; height:100px; flex-shrink:0; }.fish-hero-art svg { font-size:28px; }.fish-hero-art span { display:none; }.fish-hero p { font-size:14px; }.fish-place { flex-wrap:wrap; font-size:13px; }.fish-place span { width:100%; }.fish-metrics { grid-template-columns:1fr; gap:12px; }.fish-panel { padding:18px; }.fish-hero h1 { font-size:27px; } }
 @media (max-width:720px) { .fish-outlook-grid { grid-template-columns:1fr; }.fish-area-picker { width:100%; justify-content:flex-start; box-sizing:border-box; }.fish-area-picker select { margin-left:auto; max-width:65%; }.fish-place { display:flex; flex-direction:column; align-items:flex-start; }.fish-place span { width:auto; } }
+/* Connection recovery and the mountain planning journey. */
+.weather-status-shell { width:100%; max-width:1320px; margin:0 auto; padding:0 24px; }
+.weather-connection { display:flex; align-items:center; gap:12px; margin-top:18px; padding:15px 18px; border:1px solid #c6ddeb; background:#f0f8ff; border-radius:14px; color:#244564; }
+.weather-connection > svg { flex-shrink:0; }
+.weather-connection > div { flex:1; min-width:0; }
+.weather-connection strong { font-size:14px; }
+.weather-connection p { margin:4px 0 0; font-size:13px; line-height:1.6; }
+.weather-connection small { display:block; margin-top:4px; overflow-wrap:anywhere; }
+.weather-connection--warning { background:#fff9ed; border-color:#edd7ad; color:#7c4a18; }
+.weather-connection button, .hiking-planner button, .hike-flowbar button { min-height:42px; padding:9px 13px; border:1px solid #cbdad8; border-radius:9px; background:#fff; color:#24574f; cursor:pointer; font-weight:700; font-size:13px; }
+button:disabled { cursor:wait; opacity:.65; }
+.connection-spinner { animation:connection-spin 1.4s linear infinite; }
+@keyframes connection-spin { to { transform:rotate(360deg); } }
+@media (prefers-reduced-motion:reduce) { .connection-spinner { animation:none; } }
+.weather-empty { padding:22px; color:#475569; font-size:14px; line-height:1.7; }
+.weather-empty h3 { margin:0 0 10px; color:#24364a; font-size:16px; }
+.weather-empty p { margin:8px 0; }
+.empty-weather-values { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
+.empty-weather-values dt { color:#64748b; font-size:12px; }
+.empty-weather-values dd { margin:4px 0 0; font-weight:700; }
+.muted { color:#5f7084; font-size:12px; line-height:1.6; }
+.eyebrow { color:#27746b; font-size:11px; font-weight:800; letter-spacing:.05em; }
+.hike-flowbar { display:flex; flex-wrap:wrap; align-items:center; gap:8px; padding:10px; margin:0 0 16px; background:rgba(244,250,248,.95); border:1px solid #d8e9e3; border-radius:12px; }
+.hike-flowbar button { flex:1; min-width:80px; border-color:transparent; background:rgba(255,255,255,.85); }
+.hike-schedule { padding:16px; border-radius:14px; border:1px solid #d9e6e2; background:rgba(247,253,250,.8); margin:0 0 15px; scroll-margin-top:20px; }
+.planner-heading { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; margin-bottom:12px; }
+.planner-heading h3, .planner-heading h4 { font-size:16px; color:#1f3d38; margin:4px 0; }
+.planner-heading p { color:#5b6f7d; font-size:13px; line-height:1.55; margin:4px 0; }
+.planner-heading small { font-size:12px; color:#5b6f7d; }
+.schedule-options { display:grid; grid-template-columns:repeat(auto-fit,minmax(125px,1fr)); gap:8px; }
+.schedule-options button { display:flex; flex-direction:column; align-items:flex-start; gap:7px; padding:13px; border:1px solid #d4e1de; border-radius:12px; background:#fff; color:#475569; cursor:pointer; text-align:left; font-size:12px; }
+.schedule-options button[aria-pressed=true] { border:2px solid #238574; background:#ecfaf4; padding:12px; }
+.schedule-start { display:flex; flex-direction:column; gap:3px; color:#536b64; }
+.schedule-start strong { color:#123e34; font-size:18px; }
+.schedule-score { display:flex; flex-wrap:wrap; gap:5px; }
+.schedule-finish, .schedule-late { border-top:1px solid #e3eae6; padding-top:6px; width:100%; font-size:11px; }
+.schedule-late { color:#b42318; font-weight:700; }
+.hiking-planner { margin-top:16px; padding:20px; border:1px solid #d0e4dc; border-radius:16px; background:rgba(249,254,251,.9); color:#24364a; scroll-margin-top:20px; min-width:0; }
+.hiking-planner input, .hiking-planner select { display:block; width:100%; min-height:42px; padding:9px 11px; border:1px solid #c5d6d2; border-radius:8px; background:#fff; color:#24364a; min-width:0; font-size:14px; }
+.hiking-planner button { display:inline-flex; justify-content:center; align-items:center; gap:6px; }
+.hiking-planner h4 { margin:0 0 8px; font-size:15px; color:#25483f; }
+.hiking-planner button.primary-button { background:#176b59; color:#fff; border-color:#176b59; }
+.planner-progress { display:flex; gap:8px; padding:0; list-style:none; margin:0 0 14px; }
+.planner-progress li { flex:1; padding:9px 8px; border-radius:8px; background:#edf2f0; color:#62766e; font-size:12px; text-align:center; }
+.planner-progress .is-complete { background:#dff4e8; color:#176045; font-weight:700; }
+.planner-guest, .planner-summary { background:#fff; border:1px solid #e0ebe5; border-radius:10px; padding:14px; font-size:14px; }
+.planner-guest p, .planner-summary p { margin:7px 0 10px; color:#536b63; line-height:1.6; font-size:13px; }
+.planner-summary a { color:#176b59; font-size:12px; font-weight:700; }
+.planner-tabs { display:flex; border-radius:10px; background:#e8f1ed; padding:4px; gap:4px; margin-bottom:14px; }
+.planner-tabs button { flex:1; background:transparent; border-color:transparent; }
+.planner-tabs button[aria-selected=true] { background:#fff; border-color:#c8dcd3; box-shadow:0 2px 4px #1d483b08; }
+.planner-section { display:grid; gap:14px; }
+.planner-label { display:grid; flex:1; gap:6px; min-width:0; color:#39574e; font-size:12px; font-weight:700; }
+.planner-actions { display:flex; flex-wrap:wrap; gap:7px; align-items:center; }
+.planner-inline-form { display:flex; align-items:flex-end; flex-wrap:wrap; gap:8px; margin:12px 0; }
+.planner-inline-form .planner-label { min-width:140px; }
+.saved-plans, .create-party { border:1px solid #d7e4df; border-radius:10px; padding:12px; background:#fff; }
+.saved-plans summary, .create-party summary { font-size:14px; color:#33584b; cursor:pointer; font-weight:700; min-height:28px; }
+.create-party .planner-label { margin-bottom:10px; }
+.saved-plan { display:flex; align-items:center; flex-wrap:wrap; justify-content:space-between; gap:10px; padding:13px 0; border-top:1px solid #edf1ef; font-size:13px; }
+.saved-plan > div:first-child { flex:1; min-width:140px; }
+.saved-plan p { margin:4px 0; color:#536b63; font-size:12px; }
+.saved-plan small { color:#64748b; font-size:11px; overflow-wrap:anywhere; }
+.planner-invitations { padding:14px; background:#eff7ff; border:1px solid #c9dff2; border-radius:10px; margin-bottom:14px; }
+.planner-invitations h4 { display:flex; align-items:center; gap:6px; }
+.planner-invite { display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px; padding:10px 0; border-top:1px solid #dae7f0; font-size:13px; }
+.planner-invite p { margin:5px 0; color:#567086; font-size:12px; }
+.party-detail { padding:15px; border:1px solid #c8e2d4; border-radius:12px; background:#f5fcf7; min-width:0; }
+.party-members { display:flex; flex-wrap:wrap; gap:6px; margin:12px 0; }
+.party-members span { background:#e7f2ec; border-radius:20px; padding:6px 10px; font-size:12px; overflow-wrap:anywhere; }
+.pending-invites { font-size:12px; color:#856123; padding:8px; background:#fff8e7; border-radius:8px; overflow-wrap:anywhere; }
+.party-progress { display:flex; flex-wrap:wrap; justify-content:space-between; gap:8px; padding:12px; border-radius:10px; background:#e8f4ed; font-size:13px; }
+.party-progress progress { width:100%; height:9px; accent-color:#16865d; }
+.party-items { display:grid; gap:8px; }
+.party-item { border:1px solid #dce9e2; background:#fff; border-radius:10px; padding:12px; }
+.party-item-check { display:flex; align-items:center; gap:9px; font-size:14px; min-height:30px; overflow-wrap:anywhere; }
+.party-item-check input { width:18px; min-height:18px; height:18px; accent-color:#16865d; flex-shrink:0; }
+.party-item.is-packed .party-item-check span { text-decoration:line-through; color:#61766d; }
+.party-item-controls { display:grid; grid-template-columns:70px minmax(90px,1fr) auto; gap:8px; align-items:end; margin-top:9px; }
+.party-item-controls label { font-size:11px; color:#64748b; }
+.party-item-controls select { margin-top:4px; font-size:13px; }
+.hiking-planner .danger-button { color:#a32930; border-color:#e6c9cb; background:#fff5f5; }
+.planner-success { border:1px solid #b9dfcb; color:#1c6244; background:#edf9f2; padding:11px 13px; border-radius:9px; font-size:13px; line-height:1.6; }
+.planner-error { padding:12px; border:1px solid #efd0ca; background:#fff4f1; color:#9b392b; border-radius:10px; font-size:13px; }
+.planner-error p { margin:0 0 8px; }
+.planner-error small { display:block; margin-top:8px; line-height:1.5; }
+#hike-schedule, #hiking-planner, #mountain-picker, #member-login { scroll-margin-top:90px; }
+@media (max-width:900px) {
+  #hike-schedule, #hiking-planner, #mountain-picker, #member-login { scroll-margin-top:135px; }
+}
+@media (max-width:640px) {
+  .weather-status-shell { padding:0 10px; }
+  .weather-connection { flex-wrap:wrap; padding:13px; gap:9px; }
+  .weather-connection button { width:100%; }
+  .hiking-planner { padding:14px; }
+  .planner-heading { flex-wrap:wrap; gap:8px; }
+  .planner-heading h3 { font-size:16px; }
+  .planner-heading .subtle-button { min-height:36px; padding:6px 9px; font-size:12px; }
+  .schedule-options { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .planner-actions > .primary-button { flex:1; }
+  .hike-flowbar { position:sticky; top:116px; z-index:5; box-shadow:0 4px 12px #17372b0b; }
+  #hike-schedule, #hiking-planner, #mountain-picker, #member-login { scroll-margin-top:180px; }
+  .hike-flowbar button { font-size:12px; min-width:70px; padding:8px 5px; }
+  .planner-progress { gap:5px; }
+  .planner-progress li { font-size:11px; padding:9px 4px; }
+  .party-detail { padding:11px; }
+  .empty-weather-values { gap:6px; }
+}
+.header-hiking-button { min-height:36px; border:1px solid #c4dfd4; border-radius:20px; background:#e6f5ed; color:#215f49; padding:7px 14px; font-size:13px; font-weight:750; cursor:pointer; white-space:nowrap; }
+@media (max-width:640px) { .header-hiking-button { padding:7px 9px; font-size:12px; } }

@@ -27,7 +27,7 @@ function WeeklyForecast({ weeklyData = [], isLoading = false }) {
       
       {isLoading ? (
         <p style={{ fontSize: '14px', color: '#475569', fontWeight: '500' }}>주간 날씨를 불러오는 중...</p>
-      ) : (
+      ) : weeklyData.length === 0 ? <p className="muted">주간 예보 자료가 없습니다. 최신 자료를 받은 뒤 표시합니다.</p> : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
           {weeklyData.map((day, idx) => {
             const minVal = Number(day.temp_min);
