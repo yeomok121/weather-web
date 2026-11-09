@@ -552,8 +552,8 @@ function App() {
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         const { latitude, longitude } = position.coords;
-        await loadWeather(latitude, longitude, null);
-        showToast('현재 위치의 날씨를 성공적으로 불러왔습니다.');
+        const loaded = await loadWeather(latitude, longitude, null);
+        if (loaded) showToast('현재 위치의 날씨를 성공적으로 불러왔습니다.');
       },
       (error) => { setIsAiLoading(false); showToast('위치 접근 권한을 허용해 주세요.'); }
     );
@@ -980,7 +980,7 @@ function App() {
             onSelectDepartureOffset={hours => { setDepartureOffsetHours(hours); setRestoredDepartureAt(null); setPlanReferenceAt(Date.now()); }}
             departureAt={hikingPlanSummary?.departureAt}
             restoredDepartureAt={restoredDepartureAt}
-            onRestoreDeparture={value => { setRestoredDepartureAt(value); setDepartureOffsetHours(0); }}
+            onRestoreDeparture={value => { setSelectedDateIdx(0); setRestoredDepartureAt(value); setDepartureOffsetHours(0); }}
             isStale={connectionState.phase !== 'success'}
             onGearListChange={setCustomGearList}
             loggedInUser={loggedInUser}
