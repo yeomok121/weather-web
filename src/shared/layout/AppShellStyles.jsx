@@ -13,19 +13,17 @@ const APP_SHELL_CSS = `
         @keyframes rainFall { to { transform: translateY(110vh) rotate(15deg); opacity: 0; } }
 
         .glass-card {
-          background: var(--surface-glass) !important;
+          background: linear-gradient(145deg, rgba(255,255,255,0.84), rgba(248,251,255,0.66)) !important;
           backdrop-filter: blur(22px) saturate(155%);
           -webkit-backdrop-filter: blur(22px) saturate(155%);
-          border: 1px solid var(--border) !important;
-          box-shadow: var(--shadow-card) !important;
-          border-radius: var(--radius-card) !important;
+          border: 1px solid rgba(255,255,255,0.88) !important;
+          box-shadow: 0 16px 38px rgba(31, 48, 76, 0.085), inset 0 1px 0 rgba(255,255,255,0.95), inset 0 -1px 0 rgba(255,255,255,0.35) !important;
+          border-radius: 20px !important;
         }
 
-        .main-container { max-width: 1320px !important; gap: var(--space-6) !important; padding: 28px 24px !important; }
-        .main-container > div { gap: var(--space-6) !important; }
-        .hourly-forecast-card, .detail-info-card, .main-weekly-card > .glass-card, .main-outlook-card > .glass-card { padding: var(--space-6) !important; }
-        .main-container .glass-card h3 { font-size: var(--font-title) !important; color: var(--text-main); }
-        .weather-main-card { border-radius: var(--radius-card) !important; box-shadow: 0 20px 46px rgba(31,48,76,0.1), inset 0 1px 0 rgba(255,255,255,0.95) !important; }
+        .main-container { max-width: 1320px !important; gap: 24px !important; padding: 28px 24px !important; }
+        .main-container > div { gap: 20px !important; }
+        .weather-main-card { border-radius: 22px !important; box-shadow: 0 20px 46px rgba(31,48,76,0.1), inset 0 1px 0 rgba(255,255,255,0.95) !important; }
         .weather-main-card > div:first-child { background: linear-gradient(145deg, rgba(255,255,255,0.55), rgba(236,246,255,0.48)) !important; }
         .weather-main-right { background: linear-gradient(145deg, rgba(244,249,255,0.6), rgba(235,246,245,0.48)) !important; border-color: rgba(255,255,255,0.78) !important; backdrop-filter: blur(18px); }
         .app-footer { background: rgba(248,251,255,0.72) !important; backdrop-filter: blur(20px); border-top: 1px solid rgba(255,255,255,0.85) !important; border-radius: 0 !important; }
@@ -43,46 +41,8 @@ const APP_SHELL_CSS = `
         .mobile-mtn-pills { display: none; }
         .desktop-mtn-list { display: block; }
 
-        /* Wide mountain workspace: itinerary left, forecast context right. */
-        .main-container.is-mountain-mode { max-width: 1680px !important; box-sizing: border-box; grid-template-columns: minmax(0, 1fr) minmax(340px, 400px); padding: 24px clamp(20px, 2.5vw, 48px) !important; }
-        .weather-status-shell.is-mountain-mode { max-width: 1680px; box-sizing: border-box; padding-inline: clamp(20px, 2.5vw, 48px); }
-        .is-mountain-mode .main-side-column .main-outlook-card h3 { line-height: 1.5; }
-        .is-mountain-mode .main-outlook-card button { padding: 10px 8px !important; line-height: 1.5; }
-        .is-mountain-mode .main-outlook-card p { line-height: 1.7; overflow-wrap: anywhere; }
-        @media (min-width: 1200px) {
-          .is-mountain-mode .mountain-journey { padding: 24px !important; }
-          .is-mountain-mode .mountain-plan-controls label, .is-mountain-mode .mountain-plan-controls legend { font-size: 14px; }
-          .is-mountain-mode .mountain-plan-controls select, .is-mountain-mode .mountain-plan-controls input { font-size: 14px; }
-          .is-mountain-mode .mountain-score-basis { font-size: 12px !important; }
-          .is-mountain-mode .mountain-route-result { font-size: 14px; }
-        }
-
-        .member-intro { padding: 20px; }
-        .member-intro h3 { margin: 0 0 8px; font-size: 16px; color: #1e293b; }
-        .member-intro p { margin: 0 0 14px; font-size: 13px; line-height: 1.65; color: #526176; }
-        .member-intro-actions { display: flex; gap: 8px; }
-        .member-intro-actions button { flex: 1; min-height: 40px; border: 1px solid #bed8d0; border-radius: 8px; color: #176b63; background: #fff; font-weight: 700; cursor: pointer; }
-        .member-intro-actions button:first-child { background: #176b63; color: #fff; }
-        .summit-key-metrics { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 8px; margin: 8px 0; padding: 10px 4px; border-block: 1px solid #deebe7; }
-        .summit-key-metrics dt { font-size: 12px; color: #526176; }
-        .summit-key-metrics dd { margin: 4px 0 0; font-size: 15px; font-weight: 750; color: #243e38; }
-        .is-mountain-mode .weather-summary { justify-content: flex-start !important; padding: 16px !important; }
-        .is-mountain-mode .desktop-mtn-list { max-height: 110px !important; }
-        .is-mountain-mode .mountain-safety { flex-wrap: wrap; border-left-width: 4px !important; padding: 14px 16px !important; }
-        .is-mountain-mode .mountain-safety strong { font-size: 15px !important; }
-        .is-mountain-mode .mountain-safety span { font-size: 14px !important; }
-        .is-mountain-mode .mountain-results { align-items: flex-start !important; }
-        .is-mountain-mode .mtn-score-altitude-box { flex: 0.9 1 260px !important; }
-        .is-mountain-mode .mountain-route-result { flex: 1.2 1 320px !important; }
-        @media (max-width: 640px) {
-          .summit-key-metrics { grid-template-columns: repeat(2, minmax(0,1fr)); }
-          .is-mountain-mode .mtn-score-altitude-box, .is-mountain-mode .mountain-route-result { flex: 1 1 100% !important; }
-        }
-
         /* 💡 레이아웃 전체 간격(gap) 축소 및 모바일 최적화 */
         @media (max-width: 900px) {
-          .main-container.is-mountain-mode { padding: 18px 16px !important; }
-          .weather-status-shell.is-mountain-mode { padding-inline: 16px; }
           .main-container { grid-template-columns: minmax(0, 1fr) !important; display: grid !important; padding: 18px 16px !important; gap: 14px !important; }
           .main-primary-column, .main-side-column { display: contents !important; }
           .main-container .detail-info-card { order: 1; }
@@ -99,8 +59,6 @@ const APP_SHELL_CSS = `
           .desktop-mtn-list { display: none !important; }
         }
         @media (max-width: 640px) {
-          .main-container.is-mountain-mode { padding: 12px 10px !important; }
-          .weather-status-shell.is-mountain-mode { padding-inline: 10px; }
           .main-container { padding: 12px 10px !important; gap: 12px !important; }
           .main-container > div { gap: 12px !important; }
           .main-container button, .main-container input, .main-container select { min-height: 40px; }

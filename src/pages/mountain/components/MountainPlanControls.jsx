@@ -4,7 +4,7 @@ import HikingScheduleComparison from './HikingScheduleComparison';
 
 // All itinerary inputs live together; forecast results stay directly below them.
 export default function MountainPlanControls({ courses, courseIndex, onCourse, paces, pace, onPace,
-  tomorrowButtonRef, departureDraft, departureError, onDepartureDraft, onDeparture, onOffset, activeOffset,
+  departureDraft, departureError, onDepartureDraft, onDeparture, onOffset, activeOffset,
   restoredDepartureAt, offsets, getOffsetLabel, compareOpen, onCompareOpen,
   hourlyData, weatherData, durationMinutes, departureAt, mountainName, onReview }) {
   const [referenceAt] = useState(() => Date.now());
@@ -21,7 +21,7 @@ export default function MountainPlanControls({ courses, courseIndex, onCourse, p
       <label className="mountain-date-input">출발 날짜·시간<input type="datetime-local" value={departureDraft} aria-invalid={!!departureError} aria-describedby={departureError ? 'departure-error' : undefined} onChange={event => onDepartureDraft(event.target.value)} /></label>
       <div className="mountain-quick-times" role="group" aria-label="출발 시간 빠른 선택">
         <button type="button" onClick={() => onOffset(0)}>{weatherData.isFuture ? '선택일 오전 8시' : '지금'}</button>
-        {[6, 8, 10].map(hour => <button key={hour} ref={hour === 6 ? tomorrowButtonRef : undefined} type="button" onClick={() => tomorrow(hour)}>내일 {hour}시</button>)}
+        {[6, 8, 10].map(hour => <button key={hour} type="button" onClick={() => tomorrow(hour)}>내일 {hour}시</button>)}
       </div>
     </div>
     {departureError && <p id="departure-error" className="mountain-input-error" role="alert">{departureError} 아래 결과는 마지막으로 선택한 유효한 일정입니다.</p>}

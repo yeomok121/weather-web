@@ -167,14 +167,22 @@ function LoginCard({ loginPrompt = 0, onSignUpClick, onFindPasswordClick, logged
   }
 
   if (!showLoginForm) {
-    return <div className="member-intro">
-      <h3>내 산행을 이어서 준비하세요</h3>
-      <p>날씨와 준비물은 가입 없이 확인할 수 있어요. 로그인하면 계획을 저장하고 일행을 초대할 수 있습니다.</p>
-      <div className="member-intro-actions">
-        <button type="button" onClick={() => setShowLoginForm(true)}>로그인</button>
-        <button type="button" onClick={onSignUpClick}>무료 계정 만들기</button>
+    return (
+      <div style={{ padding: '24px', boxSizing: 'border-box', background: 'transparent' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '42px', height: '42px', margin: '0 auto 12px', borderRadius: '14px', color: '#176b63', background: 'rgba(23,107,99,0.1)', fontSize: '20px' }}>⛰️</div>
+        <h3 style={{ margin: '0 0 8px', fontSize: '17px', fontWeight: '800', color: '#1e293b', textAlign: 'center' }}>먼저 둘러보세요</h3>
+        <p style={{ margin: '0 auto 16px', maxWidth: '250px', fontSize: '13px', lineHeight: '1.55', color: '#526176', textAlign: 'center' }}>
+          날씨와 산행 정보는 가입 없이 확인할 수 있어요. 자주 보는 지역은 관심 목록으로 모아보세요.
+        </p>
+        <div style={{ display: 'grid', gap: '8px', marginBottom: '16px' }}>
+          <div style={{ padding: '9px 11px', borderRadius: '10px', background: 'rgba(255,255,255,0.48)', color: '#334155', fontSize: '12px' }}>📍 관심 지역 최대 5곳을 한눈에 비교</div>
+          <div style={{ padding: '9px 11px', borderRadius: '10px', background: 'rgba(255,255,255,0.48)', color: '#334155', fontSize: '12px' }}>☁️ 로그인하면 관심 지역과 산행 계획을 다른 기기에서도 불러오기</div>
+        </div>
+        <button type="button" onClick={onSignUpClick} style={{ width: '100%', padding: '11px', border: '0', borderRadius: '9px', color: '#fff', background: '#176b63', fontWeight: '750', fontSize: '13px', cursor: 'pointer' }}>무료 계정 만들기</button>
+        <button type="button" onClick={() => setShowLoginForm(true)} style={{ display: 'block', margin: '11px auto 0', padding: '5px 10px', border: '0', background: 'transparent', color: '#315b99', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}>이미 계정이 있어요 · 로그인</button>
+        <p style={{ margin: '10px 0 0', textAlign: 'center', color: '#64748b', fontSize: '11px' }}>비회원 저장은 현재 브라우저에 보관됩니다.</p>
       </div>
-    </div>;
+    );
   }
 
   return (
