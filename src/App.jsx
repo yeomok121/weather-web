@@ -102,8 +102,10 @@ const WeatherBackground = ({ theme }) => {
 function App() {
   const [mountainsList, setMountainsList] = useState(MOUNTAINS_LIST);
   const [mountainCatalogState, setMountainCatalogState] = useState('loading');
+  const [mountainCatalogAttempt, setMountainCatalogAttempt] = useState(0);
   useEffect(() => {
     const controller = new AbortController();
+    setMountainCatalogState('loading');
     requestJson('/api/mountain/list', { signal: controller.signal, timeoutMs: 90000 }).then(rows => {
       if (!Array.isArray(rows)) throw new Error('목록을 확인할 수 없습니다');
       const known = new Map(MOUNTAINS_LIST.map(item => [item.name, item]));
@@ -113,13 +115,19 @@ function App() {
       setMountainCatalogState(extra.length >= 30 ? 'ready' : 'limited');
     }).catch(error => { if (!controller.signal.aborted) setMountainCatalogState('limited'); });
     return () => controller.abort();
-  }, []);
+  }, [mountainCatalogAttempt]);
   const [searchInput, setSearchInput] = useState('');
   const [recentSearches, setRecentSearches] = useState([]);
   const [autoCompleteList, setAutoCompleteList] = useState([]);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
-
   const [isMountainMode, setIsMountainMode] = useState(false);
+  useEffect(() => {
+    const query = searchInput.trim().toLowerCase();
+    if (!query) { setAutoCompleteList([]); return; }
+    const candidates = isMountainMode ? mountainsList.map(item => item.name) : KOREA_REGIONS;
+    setAutoCompleteList(candidates.filter(name => name.toLowerCase().includes(query)));
+  }, [searchInput, mountainsList, isMountainMode]);
+
   const [isFishingPage, setIsFishingPage] = useState(false);
   const [mountainInfo, setMountainInfo] = useState(null);
   const [selectedDateIdx, setSelectedDateIdx] = useState(0); 
@@ -253,7 +261,7 @@ function App() {
         if (cancelled) return;
         const visible = items.length ? items : defaultFav;
         setFavorites(visible);
-        if (initialMountainRef.current && mountainsList.some(item => item.name === initialMountainRef.current)) {
+        if (initialMountainRef.current) {
           setIsMountainMode(true);
           loadMountainWeather(initialMountainRef.current, { initial: true });
         } else if (!isMountainMode) loadWeather(visible[0].lat, visible[0].lon, visible[0].name);
@@ -305,7 +313,7 @@ function App() {
       const guestFavorites = getStoredList('guestFavorites');
       setFavorites(guestFavorites);
       const initialLocation = guestFavorites[0] || defaultFav[0];
-      if (initialMountainRef.current && mountainsList.some(item => item.name === initialMountainRef.current)) {
+      if (initialMountainRef.current) {
         setIsMountainMode(true); loadMountainWeather(initialMountainRef.current, { initial: true });
       } else if (!isMountainMode) loadWeather(initialLocation.lat, initialLocation.lon, initialLocation.name);
     }
@@ -501,6 +509,11 @@ function App() {
     try {
       setIsAiLoading(true);
       if (isMountainMode) {
+        const exact = mountainsList.find(item => item.name === query);
+        if (exact) { await loadMountainWeather(exact.name); return; }
+        const matches = mountainsList.filter(item => item.name.toLowerCase().includes(query.toLowerCase()));
+        if (matches.length > 1) { setSearchInput(query); setIsSearchFocused(true); setIsAiLoading(false); showToast('일치하는 산이 여러 곳입니다. 목록에서 산을 선택해 주세요.'); return; }
+        if (matches.length === 1) { await loadMountainWeather(matches[0].name); return; }
         const res = await fetch(`${API}/api/mountain/search?q=${encodeURIComponent(query)}`);
         if (!res.ok) { showToast('지원하지 않는 산 이름입니다.'); setIsAiLoading(false); return; }
         const loc = await res.json();
@@ -519,15 +532,7 @@ function App() {
 
   const handleSearch = () => executeSearch(searchInput.trim());
 
-  const handleInputChange = (e) => {
-    const value = e.target.value;
-    setSearchInput(value);
-    if (value.trim() === '') setAutoCompleteList([]);
-    else {
-      const sourceList = isMountainMode ? mountainsList.map(item => item.name) : KOREA_REGIONS;
-      setAutoCompleteList(sourceList.filter(region => region.toLowerCase().includes(value.toLowerCase())));
-    }
-  };
+  const handleInputChange = (e) => setSearchInput(e.target.value);
 
   const handleOpenAddRegion = () => {
     setIsAddRegionOpen(true);
@@ -909,8 +914,8 @@ function App() {
                     </div>
                     <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
                       {mountainsList.map((m, idx) => (
-                        <li key={idx} onMouseDown={(e) => { e.preventDefault(); loadMountainWeather(m.name); setIsSearchFocused(false); }} style={{ padding: '8px 4px', cursor: 'pointer', color: '#333', fontSize: '13px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(0,0,0,0.03)' }}>
-                          <span><strong>{m.name}</strong> <span style={{ fontSize: '11px', color: '#64748b' }}>({m.peak})</span></span>
+                        <li key={idx} role="button" tabIndex={0} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); loadMountainWeather(m.name); setIsSearchFocused(false); } }} onMouseDown={(e) => { e.preventDefault(); loadMountainWeather(m.name); setIsSearchFocused(false); }} style={{ padding: '8px 4px', cursor: 'pointer', color: '#333', fontSize: '13px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(0,0,0,0.03)' }}>
+                          <span><strong>{m.name}</strong> {m.peak && <span style={{ fontSize: '11px', color: '#64748b' }}>({m.peak})</span>} {m.region && <span style={{ fontSize: '11px', color: '#64748b' }}>{m.region}</span>}</span>
                           <span style={{ fontSize: '11px', color: '#15803d', fontWeight: 'bold' }}>해발 {m.elevation}m</span>
                         </li>
                       ))}
@@ -924,11 +929,9 @@ function App() {
                     {autoCompleteList.length > 0 ? (
                       <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
                         {autoCompleteList.map((region, idx) => (
-                          <li key={idx} onMouseDown={(e) => { e.preventDefault(); executeSearch(region); }} style={{ padding: '8px 4px', cursor: 'pointer', color: '#333', fontSize: '13.5px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(0,0,0,0.03)' }}>
+                          <li key={idx} role="button" tabIndex={0} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); executeSearch(region); } }} onMouseDown={(e) => { e.preventDefault(); executeSearch(region); }} style={{ padding: '8px 4px', cursor: 'pointer', color: '#333', fontSize: '13.5px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(0,0,0,0.03)' }}>
                             <span>
-                              {region.split(new RegExp(`(${searchInput})`, 'gi')).map((part, i) => 
-                                part.toLowerCase() === searchInput.toLowerCase() ? <span key={i} style={{ color: '#3182ce', fontWeight: 'bold' }}>{part}</span> : part
-                              )}
+                              {region}
                             </span>
                             <FiSearch color="#94a3b8" size={12} />
                           </li>
@@ -979,7 +982,7 @@ function App() {
           />
           
           {isMountainMode && mountainInfo?.course_available === false && <div className="glass-card weather-empty" role="status"><strong>산 기상 정보 제공 중</strong><p>위치와 고도는 한국등산·트레킹지원센터 자료이며 예보는 해당 지점의 참고 추정값입니다. 이 산의 코스별 거리·소요시간은 준비 중입니다. 출발 시간별 산행 점수, 하산 예상과 계획 저장은 확인된 코스가 추가된 뒤 제공됩니다. 공식 안내에서 탐방로와 통제 상태를 확인해 주세요.</p></div>}
-          {isMountainMode && mountainCatalogState === 'limited' && <div className="glass-card weather-empty" role="status">추가 산 목록이 일부만 제공되고 있습니다. 잠시 후 새로고침해 주세요.</div>}
+          {isMountainMode && mountainCatalogState === 'limited' && <div className="glass-card weather-empty" role="status">현재 {mountainsList.length}개 산을 표시합니다. 공공데이터 연결이 지연되면 약 1분 뒤 다시 불러와 주세요. <button type="button" onClick={() => setMountainCatalogAttempt(value => value + 1)}>산 목록 다시 불러오기</button></div>}
           <HourlyForecast 
             hourlyData={hourlyData} 
             isLoading={isAiLoading && !weatherData.hasData}
