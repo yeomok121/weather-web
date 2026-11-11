@@ -3,6 +3,8 @@ import './App.css';
 import LoginCard from './components/LoginCard';
 import HourlyForecast, { PACE_OPTIONS } from './components/HourlyForecast';
 import MountainWeatherPanel from './components/MountainWeatherPanel';
+import ManualCourseForm from './components/ManualCourseForm';
+import { parseManualCourse } from './lib/manualCourse.js';
 import NoticeModal from './components/NoticeModal';
 import WeatherMain from './components/WeatherMain';
 import WeatherDetails from './components/WeatherDetails';
@@ -164,6 +166,17 @@ function App() {
   const [bgTheme, setBgTheme] = useState('clear-day');
 
   const [loggedInUser, setLoggedInUser] = useState(null);
+  const [manualCourses, setManualCourses] = useState({});
+  const manualCourseKey = (name) => `hiking_manual_course:${loggedInUser?.id || 'guest'}:${name}`;
+  const manualKey = mountainInfo?.name ? manualCourseKey(mountainInfo.name) : '';
+  const manualCourse = manualKey ? (manualCourses[manualKey] || parseManualCourse(readStoredJson(manualKey, null))) : null;
+  const effectiveMountainInfo = mountainInfo?.course_available === false && manualCourse
+    ? { ...mountainInfo, course_available: true, courses: [manualCourse], manual_course: true } : mountainInfo;
+  const saveManualCourse = (name, course) => {
+    const key = manualCourseKey(name);
+    writeStoredJson(key, course.name);
+    setManualCourses(previous => ({ ...previous, [key]: course }));
+  };
   const [loginPrompt, setLoginPrompt] = useState(0);
   const [favorites, setFavorites] = useState([]);
 
@@ -469,6 +482,8 @@ function App() {
 
   const handleApplyHikingPlan = async (plan) => {
     setIsMountainMode(true);
+    const restoredCourse = parseManualCourse(plan.course_name);
+    if (restoredCourse && plan.mountain_name) saveManualCourse(plan.mountain_name, restoredCourse);
     if (plan.mountain_name && plan.mountain_name !== mountainInfo?.name) {
       const loaded = await loadMountainWeather(plan.mountain_name);
       if (!loaded) throw new Error('산악 예보를 불러오지 못했습니다. 연결을 확인한 뒤 다시 시도해 주세요.');
@@ -478,7 +493,7 @@ function App() {
     const validDeparture = isUpcoming;
     setSelectedDateIdx(0);
     const mountain = mountainsList.find(item => item.name === plan.mountain_name);
-    const namedCourseIndex = mountain?.courses.findIndex(course => course.name === plan.course_name) ?? -1;
+    const namedCourseIndex = mountain?.courses?.findIndex(course => course.name === plan.course_name) ?? -1;
     setSelectedCourseIdx(namedCourseIndex >= 0 ? namedCourseIndex : Number(plan.course_index) || 0);
     setPaceType(plan.pace || 'normal');
     setDepartureOffsetHours(0);
@@ -634,8 +649,8 @@ function App() {
   }, [weatherData, weeklyData, selectedDateIdx, isMountainMode]);
 
   const hikingPlanSummary = useMemo(() => {
-    if (!isMountainMode || !activeWeather.hasData || mountainInfo?.course_available === false) return null;
-    const courses = mountainInfo?.courses || [{ name: '기본 탐방로', distance: '5km', time: 180, diff: '중' }];
+    if (!isMountainMode || !activeWeather.hasData || effectiveMountainInfo?.course_available === false) return null;
+    const courses = effectiveMountainInfo?.courses || [{ name: '기본 탐방로', distance: '5km', time: 180, diff: '중' }];
     const selectedCourse = courses[selectedCourseIdx] || courses[0];
     const paceObj = PACE_OPTIONS.find(p => p.key === paceType) || PACE_OPTIONS[1];
     const totalMins = Math.max(20, Math.round((selectedCourse.time * paceObj.multiplier) / 10) * 10);
@@ -779,7 +794,7 @@ function App() {
       summitForecast,
       gearList: customGearList
     };
-  }, [isMountainMode, mountainInfo, selectedCourseIdx, paceType, departureOffsetHours, activeWeather, hourlyData, customGearList, planReferenceAt, restoredDepartureAt]);
+  }, [isMountainMode, mountainInfo, manualCourse?.name, selectedCourseIdx, paceType, departureOffsetHours, activeWeather, hourlyData, customGearList, planReferenceAt, restoredDepartureAt]);
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', position: 'relative' }}>
@@ -982,7 +997,8 @@ function App() {
             onSelectMountain={(mName) => loadMountainWeather(mName)}
           />
           
-          {isMountainMode && mountainInfo?.course_available === false && activeWeather.hasData && <MountainWeatherPanel mountainInfo={mountainInfo} weatherData={activeWeather} hourlyData={hourlyData} isStale={connectionState.phase !== 'success'} />}
+          {isMountainMode && mountainInfo?.course_available === false && activeWeather.hasData && <ManualCourseForm mountain={mountainInfo.name} course={manualCourse} onApply={course => { saveManualCourse(mountainInfo.name, course); setSelectedCourseIdx(0); }} />}
+          {isMountainMode && effectiveMountainInfo?.course_available === false && activeWeather.hasData && <MountainWeatherPanel mountainInfo={mountainInfo} weatherData={activeWeather} hourlyData={hourlyData} isStale={connectionState.phase !== 'success'} />}
           {isMountainMode && mountainCatalogState === 'limited' && <div className="glass-card weather-empty" role="status">현재 {mountainsList.length}개 산을 표시합니다. 공공데이터 연결이 지연되면 약 1분 뒤 다시 불러와 주세요. <button type="button" onClick={() => setMountainCatalogAttempt(value => value + 1)}>산 목록 다시 불러오기</button></div>}
           <HourlyForecast 
             hourlyData={hourlyData} 
@@ -993,8 +1009,8 @@ function App() {
               if (request.kind === 'mountain') loadMountainWeather(request.mountainName);
               else loadWeather(request.lat, request.lon, request.regionName);
             }}
-            isMountainMode={isMountainMode && mountainInfo?.course_available !== false}
-            mountainInfo={mountainInfo}
+            isMountainMode={isMountainMode && effectiveMountainInfo?.course_available !== false}
+            mountainInfo={effectiveMountainInfo}
             weatherData={activeWeather}
             onShowToast={showToast}
             selectedCourseIdx={selectedCourseIdx}

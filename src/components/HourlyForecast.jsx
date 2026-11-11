@@ -190,6 +190,7 @@ function HourlyForecast({
   const getTrailheadQuery = () => {
     if (selectedCourse.trailhead) return selectedCourse.trailhead;
     const mName = weatherData?.region || mountainInfo?.name || '북한산';
+    if (selectedCourse.manual) return `${mName} 등산로`;
     const match = selectedCourse.name.match(/\(([^)]+)\)/);
     if (match && match[1]) {
       const sub = match[1].replace('최단', '').trim();
@@ -614,6 +615,7 @@ function HourlyForecast({
         )}
       </div>
 
+      {isMountainMode && mountainInfo?.manual_course && <p role="note" style={{ color: '#92400e', fontSize: '13px' }}>직접 입력한 코스 기준입니다. 거리·시간·경로와 통제 여부는 공식 안내에서 확인하세요.</p>}
       {isMountainMode && <MountainQuickGuide />}
       {isMountainMode && <nav className="hike-flowbar mountain-shortcuts" aria-label="산행 준비 바로가기">
         <button type="button" onClick={() => jumpTo('mountain-picker')}>산 바꾸기</button>
@@ -788,7 +790,7 @@ function HourlyForecast({
                     whiteSpace: 'nowrap'
                   }}
                 >
-                  <FiMapPin size={12} /> 카카오맵 들머리
+                  <FiMapPin size={12} /> {selectedCourse.manual ? '카카오맵 산 검색' : '카카오맵 들머리'}
                 </button>
                 <button
                   type="button"
@@ -800,7 +802,7 @@ function HourlyForecast({
                     whiteSpace: 'nowrap'
                   }}
                 >
-                  <FiMapPin size={12} /> 네이버지도 들머리
+                  <FiMapPin size={12} /> {selectedCourse.manual ? '네이버지도 산 검색' : '네이버지도 들머리'}
                 </button>
               </div>
               {officialTrailInfo && (
