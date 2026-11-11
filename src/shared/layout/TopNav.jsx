@@ -23,8 +23,8 @@ export default function TopNav({ search, isMountainMode, isFishingPage, isNotice
     : (isRecent ? search.recentSearches : search.autoCompleteList).map(name => ({ name }));
 
   return <header className={`top-nav ${isMountainMode && !isFishingPage ? 'is-mountain-mode' : ''}`}>
-    <div className="top-nav-inner">
       <button type="button" className="header-brand" onClick={() => { closeSearch(); onGoHome(); }} aria-label="Weather+ 일반 날씨 홈"><FiSun aria-hidden="true" size={24} /><span>Weather<span className="header-brand-plus">+</span></span></button>
+    <div className="top-nav-inner">
       <div className={`header-search ${mobileSearchOpen ? 'is-expanded' : ''}`} onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget)) search.setIsSearchFocused(false); }}>
         {!isFishingPage && <>
           <button ref={toggleRef} className="header-search-toggle" type="button" aria-label={mobileSearchOpen ? '검색창 닫기' : isMountainMode ? '산 검색창 열기' : '지역 검색창 열기'} aria-expanded={mobileSearchOpen} aria-controls="header-search-panel" onClick={() => mobileSearchOpen ? closeSearch() : openSearch()}>
@@ -48,8 +48,8 @@ export default function TopNav({ search, isMountainMode, isFishingPage, isNotice
         </>}
       </div>
       <nav className="header-navigation" aria-label="주요 서비스">
-        <button type="button" className="header-nav-item" onClick={() => { closeSearch(); onToggleMountainMode(); }}>{isMountainMode ? <FiSun aria-hidden="true" size={16} /> : <FiMap aria-hidden="true" size={16} />}{isMountainMode ? '일반 날씨' : '산행 날씨'}</button>
-        <button type="button" className="header-nav-item" aria-pressed={isFishingPage && !isNoticeOpen} onClick={() => { closeSearch(); onToggleFishing(); }}>{isFishingPage ? <FiSun aria-hidden="true" size={16} /> : <FiAnchor aria-hidden="true" size={16} />}{isFishingPage ? '날씨 홈' : '바다 낚시'}</button>
+        <button type="button" className="header-nav-item" onClick={() => { closeSearch(); if (isFishingPage) onGoHome(); else onToggleMountainMode(); }}>{isMountainMode || isFishingPage ? <FiSun aria-hidden="true" size={16} /> : <FiMap aria-hidden="true" size={16} />}{isMountainMode || isFishingPage ? '일반 날씨' : '산행 날씨'}</button>
+        <button type="button" className="header-nav-item" aria-pressed={isFishingPage && !isNoticeOpen} onClick={() => { closeSearch(); if (!isFishingPage) onToggleFishing(); }}><FiAnchor aria-hidden="true" size={16} />바다 낚시</button>
         <button type="button" className="header-nav-item" aria-pressed={!!isNoticeOpen} onClick={() => { closeSearch(); onOpenNotices(); }}><FiBell aria-hidden="true" size={16} />공지사항</button>
       </nav>
     </div>
