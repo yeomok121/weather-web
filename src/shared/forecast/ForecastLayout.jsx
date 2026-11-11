@@ -42,8 +42,8 @@ export default function ForecastLayout({ extras = null }) {
     <main className={`main-container ${isMountainMode ? 'is-mountain-mode' : ''}`} style={{ flexGrow: 1, maxWidth: '1320px', margin: '0 auto', width: '100%', zIndex: 1, padding: '28px 24px' }}>
       <div className="main-primary-column" style={{ display: 'flex', flexDirection: 'column', gap: '16px', minWidth: 0 }}>
 
-        {isMountainMode && <div className="mountain-summary-host" ref={setSummaryHost} />}
         <WeatherMain
+          onSummaryHostChange={setSummaryHost}
           weatherData={activeWeather}
           hourlyData={hourlyData}
           weeklyData={weeklyData}

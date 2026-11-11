@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { FiTrash2, FiCalendar, FiChevronDown } from 'react-icons/fi';
 
 function WeatherMain({
-  weatherData, hourlyData = [], weeklyData = [],
+  onSummaryHostChange, weatherData, hourlyData = [], weeklyData = [],
   selectedDateIdx, onSelectDate,
   isAiLoading, aiMessage, favorites, onAddClick, onFavoriteClick, onRemoveFavorite, onCurrentLocationClick,
   isMountainMode, onToggleMountainMode, mountainInfo, mountainsList = [], onSelectMountain, isLoggedIn = false
@@ -92,108 +92,20 @@ function WeatherMain({
   const weatherAlert = getWeatherAlert();
   const displayGuideMessage = getActiveGuideMessage();
 
-  return (
-    <div className="weather-main-card glass-card" style={{ borderRadius: '16px', display: 'flex', flexDirection: 'row', overflow: 'hidden' }}>
-      
-      {/* 💡 전체 패딩 대폭 축소 (16px 20px) 및 요소 밀착 */}
-      <div className="weather-summary" style={{ flex: 2, padding: '16px 20px', textAlign: 'center', color: '#1e293b', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-        
-        {weatherAlert && (
-          <div style={{ backgroundColor: weatherAlert.bg, color: weatherAlert.color, borderRadius: '6px', padding: '6px 10px', fontSize: '11.5px', fontWeight: 'bold', marginBottom: '8px', wordBreak: 'keep-all', lineHeight: '1.3' }}>
-            {weatherAlert.text}
-          </div>
-        )}
-
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '8px' }}>
-          <button 
-            onClick={onToggleMountainMode}
-            style={{
-              padding: '6px 12px', borderRadius: '16px', fontSize: '11.5px', fontWeight: 'bold', cursor: 'pointer',
-              border: isMountainMode ? '1px solid rgba(22,163,74,0.3)' : '1px solid rgba(37,99,235,0.3)',
-              backgroundColor: isMountainMode ? 'rgba(22,163,74,0.9)' : 'rgba(255,255,255,0.6)', 
-              color: isMountainMode ? '#ffffff' : '#1e3a8a',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.04)', transition: 'all 0.2s ease'
-            }}
-          >
-            {isMountainMode ? '⛰️ 일반 날씨로 전환 ↺' : '⛰️ 산악 기상 모드'}
-          </button>
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', flexWrap: 'wrap', marginBottom: '6px' }}>
-          <h3 style={{ margin: '0', fontSize: '18px', fontWeight: '800' }}>{weatherData.region}</h3>
-          {isMountainMode && mountainInfo?.peak && <span style={{ fontSize: '13px', color: '#475569', fontWeight: '500' }}>({mountainInfo.peak})</span>}
-          {isMountainMode && weatherData.elevation > 0 && <span style={{ fontSize: '10.5px', color: '#166534', backgroundColor: 'rgba(22,163,74,0.1)', padding: '2px 6px', borderRadius: '6px', fontWeight: 'bold' }}>해발 {weatherData.elevation}m</span>}
-          {isMountainMode && mountainInfo?.difficulty && <span style={{ fontSize: '10.5px', color: '#dc2626', backgroundColor: 'rgba(220,38,38,0.1)', padding: '2px 6px', borderRadius: '6px', fontWeight: 'bold' }}>난이도 {mountainInfo.difficulty}</span>}
-        </div>
-        
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '8px' }}>
-          <div ref={dropdownRef} style={{ position: 'relative', display: 'inline-block' }}>
-            <button 
-              onClick={() => setIsDatePickerOpen(!isDatePickerOpen)}
-              style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '4px 10px', borderRadius: '6px', border: '1px solid rgba(0,0,0,0.08)', backgroundColor: 'rgba(255,255,255,0.6)', color: '#475569', fontSize: '11.5px', fontWeight: 'bold', cursor: 'pointer' }}
-            >
-              <FiCalendar size={12} /> 
-              {weatherData.date} {selectedDateIdx === 0 ? '(오늘)' : ''}
-              <FiChevronDown size={12} style={{ transform: isDatePickerOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }} />
-            </button>
-
-            {isDatePickerOpen && weeklyData.length > 0 && (
-              <div className="glass-card" style={{ position: 'absolute', top: '100%', left: '50%', transform: 'translateX(-50%)', marginTop: '4px', borderRadius: '8px', width: '150px', zIndex: 50, overflow: 'hidden' }}>
-                {weeklyData.map((d, i) => (
-                  <div 
-                    key={i} 
-                    onClick={() => { onSelectDate(i); setIsDatePickerOpen(false); }}
-                    style={{ padding: '8px 12px', fontSize: '11.5px', cursor: 'pointer', backgroundColor: selectedDateIdx === i ? 'rgba(0,0,0,0.05)' : 'transparent', color: selectedDateIdx === i ? '#0f172a' : '#475569', fontWeight: selectedDateIdx === i ? 'bold' : '500', borderBottom: i !== weeklyData.length - 1 ? '1px solid rgba(0,0,0,0.05)' : 'none' }}
-                  >
-                    {d.date} ({d.day}) {i === 0 ? ' - 오늘' : ''}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-        
-        {/* 💡 기온/아이콘 크기 적절히 축소 (50px / 42px) */}
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', margin: '4px 0' }}>
-          <h1 aria-label={hasData ? `기온 ${weatherData.temp}도` : '기온 자료 없음'} style={{ fontSize: '50px', margin: '0', fontWeight: '800', letterSpacing: '-1.5px' }}>{hasData ? `${weatherData.temp}°` : '—'}{hasData && <span style={{ fontSize: '24px', fontWeight: 'bold' }}>C</span>}</h1>
-          <span style={{ fontSize: '42px', filter: 'drop-shadow(0px 2px 4px rgba(0,0,0,0.1))' }}>{hasData ? weatherData.icon : null}</span>
-        </div>
-        
-        <p style={{ margin: '4px 0 2px 0', fontWeight: 'bold', fontSize: '13px', color: '#1e293b' }}>
-          {hasData ? (isMountainMode ? `정상 ${weatherData.condition}` : weatherData.condition) : (isAiLoading ? '날씨 확인 중' : '기상 자료 없음')}
-        </p>
-        <p style={{ margin: '0 0 8px 0', color: '#475569', fontSize: '12px', fontWeight: '500' }}>{hasData ? weatherData.highLow : '기온 · 습도 · 바람 자료를 확인해 주세요.'}</p>
-
-        {isMountainMode && hasData && <dl className="summit-key-metrics">
-          <div><dt>체감온도</dt><dd>{weatherData.feelsLike ?? '—'}°C</dd></div>
-          <div><dt>능선 풍속</dt><dd>{weatherData.wind_speed ?? '—'} m/s</dd></div>
-          <div><dt>습도</dt><dd>{weatherData.humidity ?? '—'}%</dd></div>
-          <div><dt>오늘 일몰</dt><dd>{weatherData.sunset || '자료 없음'}</dd></div>
-        </dl>}
-
-        {diffBadge && <div style={{ display: 'flex', justifyContent: 'center' }}>
-          <span style={{ display: 'inline-block', backgroundColor: diffBadge.bg, color: diffBadge.color, borderRadius: '6px', padding: '4px 10px', fontSize: '11px', fontWeight: 'bold' }}>
-            {diffBadge.text}
-          </span>
-        </div>}
-        
-        <div style={{ marginTop: '10px', padding: '8px 12px', background: 'rgba(255,255,255,0.4)', borderRadius: '8px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: '3px', fontSize: '11.5px', border: '1px solid rgba(255,255,255,0.5)', textAlign: 'center', minHeight: '36px' }}>
-          <span style={{ color: '#64748b', fontSize: '9.5px', fontWeight: '700' }}>{weatherData.isFuture ? '예보 기반 안내 · 참고용' : 'AI 참고 안내 · 예보 자료 요약'}</span>
-          <span style={{ fontWeight: '600', color: '#1e293b', lineHeight: '1.4', wordBreak: 'keep-all' }}>{displayGuideMessage}</span>
-        </div>
-      </div>
-      
-      {/* 💡 우측 명산 목록 패딩 및 아이템 크기 최적화 */}
-      <div id="mountain-picker" className="weather-main-right" style={{ flex: 1, padding: '16px', borderLeft: '1px solid rgba(255,255,255,0.4)', color: '#333', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', backgroundColor: 'rgba(255,255,255,0.15)', minWidth: 0 }}>
+  const picker = (
+      <div id="mountain-picker" className={isMountainMode ? "mountain-picker-card glass-card" : "weather-main-right"} tabIndex={-1} style={{ flex: 1, padding: '16px', borderLeft: '1px solid rgba(255,255,255,0.4)', color: '#333', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', backgroundColor: 'rgba(255,255,255,0.15)', minWidth: 0 }}>
         {isMountainMode ? (
           <div style={{ minWidth: 0 }}>
-            <h4 style={{ fontSize: '11.5px', color: '#166534', fontWeight: 'bold', margin: '0 0 6px 0' }}>📌 핵심 산행 팁</h4>
+            <h2 className="mountain-picker-heading">산 바꾸기</h2>
+            <details className="mountain-tip"><summary>핵심 산행 팁</summary>
             <div style={{ backgroundColor: 'rgba(255,255,255,0.6)', borderRadius: '6px', padding: '8px 10px', fontSize: '11px', color: '#1e293b', lineHeight: '1.45', margin: '0 0 12px 0', wordBreak: 'keep-all' }}>
               {mountainInfo?.course_tip || '정상 부근 기온 하강과 강풍에 대비해 방풍 의류와 스틱을 준비하세요.'}
             </div>
 
+            </details>
+
             <h4 style={{ fontSize: '11.5px', color: '#475569', margin: '0 0 6px 0', fontWeight: 'bold' }}>⛰️ {mountainsList.length}개 산 빠른 선택</h4>
-            
+
             <div className="mobile-mtn-pills no-scrollbar" style={{ gap: '6px', overflowX: 'auto', paddingBottom: '4px', WebkitOverflowScrolling: 'touch' }}>
               {mountainsList.map((m, idx) => {
                 const isSelected = weatherData.region === m.name;
@@ -254,7 +166,104 @@ function WeatherMain({
           </div>
         )}
       </div>
+  );
+
+  return (
+    <>
+    <div className="weather-main-card glass-card" style={{ borderRadius: '16px', display: 'flex', flexDirection: 'row', overflow: 'hidden' }}>
+
+      {/* 💡 전체 패딩 대폭 축소 (16px 20px) 및 요소 밀착 */}
+      <div className="weather-summary" style={{ flex: 2, padding: '16px 20px', textAlign: 'center', color: '#1e293b', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+
+        {weatherAlert && (
+          <div style={{ backgroundColor: weatherAlert.bg, color: weatherAlert.color, borderRadius: '6px', padding: '6px 10px', fontSize: '11.5px', fontWeight: 'bold', marginBottom: '8px', wordBreak: 'keep-all', lineHeight: '1.3' }}>
+            {weatherAlert.text}
+          </div>
+        )}
+
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '8px' }}>
+          <button
+            onClick={onToggleMountainMode}
+            style={{
+              padding: '6px 12px', borderRadius: '16px', fontSize: '11.5px', fontWeight: 'bold', cursor: 'pointer',
+              border: isMountainMode ? '1px solid rgba(22,163,74,0.3)' : '1px solid rgba(37,99,235,0.3)',
+              backgroundColor: isMountainMode ? 'rgba(22,163,74,0.9)' : 'rgba(255,255,255,0.6)',
+              color: isMountainMode ? '#ffffff' : '#1e3a8a',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.04)', transition: 'all 0.2s ease'
+            }}
+          >
+            {isMountainMode ? '⛰️ 일반 날씨로 전환 ↺' : '⛰️ 산악 기상 모드'}
+          </button>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', flexWrap: 'wrap', marginBottom: '6px' }}>
+          <h3 style={{ margin: '0', fontSize: '18px', fontWeight: '800' }}>{weatherData.region}</h3>
+          {isMountainMode && mountainInfo?.peak && <span style={{ fontSize: '13px', color: '#475569', fontWeight: '500' }}>({mountainInfo.peak})</span>}
+          {isMountainMode && weatherData.elevation > 0 && <span style={{ fontSize: '10.5px', color: '#166534', backgroundColor: 'rgba(22,163,74,0.1)', padding: '2px 6px', borderRadius: '6px', fontWeight: 'bold' }}>해발 {weatherData.elevation}m</span>}
+          {isMountainMode && mountainInfo?.difficulty && <span style={{ fontSize: '10.5px', color: '#dc2626', backgroundColor: 'rgba(220,38,38,0.1)', padding: '2px 6px', borderRadius: '6px', fontWeight: 'bold' }}>난이도 {mountainInfo.difficulty}</span>}
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '8px' }}>
+          <div ref={dropdownRef} style={{ position: 'relative', display: 'inline-block' }}>
+            <button
+              onClick={() => setIsDatePickerOpen(!isDatePickerOpen)}
+              style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '4px 10px', borderRadius: '6px', border: '1px solid rgba(0,0,0,0.08)', backgroundColor: 'rgba(255,255,255,0.6)', color: '#475569', fontSize: '11.5px', fontWeight: 'bold', cursor: 'pointer' }}
+            >
+              <FiCalendar size={12} />
+              {weatherData.date} {selectedDateIdx === 0 ? '(오늘)' : ''}
+              <FiChevronDown size={12} style={{ transform: isDatePickerOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }} />
+            </button>
+
+            {isDatePickerOpen && weeklyData.length > 0 && (
+              <div className="glass-card" style={{ position: 'absolute', top: '100%', left: '50%', transform: 'translateX(-50%)', marginTop: '4px', borderRadius: '8px', width: '150px', zIndex: 50, overflow: 'hidden' }}>
+                {weeklyData.map((d, i) => (
+                  <div
+                    key={i}
+                    onClick={() => { onSelectDate(i); setIsDatePickerOpen(false); }}
+                    style={{ padding: '8px 12px', fontSize: '11.5px', cursor: 'pointer', backgroundColor: selectedDateIdx === i ? 'rgba(0,0,0,0.05)' : 'transparent', color: selectedDateIdx === i ? '#0f172a' : '#475569', fontWeight: selectedDateIdx === i ? 'bold' : '500', borderBottom: i !== weeklyData.length - 1 ? '1px solid rgba(0,0,0,0.05)' : 'none' }}
+                  >
+                    {d.date} ({d.day}) {i === 0 ? ' - 오늘' : ''}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {isMountainMode && <p className="weather-current-label">{weatherData.isFuture ? '선택일 예보' : '현재'} · 정상 기온 <span>고도 보정 추정값</span></p>}
+        {/* 💡 기온/아이콘 크기 적절히 축소 (50px / 42px) */}
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', margin: '4px 0' }}>
+          <h1 aria-label={hasData ? `기온 ${weatherData.temp}도` : '기온 자료 없음'} style={{ fontSize: '50px', margin: '0', fontWeight: '800', letterSpacing: '-1.5px' }}>{hasData ? `${weatherData.temp}°` : '—'}{hasData && <span style={{ fontSize: '24px', fontWeight: 'bold' }}>C</span>}</h1>
+          <span style={{ fontSize: '42px', filter: 'drop-shadow(0px 2px 4px rgba(0,0,0,0.1))' }}>{hasData ? weatherData.icon : null}</span>
+        </div>
+
+        {isMountainMode && <div className="mountain-summary-host" ref={onSummaryHostChange} />}
+
+        <p style={{ margin: '4px 0 2px 0', fontWeight: 'bold', fontSize: '13px', color: '#1e293b' }}>
+          {hasData ? (isMountainMode ? `정상 ${weatherData.condition}` : weatherData.condition) : (isAiLoading ? '날씨 확인 중' : '기상 자료 없음')}
+        </p>
+        <p style={{ margin: '0 0 8px 0', color: '#475569', fontSize: '12px', fontWeight: '500' }}>{hasData ? weatherData.highLow : '기온 · 습도 · 바람 자료를 확인해 주세요.'}</p>
+
+        {isMountainMode && hasData && <dl className="summit-key-metrics mountain-current-metrics">
+          <div><dt>체감온도</dt><dd>{weatherData.feelsLike ?? '—'}°C</dd></div>
+          <div><dt>능선 풍속</dt><dd>{weatherData.wind_speed ?? '—'} m/s</dd></div>
+          <div><dt>습도</dt><dd>{weatherData.humidity ?? '—'}%</dd></div>
+        </dl>}
+
+        {diffBadge && <div style={{ display: 'flex', justifyContent: 'center' }}>
+          <span style={{ display: 'inline-block', backgroundColor: diffBadge.bg, color: diffBadge.color, borderRadius: '6px', padding: '4px 10px', fontSize: '11px', fontWeight: 'bold' }}>
+            {diffBadge.text}
+          </span>
+        </div>}
+
+        <p className="weather-inline-guide" title={displayGuideMessage}>AI 예보 안내 · {displayGuideMessage}</p>
+
+      </div>
+
+      {!isMountainMode && picker}
     </div>
+    {isMountainMode && picker}
+    </>
   );
 }
 

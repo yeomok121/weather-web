@@ -177,13 +177,13 @@ function WeatherDetails({ airQuality = {}, current = {}, isMountainMode = false,
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#475569', fontWeight: 'bold' }}>
           {celestial.isNight ? (
             <>
-              <span>🌇 오늘 일몰 {sunset}</span>
+              {!isMountainMode && <span>🌇 오늘 일몰 {sunset}</span>}
               <span>🌅 내일 일출 {sunrise}</span>
             </>
           ) : (
             <>
               <span>🌅 오늘 일출 {sunrise}</span>
-              <span>🌇 오늘 일몰 {sunset}</span>
+              {!isMountainMode && <span>🌇 오늘 일몰 {sunset}</span>}
             </>
           )}
         </div>
@@ -196,11 +196,7 @@ function WeatherDetails({ airQuality = {}, current = {}, isMountainMode = false,
           </span>
         </div>
 
-        {isMountainMode && (
-          <div style={{ marginTop: '4px', backgroundColor: 'rgba(255,247,237,0.7)', border: '1px solid rgba(254,215,170,0.5)', color: '#c2410c', borderRadius: '8px', padding: '4px 8px', fontSize: '11.5px', fontWeight: 'bold', textAlign: 'center' }}>
-            🚨 권장 하산 시작: {current.safeDescentTime || '일몰 자료 확인 필요'}
-          </div>
-        )}
+
       </div>
 
       : <p className="muted">일출·일몰 자료 없음 · 날짜별 공식 정보를 확인하세요.</p>}
