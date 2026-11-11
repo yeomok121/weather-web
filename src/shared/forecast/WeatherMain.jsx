@@ -171,7 +171,7 @@ function WeatherMain({
               {mountainInfo?.course_tip || '정상 부근 기온 하강과 강풍에 대비해 방풍 의류와 스틱을 준비하세요.'}
             </div>
 
-            <h4 style={{ fontSize: '11.5px', color: '#475569', margin: '0 0 6px 0', fontWeight: 'bold' }}>⛰️ 산 리스트 · 가나다순</h4>
+            <h4 style={{ fontSize: '11.5px', color: '#475569', margin: '0 0 6px 0', fontWeight: 'bold' }}>국내 산 리스트</h4>
 
             <ul className="mountain-picker-list" aria-label="가나다순 산 리스트">
               {sortedMountains.map((m, idx) => {
