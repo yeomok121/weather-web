@@ -182,66 +182,6 @@
     border-right-color: var(--border);
   }
 }
-#root .fishing-page {
-  width: min(1120px, calc(100% - 40px));
-  margin: 30px auto 64px;
-  color: #eaf4ff;
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-}
-.fish-hero, .fish-panel {
-  border: 1px solid rgba(255,255,255,.42);
-  background: linear-gradient(135deg, rgba(244,250,255,.91), rgba(218,234,245,.83));
-  color: #172b43;
-  border-radius: 24px;
-  box-shadow: 0 18px 48px rgba(4,18,38,.18), inset 0 1px rgba(255,255,255,.85);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-}
-.fish-hero { min-height: 280px; padding: 34px 42px; display: flex; justify-content: space-between; align-items: center; overflow: hidden; position: relative; }
-.fish-hero::after { content:""; position:absolute; width:460px; height:460px; border-radius:50%; right:90px; bottom:-360px; background:rgba(41,167,187,.2); filter:blur(5px); }
-.fish-eyebrow { display:inline-flex; gap:8px; align-items:center; color:#087d84; font-weight:800; letter-spacing:.08em; font-size:12px; }
-.fish-hero h1 { font-size:clamp(28px,4vw,46px); letter-spacing:-.04em; margin:16px 0 8px; }
-.fish-hero p { color:#52677e; margin:0 0 20px; font-size:16px; }
-.fish-place { display:flex; align-items:center; gap:7px; color:#213d59; font-weight:750; }
-.fish-place span { color:#708198; font-size:13px; font-weight:500; }
-.fish-refresh { margin-top:22px; padding:11px 16px; color:white; border:0; border-radius:12px; background:linear-gradient(135deg,#0f8c91,#1470a4); font-weight:700; display:flex; gap:9px; align-items:center; cursor:pointer; box-shadow:0 7px 18px rgba(15,116,142,.22); }
-.fish-refresh:disabled { opacity:.7; cursor:wait; }
-.fish-hero-art { width:210px; height:210px; border-radius:50%; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:13px; background:radial-gradient(circle at 35% 25%,#b6f1e7,#48afc0 55%,#2676a5); color:white; box-shadow:inset -20px -25px 48px rgba(10,53,96,.2),0 20px 40px rgba(25,103,143,.2); z-index:1; }
-.fish-hero-art svg { font-size:54px; }.fish-hero-art span { font-size:10px; letter-spacing:.2em; opacity:.8; }
-.fish-data-meta { display:flex; gap:8px; align-items:center; font-size:12px; color:rgba(237,246,255,.78); padding:0 4px; }.fish-data-meta span { opacity:.72; }
-.fish-metrics { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
-.fish-panel { padding:24px; }
-.fish-panel-title { display:flex; gap:12px; align-items:center; margin-bottom:19px; color:#087f86; }
-.fish-panel-title > svg { font-size:21px; }.fish-panel-title h2 { color:#172b43; font-size:19px; margin:0; }.fish-panel-title p { color:#73859a; font-size:12px; margin:4px 0 0; }
-.fish-metric-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
-.fish-metric { display:flex; flex-direction:column; gap:7px; padding:15px; border:1px solid rgba(119,153,178,.2); background:rgba(255,255,255,.53); border-radius:15px; }.fish-metric span,.fish-tide-item span { color:#6f8298; font-size:12px; }.fish-metric strong { font-size:24px; color:#193651; }.fish-metric small { font-size:12px; margin-left:4px; color:#758aa0; }
-.fish-station { margin:12px 0 0; font-size:12px; color:#71849a; }.fish-station b { color:#264a66; }
-.fish-tide-values { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }.fish-tide-item { display:flex; flex-direction:column; gap:7px; padding:13px; background:rgba(255,255,255,.56); border-radius:13px; }.fish-tide-item b { font-size:14px; color:#24435f; overflow-wrap:anywhere; }
-.fish-data-list { display:flex; flex-direction:column; gap:8px; margin-top:14px; }.fish-data-row { display:flex; gap:7px; flex-wrap:wrap; padding:9px; background:rgba(255,255,255,.43); border-radius:12px; }.fish-data-chip { display:flex; flex-direction:column; gap:4px; min-width:70px; padding:7px 9px; background:rgba(255,255,255,.68); border-radius:9px; }.fish-data-chip small { color:#7b8da0; font-size:10px; }.fish-data-chip b { color:#24435f; font-size:12px; }.fish-data-chip.fish-raw { font-size:11px; line-height:1.6; color:#24435f; }
-.fish-forecast-row .fish-data-chip { flex:1 1 110px; }.fish-forecast-row .fish-data-chip:first-child { background:rgba(14,137,145,.12); }.fish-forecast-row .fish-data-chip:nth-child(2) { flex-grow:2; }
-.fish-empty { color:#74869b; font-size:13px; line-height:1.6; }.fish-inline-error { color:#a34c28; background:#fff3e9; padding:10px 12px; border-radius:10px; font-size:12px; }.fish-error { display:flex; align-items:center; gap:10px; background:#fff0f0; color:#9b3131; border:1px solid #facaca; padding:13px 16px; border-radius:12px; }.fish-error button { margin-left:auto; border:0; background:#9b3131; color:#fff; border-radius:8px; padding:7px 12px; cursor:pointer; }
-.fish-disclaimer { display:flex; align-items:flex-start; gap:9px; color:rgba(237,246,255,.8); font-size:12px; line-height:1.6; margin:2px 4px; }.fish-spin { animation:fish-spin 1s linear infinite; }@keyframes fish-spin { to { transform:rotate(360deg); } }
-.fish-area-picker { display:inline-flex; align-items:center; gap:9px; padding:9px 12px; border:1px solid rgba(255,255,255,.72); border-radius:12px; color:#35556d; background:rgba(255,255,255,.62); font-size:13px; font-weight:700; box-shadow:0 5px 16px rgba(32,74,105,.08); }
-.fish-area-picker select { border:0; outline:0; color:#153d56; background:transparent; font:inherit; font-weight:800; cursor:pointer; }
-.fish-place { margin-top:12px; flex-wrap:wrap; }
-.fish-outlook { border-color:rgba(106,190,181,.45); background:linear-gradient(135deg,rgba(245,253,251,.95),rgba(220,242,239,.9)); }
-.fish-outlook-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
-.fish-outlook-grid article { display:flex; flex-direction:column; gap:7px; padding:16px 18px; border:1px solid rgba(41,137,135,.18); border-radius:15px; background:rgba(255,255,255,.7); }
-.fish-outlook-grid article span { color:#557286; font-size:13px; font-weight:700; }
-.fish-outlook-grid article b { color:#123f56; font-size:25px; letter-spacing:-.03em; }
-.fish-outlook-grid article small { color:#61798a; font-size:12px; }
-.fish-outlook-note { display:flex; align-items:flex-start; gap:8px; margin:13px 0 0; color:#735a38; font-size:12px; line-height:1.55; }
-.fish-station span { display:block; margin-top:4px; color:#8291a0; font-size:11px; }
-.fish-loading { display:flex; align-items:center; gap:13px; padding:16px 19px; border:1px solid rgba(255,255,255,.38); border-radius:15px; background:rgba(255,255,255,.12); color:#f0f8ff; }
-.fish-loading > svg { flex:none; color:#91ded1; font-size:20px; }
-.fish-loading div { display:grid; gap:4px; }.fish-loading b { font-size:14px; }.fish-loading span { color:rgba(240,248,255,.72); font-size:12px; }
-.fish-source-details { padding:14px 18px; border:1px solid rgba(255,255,255,.28); border-radius:14px; color:#e7f1f8; background:rgba(255,255,255,.08); font-size:12px; }
-.fish-source-details summary { display:flex; align-items:center; gap:8px; font-weight:750; cursor:pointer; }
-.fish-source-details p { margin:10px 0 0; color:rgba(231,241,248,.76); line-height:1.7; }
-@media (max-width:720px) { #root .fishing-page { width:calc(100% - 24px); margin:16px auto 40px; gap:12px; }.fish-hero { padding:24px; min-height:0; }.fish-hero-art { width:100px; height:100px; flex-shrink:0; }.fish-hero-art svg { font-size:28px; }.fish-hero-art span { display:none; }.fish-hero p { font-size:14px; }.fish-place { flex-wrap:wrap; font-size:13px; }.fish-place span { width:100%; }.fish-metrics { grid-template-columns:1fr; gap:12px; }.fish-panel { padding:18px; }.fish-hero h1 { font-size:27px; } }
-@media (max-width:720px) { .fish-outlook-grid { grid-template-columns:1fr; }.fish-area-picker { width:100%; justify-content:flex-start; box-sizing:border-box; }.fish-area-picker select { margin-left:auto; max-width:65%; }.fish-place { display:flex; flex-direction:column; align-items:flex-start; }.fish-place span { width:auto; } }
 /* Connection recovery and the mountain planning journey. */
 .weather-status-shell { width:100%; max-width:1320px; margin:0 auto; padding:0 24px; }
 .weather-connection { display:flex; align-items:center; gap:12px; margin-top:18px; padding:15px 18px; border:1px solid #c6ddeb; background:#f0f8ff; border-radius:14px; color:#244564; }

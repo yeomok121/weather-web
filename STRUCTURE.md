@@ -19,7 +19,9 @@ src/
 │   │                    useHikingPlan(산행 선택값·직접 입력 코스), hikingPlanSummary(일정·위험도 계산),
 │   │   ├── components/  산행 계획·파티·코스 입력·일정 비교 등 산악 전용 컴포넌트
 │   │   └── lib/         hikingPlan, manualCourse, mountainWindow, solarTimes
-│   ├── fishing/         FishingPage
+│   ├── fishing/         FishingPage, FishingPage.css(전용 스타일), fishingApi(서버 요청),
+│   │   │                useFishingData(해역 목록·바다 정보 상태), fishingFormat(값 변환)
+│   │   └── components/  FishingHero, ForecastOutlook, BuoyPanel, TidePanel, MarineForecastPanel, DataRows
 │   └── admin/           AdminRoute(관리자 권한 확인), AdminPage(대시보드)
 └── shared/              여러 페이지가 함께 쓰는 공통 영역 (고치기 전에 팀에 먼저 공유)
     ├── AppContext.js    페이지에서 공통 상태를 꺼내 쓰는 useApp()

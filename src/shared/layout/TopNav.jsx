@@ -7,6 +7,8 @@ export default function TopNav({ search, isMountainMode, isFishingPage, mountain
       <div className="top-nav-inner" style={{ display: 'flex', width: '100%', maxWidth: '1320px', justifyContent: 'space-between', alignItems: 'center' }}>
         
         <div className="search-wrapper" style={{ position: 'relative', display: 'flex', width: '44%', maxWidth: '520px' }}>
+          {/* 낚시 페이지에는 지역·산 검색이 필요 없어 숨깁니다 (자리는 유지해 버튼 위치가 그대로입니다) */}
+          {!isFishingPage && <>
           <div style={{ display: 'flex', width: '100%', backgroundColor: 'rgba(255, 255, 255, 0.65)', backdropFilter: 'blur(10px)', borderRadius: '30px', padding: '6px 20px', alignItems: 'center', zIndex: 10, border: '1px solid rgba(255,255,255,0.8)', boxShadow: '0 2px 6px rgba(0,0,0,0.05)' }}>
             <input 
               type="text" 
@@ -78,6 +80,7 @@ export default function TopNav({ search, isMountainMode, isFishingPage, mountain
               )}
             </div>
           )}
+          </>}
         </div>
         
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
