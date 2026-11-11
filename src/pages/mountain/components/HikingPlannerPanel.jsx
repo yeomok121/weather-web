@@ -37,7 +37,7 @@ export default function HikingPlannerPanel({
   const [savedOpen, setSavedOpen] = useState(false);
   const token = user?.accessToken;
   const activeToken = useRef(token);
-  activeToken.current = token;
+  useEffect(() => { activeToken.current = token; }, [token]);
   const selectedRef = useRef('');
   const busyRef = useRef(false);
   const syncingRef = useRef(null);

@@ -33,12 +33,6 @@ function AdminPage({ onClose, adminPassword, adminToken, adminRole }) {
   const [editingUserId, setEditingUserId] = useState(null);
   const [editUserForm, setEditUserForm] = useState({ id: '', pw: '', name: '' });
 
-  // 초기 데이터 불러오기 (공지사항 + 회원 목록) - 둘 다 서버(MySQL)에서 가져옴
-  useEffect(() => {
-    loadNotices();
-    if (canMembers) { loadUsers(); loadAudit(); }
-  }, []);
-
   // ----------------- 공지사항 관련 함수 (MySQL 연동) -----------------
   const noticeHeaders = { 'Content-Type': 'application/json', ...(adminToken ? { Authorization: `Bearer ${adminToken}` } : { 'x-admin-password': adminPassword || '' }) };
 
@@ -278,6 +272,12 @@ function AdminPage({ onClose, adminPassword, adminToken, adminRole }) {
     (statusFilter === 'all' || (statusFilter === 'suspended') === u.suspended) &&
     (u.id.toLowerCase().includes(searchQuery.toLowerCase()) || u.name.toLowerCase().includes(searchQuery.toLowerCase()))
   );
+
+  // 초기 데이터 불러오기 (공지사항 + 회원 목록) - 둘 다 서버(MySQL)에서 가져옴
+  useEffect(() => {
+    loadNotices();
+    if (canMembers) { loadUsers(); loadAudit(); }
+  }, []);
 
   return (
     <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: '#f4f7f6', zIndex: 9999, overflowY: 'auto' }}>

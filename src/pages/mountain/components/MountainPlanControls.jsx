@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { koreanDate } from '../lib/hikingPlan';
 import HikingScheduleComparison from './HikingScheduleComparison';
 
@@ -7,7 +7,8 @@ export default function MountainPlanControls({ courses, courseIndex, onCourse, p
   departureDraft, departureError, onDepartureDraft, onDeparture, onOffset, activeOffset,
   restoredDepartureAt, offsets, getOffsetLabel, compareOpen, onCompareOpen,
   hourlyData, weatherData, durationMinutes, departureAt, mountainName, onReview }) {
-  const tomorrow = hour => onDeparture(new Date(`${koreanDate(Date.now() + 86400000)}T${String(hour).padStart(2, '0')}:00:00+09:00`).toISOString());
+  const [referenceAt] = useState(() => Date.now());
+  const tomorrow = hour => onDeparture(new Date(`${koreanDate(referenceAt + 86400000)}T${String(hour).padStart(2, '0')}:00:00+09:00`).toISOString());
   return <section id="hike-schedule" className="mountain-plan-controls" tabIndex={-1} aria-labelledby="mountain-plan-heading">
     <div className="mountain-section-heading"><h3 id="mountain-plan-heading">{mountainName || '산행'} 일정 선택</h3><span>변경 즉시 아래 결과에 반영 · 한국 시간</span></div>
     <div className="mountain-input-grid">

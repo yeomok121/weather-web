@@ -96,7 +96,8 @@ function HourlyForecast({
   const setPace = onSelectPaceType || setLocalPaceType;
   const activeDepOffset = onSelectDepartureOffset ? departureOffsetHours : localDepOffset;
   const setDepOffset = onSelectDepartureOffset || setLocalDepOffset;
-  const departureReferenceTime = new Date();
+  const [departureReferenceAt] = useState(() => Date.now());
+  const departureReferenceTime = new Date(departureAt || departureReferenceAt);
 
   const getDepartureOptionLabel = option => {
     const reference = departureAt && !restoredDepartureAt
