@@ -8,14 +8,14 @@ const WeatherBackground = ({ theme }) => {
       {isRain && (
         <div className="rain-container">
           {[...Array(20)].map((_, i) => (
-            <div key={i} className="rain-drop" style={{ left: `${Math.random() * 100}%`, animationDuration: `${0.5 + Math.random() * 0.5}s`, animationDelay: `${Math.random()}s` }}></div>
+            <div key={i} className="rain-drop" style={{ left: `${((i * 47 + 13) % 100)}%`, animationDuration: `${0.5 + ((i * 7 % 10) / 20)}s`, animationDelay: `${((i * 7 % 10) / 10)}s` }}></div>
           ))}
         </div>
       )}
       {isSnow && (
         <div className="snow-container">
           {[...Array(30)].map((_, i) => (
-            <div key={i} className="snow-flake" style={{ left: `${Math.random() * 100}%`, animationDuration: `${4 + Math.random() * 5}s`, animationDelay: `${Math.random() * 3}s` }}></div>
+            <div key={i} className="snow-flake" style={{ left: `${((i * 47 + 13) % 100)}%`, animationDuration: `${4 + ((i * 7 % 10) / 2)}s`, animationDelay: `${((i * 7 % 10) * 0.3)}s` }}></div>
           ))}
         </div>
       )}

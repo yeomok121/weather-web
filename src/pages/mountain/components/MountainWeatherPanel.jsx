@@ -17,7 +17,8 @@ export default function MountainWeatherPanel({ mountainInfo, weatherData, hourly
   }, [rows, mountainInfo?.name]);
   useEffect(() => { setChecked({}); }, [mountainInfo?.name]);
   const dustMatch = (weatherData?.dust || '').match(/\((\d+(?:\.\d+)?)\)/);
-  const summary = useMemo(() => summarizeMountainWindow({hourlyData: rows, start, durationHours: Number(duration), pm25: dustMatch ? Number(dustMatch[1]) : null}), [rows, start, duration, dustMatch?.[1]]);
+  const pm25 = dustMatch ? Number(dustMatch[1]) : null;
+  const summary = useMemo(() => summarizeMountainWindow({hourlyData: rows, start, durationHours: Number(duration), pm25}), [rows, start, duration, pm25]);
   const sun = start ? solarTimes(start, mountainInfo?.lat, mountainInfo?.lon) : null;
   const crossesDay = start && summary.endMs && koreanDate(new Date(start)) !== koreanDate(new Date(summary.endMs));
   const gear = ['등산화와 물', '비상식량', '휴대전화와 보조배터리', '헤드랜턴'];

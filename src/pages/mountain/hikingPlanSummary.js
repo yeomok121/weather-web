@@ -1,6 +1,6 @@
 // 산악 페이지: 선택한 코스·속도·출발 시각으로 산행 일정과 위험도를 계산합니다.
 // (기존 App.jsx의 hikingPlanSummary useMemo 본문을 그대로 옮긴 순수 함수)
-import { PACE_OPTIONS } from '../../shared/forecast/HourlyForecast';
+import { PACE_OPTIONS } from './paceOptions.js';
 import { isWeatherNumber } from '../../shared/lib/forecastCache';
 import { assessHikingForecastWindow, getHourlyForecastIndex } from './components/mountainAssessment';
 import { koreanDate, planDepartureAt } from './lib/hikingPlan';
@@ -17,11 +17,6 @@ export function buildHikingPlanSummary({
   const totalMins = Math.max(20, Math.round((selectedCourse.time * paceObj.multiplier) / 10) * 10);
   const ascentMins = Math.max(15, Math.round((totalMins * 0.55) / 5) * 5);
 
-  const parseTime = (str, fallback = 1080) => {
-    if (!str || !str.includes(':')) return fallback;
-    const [h, m] = str.split(':').map(Number);
-    return (Number.isFinite(h) ? h : 18) * 60 + (Number.isFinite(m) ? m : 0);
-  };
   const formatTime = (mins) => {
     const normalized = ((mins % 1440) + 1440) % 1440;
     return `${String(Math.floor(normalized / 60)).padStart(2, '0')}:${String(normalized % 60).padStart(2, '0')}`;
@@ -37,21 +32,16 @@ export function buildHikingPlanSummary({
 
   const summitArrivalMins = depMins + ascentMins;
   const descentFinishMins = depMins + totalMins;
+  const descentStartMins = summitArrivalMins;
   const isNextDayPlan = !activeWeather.isFuture && Math.floor(depMins / 1440) > 0;
   const solar = solarTimes(departureAt, mountainInfo?.lat, mountainInfo?.lon);
   const sameFinishDate = koreanDate(new Date(departureDate.getTime() + totalMins * 60000)) === koreanDate(departureDate);
-
-  const safeDescentMins = parseTime(activeWeather.safeDescentTime || '15:30', 930);
-  const sunsetMins = parseTime(activeWeather.sunset || '18:00', 1080);
-  // safeDescentTime은 '하산 완료'가 아니라 '하산을 시작하도록 권장하는 시각'입니다.
-  const descentStartMins = summitArrivalMins;
-  const recommendedDepDeadlineMins = safeDescentMins - ascentMins;
 
   const temp = Number(activeWeather.temp || 0);
   const wind = isWeatherNumber(activeWeather.wind_speed) ? Number(activeWeather.wind_speed) : null;
   const cond = activeWeather.condition || '';
   const pm25Match = (activeWeather.dust || '').match(/\d+/);
-  const pm25 = pm25Match ? parseInt(pm25Match[0], 10) : 15;
+  const pm25 = pm25Match ? parseInt(pm25Match[0], 10) : null;
   const scheduleAssessment = assessHikingForecastWindow({
     hourlyData,
     now,

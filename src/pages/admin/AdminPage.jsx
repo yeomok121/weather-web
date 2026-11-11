@@ -47,7 +47,7 @@ function AdminPage({ onClose, adminPassword, adminToken, adminRole }) {
       const res = await fetch(`${API}/api/notices`);
       if (!res.ok) throw new Error('failed');
       setNotices(await res.json());
-    } catch (e) {
+    } catch {
       setNoticeMessage('공지사항을 불러오지 못했습니다. 다시 확인해 주세요.');
     }
   };
@@ -79,7 +79,7 @@ function AdminPage({ onClose, adminPassword, adminToken, adminRole }) {
       setForm(newNotice());
       await loadNotices();
       setNoticeMessage(wasEditing ? '공지사항이 수정되었습니다.' : '새 공지사항이 등록되었습니다.');
-    } catch (e) {
+    } catch {
       setNoticeMessage('서버 응답을 확인하지 못했습니다. 목록에서 저장 여부를 확인해 주세요.');
     } finally { setNoticeBusy(false); }
   };
@@ -94,7 +94,7 @@ function AdminPage({ onClose, adminPassword, adminToken, adminRole }) {
         return;
       }
       await loadNotices();
-    } catch (e) {
+    } catch {
       alert('서버에 연결할 수 없습니다.');
     }
   };
@@ -137,7 +137,7 @@ function AdminPage({ onClose, adminPassword, adminToken, adminRole }) {
         return;
       }
       setUsers(data.map(u => ({ dbId: u.id, id: u.username, name: u.name, createdAt: u.created_at, suspended: !!u.suspended, role: u.role || 'member' })));
-    } catch (e) {
+    } catch {
       alert('서버에 연결할 수 없습니다.');
     }
   };
@@ -192,7 +192,7 @@ function AdminPage({ onClose, adminPassword, adminToken, adminRole }) {
       setNewUserForm({ id: '', pw: '', name: '' });
       await loadUsers(); await loadAudit();
       alert(`'${name}(${id})' 회원이 추가되었습니다.`);
-    } catch (e) {
+    } catch {
       alert('서버에 연결할 수 없습니다.');
     }
   };
@@ -245,7 +245,7 @@ function AdminPage({ onClose, adminPassword, adminToken, adminRole }) {
       setEditingUserId(null);
       await loadUsers(); await loadAudit();
       alert('회원 정보가 수정되었습니다.');
-    } catch (e) {
+    } catch {
       alert('서버에 연결할 수 없습니다.');
     }
   };
@@ -268,7 +268,7 @@ function AdminPage({ onClose, adminPassword, adminToken, adminRole }) {
       }
       localStorage.removeItem(`favorites_${targetId}`);
       await loadUsers(); await loadAudit();
-    } catch (e) {
+    } catch {
       alert('서버에 연결할 수 없습니다.');
     }
   };

@@ -7,7 +7,7 @@
 //
 // 페이지 안의 기능은 각 pages/ 폴더에서 작업하고, 여러 페이지가 같이 쓰는 기능은 shared/에 있습니다.
 // 새 페이지를 만들면 아래 <Routes>에 <Route> 한 줄을 추가하세요.
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react';
 import { Navigate, Route, Routes, matchPath, useLocation, useNavigate } from 'react-router-dom';
 import { FiSettings } from 'react-icons/fi';
 import './App.css';
@@ -27,15 +27,15 @@ import FindPasswordModal from './shared/auth/FindPasswordModal';
 import { useForecast } from './shared/forecast/useForecast';
 import { buildActiveWeather } from './shared/forecast/activeWeather';
 import WeatherConnectionStatus from './shared/forecast/WeatherConnectionStatus';
-import WeatherPage from './pages/weather/WeatherPage';
+const WeatherPage = lazy(() => import('./pages/weather/WeatherPage'));
 import AddRegionModal from './pages/weather/AddRegionModal';
-import MountainPage from './pages/mountain/MountainPage';
+const MountainPage = lazy(() => import('./pages/mountain/MountainPage'));
 import { useMountainCatalog } from './pages/mountain/useMountainCatalog';
 import { useHikingPlan, useManualCourse } from './pages/mountain/useHikingPlan';
 import { buildHikingPlanSummary } from './pages/mountain/hikingPlanSummary';
 import { parseManualCourse } from './pages/mountain/lib/manualCourse.js';
-import FishingPage from './pages/fishing/FishingPage';
-import AdminRoute from './pages/admin/AdminRoute';
+const FishingPage = lazy(() => import('./pages/fishing/FishingPage'));
+const AdminRoute = lazy(() => import('./pages/admin/AdminRoute'));
 
 const DEFAULT_LOCATION = { name: '부천시', lat: 37.5034, lon: 126.7660 };
 const DEFAULT_MOUNTAIN = '북한산';
@@ -228,7 +228,7 @@ function App() {
     isMountainMode, activeWeather, mountainInfo, effectiveMountainInfo, hourlyData: forecast.hourlyData,
     selectedCourseIdx: plan.selectedCourseIdx, paceType: plan.paceType, departureOffsetHours: plan.departureOffsetHours,
     planReferenceAt: plan.planReferenceAt, restoredDepartureAt: plan.restoredDepartureAt, customGearList: plan.customGearList,
-  }), [isMountainMode, mountainInfo, manualCourse?.name, plan.selectedCourseIdx, plan.paceType, plan.departureOffsetHours, activeWeather, forecast.hourlyData, plan.customGearList, plan.planReferenceAt, plan.restoredDepartureAt]);
+  }), [isMountainMode, mountainInfo, effectiveMountainInfo, plan.selectedCourseIdx, plan.paceType, plan.departureOffsetHours, activeWeather, forecast.hourlyData, plan.customGearList, plan.planReferenceAt, plan.restoredDepartureAt]);
 
   // 페이지에서 useApp()으로 꺼내 쓰는 값들
   const app = {
@@ -257,6 +257,7 @@ function App() {
 
         {routeMode !== null && <div className="weather-status-shell"><WeatherConnectionStatus state={forecast.connectionState} hasData={forecast.weatherData.hasData} fetchedAt={forecast.weatherFetchedAt} onRetry={forecast.retryForecast} /></div>}
 
+        <Suspense fallback={<div role="status" className="weather-status-shell">화면을 불러오는 중입니다...</div>}>
         <Routes>
           <Route path="/" element={<WeatherPage />} />
           <Route path="/mountain" element={<MountainPage />} />
@@ -265,6 +266,7 @@ function App() {
           <Route path="/admin" element={<AdminRoute loggedInUser={loggedInUser} onExit={exitAdmin} />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        </Suspense>
 
         <footer className="app-footer glass-card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 40px', color: '#1e293b', fontSize: '12px', borderRadius: '0', border: 'none', borderTop: '1px solid rgba(255,255,255,0.4)' }}>
           <div>

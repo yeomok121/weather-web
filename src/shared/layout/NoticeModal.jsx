@@ -16,7 +16,7 @@ function NoticeModal({ onClose }) {
           setNotices(data);
           setStatus('ok');
         }
-      } catch (e) {
+      } catch {
         if (!cancelled) setStatus('error');
       }
     };

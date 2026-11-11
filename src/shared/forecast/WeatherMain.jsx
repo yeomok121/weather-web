@@ -74,7 +74,6 @@ function WeatherMain({
     const t = Number(weatherData.temp || 0);
     const w = Number(weatherData.wind_speed || 0);
     const pop = Number(weatherData.targetPop || 0);
-    const rName = weatherData.region || '산';
 
     if (isMountainMode) {
       if (pop >= 60) return `🌧️ 강수확률 ${pop}%! 미끄럼 주의 및 우천 장비 필수.`;

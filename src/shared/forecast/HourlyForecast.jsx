@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { FiChevronLeft, FiChevronRight, FiShare2, FiPlus, FiX, FiRotateCcw, FiMapPin, FiEye, FiInfo } from 'react-icons/fi';
 import { LineChart, Line, YAxis, ResponsiveContainer } from 'recharts';
+import { PACE_OPTIONS } from '../../pages/mountain/paceOptions.js';
 import { getEmojiIcon } from './WeeklyForecast';
 import { assessMountainWeather, estimateSummitView, getHourlyForecastIndex } from '../../pages/mountain/components/mountainAssessment';
 import HikingPlannerPanel from '../../pages/mountain/components/HikingPlannerPanel';
@@ -12,12 +13,6 @@ import { readHikingDraft, writeHikingDraft, koreanDate } from '../../pages/mount
 const ITEMS_TO_SHOW = 6;
 const EMPTY_HOURLY = [];
 const departureInputValue = value => value && Number.isFinite(Date.parse(value)) ? new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date(value)).replace(' ', 'T') : '';
-
-export const PACE_OPTIONS = [
-  { key: 'slow', label: '🐢 초보(여유)', multiplier: 1.3 },
-  { key: 'normal', label: '🥾 보통(표준)', multiplier: 1.0 },
-  { key: 'fast', label: '⚡ 숙련(빠름)', multiplier: 0.85 },
-];
 
 const DEPARTURE_OFFSETS = Array.from({ length: 25 }, (_, value) => ({ value, label: value === 0 ? '지금 출발' : `+${value}시간 뒤` }));
 
@@ -415,7 +410,6 @@ function HourlyForecast({
       }
     }
 
-    const isNextDayPlan = !isFuture && Math.floor(depMins / 1440) > 0;
     if (!hikingPlanSummary?.solar) {
       return {
         status: 'planning',
@@ -537,7 +531,7 @@ function HourlyForecast({
     try {
       await navigator.clipboard.writeText(shareText);
       if (onShowToast) onShowToast('📋 정상 도착 기상·안전 판정·체크리스트가 클립보드에 복사되었습니다!');
-    } catch (err) {
+    } catch {
       if (onShowToast) onShowToast('복사에 실패했습니다. 브라우저 권한을 확인해주세요.');
     }
   };
