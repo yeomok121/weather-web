@@ -10,6 +10,7 @@ function WeatherMain({
   const [hoveredIndex, setHoveredIndex] = useState(null);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const dropdownRef = useRef(null);
+  const sortedMountains = [...mountainsList].sort((a, b) => a.name.localeCompare(b.name, 'ko'));
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -164,41 +165,19 @@ function WeatherMain({
       {/* 💡 우측 명산 목록 패딩 및 아이템 크기 최적화 */}
       <div id="mountain-picker" className="weather-main-right" style={{ flex: 1, padding: '16px', borderLeft: '1px solid rgba(255,255,255,0.4)', color: '#333', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', backgroundColor: 'rgba(255,255,255,0.15)', minWidth: 0 }}>
         {isMountainMode ? (
-          <div style={{ minWidth: 0 }}>
+          <div className="mountain-picker-content">
             <h4 style={{ fontSize: '11.5px', color: '#166534', fontWeight: 'bold', margin: '0 0 6px 0' }}>📌 핵심 산행 팁</h4>
             <div style={{ backgroundColor: 'rgba(255,255,255,0.6)', borderRadius: '6px', padding: '8px 10px', fontSize: '11px', color: '#1e293b', lineHeight: '1.45', margin: '0 0 12px 0', wordBreak: 'keep-all' }}>
               {mountainInfo?.course_tip || '정상 부근 기온 하강과 강풍에 대비해 방풍 의류와 스틱을 준비하세요.'}
             </div>
 
-            <h4 style={{ fontSize: '11.5px', color: '#475569', margin: '0 0 6px 0', fontWeight: 'bold' }}>⛰️ {mountainsList.length}개 산 빠른 선택</h4>
+            <h4 style={{ fontSize: '11.5px', color: '#475569', margin: '0 0 6px 0', fontWeight: 'bold' }}>⛰️ 산 리스트 · 가나다순</h4>
 
-            <div className="mobile-mtn-pills no-scrollbar" style={{ gap: '6px', overflowX: 'auto', paddingBottom: '4px', WebkitOverflowScrolling: 'touch' }}>
-              {mountainsList.map((m, idx) => {
+            <ul className="mountain-picker-list" aria-label="가나다순 산 리스트">
+              {sortedMountains.map((m, idx) => {
                 const isSelected = weatherData.region === m.name;
                 return (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => onSelectMountain && onSelectMountain(m.name)}
-                    style={{
-                      flexShrink: 0, padding: '6px 10px', borderRadius: '6px', fontSize: '11px', cursor: 'pointer',
-                      border: isSelected ? '1px solid #16a34a' : '1px solid rgba(0,0,0,0.1)',
-                      backgroundColor: isSelected ? '#16a34a' : 'rgba(255,255,255,0.75)',
-                      color: isSelected ? '#ffffff' : '#334155',
-                      fontWeight: isSelected ? 'bold' : '600',
-                    }}
-                  >
-                    {m.name} <span style={{ fontSize: '10px', opacity: 0.85 }}>{m.elevation}m</span>
-                  </button>
-                );
-              })}
-            </div>
-
-            <ul className="desktop-mtn-list no-scrollbar" style={{ listStyle: 'none', padding: '0', margin: '0', fontSize: '11.5px', maxHeight: '140px', overflowY: 'auto' }}>
-              {mountainsList.map((m, idx) => {
-                const isSelected = weatherData.region === m.name;
-                return (
-                  <li key={idx} role="button" tabIndex={0} onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onSelectMountain?.(m.name); } }} onClick={() => onSelectMountain && onSelectMountain(m.name)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 8px', cursor: 'pointer', borderRadius: '6px', backgroundColor: isSelected ? 'rgba(22,163,74,0.1)' : 'transparent', color: isSelected ? '#16a34a' : '#475569', fontWeight: isSelected ? 'bold' : '500', marginBottom: '2px' }}>
+                  <li key={m.name} role="button" aria-pressed={isSelected} tabIndex={0} onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onSelectMountain?.(m.name); } }} onClick={() => onSelectMountain && onSelectMountain(m.name)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 8px', cursor: 'pointer', borderRadius: '6px', backgroundColor: isSelected ? 'rgba(22,163,74,0.1)' : 'transparent', color: isSelected ? '#16a34a' : '#475569', fontWeight: isSelected ? 'bold' : '500', marginBottom: '2px' }}>
                     <span>{idx + 1}. {m.name}</span><span style={{ fontSize: '10.5px', color: isSelected ? '#16a34a' : '#94a3b8' }}>{m.elevation}m</span>
                   </li>
                 );
