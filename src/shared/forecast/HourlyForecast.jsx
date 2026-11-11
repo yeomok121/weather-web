@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useEffectEvent, useRef } from 'react';
-import { FiChevronLeft, FiChevronRight, FiShare2, FiPlus, FiX, FiRotateCcw, FiMapPin, FiEye, FiInfo } from 'react-icons/fi';
+import { FiChevronLeft, FiChevronRight, FiShare2, FiPlus, FiX, FiRotateCcw, FiMapPin, FiInfo } from 'react-icons/fi';
 import { LineChart, Line, YAxis, ResponsiveContainer } from 'recharts';
 import { PACE_OPTIONS } from '../../pages/mountain/paceOptions.js';
 import { getEmojiIcon } from './weatherIcons';
@@ -596,7 +596,6 @@ function HourlyForecast({
         @media (max-width: 640px) {
           .mtn-score-altitude-box { flex-direction: column !important; }
           .mtn-left-top-row { flex-direction: column !important; }
-          .mtn-dual-score-row { flex-direction: row !important; }
         }
       `}</style>
 
@@ -653,35 +652,16 @@ function HourlyForecast({
 
             <div className="mtn-score-altitude-box" style={{ flex: '1 1 250px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
 
-              <div className="mtn-dual-score-row" style={{ display: 'flex', gap: '8px' }}>
-                <div style={{ flex: 1, backgroundColor: 'rgba(240,253,244,0.75)', borderRadius: '12px', padding: '10px 8px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(22,163,74,0.2)' }}>
-                  <span style={{ fontSize: '12px', color: '#166534', fontWeight: '800', marginBottom: '4px', whiteSpace: 'nowrap' }}>🌤️ 기상 조건 점수</span>
-                  <div style={{ position: 'relative', width: '44px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <svg viewBox="0 0 36 36" style={{ width: '100%', height: '100%', transform: 'rotate(-90deg)' }}>
-                      <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="rgba(22,163,74,0.2)" strokeWidth="4" />
-                      <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke={weatherAssessment.color} strokeWidth="4" strokeDasharray={`${weatherScore ?? 0}, 100`} />
-                    </svg>
-                    <span style={{ position: 'absolute', fontSize: '14px', fontWeight: '800', color: '#064e3b' }}>{weatherScore ?? '—'}</span>
-                  </div>
-                  <span style={{ fontSize: '12px', color: '#0f172a', marginTop: '6px', fontWeight: 'bold', whiteSpace: 'nowrap' }}>
-                    {weatherAssessment.status}
-                  </span>
+              <div className="mountain-score-stack">
+                <div className="mountain-score-card">
+                  <span className="mountain-score-card__label">기상 조건 점수 · 참고</span>
+                  <strong className="mountain-score-card__value">{weatherScore ?? '—'}</strong>
+                  <span className="mountain-score-card__status">{weatherAssessment.status}</span>
                 </div>
-
-                <div style={{ flex: 1.25, backgroundColor: 'rgba(240,249,255,0.8)', borderRadius: '12px', padding: '10px 8px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(2,132,199,0.2)' }}>
-                  <span style={{ fontSize: '10.5px', color: '#0369a1', fontWeight: '800', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }}>
-                    <FiEye size={12} /> 조망 환경 참고 점수
-                  </span>
-                  <div style={{ position: 'relative', width: '44px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <svg viewBox="0 0 36 36" style={{ width: '100%', height: '100%', transform: 'rotate(-90deg)' }}>
-                      <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="rgba(2,132,199,0.2)" strokeWidth="4" />
-                      <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke={viewEstimate.gradeColor} strokeWidth="4" strokeDasharray={`${viewEstimate.score ?? 0}, 100`} />
-                    </svg>
-                    <span style={{ position: 'absolute', fontSize: '14px', fontWeight: '800', color: '#0c4a6e' }}>{viewEstimate.score ?? '—'}</span>
-                  </div>
-                  <span style={{ fontSize: '12px', color: viewEstimate.gradeColor, marginTop: '6px', fontWeight: '800', whiteSpace: 'nowrap' }}>
-                    {viewEstimate.gradeText}
-                  </span>
+                <div className="mountain-score-card">
+                  <span className="mountain-score-card__label">조망 환경 참고 점수</span>
+                  <strong className="mountain-score-card__value">{viewEstimate.score ?? '—'}</strong>
+                  <span className="mountain-score-card__status">{viewEstimate.gradeText}</span>
                 </div>
               </div>
 
