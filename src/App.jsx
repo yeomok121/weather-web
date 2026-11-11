@@ -66,7 +66,6 @@ export const MOUNTAINS_LIST = [
   { name: '마이산', elevation: 686, peak: '암마이봉', region: '전북 진안', terrain: '역암 바위', difficulty: '중하', cctv_url: 'https://www.youtube.com/results?search_query=%EB%A7%88%EC%9D%B4%EC%82%B0+%EC%8B%A4%EC%8B%9C%EA%B0%84', course_tip: '암마이봉 구간은 겨울철 결빙 시 통제될 수 있으니 노면 상태를 꼭 확인하세요.', courses: [{ name: '탑사~암마이봉 코스', distance: '5km', time: 150, diff: '중하', trailhead: '마이산 남부주차장' }] }
 ];
 
-const MOUNTAINS = MOUNTAINS_LIST.map(m => m.name);
 
 const getTodayDateString = () => {
   const now = new Date();
@@ -101,6 +100,20 @@ const WeatherBackground = ({ theme }) => {
 };
 
 function App() {
+  const [mountainsList, setMountainsList] = useState(MOUNTAINS_LIST);
+  const [mountainCatalogState, setMountainCatalogState] = useState('loading');
+  useEffect(() => {
+    const controller = new AbortController();
+    requestJson('/api/mountain/list', { signal: controller.signal, timeoutMs: 90000 }).then(rows => {
+      if (!Array.isArray(rows)) throw new Error('목록을 확인할 수 없습니다');
+      const known = new Map(MOUNTAINS_LIST.map(item => [item.name, item]));
+      const extra = rows.filter(row => row?.name && !known.has(row.name) && Number.isFinite(Number(row.elevation)))
+        .slice(0, 30).map(row => ({ name: row.name, elevation: Number(row.elevation), region: row.region, peak: row.peak || '', course_available: false }));
+      setMountainsList([...MOUNTAINS_LIST, ...extra]);
+      setMountainCatalogState(extra.length >= 30 ? 'ready' : 'limited');
+    }).catch(error => { if (!controller.signal.aborted) setMountainCatalogState('limited'); });
+    return () => controller.abort();
+  }, []);
   const [searchInput, setSearchInput] = useState('');
   const [recentSearches, setRecentSearches] = useState([]);
   const [autoCompleteList, setAutoCompleteList] = useState([]);
@@ -240,7 +253,7 @@ function App() {
         if (cancelled) return;
         const visible = items.length ? items : defaultFav;
         setFavorites(visible);
-        if (initialMountainRef.current && MOUNTAINS_LIST.some(item => item.name === initialMountainRef.current)) {
+        if (initialMountainRef.current && mountainsList.some(item => item.name === initialMountainRef.current)) {
           setIsMountainMode(true);
           loadMountainWeather(initialMountainRef.current, { initial: true });
         } else if (!isMountainMode) loadWeather(visible[0].lat, visible[0].lon, visible[0].name);
@@ -292,7 +305,7 @@ function App() {
       const guestFavorites = getStoredList('guestFavorites');
       setFavorites(guestFavorites);
       const initialLocation = guestFavorites[0] || defaultFav[0];
-      if (initialMountainRef.current && MOUNTAINS_LIST.some(item => item.name === initialMountainRef.current)) {
+      if (initialMountainRef.current && mountainsList.some(item => item.name === initialMountainRef.current)) {
         setIsMountainMode(true); loadMountainWeather(initialMountainRef.current, { initial: true });
       } else if (!isMountainMode) loadWeather(initialLocation.lat, initialLocation.lon, initialLocation.name);
     }
@@ -369,10 +382,10 @@ function App() {
     const preservePlan = displayedForecastKeyRef.current === key;
     const cached = readForecastCache(key);
     const localMountain = request.kind === 'mountain'
-      ? MOUNTAINS_LIST.find(item => item.name === request.mountainName) : null;
+      ? mountainsList.find(item => item.name === request.mountainName) : null;
     const label = request.kind === 'mountain' ? request.mountainName : (request.regionName || '현재 위치');
     const apply = (data, fetchedAt) => {
-      const info = localMountain ? { ...localMountain, ...data.mountain_info, courses: localMountain.courses } : null;
+      const info = data.mountain_info ? { ...localMountain, ...data.mountain_info, courses: localMountain?.courses } : localMountain;
       updateWeatherState(data, request.kind === 'mountain' ? data.mountain_name : request.regionName,
         data.elevation || 0, info, { fetchedAt, preservePlan });
       displayedForecastKeyRef.current = key;
@@ -455,7 +468,7 @@ function App() {
     const isUpcoming = Number.isFinite(parsedDeparture) && parsedDeparture >= Date.now();
     const validDeparture = isUpcoming;
     setSelectedDateIdx(0);
-    const mountain = MOUNTAINS_LIST.find(item => item.name === plan.mountain_name);
+    const mountain = mountainsList.find(item => item.name === plan.mountain_name);
     const namedCourseIndex = mountain?.courses.findIndex(course => course.name === plan.course_name) ?? -1;
     setSelectedCourseIdx(namedCourseIndex >= 0 ? namedCourseIndex : Number(plan.course_index) || 0);
     setPaceType(plan.pace || 'normal');
@@ -511,7 +524,7 @@ function App() {
     setSearchInput(value);
     if (value.trim() === '') setAutoCompleteList([]);
     else {
-      const sourceList = isMountainMode ? MOUNTAINS : KOREA_REGIONS;
+      const sourceList = isMountainMode ? mountainsList.map(item => item.name) : KOREA_REGIONS;
       setAutoCompleteList(sourceList.filter(region => region.toLowerCase().includes(value.toLowerCase())));
     }
   };
@@ -546,7 +559,7 @@ function App() {
   };
 
   const handleCurrentLocation = () => {
-    if (isMountainMode) { showToast('산악 모드에서는 우측 20대 명산 목록을 선택해 주세요.'); return; }
+    if (isMountainMode) { showToast('산악 모드에서는 산 목록을 선택해 주세요.'); return; }
     if (!navigator.geolocation) { showToast('브라우저에서 위치 서비스를 지원하지 않습니다.'); return; }
     setIsAiLoading(true);
     navigator.geolocation.getCurrentPosition(
@@ -615,7 +628,7 @@ function App() {
   }, [weatherData, weeklyData, selectedDateIdx, isMountainMode]);
 
   const hikingPlanSummary = useMemo(() => {
-    if (!isMountainMode || !activeWeather.hasData) return null;
+    if (!isMountainMode || !activeWeather.hasData || mountainInfo?.course_available === false) return null;
     const courses = mountainInfo?.courses || [{ name: '기본 탐방로', distance: '5km', time: 180, diff: '중' }];
     const selectedCourse = courses[selectedCourseIdx] || courses[0];
     const paceObj = PACE_OPTIONS.find(p => p.key === paceType) || PACE_OPTIONS[1];
@@ -856,7 +869,7 @@ function App() {
             <div style={{ display: 'flex', width: '100%', backgroundColor: 'rgba(255, 255, 255, 0.65)', backdropFilter: 'blur(10px)', borderRadius: '30px', padding: '6px 20px', alignItems: 'center', zIndex: 10, border: '1px solid rgba(255,255,255,0.8)', boxShadow: '0 2px 6px rgba(0,0,0,0.05)' }}>
               <input 
                 type="text" 
-                placeholder={isMountainMode ? "20대 명산 검색 (예: 북한산...)" : "검색할 지역을 입력하세요"} 
+                placeholder={isMountainMode ? "산 이름 검색 (예: 북한산...)" : "검색할 지역을 입력하세요"}
                 value={searchInput} 
                 onChange={handleInputChange} 
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()} 
@@ -892,10 +905,10 @@ function App() {
                 ) : searchInput.trim() === '' && isMountainMode ? (
                   <>
                     <div style={{ marginBottom: '8px', paddingBottom: '8px', borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
-                      <h4 style={{ margin: 0, fontSize: '12px', color: '#166534', display: 'flex', alignItems: 'center', gap: '5px' }}>⛰️ 20대 명산 목록</h4>
+                      <h4 style={{ margin: 0, fontSize: '12px', color: '#166534', display: 'flex', alignItems: 'center', gap: '5px' }}>⛰️ 산 목록</h4>
                     </div>
                     <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-                      {MOUNTAINS_LIST.map((m, idx) => (
+                      {mountainsList.map((m, idx) => (
                         <li key={idx} onMouseDown={(e) => { e.preventDefault(); loadMountainWeather(m.name); setIsSearchFocused(false); }} style={{ padding: '8px 4px', cursor: 'pointer', color: '#333', fontSize: '13px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(0,0,0,0.03)' }}>
                           <span><strong>{m.name}</strong> <span style={{ fontSize: '11px', color: '#64748b' }}>({m.peak})</span></span>
                           <span style={{ fontSize: '11px', color: '#15803d', fontWeight: 'bold' }}>해발 {m.elevation}m</span>
@@ -961,10 +974,12 @@ function App() {
             isMountainMode={isMountainMode}
             onToggleMountainMode={handleToggleMountainMode}
             mountainInfo={mountainInfo}
-            mountainsList={MOUNTAINS_LIST}
+            mountainsList={mountainsList}
             onSelectMountain={(mName) => loadMountainWeather(mName)}
           />
           
+          {isMountainMode && mountainInfo?.course_available === false && <div className="glass-card weather-empty" role="status"><strong>산 기상 정보 제공 중</strong><p>위치와 고도는 한국등산·트레킹지원센터 자료이며 예보는 해당 지점의 참고 추정값입니다. 이 산의 코스별 거리·소요시간은 준비 중입니다. 출발 시간별 산행 점수, 하산 예상과 계획 저장은 확인된 코스가 추가된 뒤 제공됩니다. 공식 안내에서 탐방로와 통제 상태를 확인해 주세요.</p></div>}
+          {isMountainMode && mountainCatalogState === 'limited' && <div className="glass-card weather-empty" role="status">추가 산 목록이 일부만 제공되고 있습니다. 잠시 후 새로고침해 주세요.</div>}
           <HourlyForecast 
             hourlyData={hourlyData} 
             isLoading={isAiLoading && !weatherData.hasData}
@@ -974,7 +989,7 @@ function App() {
               if (request.kind === 'mountain') loadMountainWeather(request.mountainName);
               else loadWeather(request.lat, request.lon, request.regionName);
             }}
-            isMountainMode={isMountainMode}
+            isMountainMode={isMountainMode && mountainInfo?.course_available !== false}
             mountainInfo={mountainInfo}
             weatherData={activeWeather}
             onShowToast={showToast}

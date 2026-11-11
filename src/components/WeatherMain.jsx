@@ -186,7 +186,7 @@ function WeatherMain({
               {mountainInfo?.course_tip || '정상 부근 기온 하강과 강풍에 대비해 방풍 의류와 스틱을 준비하세요.'}
             </div>
 
-            <h4 style={{ fontSize: '11.5px', color: '#475569', margin: '0 0 6px 0', fontWeight: 'bold' }}>⛰️ 20대 명산 빠른 선택</h4>
+            <h4 style={{ fontSize: '11.5px', color: '#475569', margin: '0 0 6px 0', fontWeight: 'bold' }}>⛰️ {mountainsList.length}개 산 빠른 선택</h4>
             
             <div className="mobile-mtn-pills no-scrollbar" style={{ gap: '6px', overflowX: 'auto', paddingBottom: '4px', WebkitOverflowScrolling: 'touch' }}>
               {mountainsList.map((m, idx) => {
