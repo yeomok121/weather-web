@@ -16,6 +16,7 @@ import { FiSearch, FiBell, FiSettings, FiClock, FiCheckCircle } from 'react-icon
 import { API } from './config';
 import { assessHikingForecastWindow, getHourlyForecastIndex } from './components/mountainAssessment';
 import { koreanDate, planDepartureAt } from './lib/hikingPlan';
+import { solarTimes } from './lib/solarTimes';
 import { readStoredJson, writeStoredJson } from './lib/browserStorage';
 import WeatherConnectionStatus from './components/WeatherConnectionStatus';
 import { requestJson, requestForecastJson } from './lib/apiClient';
@@ -641,6 +642,8 @@ function App() {
     const summitArrivalMins = depMins + ascentMins;
     const descentFinishMins = depMins + totalMins;
     const isNextDayPlan = !activeWeather.isFuture && Math.floor(depMins / 1440) > 0;
+    const solar = solarTimes(departureAt, mountainInfo?.lat, mountainInfo?.lon);
+    const sameFinishDate = koreanDate(new Date(departureDate.getTime() + totalMins * 60000)) === koreanDate(departureDate);
 
     const safeDescentMins = parseTime(activeWeather.safeDescentTime || '15:30', 930);
     const sunsetMins = parseTime(activeWeather.sunset || '18:00', 1080);
@@ -687,16 +690,16 @@ function App() {
 
     let timeSafetyStatus = '시간 여유 있음';
     let timeSafetyColor = '#166534';
-    if (activeWeather.isFuture || isNextDayPlan || !activeWeather.sunset || !activeWeather.sunrise || !activeWeather.safeDescentTime) {
+    if (!solar || !sameFinishDate) {
       timeSafetyStatus = '날짜별 일출·일몰 정보 확인 필요';
       timeSafetyColor = '#d97706';
-    } else if (depMins < parseTime(activeWeather.sunrise, 390)) {
+    } else if (departureDate.getTime() < solar.sunriseAt && departureDate.getTime() + totalMins * 60000 <= solar.sunsetAt) {
       timeSafetyStatus = '일출 전 출발 · 야간 산행 주의';
       timeSafetyColor = '#b45309';
-    } else if (descentFinishMins > sunsetMins) {
+    } else if (departureDate.getTime() + totalMins * 60000 > solar.sunsetAt) {
       timeSafetyStatus = '위험 (일몰 후 하산 예상)';
       timeSafetyColor = '#dc2626';
-    } else if (descentStartMins > safeDescentMins) {
+    } else if (departureDate.getTime() + ascentMins * 60000 > solar.sunsetAt - 120 * 60000) {
       timeSafetyStatus = '주의 (권장 하산 시작 시각 경과)';
       timeSafetyColor = '#d97706';
     }
@@ -738,9 +741,9 @@ function App() {
       departureTimeStr: formatTime(depMins),
       summitArrivalTimeStr: formatTime(summitArrivalMins),
       descentFinishTimeStr: formatTime(descentFinishMins),
-      recommendedDepDeadlineStr: activeWeather.isFuture || isNextDayPlan || !activeWeather.safeDescentTime ? '날짜별 일몰 정보 확인 필요' : formatTime(recommendedDepDeadlineMins),
+      recommendedDepDeadlineStr: solar && sameFinishDate ? new Intl.DateTimeFormat('en-GB', {timeZone:'Asia/Seoul',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(new Date(solar.sunsetAt - (120 + ascentMins) * 60000)) : '날짜별 일몰 정보 확인 필요',
       descentStartTimeStr: formatTime(descentStartMins),
-      safeDescentStartTime: activeWeather.isFuture || isNextDayPlan || !activeWeather.safeDescentTime ? '날짜별 확인 필요' : activeWeather.safeDescentTime,
+      safeDescentStartTime: solar && sameFinishDate ? new Intl.DateTimeFormat('en-GB', {timeZone:'Asia/Seoul',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(new Date(solar.sunsetAt - 120 * 60000)) : '날짜별 확인 필요',
       weatherScore: weatherAssessment.score,
       weatherAssessmentStatus: weatherAssessment.status,
       weatherAssessmentReasons: weatherAssessment.reasons,
@@ -752,6 +755,7 @@ function App() {
       timeSafetyStatus,
       timeSafetyColor,
       isNextDayPlan,
+      solar: sameFinishDate ? solar : null,
       summitForecast,
       gearList: customGearList
     };

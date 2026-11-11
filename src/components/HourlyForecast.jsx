@@ -112,27 +112,36 @@ function HourlyForecast({
     return `${option.value === 0 ? (isFuture ? '선택일 오전 8시' : '지금 출발') : `+${option.value}시간`} (${time})`;
   };
 
-  const temp = Number(weatherData?.temp || 0);
-  const baseTemp = Number(weatherData?.baseTemp ?? (temp + 5));
-  const wind = Number(weatherData?.wind_speed || 0);
-  const humidity = Number(weatherData?.humidity || 50);
+  const plannedStart = Date.parse(departureAt);
+  const plannedDuration = (hikingPlanSummary?.totalMins || 180) * 60000;
+  const plannedRows = Array.isArray(hourlyData) && Number.isFinite(plannedStart)
+    ? hourlyData.filter(row => { const t = Date.parse(row.valid_at); return Number.isFinite(t) && t >= plannedStart - 1800000 && t <= plannedStart + plannedDuration + 1800000; }) : [];
+  const plannedTemps = plannedRows.map(row => toNumber(row.temp)).filter(n => n !== null);
+  const plannedWinds = plannedRows.map(row => toNumber(row.wind_speed)).filter(n => n !== null);
+  const plannedHumidity = plannedRows.map(row => toNumber(row.humidity)).filter(n => n !== null);
+  const temp = plannedTemps.length ? Math.min(...plannedTemps) : Number(weatherData?.temp ?? 0);
+  const currentTemp = Number(weatherData?.temp ?? 0);
+  const currentWind = Number(weatherData?.wind_speed ?? 0);
+  const baseTemp = Number(weatherData?.baseTemp ?? (currentTemp + 5));
+  const wind = plannedWinds.length ? Math.max(...plannedWinds) : Number(weatherData?.wind_speed ?? 0);
+  const humidity = plannedHumidity.length ? Math.max(...plannedHumidity) : Number(weatherData?.humidity ?? 50);
   const dustStr = weatherData?.dust || '';
   const pm25Match = dustStr.match(/\d+/);
   const pm25 = pm25Match ? parseInt(pm25Match[0], 10) : 15;
-  const desc = weatherData?.condition || '';
+  const desc = plannedRows.length ? plannedRows.map(row => row.description || '').join(' ') : (weatherData?.condition || '');
   const nextHoursRainPop = Array.isArray(hourlyData)
-    ? Math.max(0, ...hourlyData.slice(0, 6).map(item => Number(item?.pop || 0) * 100))
+    ? Math.max(0, ...plannedRows.map(item => Number(item?.pop || 0) * 100))
     : 0;
-  const currentRainPop = Number(weatherData?.targetPop || 0);
+  const currentRainPop = plannedRows.length ? 0 : Number(weatherData?.targetPop || 0);
   const isRainOrSnow = desc.includes('비') || desc.includes('소나기') || desc.includes('눈') || desc.includes('우박') || Math.max(currentRainPop, nextHoursRainPop) >= 60;
   const isSnow = desc.includes('눈');
-  const sunrise = weatherData?.sunrise || '06:30';
-  const sunset = weatherData?.sunset || '18:00';
-  const safeDescentTime = weatherData?.safeDescentTime || mountainInfo?.safe_descent_time || '';
+  const sunrise = hikingPlanSummary?.solar?.sunrise || weatherData?.sunrise || '06:30';
+  const sunset = hikingPlanSummary?.solar?.sunset || weatherData?.sunset || '18:00';
+  const safeDescentTime = hikingPlanSummary?.solar ? new Intl.DateTimeFormat('en-GB', {timeZone:'Asia/Seoul', hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(new Date(hikingPlanSummary.solar.sunsetAt - 7200000)) : (weatherData?.safeDescentTime || mountainInfo?.safe_descent_time || '');
   const terrain = mountainInfo?.terrain || '';
   const isFuture = weatherData?.isFuture || false;
 
-  const summitFeelsLike = temp <= 15 ? Math.round(temp - (wind * 0.7)) : temp;
+  const summitFeelsLike = currentTemp <= 15 ? Math.round(currentTemp - (currentWind * 0.7)) : currentTemp;
 
   const courses = mountainInfo?.courses || [{ name: '기본 탐방로', distance: '5km', time: 180, diff: '중' }];
   const selectedCourse = courses[activeCourseIdx] || courses[0];
@@ -406,7 +415,7 @@ function HourlyForecast({
     }
 
     const isNextDayPlan = !isFuture && Math.floor(depMins / 1440) > 0;
-    if (isFuture || isNextDayPlan || !weatherData.sunset || !weatherData.sunrise || !safeDescentTime) {
+    if (!hikingPlanSummary?.solar) {
       return {
         status: 'planning',
         safetyBadge: '🗓️ 날짜별 일몰 확인 필요',
@@ -423,17 +432,18 @@ function HourlyForecast({
       };
     }
 
-    if (depMins < parseTime(weatherData.sunrise, 390)) {
+    if (actualDeparture && actualDeparture.getTime() < hikingPlanSummary.solar.sunriseAt && actualDeparture.getTime() + adjustedTimeMins * 60000 <= hikingPlanSummary.solar.sunsetAt) {
       return {
         status: 'night', safetyBadge: '🌙 일출 전 출발 · 야간 산행 주의',
         safetyColor: '#b45309', safetyBg: 'rgba(254,252,232,0.9)',
         deadlineStr: '일출 전 출발', depTimeStr, summitArrivalStr, descentFinishStr, arrivalWeather,
-        msg: `🌙 ${depTimeStr} 출발은 일출(${weatherData.sunrise}) 전입니다. 어두운 구간과 탐방로 입산 가능 시간을 확인하세요.`
+        msg: `🌙 ${depTimeStr} 출발은 일출(${sunrise}) 전입니다. 어두운 구간과 탐방로 입산 가능 시간을 확인하세요.`
       };
     }
 
-    const safeDescentMins = parseTime(safeDescentTime, 930);
-    const sunsetMins = parseTime(sunset, 1080);
+    const dayOffset = Math.floor(depMins / 1440) * 1440;
+    const safeDescentMins = dayOffset + parseTime(safeDescentTime, 930);
+    const sunsetMins = dayOffset + parseTime(sunset, 1080);
     // 권장 하산 시작 시각에 정상에서 출발할 수 있도록 등정 시간만큼 역산합니다.
     const descentStartMins = summitArrivalMins;
     const deadlineMins = safeDescentMins - ascentTimeMins;
@@ -693,11 +703,11 @@ function HourlyForecast({
                 <strong style={{ fontSize: '12px', color: '#334155' }}>{isFuture ? '선택일 고도별 기온' : '현재 고도별 기온'} <span className="mountain-reference-label">참고 추정</span></strong>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '4px', borderBottom: '1px dashed rgba(0,0,0,0.1)' }}>
                   <span style={{ fontWeight: '800', color: '#1e293b' }}>⛰️ 정상 <span style={{fontSize:'10px', color:'#475569', fontWeight:'normal'}}>({mountainInfo?.elevation}m)</span></span>
-                  <span style={{ color: '#0f172a', fontWeight: '800' }}>{temp}°C <span style={{fontSize:'10px', color:'#475569', fontWeight:'normal'}}>(체감 {summitFeelsLike}°C)</span></span>
+                  <span style={{ color: '#0f172a', fontWeight: '800' }}>{currentTemp}°C <span style={{fontSize:'10px', color:'#475569', fontWeight:'normal'}}>(체감 {summitFeelsLike}°C)</span></span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '2px 0', borderBottom: '1px dashed rgba(0,0,0,0.1)' }}>
                   <span style={{ color: '#475569', fontWeight: 'bold' }}>🌲 중턱 <span style={{fontSize:'10px', color:'#64748b', fontWeight:'normal'}}>({Math.round((mountainInfo?.elevation || 800) / 2)}m)</span></span>
-                  <span style={{ color: '#334155', fontWeight: '600' }}>{Math.round((temp + baseTemp) / 2)}°C</span>
+                  <span style={{ color: '#334155', fontWeight: '600' }}>{Math.round((currentTemp + baseTemp) / 2)}°C</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '2px' }}>
                   <span style={{ color: '#475569', fontWeight: 'bold' }}>👟 들머리 <span style={{fontSize:'10px', color:'#64748b', fontWeight:'normal'}}>(입구)</span></span>
@@ -757,7 +767,7 @@ function HourlyForecast({
                 정상 도착 시각은 전체 코스 시간의 55%를 오름 시간으로 계산한 참고 추정치입니다. 실제 소요 시간은 체력, 휴식, 노면과 코스 상황에 따라 달라집니다.
               </MountainInfo>
               <MountainInfo label="일출 산행을 계획한다면">
-                {timeline.status === 'planning' ? '선택한 날짜의 일출 시간과 입산 가능 시간을 먼저 확인하세요.' : `오늘 일출은 ${sunrise}입니다. 선택 코스의 정상까지 약 ${Math.floor(ascentTimeMins / 60)}시간 ${ascentTimeMins % 60}분에 휴식 여유를 더해 출발 시간을 정하세요.`}
+                {timeline.status === 'planning' ? '선택한 날짜의 일출 시간과 입산 가능 시간을 먼저 확인하세요.' : `선택 날짜의 계산된 일출은 ${sunrise}입니다. 선택 코스의 정상까지 약 ${Math.floor(ascentTimeMins / 60)}시간 ${ascentTimeMins % 60}분에 휴식 여유를 더해 출발 시간을 정하세요.`}
                 <div>야간 입산 허용 여부를 확인하고 헤드랜턴·여분 배터리·보온 의류를 준비하세요. 위 시간 주의 안내는 선택한 실제 일정에 적용됩니다.</div>
               </MountainInfo>
               {courseRiskNotes.length > 0 && (
@@ -809,7 +819,7 @@ function HourlyForecast({
                     {officialTrailInfo.label} ↗
                   </a>
                   <div style={{ marginTop: '4px', color: '#64748b', fontSize: '9.5px', lineHeight: '1.4', textAlign: 'center' }}>
-                    통제 상태는 공식 페이지에서 출발 전에 확인하세요.
+                    일출·일몰은 산 좌표 기준 계산값이며 지형과 현장 상황에 따라 다릅니다. 통제 상태도 출발 전에 확인하세요.
                   </div>
                 </div>
               )}
@@ -830,7 +840,7 @@ function HourlyForecast({
                   🎒 내 배낭 체크리스트
                 </h4>
                 <span style={{ fontSize: '10.5px', color: '#475569', fontWeight: '500' }}>
-                  준비한 물품을 체크하세요. 수정한 목록은 이 브라우저에 보관됩니다.
+                  준비한 물품을 체크하세요. 수정한 목록은 이 브라우저에 보관됩니다. 추천은 제공된 산행 시간대 예보를 참고합니다.
                 </span>
               </div>
               <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
@@ -843,6 +853,8 @@ function HourlyForecast({
               </div>
             </div>
 
+            {plannedRows.length > 0 && buildWeatherGearList().some(item => !gearList.includes(item)) && <div className="mountain-info-disclosure__content"><strong>현재 일정의 추가 추천</strong><p>기존 물품과 체크 상태는 유지됩니다. 필요한 항목만 추가하세요.</p>{buildWeatherGearList().filter(item => !gearList.includes(item)).map(item => <button key={item} type="button" onClick={() => updateGears([...gearList, item])}>＋ {item}</button>)}</div>}
+            {!plannedRows.length && <p>선택한 산행 시간의 상세 예보가 없어 현재 기상 기준 추천을 표시합니다. 출발 전 다시 확인하세요.</p>}
             <div style={{ display: 'flex', gap: '6px', marginBottom: '12px' }}>
               <input type="text" aria-label="추가할 준비물" maxLength={120} placeholder="준비물 추가 (예: 보조배터리)" value={newGearInput} onChange={(e) => setNewGearInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && !e.nativeEvent.isComposing && handleAddGear()} style={{ flex: 1, padding: '8px 12px', borderRadius: '6px', border: '1px solid rgba(0,0,0,0.1)', fontSize: '12.5px', outline: 'none', color: '#1e293b', backgroundColor: 'rgba(255,255,255,0.8)', fontWeight: '500' }} />
               <button type="button" onClick={handleAddGear} style={{ padding: '8px 14px', borderRadius: '6px', border: 'none', backgroundColor: '#15803d', color: '#ffffff', fontSize: '12.5px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}>
