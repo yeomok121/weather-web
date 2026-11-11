@@ -21,7 +21,8 @@ src/
 │   │   └── lib/         hikingPlan, manualCourse, mountainWindow, solarTimes
 │   ├── fishing/         FishingPage, FishingPage.css(전용 스타일), fishingApi(서버 요청),
 │   │   │                useFishingData(해역 목록·바다 정보 상태), fishingFormat(값 변환)
-│   │   └── components/  FishingHero, ForecastOutlook, BuoyPanel, TidePanel, MarineForecastPanel, DataRows
+│   │   ├── components/  FishingHero, ForecastOutlook, BuoyPanel, TidePanel, TideChart, MarineForecastPanel, DataRows
+│   │   └── lib/         tideCalendar(음력 날짜·물때 계산)
 │   └── admin/           AdminRoute(관리자 권한 확인), AdminPage(대시보드)
 └── shared/              여러 페이지가 함께 쓰는 공통 영역 (고치기 전에 팀에 먼저 공유)
     ├── AppContext.js    페이지에서 공통 상태를 꺼내 쓰는 useApp()

@@ -2,6 +2,7 @@
 //   fishingApi.js      서버 요청          useFishingData.js  해역 목록·바다 정보 상태
 //   fishingFormat.js   화면용 값 변환      components/        화면 영역별 컴포넌트
 //   FishingPage.css    낚시 페이지 전용 스타일
+// 물때 계산은 lib/tideCalendar.js 에 있습니다.
 // 새 영역(예: 기상특보, 바다낚시지수)은 components/에 만들고 아래 순서에 끼워 넣으면 됩니다.
 import { useState } from 'react';
 import { FiClock, FiInfo, FiRefreshCw } from 'react-icons/fi';
@@ -34,7 +35,7 @@ export default function FishingPage() {
 
     <section className="fish-metrics">
       <BuoyPanel area={area} buoyRows={sources.buoy?.records || []} error={errors.buoy} />
-      <TidePanel area={area} tideData={sources.tide?.data} error={errors.tide} />
+      <TidePanel area={area} tideSource={sources.tide} error={errors.tide} />
     </section>
 
     <MarineForecastPanel regionName={data?.region_name || area.region_name} forecastRows={forecastRows} error={errors.forecast} />

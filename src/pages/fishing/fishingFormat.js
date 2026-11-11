@@ -56,3 +56,29 @@ export function upcomingTides(tideData, { now = Date.now(), limit = 6 } = {}) {
     station: rows[0]?.obsvtrNm || list[0]?.obsvtrNm,
   };
 }
+
+const kstTime = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Seoul', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
+const kstDate = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit' });
+
+// "14:21", 그리고 오늘이 아니면 "내일 14:21"처럼 날짜 구분을 붙입니다.
+export function formatTideTime(value, now = Date.now()) {
+  const time = Date.parse(value);
+  if (!Number.isFinite(time)) return '—';
+  const days = Math.round((Date.parse(`${kstDate.format(time)}T00:00:00+09:00`) - Date.parse(`${kstDate.format(now)}T00:00:00+09:00`)) / 86400000);
+  const prefix = days === 0 ? '' : days === 1 ? '내일 ' : days === -1 ? '어제 ' : `${kstDate.format(time).slice(5).replace('-', '/')} `;
+  return prefix + kstTime.format(time);
+}
+
+// 서버가 정리해 준 조위(predictions·extremes)에서 지금 이후 만조·간조와 그래프용 점을 고릅니다.
+export function tideTimeline(tideSource, { now = Date.now(), extremeLimit = 4 } = {}) {
+  const predictions = Array.isArray(tideSource?.predictions) ? tideSource.predictions : [];
+  const extremes = Array.isArray(tideSource?.extremes) ? tideSource.extremes : [];
+  const points = predictions
+    .map((point) => ({ time: Date.parse(point.time), height: Number(point.height_cm) }))
+    .filter((point) => Number.isFinite(point.time) && Number.isFinite(point.height) && point.time >= now - 3 * 3600000);
+  const upcoming = extremes
+    .map((item) => ({ ...item, at: Date.parse(item.time) }))
+    .filter((item) => Number.isFinite(item.at) && item.at >= now)
+    .slice(0, extremeLimit);
+  return { points, upcoming, station: tideSource?.station || '' };
+}

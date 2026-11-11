@@ -59,3 +59,19 @@
 .fish-source-details p { margin:10px 0 0; color:rgba(231,241,248,.76); line-height:1.7; }
 @media (max-width:720px) { #root .fishing-page { width:calc(100% - 24px); margin:16px auto 40px; gap:12px; }.fish-hero { padding:24px; min-height:0; }.fish-hero-art { width:100px; height:100px; flex-shrink:0; }.fish-hero-art svg { font-size:28px; }.fish-hero-art span { display:none; }.fish-hero p { font-size:14px; }.fish-place { flex-wrap:wrap; font-size:13px; }.fish-place span { width:100%; }.fish-metrics { grid-template-columns:1fr; gap:12px; }.fish-panel { padding:18px; }.fish-hero h1 { font-size:27px; } }
 @media (max-width:720px) { .fish-outlook-grid { grid-template-columns:1fr; }.fish-area-picker { width:100%; justify-content:flex-start; box-sizing:border-box; }.fish-area-picker select { margin-left:auto; max-width:65%; }.fish-place { display:flex; flex-direction:column; align-items:flex-start; }.fish-place span { width:auto; } }
+
+/* 물때와 조위 */
+.fish-tide-day { display:grid; grid-template-columns:auto 1fr; grid-template-rows:auto auto; column-gap:12px; row-gap:2px; align-items:center; padding:14px 16px; margin-bottom:12px; border-radius:15px; background:linear-gradient(135deg,rgba(236,247,255,.9),rgba(225,244,240,.85)); border:1px solid rgba(119,153,178,.2); }
+.fish-tide-day > svg { grid-row:1 / span 2; font-size:22px; color:#3d5f9e; }
+.fish-tide-day div { display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; }
+.fish-tide-day span { color:#6f8298; font-size:12px; }
+.fish-tide-day b { color:#173a5c; font-size:22px; letter-spacing:-.02em; }
+.fish-tide-day small { color:#5f7790; font-size:12px; }
+.fish-tide-extremes { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+.fish-tide-extreme { display:flex; flex-direction:column; gap:4px; padding:12px 13px; border-radius:13px; background:rgba(255,255,255,.6); border-left:4px solid #0f8c8a; }
+.fish-tide-extreme.high { border-left-color:#1d6fb8; }
+.fish-tide-extreme span { color:#6f8298; font-size:12px; font-weight:700; }
+.fish-tide-extreme b { color:#193651; font-size:18px; }
+.fish-tide-extreme small { color:#71849a; font-size:12px; }
+.fish-tide-chart { margin-top:12px; padding:8px 4px 0; border-radius:13px; background:rgba(255,255,255,.45); }
+.fish-tide-note { margin:10px 0 0; color:#7a8ca0; font-size:11px; line-height:1.6; }

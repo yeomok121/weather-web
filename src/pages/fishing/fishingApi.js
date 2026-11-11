@@ -3,9 +3,9 @@ import { requestJson } from '../../shared/lib/apiClient';
 
 // 서버 해역 목록(/api/fishing/areas)을 못 받을 때 쓰는 기본 목록. 해역 추가는 백엔드 app/fishing/areas.py에서 합니다.
 export const FALLBACK_AREAS = [
-  { id: 'chuja', place: '추자도 해상', region: '12D00000', region_name: '제주도 전해상', lat: 33.96194, lon: 126.44527 },
-  { id: 'west', place: '태안 앞바다', region: '12A20100', region_name: '서해중부앞바다', lat: 36.7, lon: 126.1 },
-  { id: 'southeast', place: '부산 앞바다', region: '12B20100', region_name: '남해동부앞바다', lat: 35.1, lon: 129.2 },
+  { id: 'chuja', place: '추자도 해상', region: '12D00000', region_name: '제주도 전해상', lat: 33.96194, lon: 126.44527, tide_system: 8 },
+  { id: 'west', place: '태안 앞바다', region: '12A20100', region_name: '서해중부앞바다', lat: 36.7, lon: 126.1, tide_system: 7 },
+  { id: 'southeast', place: '부산 앞바다', region: '12B20100', region_name: '남해동부앞바다', lat: 35.1, lon: 129.2, tide_system: 8 },
 ];
 
 const isArea = (item) => item && typeof item.id === 'string' && typeof item.place === 'string'
