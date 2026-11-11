@@ -600,10 +600,10 @@ function HourlyForecast({
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '12px' }}>
         <div>
           <h4 style={{ margin: 0, fontSize: '16px', fontWeight: '800', color: isMountainMode ? '#166534' : '#1e293b' }}>
-            {isMountainMode ? '⛰️ 산악 기상 & 등산 환경 대시보드' : '시간별 날씨 · 기온과 강수확률'}
+            {isMountainMode ? '⛰️ 산악 기상 & 등산 환경 대시보드' : mountainInfo?.course_available === false ? '시간별 산 정상 기온 · 강수확률' : '시간별 날씨 · 기온과 강수확률'}
           </h4>
           <div style={{ marginTop: '3px', fontSize: '10.5px', color: '#64748b' }}>
-            {isMountainMode ? '기상청 시간별 예보를 고도 보정한 산악 참고 추정값' : '기상청 동네예보 기준 · 강수확률은 시간대별 비 가능성입니다'}
+            {isMountainMode || mountainInfo?.course_available === false ? '기상청 시간별 예보를 고도 보정한 산악 참고 추정값' : '기상청 동네예보 기준 · 강수확률은 시간대별 비 가능성입니다'}
           </div>
         </div>
         {!isMountainMode && (
