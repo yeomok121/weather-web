@@ -191,7 +191,8 @@ function App() {
       const updated = { ...loggedInUser, name: data.name };
       localStorage.setItem('loggedInUser', JSON.stringify(updated));
       setLoggedInUser(updated);
-      showToast('내 정보가 성공적으로 수정되었습니다.');
+      if (newPassword) { localStorage.removeItem('loggedInUser'); setLoggedInUser(null); showToast('비밀번호가 변경되어 다시 로그인해 주세요.'); }
+      else showToast('내 정보가 성공적으로 수정되었습니다.');
       return true;
     } catch (e) {
       alert('서버에 연결할 수 없습니다.'); return false;
