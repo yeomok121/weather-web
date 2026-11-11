@@ -981,7 +981,7 @@ function App() {
             onSelectMountain={(mName) => loadMountainWeather(mName)}
           />
           
-          {isMountainMode && mountainInfo?.course_available === false && <div className="glass-card weather-empty" role="status"><strong>산 기상 정보 제공 중</strong><p>위치와 고도는 한국등산·트레킹지원센터 자료이며 예보는 해당 지점의 참고 추정값입니다. 이 산의 코스별 거리·소요시간은 준비 중입니다. 출발 시간별 산행 점수, 하산 예상과 계획 저장은 확인된 코스가 추가된 뒤 제공됩니다. 공식 안내에서 탐방로와 통제 상태를 확인해 주세요.</p></div>}
+          {isMountainMode && mountainInfo?.course_available === false && <div className="glass-card weather-empty" role="status"><strong>산 기상 정보 제공 중</strong><p>위치와 고도는 산림청 산정보 및 OpenStreetMap 자료를 참고하며 예보는 해당 지점의 추정값입니다. 이 산의 코스별 거리·소요시간은 준비 중입니다. 출발 시간별 산행 점수, 하산 예상과 계획 저장은 확인된 코스가 추가된 뒤 제공됩니다. 공식 안내에서 탐방로와 통제 상태를 확인해 주세요. 지도 좌표 © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap 기여자</a>.</p></div>}
           {isMountainMode && mountainCatalogState === 'limited' && <div className="glass-card weather-empty" role="status">현재 {mountainsList.length}개 산을 표시합니다. 공공데이터 연결이 지연되면 약 1분 뒤 다시 불러와 주세요. <button type="button" onClick={() => setMountainCatalogAttempt(value => value + 1)}>산 목록 다시 불러오기</button></div>}
           <HourlyForecast 
             hourlyData={hourlyData} 
