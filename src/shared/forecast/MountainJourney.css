@@ -14,8 +14,25 @@
 @media(max-width:640px){.mountain-quick-guide ol{grid-template-columns:1fr}.mountain-quick-guide li{grid-template-columns:80px 1fr;padding:6px 8px}.mountain-review-next{flex-wrap:wrap}.mountain-review-next button{width:100%}#mountain-conditions{scroll-margin-top:135px}}
 
 /* Score cards stay stacked at every viewport width. */
-.mountain-score-stack{display:grid;grid-template-columns:minmax(0,1fr);gap:12px}
-.mountain-score-card{display:flex;flex-direction:column;align-items:flex-start;gap:8px;padding:16px;background:#edf8f4;border:1px solid #cce5dc;border-radius:12px;min-width:0}
+.mountain-score-stack{display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
+.mountain-score-card{display:flex;flex-direction:column;align-items:flex-start;gap:4px;padding:12px;background:#edf8f4;border:1px solid #cce5dc;border-radius:12px;min-width:0}
 .mountain-score-card__label{font-size:14px;line-height:1.5;color:#45665e}
-.mountain-score-card__value{font-size:32px;line-height:1.2;font-weight:800;color:#087962;font-variant-numeric:tabular-nums}
+.mountain-score-card__value{font-size:28px;line-height:1.2;font-weight:800;color:#087962;font-variant-numeric:tabular-nums}
 .mountain-score-card__status{font-size:14px;line-height:1.5;color:#254e43;overflow-wrap:anywhere}
+
+.mountain-route-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:0 0 8px;padding:12px;background:#f6f9f8;border:1px solid #e0e9e5;border-radius:10px}
+.mountain-route-metrics>div{min-width:0;display:grid;gap:4px}
+.mountain-route-metrics dt{font-size:12px;line-height:1.5;color:#52685f}
+.mountain-route-metrics dd{margin:0;font-size:14px;line-height:1.5;font-weight:700;color:#243e34;overflow-wrap:anywhere}
+.mountain-arrival-weather{padding:16px;margin-bottom:8px;border:1px solid #b7d5ed;border-radius:12px;background:#edf5fd;min-width:0}
+.mountain-arrival-weather h4{margin:0 0 8px;font-size:16px;line-height:1.5;color:#173f6b}
+.mountain-arrival-weather__caption{margin:4px 0;font-size:12px;line-height:1.6;color:#425d78}
+.mountain-arrival-weather__conditions{display:flex;align-items:baseline;flex-wrap:wrap;gap:8px;margin:12px 0;color:#213f5d;font-size:14px;line-height:1.5}
+.mountain-arrival-weather__conditions strong{font-size:24px;line-height:1.3;font-variant-numeric:tabular-nums}
+.mountain-gear-suggestions{padding:12px;border:1px solid #cce2d8;border-radius:12px;background:#f1f8f5;margin:12px 0}
+.mountain-gear-suggestions>strong{font-size:14px;color:#254e43}
+.mountain-gear-suggestions>p{font-size:12px;line-height:1.6;color:#52685f;margin:8px 0}
+.mountain-gear-suggestions__grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.mountain-gear-suggestions__grid button{width:100%;min-width:0;min-height:44px;padding:8px 12px;text-align:left;white-space:normal;overflow-wrap:anywhere;font:inherit;font-size:14px;line-height:1.5;color:#245b4b;background:#fff;border:1px solid #bfd8cd;border-radius:10px;cursor:pointer}
+.mountain-gear-suggestions__grid button:hover{background:#e4f3ec;border-color:#248267}
+.mountain-gear-suggestions__grid button:focus-visible{outline:2px solid #176c58;outline-offset:2px}

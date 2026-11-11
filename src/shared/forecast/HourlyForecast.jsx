@@ -655,12 +655,12 @@ function HourlyForecast({
               <div className="mountain-score-stack">
                 <div className="mountain-score-card">
                   <span className="mountain-score-card__label">기상 조건 점수 · 참고</span>
-                  <strong className="mountain-score-card__value">{weatherScore ?? '—'}</strong>
+                  <strong className="mountain-score-card__value" style={{ color: weatherScore === null ? undefined : weatherAssessment.color }}>{weatherScore ?? '—'}</strong>
                   <span className="mountain-score-card__status">{weatherAssessment.status}</span>
                 </div>
                 <div className="mountain-score-card">
                   <span className="mountain-score-card__label">조망 환경 참고 점수</span>
-                  <strong className="mountain-score-card__value">{viewEstimate.score ?? '—'}</strong>
+                  <strong className="mountain-score-card__value" style={{ color: viewEstimate.score === null ? undefined : viewEstimate.gradeColor }}>{viewEstimate.score ?? '—'}</strong>
                   <span className="mountain-score-card__status">{viewEstimate.gradeText}</span>
                 </div>
               </div>
@@ -713,39 +713,30 @@ function HourlyForecast({
                 <li><span>정상 도착</span><strong>{itineraryTime(ascentTimeMins)}</strong></li>
                 <li><span>하산 완료</span><strong>{itineraryTime(adjustedTimeMins)}</strong></li>
               </ol>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', fontSize: '11px', color: '#1e293b', backgroundColor: 'rgba(255,255,255,0.7)', padding: '8px 10px', borderRadius: '8px', marginBottom: '8px' }}>
-                <span>거리: <strong>{selectedCourse.distance}</strong></span>
-                <span>난이도: <strong style={{ color: selectedCourse.diff.includes('상') ? '#dc2626' : '#16a34a' }}>{selectedCourse.diff}</strong></span>
-                <span>열량: <strong>🍫 {nutrition.kcalText}</strong></span>
-                <span style={{ gridColumn: 'span 2', color: '#0369a1', fontWeight: '600' }}>
-                  💧 권장 식수: <strong>{nutrition.waterText}</strong>
-                </span>
-              </div>
+              <dl className="mountain-route-metrics" aria-label="코스와 준비 정보">
+                <div><dt>거리</dt><dd>{selectedCourse.distance}</dd></div>
+                <div><dt>난이도</dt><dd>{selectedCourse.diff}</dd></div>
+                <div><dt>권장 열량</dt><dd>{nutrition.kcalText}</dd></div>
+                <div><dt>권장 식수</dt><dd>{nutrition.waterText}</dd></div>
+              </dl>
 
-              <div style={{ backgroundColor: 'rgba(239,246,255,0.85)', border: '1px solid rgba(59,130,246,0.25)', borderRadius: '8px', padding: '8px 10px', marginBottom: '8px', fontSize: '11px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2px' }}>
-                  <span style={{ fontWeight: '800', color: '#1e3a8a' }}>
-                    ⛰️ 정상 도착 무렵 예보
-                  </span>
-                  <span style={{ fontSize: '10px', color: '#475569', fontWeight: '600' }}>
-                    {timeline.status !== 'planning' && safeDescentTime ? `하산 시작 권장 ${safeDescentTime}` : '날짜별 일몰 확인 필요'}
-                  </span>
-                </div>
+              <section className="mountain-arrival-weather" aria-label="정상 도착 무렵 예보">
+                <h4>⛰️ 정상 도착 무렵 예보</h4>
+                <p className="mountain-arrival-weather__caption">선택한 일정의 정상 도착 시간에 가까운 예보입니다.</p>
                 {timeline.arrivalWeather.available ? (
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '2px', color: '#1e293b', fontWeight: '700' }}>
-                    <span>
-                      {getEmojiIcon(timeline.arrivalWeather.icon)} {timeline.arrivalWeather.forecastHour}: <strong>{timeline.arrivalWeather.temp}°C</strong> (체감 {timeline.arrivalWeather.feelsLike}°C)
-                    </span>
-                    <span style={{ color: timeline.arrivalWeather.pop >= 30 ? '#2563eb' : '#475569' }}>
-                      {timeline.arrivalWeather.description} · 💧{timeline.arrivalWeather.pop}%
-                    </span>
+                  <div className="mountain-arrival-weather__conditions">
+                    <span>{getEmojiIcon(timeline.arrivalWeather.icon)} {timeline.arrivalWeather.forecastHour}</span>
+                    <strong>{timeline.arrivalWeather.temp}°C</strong>
+                    <span>체감 {timeline.arrivalWeather.feelsLike}°C</span>
+                    <span>{timeline.arrivalWeather.description} · 강수확률 {timeline.arrivalWeather.pop}%</span>
                   </div>
                 ) : (
-                  <div style={{ color: '#64748b', fontSize: '10.5px', fontWeight: '600' }}>
-                    ℹ️ {timeline.arrivalWeather.reason}
-                  </div>
+                  <p className="mountain-arrival-weather__caption">ℹ️ {timeline.arrivalWeather.reason}</p>
                 )}
-              </div>
+                <p className="mountain-arrival-weather__caption">
+                  {timeline.status !== 'planning' && safeDescentTime ? `하산 시작 권장 ${safeDescentTime}` : '날짜별 일몰 확인 필요'}
+                </p>
+              </section>
 
               <MountainInfo label="정상 도착 시각 산정 기준">
                 정상 도착 시각은 전체 코스 시간의 55%를 오름 시간으로 계산한 참고 추정치입니다. 실제 소요 시간은 체력, 휴식, 노면과 코스 상황에 따라 달라집니다.
@@ -837,7 +828,7 @@ function HourlyForecast({
               </div>
             </div>
 
-            {plannedRows.length > 0 && buildWeatherGearList().some(item => !gearList.includes(item)) && <div className="mountain-info-disclosure__content"><strong>현재 일정의 추가 추천</strong><p>기존 물품과 체크 상태는 유지됩니다. 필요한 항목만 추가하세요.</p>{buildWeatherGearList().filter(item => !gearList.includes(item)).map(item => <button key={item} type="button" onClick={() => updateGears([...gearList, item])}>＋ {item}</button>)}</div>}
+            {plannedRows.length > 0 && buildWeatherGearList().some(item => !gearList.includes(item)) && <div className="mountain-gear-suggestions"><strong>현재 일정의 추가 추천</strong><p>기존 물품과 체크 상태는 유지됩니다. 필요한 항목만 추가하세요.</p><div className="mountain-gear-suggestions__grid">{buildWeatherGearList().filter(item => !gearList.includes(item)).map(item => <button key={item} type="button" onClick={() => updateGears([...gearList, item])}>＋ {item}</button>)}</div></div>}
             {!plannedRows.length && <p>선택한 산행 시간의 상세 예보가 없어 현재 기상 기준 추천을 표시합니다. 출발 전 다시 확인하세요.</p>}
             <div style={{ display: 'flex', gap: '6px', marginBottom: '12px' }}>
               <input type="text" aria-label="추가할 준비물" maxLength={120} placeholder="준비물 추가 (예: 보조배터리)" value={newGearInput} onChange={(e) => setNewGearInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && !e.nativeEvent.isComposing && handleAddGear()} style={{ flex: 1, padding: '8px 12px', borderRadius: '6px', border: '1px solid rgba(0,0,0,0.1)', fontSize: '12.5px', outline: 'none', color: '#1e293b', backgroundColor: 'rgba(255,255,255,0.8)', fontWeight: '500' }} />
