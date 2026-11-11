@@ -1,0 +1,506 @@
+{
+  "checked_on": "2026-11-11",
+  "scope": "자료 조사표; 코스 승인·현장검증 아님",
+  "mountains": [
+    {
+      "mountain": "북한산",
+      "group": "기존20",
+      "candidate_course": "백운대 최단 코스 (탐방지원센터)",
+      "source_url": "https://www.knps.or.kr/front/portal/visit/visitCourseGuide.do?parkId=121500&vcursId=121500V008",
+      "status": "기존 등록 코스 대조 완료·승인 보류",
+      "next_action": "existing-20-audit.json의 개별 경로/수치/등급 보완",
+      "distance_km": null,
+      "duration_minutes": null
+    },
+    {
+      "mountain": "설악산",
+      "group": "기존20",
+      "candidate_course": "대청봉 최단 (오색 코스)",
+      "source_url": "https://www.knps.or.kr/front/portal/visit/visitCourseGuide.do?parkId=120400&vcursId=120400V012",
+      "status": "기존 등록 코스 대조 완료·승인 보류",
+      "next_action": "existing-20-audit.json의 개별 경로/수치/등급 보완",
+      "distance_km": null,
+      "duration_minutes": null
+    },
+    {
+      "mountain": "한라산",
+      "group": "기존20",
+      "candidate_course": "성판악~백록담 코스",
+      "source_url": "https://visithalla.jeju.go.kr/contents/contents.do?id=61&language=ko_KR",
+      "status": "기존 등록 코스 대조 완료·승인 보류",
+      "next_action": "existing-20-audit.json의 개별 경로/수치/등급 보완",
+      "distance_km": null,
+      "duration_minutes": null
+    },
+    {
+      "mountain": "지리산",
+      "group": "기존20",
+      "candidate_course": "중산리~천왕봉 단거리",
+      "source_url": "https://www.knps.or.kr/front/portal/visit/visitCourseGuide.do?parkId=120100&vcursId=120100V011",
+      "status": "기존 등록 코스 대조 완료·승인 보류",
+      "next_action": "existing-20-audit.json의 개별 경로/수치/등급 보완",
+      "distance_km": null,
+      "duration_minutes": null
+    },
+    {
+      "mountain": "계룡산",
+      "group": "기존20",
+      "candidate_course": "동학사~관음봉 순환 코스",
+      "source_url": "https://www.knps.or.kr/front/portal/visit/visitCourseGuide.do?parkId=120200&vcursId=120200V002",
+      "status": "기존 등록 코스 대조 완료·승인 보류",
+      "next_action": "existing-20-audit.json의 개별 경로/수치/등급 보완",
+      "distance_km": null,
+      "duration_minutes": null
+    },
+    {
+      "mountain": "덕유산",
+      "group": "기존20",
+      "candidate_course": "곤돌라~향적봉 코스",
+      "source_url": "https://www.knps.or.kr/front/portal/visit/visitCourseGuide.do?parkId=120800&vcursId=120800V003",
+      "status": "기존 등록 코스 대조 완료·승인 보류",
+      "next_action": "existing-20-audit.json의 개별 경로/수치/등급 보완",
+      "distance_km": null,
+      "duration_minutes": null
+    },
+    {
+      "mountain": "소백산",
+      "group": "기존20",
+      "candidate_course": "어의곡~비로봉 코스",
+      "source_url": "https://www.knps.or.kr/front/portal/visit/visitCourseGuide.do?parkId=121600&vcursId=121600V013",
+      "status": "기존 등록 코스 대조 완료·승인 보류",
+      "next_action": "existing-20-audit.json의 개별 경로/수치/등급 보완",
+      "distance_km": null,
+      "duration_minutes": null
+    },
+    {
+      "mountain": "태백산",
+      "group": "기존20",
+      "candidate_course": "유일사~천제단 코스",
+      "source_url": "https://www.knps.or.kr/front/portal/visit/visitCourseGuide.do?parkId=122200&vcursId=122200V001",
+      "status": "기존 등록 코스 대조 완료·승인 보류",
+      "next_action": "existing-20-audit.json의 개별 경로/수치/등급 보완",
+      "distance_km": null,
+      "duration_minutes": null
+    },
+    {
+      "mountain": "오대산",
+      "group": "기존20",
+      "candidate_course": "상원사~비로봉 코스",
+      "source_url": "https://www.knps.or.kr/front/portal/visit/visitCourseGuide.do?parkId=120900&vcursId=120900V005",
+      "status": "기존 등록 코스 대조 완료·승인 보류",
+      "next_action": "existing-20-audit.json의 개별 경로/수치/등급 보완",
+      "distance_km": null,
+      "duration_minutes": null
+    },
+    {
+      "mountain": "치악산",
+      "group": "기존20",
+      "candidate_course": "구룡사~사다리병창 코스",
+      "source_url": "https://www.knps.or.kr/front/portal/visit/visitCourseGuide.do?parkId=121300&vcursId=121300V006",
+      "status": "기존 등록 코스 대조 완료·승인 보류",
+      "next_action": "existing-20-audit.json의 개별 경로/수치/등급 보완",
+      "distance_km": null,
+      "duration_minutes": null
+    },
+    {
+      "mountain": "월악산",
+      "group": "기존20",
+      "candidate_course": "보덕암~영봉 코스",
+      "source_url": "https://www.knps.or.kr/front/portal/visit/visitCourseGuide.do?parkId=121400&vcursId=121400V004",
+      "status": "기존 등록 코스 대조 완료·승인 보류",
+      "next_action": "existing-20-audit.json의 개별 경로/수치/등급 보완",
+      "distance_km": null,
+      "duration_minutes": null
+    },
+    {
+      "mountain": "속리산",
+      "group": "기존20",
+      "candidate_course": "법주사~문장대 코스",
+      "source_url": "https://www.knps.or.kr/front/portal/visit/visitCourseGuide.do?parkId=120500&vcursId=120500V012",
+      "status": "기존 등록 코스 대조 완료·승인 보류",
+      "next_action": "existing-20-audit.json의 개별 경로/수치/등급 보완",
+      "distance_km": null,
+      "duration_minutes": null
+    },
+    {
+      "mountain": "가야산",
+      "group": "기존20",
+      "candidate_course": "백운동~상왕봉 코스",
+      "source_url": "https://www.knps.or.kr/front/portal/visit/visitCourseGuide.do?parkId=120700&vcursId=120700V006",
+      "status": "기존 등록 코스 대조 완료·승인 보류",
+      "next_action": "existing-20-audit.json의 개별 경로/수치/등급 보완",
+      "distance_km": null,
+      "duration_minutes": null
+    },
+    {
+      "mountain": "무등산",
+      "group": "기존20",
+      "candidate_course": "증심사~서석대 코스",
+      "source_url": "https://www.knps.or.kr/front/portal/visit/visitCourseGuide.do?parkId=122000&vcursId=122000V001",
+      "status": "기존 등록 코스 대조 완료·승인 보류",
+      "next_action": "existing-20-audit.json의 개별 경로/수치/등급 보완",
+      "distance_km": null,
+      "duration_minutes": null
+    },
+    {
+      "mountain": "주왕산",
+      "group": "기존20",
+      "candidate_course": "대전사~주봉 코스",
+      "source_url": "https://www.knps.or.kr/front/portal/visit/visitCourseGuide.do?parkId=121000&vcursId=121000V003",
+      "status": "기존 등록 코스 대조 완료·승인 보류",
+      "next_action": "existing-20-audit.json의 개별 경로/수치/등급 보완",
+      "distance_km": null,
+      "duration_minutes": null
+    },
+    {
+      "mountain": "도봉산",
+      "group": "기존20",
+      "candidate_course": "도봉탐방센터~신선대",
+      "source_url": "https://www.knps.or.kr/front/portal/visit/visitCourseGuide.do?parkId=121500&vcursId=121500V007",
+      "status": "기존 등록 코스 대조 완료·승인 보류",
+      "next_action": "existing-20-audit.json의 개별 경로/수치/등급 보완",
+      "distance_km": null,
+      "duration_minutes": null
+    },
+    {
+      "mountain": "관악산",
+      "group": "기존20",
+      "candidate_course": "서울대~연주대 코스",
+      "source_url": "https://www.gwanak.go.kr/site/gwanak/08/10802020100002026041302.jsp",
+      "status": "기존 등록 코스 대조 완료·승인 보류",
+      "next_action": "existing-20-audit.json의 개별 경로/수치/등급 보완",
+      "distance_km": null,
+      "duration_minutes": null
+    },
+    {
+      "mountain": "대둔산",
+      "group": "기존20",
+      "candidate_course": "케이블카~마천대 코스",
+      "source_url": "https://www.wanju.go.kr/tour/index.9is?contentUid=ff8080818c5d9e6d018ca46557b468d4",
+      "status": "기존 등록 코스 대조 완료·승인 보류",
+      "next_action": "existing-20-audit.json의 개별 경로/수치/등급 보완",
+      "distance_km": null,
+      "duration_minutes": null
+    },
+    {
+      "mountain": "내장산",
+      "group": "기존20",
+      "candidate_course": "일주문~신선봉 코스",
+      "source_url": "https://www.knps.or.kr/front/portal/visit/visitCourseGuide.do?parkId=120600&vcursId=120600V006",
+      "status": "기존 등록 코스 대조 완료·승인 보류",
+      "next_action": "existing-20-audit.json의 개별 경로/수치/등급 보완",
+      "distance_km": null,
+      "duration_minutes": null
+    },
+    {
+      "mountain": "마이산",
+      "group": "기존20",
+      "candidate_course": "탑사~암마이봉 코스",
+      "source_url": "https://www.jinan.go.kr/maisan/index.jinan?menuCd=DOM_000001104002000000",
+      "status": "기존 등록 코스 대조 완료·승인 보류",
+      "next_action": "existing-20-audit.json의 개별 경로/수치/등급 보완",
+      "distance_km": null,
+      "duration_minutes": null
+    },
+    {
+      "mountain": "방태산",
+      "group": "추가30",
+      "candidate_course": "자연휴양림→주억봉 (정상 탐방로 별도 확인)",
+      "source_url": "https://www.foresttrip.go.kr/pot/cc/hm/selectHndfmsmtnMngmeDtl.do?fmmntSeq=71983",
+      "status": "산림청 공식 코스 자료 후보 확보",
+      "next_action": "상세 경로와 원문 갱신일·현재 운영 여부 대조 후 채택. 미확정 거리·시간은 등록하지 않음.",
+      "distance_km": null,
+      "duration_minutes": null
+    },
+    {
+      "mountain": "화악산",
+      "group": "추가30",
+      "candidate_course": "중봉 탐방로 (군사시설 정상과 구별)",
+      "source_url": "https://www.foresttrip.go.kr/pot/cc/hm/selectHndfmsmtnMngmeDtl.do?fmmntSeq=72037",
+      "status": "산림청 공식 코스 자료 후보 확보",
+      "next_action": "상세 경로와 원문 갱신일·현재 운영 여부 대조 후 채택. 미확정 거리·시간은 등록하지 않음.",
+      "distance_km": null,
+      "duration_minutes": null
+    },
+    {
+      "mountain": "명지산",
+      "group": "추가30",
+      "candidate_course": "대표 코스 선정 대기",
+      "source_url": "https://www.foresttrip.go.kr/",
+      "status": "관할기관 상세 원문 추가 확보 필요",
+      "next_action": "숲나들e 산 상세 자료 확인; 재현 가능한 상세 링크 및 경로표 형식 재확인 필요.",
+      "distance_km": null,
+      "duration_minutes": null
+    },
+    {
+      "mountain": "운악산",
+      "group": "추가30",
+      "candidate_course": "현등사 경유 정상",
+      "source_url": "https://www.foresttrip.go.kr/pot/cc/hm/selectHndfmsmtnMngmeDtl.do?fmmntSeq=72007",
+      "status": "산림청 공식 코스 자료 후보 확보",
+      "next_action": "상세 경로와 원문 갱신일·현재 운영 여부 대조 후 채택. 미확정 거리·시간은 등록하지 않음.",
+      "distance_km": null,
+      "duration_minutes": null
+    },
+    {
+      "mountain": "용문산",
+      "group": "추가30",
+      "candidate_course": "대표 코스 선정 대기",
+      "source_url": null,
+      "status": "관할기관 상세 원문 추가 확보 필요",
+      "next_action": "대표 경로·왕복/편도·거리·시간·난이도를 확정하지 않음.",
+      "distance_km": null,
+      "duration_minutes": null
+    },
+    {
+      "mountain": "소요산",
+      "group": "추가30",
+      "candidate_course": "대표 코스 선정 대기",
+      "source_url": "https://www.ddc.go.kr/site/tour/download/tourmap_2021.pdf",
+      "status": "관할기관 상세 원문 추가 확보 필요",
+      "next_action": "2021년 공식 지도 후보. 최신성 및 등산 경로 확인 전 채택 금지.",
+      "distance_km": null,
+      "duration_minutes": null
+    },
+    {
+      "mountain": "천마산",
+      "group": "추가30",
+      "candidate_course": "심신수련장→동릉→정상→도원사",
+      "source_url": "https://www.foresttrip.go.kr/pot/cc/hm/selectHndfmsmtnMngmeDtl.do?fmmntSeq=72023",
+      "status": "산림청 공식 코스 자료 후보 확보",
+      "next_action": "상세 경로와 원문 갱신일·현재 운영 여부 대조 후 채택. 미확정 거리·시간은 등록하지 않음.",
+      "distance_km": null,
+      "duration_minutes": null
+    },
+    {
+      "mountain": "금오산",
+      "group": "추가30",
+      "candidate_course": "대표 코스 선정 대기",
+      "source_url": "https://www.gumi.go.kr/park/contents.do?mid=0201000000",
+      "status": "관할기관 상세 원문 추가 확보 필요",
+      "next_action": "공식 공원 소개 확보. 소개 페이지를 코스 거리·시간 근거로 사용하지 않음.",
+      "distance_km": null,
+      "duration_minutes": null
+    },
+    {
+      "mountain": "재약산",
+      "group": "추가30",
+      "candidate_course": "대표 코스 선정 대기",
+      "source_url": null,
+      "status": "관할기관 상세 원문 추가 확보 필요",
+      "next_action": "밀양 관광 안내의 수미봉 1,018m와 등록 고도 1,119m가 다름. 천황산/재약산 정상 식별부터 재검토.",
+      "distance_km": null,
+      "duration_minutes": null
+    },
+    {
+      "mountain": "황매산",
+      "group": "추가30",
+      "candidate_course": "영암사지→모산재→정상→영화주제공원",
+      "source_url": "https://www.foresttrip.go.kr/pot/cc/hm/selectHndfmsmtnMngmeDtl.do?fmmntSeq=72039",
+      "status": "산림청 공식 코스 자료 후보 확보",
+      "next_action": "상세 경로와 원문 갱신일·현재 운영 여부 대조 후 채택. 미확정 거리·시간은 등록하지 않음.",
+      "distance_km": null,
+      "duration_minutes": null
+    },
+    {
+      "mountain": "화왕산",
+      "group": "추가30",
+      "candidate_course": "대표 코스 선정 대기",
+      "source_url": null,
+      "status": "관할기관 상세 원문 추가 확보 필요",
+      "next_action": "대표 경로·왕복/편도·거리·시간·난이도를 확정하지 않음.",
+      "distance_km": null,
+      "duration_minutes": null
+    },
+    {
+      "mountain": "천성산",
+      "group": "추가30",
+      "candidate_course": "무지개산장→은수고개→천성산",
+      "source_url": "https://www.foresttrip.go.kr/pot/cc/hm/selectHndfmsmtnMngmeDtl.do?fmmntSeq=72024",
+      "status": "산림청 공식 코스 자료 후보 확보",
+      "next_action": "상세 경로와 원문 갱신일·현재 운영 여부 대조 후 채택. 미확정 거리·시간은 등록하지 않음.",
+      "distance_km": null,
+      "duration_minutes": null
+    },
+    {
+      "mountain": "무학산",
+      "group": "추가30",
+      "candidate_course": "대표 코스 선정 대기",
+      "source_url": null,
+      "status": "관할기관 상세 원문 추가 확보 필요",
+      "next_action": "대표 경로·왕복/편도·거리·시간·난이도를 확정하지 않음.",
+      "distance_km": null,
+      "duration_minutes": null
+    },
+    {
+      "mountain": "두륜산",
+      "group": "추가30",
+      "candidate_course": "대흥사 기점 (차량 구간 제외 필요)",
+      "source_url": "https://www.foresttrip.go.kr/pot/cc/hm/selectHndfmsmtnMngmeDtl.do?fmmntSeq=71971",
+      "status": "산림청 공식 코스 자료 후보 확보",
+      "next_action": "상세 경로와 원문 갱신일·현재 운영 여부 대조 후 채택. 미확정 거리·시간은 등록하지 않음.",
+      "distance_km": null,
+      "duration_minutes": null
+    },
+    {
+      "mountain": "선운산",
+      "group": "추가30",
+      "candidate_course": "선운사→도솔산→낙조대→선운사",
+      "source_url": "https://www.foresttrip.go.kr/pot/cc/hm/selectHndfmsmtnMngmeDtl.do?fmmntSeq=71994",
+      "status": "산림청 공식 코스 자료 후보 확보",
+      "next_action": "상세 경로와 원문 갱신일·현재 운영 여부 대조 후 채택. 미확정 거리·시간은 등록하지 않음.",
+      "distance_km": null,
+      "duration_minutes": null
+    },
+    {
+      "mountain": "강천산",
+      "group": "추가30",
+      "candidate_course": "강천사→신선봉→왕자봉→매표소",
+      "source_url": "https://www.foresttrip.go.kr/pot/cc/hm/selectHndfmsmtnMngmeDtl.do?fmmntSeq=71948",
+      "status": "산림청 공식 코스 자료 후보 확보",
+      "next_action": "상세 경로와 원문 갱신일·현재 운영 여부 대조 후 채택. 미확정 거리·시간은 등록하지 않음.",
+      "distance_km": null,
+      "duration_minutes": null
+    },
+    {
+      "mountain": "칠갑산",
+      "group": "추가30",
+      "candidate_course": "대표 코스 선정 대기",
+      "source_url": "https://www.foresttrip.go.kr/pot/cc/hm/selectHndfmsmtnMngmeDtl.do?fmmntSeq=72030",
+      "status": "산림청 공식 코스 자료 후보 확보",
+      "next_action": "상세 경로와 원문 갱신일·현재 운영 여부 대조 후 채택. 미확정 거리·시간은 등록하지 않음.",
+      "distance_km": null,
+      "duration_minutes": null
+    },
+    {
+      "mountain": "민주지산",
+      "group": "추가30",
+      "candidate_course": "물한리→삼도봉→석기봉→민주지산→물한리",
+      "source_url": "https://www.foresttrip.go.kr/pot/cc/hm/selectHndfmsmtnMngmeDtl.do?fmmntSeq=71981",
+      "status": "산림청 공식 코스 자료 후보 확보",
+      "next_action": "상세 경로와 원문 갱신일·현재 운영 여부 대조 후 채택. 미확정 거리·시간은 등록하지 않음.",
+      "distance_km": null,
+      "duration_minutes": null
+    },
+    {
+      "mountain": "삼악산",
+      "group": "추가30",
+      "candidate_course": "대표 코스 선정 대기",
+      "source_url": "https://www.foresttrip.go.kr/pot/cc/hm/selectHndfmsmtnMngmeDtl.do?fmmntSeq=71992",
+      "status": "산림청 공식 코스 자료 후보 확보",
+      "next_action": "상세 경로와 원문 갱신일·현재 운영 여부 대조 후 채택. 미확정 거리·시간은 등록하지 않음.",
+      "distance_km": null,
+      "duration_minutes": null
+    },
+    {
+      "mountain": "오봉산",
+      "group": "추가30",
+      "candidate_course": "대표 코스 선정 대기",
+      "source_url": "https://www.foresttrip.go.kr/",
+      "status": "관할기관 상세 원문 추가 확보 필요",
+      "next_action": "숲나들e 산 상세 자료 확인; 재현 가능한 상세 링크 및 경로표 형식 재확인 필요.",
+      "distance_km": null,
+      "duration_minutes": null
+    },
+    {
+      "mountain": "공작산",
+      "group": "추가30",
+      "candidate_course": "대표 코스 선정 대기",
+      "source_url": "https://www.foresttrip.go.kr/pot/cc/hm/selectHndfmsmtnMngmeDtl.do?fmmntSeq=71951",
+      "status": "산림청 공식 코스 자료 후보 확보",
+      "next_action": "상세 경로와 원문 갱신일·현재 운영 여부 대조 후 채택. 미확정 거리·시간은 등록하지 않음.",
+      "distance_km": null,
+      "duration_minutes": null
+    },
+    {
+      "mountain": "구병산",
+      "group": "추가30",
+      "candidate_course": "적암→정수암터→정상→적암",
+      "source_url": "https://www.foresttrip.go.kr/pot/cc/hm/selectHndfmsmtnMngmeDtl.do?fmmntSeq=71954",
+      "status": "산림청 공식 코스 자료 후보 확보",
+      "next_action": "상세 경로와 원문 갱신일·현재 운영 여부 대조 후 채택. 미확정 거리·시간은 등록하지 않음.",
+      "distance_km": null,
+      "duration_minutes": null
+    },
+    {
+      "mountain": "도락산",
+      "group": "추가30",
+      "candidate_course": "상선암→제봉→도락산",
+      "source_url": "https://www.knps.or.kr/front/portal/visit/visitCourseGuide.do?parkId=121400&vcursId=121400V019",
+      "status": "국립공원 공식 코스 자료 후보 확보",
+      "next_action": "공식 페이지 내 3.3km와 3.0km 표기가 달라 거리 확정 보류.",
+      "distance_km": null,
+      "duration_minutes": null
+    },
+    {
+      "mountain": "대야산",
+      "group": "추가30",
+      "candidate_course": "월영대→밀재→대야산→피아골",
+      "source_url": "https://www.knps.or.kr/front/portal/visit/visitCourseGuide.do?parkId=120500&vcursId=120500V014",
+      "status": "국립공원 공식 코스 자료 후보 확보",
+      "next_action": "공식 9.8km·350분 표기. 주차장 포함 여부와 시작점 재확인.",
+      "distance_km": null,
+      "duration_minutes": null
+    },
+    {
+      "mountain": "주흘산",
+      "group": "추가30",
+      "candidate_course": "제1관문→혜국사→주흘영봉→제2관문",
+      "source_url": "https://www.foresttrip.go.kr/pot/cc/hm/selectHndfmsmtnMngmeDtl.do?fmmntSeq=72019",
+      "status": "산림청 공식 코스 자료 후보 확보",
+      "next_action": "상세 경로와 원문 갱신일·현재 운영 여부 대조 후 채택. 미확정 거리·시간은 등록하지 않음.",
+      "distance_km": null,
+      "duration_minutes": null
+    },
+    {
+      "mountain": "금수산",
+      "group": "추가30",
+      "candidate_course": "상학→남근석공원→금수산",
+      "source_url": "https://www.knps.or.kr/front/portal/visit/visitCourseGuide.do?parkId=121400&vcursId=121400V013",
+      "status": "국립공원 공식 코스 자료 후보 확보",
+      "next_action": "구간별 수치만 확인. 회귀 경로와 총소요시간 미확정.",
+      "distance_km": null,
+      "duration_minutes": null
+    },
+    {
+      "mountain": "장안산",
+      "group": "추가30",
+      "candidate_course": "대표 코스 선정 대기",
+      "source_url": "https://www.foresttrip.go.kr/pot/cc/hm/selectHndfmsmtnMngmeDtl.do?fmmntSeq=72013",
+      "status": "산림청 공식 코스 자료 후보 확보",
+      "next_action": "상세 경로와 원문 갱신일·현재 운영 여부 대조 후 채택. 미확정 거리·시간은 등록하지 않음.",
+      "distance_km": null,
+      "duration_minutes": null
+    },
+    {
+      "mountain": "적상산",
+      "group": "추가30",
+      "candidate_course": "서창 기점 적상산 코스",
+      "source_url": "https://www.knps.or.kr/front/portal/visit/visitCourseGuide.do?parkId=120800&vcursId=120800V005",
+      "status": "국립공원 공식 코스 자료 후보 확보",
+      "next_action": "대표 도착점·정상 좌표와 일치 여부 후속 확인.",
+      "distance_km": null,
+      "duration_minutes": null
+    },
+    {
+      "mountain": "운장산",
+      "group": "추가30",
+      "candidate_course": "대표 코스 선정 대기",
+      "source_url": "https://www.foresttrip.go.kr/pot/cc/hm/selectHndfmsmtnMngmeDtl.do?fmmntSeq=72008",
+      "status": "산림청 공식 코스 자료 후보 확보",
+      "next_action": "상세 경로와 원문 갱신일·현재 운영 여부 대조 후 채택. 미확정 거리·시간은 등록하지 않음.",
+      "distance_km": null,
+      "duration_minutes": null
+    },
+    {
+      "mountain": "조계산",
+      "group": "추가30",
+      "candidate_course": "대표 코스 선정 대기",
+      "source_url": "https://www.suncheon.go.kr/tour/",
+      "status": "관할기관 상세 원문 추가 확보 필요",
+      "next_action": "관할 관광 포털 확인. 코스 상세 원문 추가 확보 필요.",
+      "distance_km": null,
+      "duration_minutes": null
+    }
+  ]
+}

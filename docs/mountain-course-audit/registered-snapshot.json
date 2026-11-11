@@ -1,0 +1,298 @@
+[
+  {
+    "name": "북한산",
+    "courses": [
+      {
+        "name": "백운대 최단 코스 (탐방지원센터)",
+        "distance": "4km",
+        "time": 180,
+        "diff": "중상",
+        "trailhead": "북한산 백운대탐방지원센터"
+      },
+      {
+        "name": "대남문 능선 코스 (구기동)",
+        "distance": "8.5km",
+        "time": 270,
+        "diff": "중",
+        "trailhead": "북한산 구기탐방지원센터"
+      },
+      {
+        "name": "숨은벽 능선 코스 (밤골)",
+        "distance": "7.6km",
+        "time": 240,
+        "diff": "상",
+        "trailhead": "북한산 밤골공원지킴터"
+      }
+    ]
+  },
+  {
+    "name": "설악산",
+    "courses": [
+      {
+        "name": "대청봉 최단 (오색 코스)",
+        "distance": "10km",
+        "time": 480,
+        "diff": "상",
+        "trailhead": "설악산 남설악탐방지원센터"
+      },
+      {
+        "name": "한계령~대청봉 종주 코스",
+        "distance": "13.5km",
+        "time": 660,
+        "diff": "최상",
+        "trailhead": "설악산 한계령탐방지원센터"
+      }
+    ]
+  },
+  {
+    "name": "한라산",
+    "courses": [
+      {
+        "name": "성판악~백록담 코스",
+        "distance": "19.2km",
+        "time": 540,
+        "diff": "중상",
+        "trailhead": "한라산 성판악탐방안내소"
+      },
+      {
+        "name": "관음사~백록담 코스",
+        "distance": "17.4km",
+        "time": 600,
+        "diff": "상",
+        "trailhead": "한라산 관음사지구야영장"
+      }
+    ]
+  },
+  {
+    "name": "지리산",
+    "courses": [
+      {
+        "name": "중산리~천왕봉 단거리",
+        "distance": "10.8km",
+        "time": 480,
+        "diff": "상",
+        "trailhead": "지리산 중산리탐방안내소"
+      },
+      {
+        "name": "백무동~천왕봉 코스",
+        "distance": "15km",
+        "time": 570,
+        "diff": "중상",
+        "trailhead": "지리산 백무동탐방지원센터"
+      }
+    ]
+  },
+  {
+    "name": "계룡산",
+    "courses": [
+      {
+        "name": "동학사~관음봉 순환 코스",
+        "distance": "8.5km",
+        "time": 300,
+        "diff": "중상",
+        "trailhead": "계룡산 동학사주차장"
+      },
+      {
+        "name": "갑사~관음봉 코스",
+        "distance": "7km",
+        "time": 240,
+        "diff": "중",
+        "trailhead": "계룡산 갑사주차장"
+      }
+    ]
+  },
+  {
+    "name": "덕유산",
+    "courses": [
+      {
+        "name": "곤돌라~향적봉 코스",
+        "distance": "1.2km",
+        "time": 40,
+        "diff": "하",
+        "trailhead": "무주덕유산리조트 관광곤도라"
+      },
+      {
+        "name": "구천동~향적봉 코스",
+        "distance": "17km",
+        "time": 510,
+        "diff": "중상",
+        "trailhead": "덕유산 삼공탐방지원센터"
+      }
+    ]
+  },
+  {
+    "name": "소백산",
+    "courses": [
+      {
+        "name": "어의곡~비로봉 코스",
+        "distance": "10km",
+        "time": 300,
+        "diff": "중",
+        "trailhead": "소백산 어의곡탐방지원센터"
+      }
+    ]
+  },
+  {
+    "name": "태백산",
+    "courses": [
+      {
+        "name": "유일사~천제단 코스",
+        "distance": "8km",
+        "time": 240,
+        "diff": "중하",
+        "trailhead": "태백산 유일사주차장"
+      }
+    ]
+  },
+  {
+    "name": "오대산",
+    "courses": [
+      {
+        "name": "상원사~비로봉 코스",
+        "distance": "7km",
+        "time": 210,
+        "diff": "중",
+        "trailhead": "오대산 상원사주차장"
+      }
+    ]
+  },
+  {
+    "name": "치악산",
+    "courses": [
+      {
+        "name": "구룡사~사다리병창 코스",
+        "distance": "11km",
+        "time": 360,
+        "diff": "상",
+        "trailhead": "치악산 구룡탐방지원센터"
+      }
+    ]
+  },
+  {
+    "name": "월악산",
+    "courses": [
+      {
+        "name": "보덕암~영봉 코스",
+        "distance": "8km",
+        "time": 330,
+        "diff": "상",
+        "trailhead": "월악산 보덕암주차장"
+      }
+    ]
+  },
+  {
+    "name": "속리산",
+    "courses": [
+      {
+        "name": "법주사~문장대 코스",
+        "distance": "12km",
+        "time": 330,
+        "diff": "중",
+        "trailhead": "속리산 법주사소형주차장"
+      }
+    ]
+  },
+  {
+    "name": "가야산",
+    "courses": [
+      {
+        "name": "백운동~상왕봉 코스",
+        "distance": "7.5km",
+        "time": 270,
+        "diff": "중상",
+        "trailhead": "가야산 백운동탐방지원센터"
+      }
+    ]
+  },
+  {
+    "name": "무등산",
+    "courses": [
+      {
+        "name": "증심사~서석대 코스",
+        "distance": "12km",
+        "time": 330,
+        "diff": "중",
+        "trailhead": "무등산 증심사주차장"
+      }
+    ]
+  },
+  {
+    "name": "주왕산",
+    "courses": [
+      {
+        "name": "대전사~주봉 코스",
+        "distance": "9km",
+        "time": 270,
+        "diff": "하",
+        "trailhead": "주왕산 상의주차장"
+      }
+    ]
+  },
+  {
+    "name": "도봉산",
+    "courses": [
+      {
+        "name": "도봉탐방센터~신선대",
+        "distance": "6.5km",
+        "time": 210,
+        "diff": "중상",
+        "trailhead": "도봉산탐방지원센터"
+      }
+    ]
+  },
+  {
+    "name": "관악산",
+    "courses": [
+      {
+        "name": "서울대~연주대 코스",
+        "distance": "6km",
+        "time": 210,
+        "diff": "중",
+        "trailhead": "관악산공원 입구"
+      }
+    ]
+  },
+  {
+    "name": "대둔산",
+    "courses": [
+      {
+        "name": "케이블카~마천대 코스",
+        "distance": "2km",
+        "time": 90,
+        "diff": "하",
+        "trailhead": "대둔산케이블카"
+      },
+      {
+        "name": "수락계곡~마천대 코스",
+        "distance": "7km",
+        "time": 240,
+        "diff": "중",
+        "trailhead": "대둔산 수락계곡주차장"
+      }
+    ]
+  },
+  {
+    "name": "내장산",
+    "courses": [
+      {
+        "name": "일주문~신선봉 코스",
+        "distance": "8km",
+        "time": 270,
+        "diff": "중",
+        "trailhead": "내장산 일주문"
+      }
+    ]
+  },
+  {
+    "name": "마이산",
+    "courses": [
+      {
+        "name": "탑사~암마이봉 코스",
+        "distance": "5km",
+        "time": 150,
+        "diff": "중하",
+        "trailhead": "마이산 남부주차장"
+      }
+    ]
+  }
+]
