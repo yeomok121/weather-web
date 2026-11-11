@@ -191,7 +191,7 @@ function WeatherDetails({ airQuality = {}, current = {}, isMountainMode = false,
           <svg width="100%" height="40" viewBox="0 0 180 40" preserveAspectRatio="none">
             <path d="M 10 5 Q 90 60 170 5" fill="none" stroke={celestial.isNight ? "rgba(0,0,0,0.4)" : "rgba(0,0,0,0.2)"} strokeWidth="1.5" strokeDasharray="4 4" />
           </svg>
-          <span style={{ position: 'absolute', bottom: '6px', left: `calc(${celestial.position}% - 10px)`, fontSize: '14px', background: 'rgba(255,255,255,0.8)', borderRadius: '50%', padding: '3px', boxShadow: '0 2px 6px rgba(0,0,0,0.1)', lineHeight: 1, transition: 'left 0.8s ease-in-out' }}>
+          <span style={{ position: 'absolute', bottom: '6px', left: `calc(${celestial.position}% - 10px)`, fontSize: '20px', lineHeight: 1, transition: 'left 0.8s ease-in-out' }}>
             {celestial.icon}
           </span>
         </div>
