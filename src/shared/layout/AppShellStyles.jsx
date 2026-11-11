@@ -13,22 +13,19 @@ const APP_SHELL_CSS = `
         @keyframes rainFall { to { transform: translateY(110vh) rotate(15deg); opacity: 0; } }
 
         .glass-card {
-          background: linear-gradient(145deg, rgba(255,255,255,0.84), rgba(248,251,255,0.66)) !important;
+          background: var(--surface-glass) !important;
           backdrop-filter: blur(22px) saturate(155%);
           -webkit-backdrop-filter: blur(22px) saturate(155%);
-          border: 1px solid rgba(255,255,255,0.88) !important;
-          box-shadow: 0 16px 38px rgba(31, 48, 76, 0.085), inset 0 1px 0 rgba(255,255,255,0.95), inset 0 -1px 0 rgba(255,255,255,0.35) !important;
-          border-radius: 20px !important;
+          border: 1px solid var(--border) !important;
+          box-shadow: var(--shadow-card) !important;
+          border-radius: var(--radius-card) !important;
         }
 
-        .top-nav { background: rgba(246,250,255,0.68) !important; backdrop-filter: blur(26px) saturate(165%) !important; -webkit-backdrop-filter: blur(26px) saturate(165%) !important; border-bottom: 1px solid rgba(255,255,255,0.82) !important; box-shadow: 0 8px 24px rgba(31,48,76,0.055), inset 0 1px 0 rgba(255,255,255,0.9); padding: 12px 24px !important; }
-        .top-nav-inner { max-width: 1320px !important; }
-        .search-wrapper > div:first-child { background: rgba(255,255,255,0.62) !important; backdrop-filter: blur(18px) saturate(150%); -webkit-backdrop-filter: blur(18px) saturate(150%); border: 1px solid rgba(255,255,255,0.92) !important; border-radius: 15px !important; box-shadow: 0 6px 20px rgba(31,48,76,0.06), inset 0 1px 0 rgba(255,255,255,0.95) !important; padding: 7px 12px !important; }
-        .search-wrapper > div:first-child:focus-within { border-color: rgba(23,107,99,0.35) !important; box-shadow: 0 0 0 3px rgba(23,107,99,0.1), 0 8px 22px rgba(31,48,76,0.08) !important; }
-        .top-nav > div > button { background: rgba(255,255,255,0.54) !important; color: #334155 !important; backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.88) !important; border-radius: 13px !important; box-shadow: 0 5px 16px rgba(31,48,76,0.05), inset 0 1px 0 rgba(255,255,255,0.9) !important; padding: 9px 14px !important; }
-        .main-container { max-width: 1320px !important; gap: 24px !important; padding: 28px 24px !important; }
-        .main-container > div { gap: 20px !important; }
-        .weather-main-card { border-radius: 22px !important; box-shadow: 0 20px 46px rgba(31,48,76,0.1), inset 0 1px 0 rgba(255,255,255,0.95) !important; }
+        .main-container { max-width: 1320px !important; gap: var(--space-6) !important; padding: 28px 24px !important; }
+        .main-container > div { gap: var(--space-6) !important; }
+        .hourly-forecast-card, .detail-info-card, .main-weekly-card > .glass-card, .main-outlook-card > .glass-card { padding: var(--space-6) !important; }
+        .main-container .glass-card h3 { font-size: var(--font-title) !important; color: var(--text-main); }
+        .weather-main-card { border-radius: var(--radius-card) !important; box-shadow: 0 20px 46px rgba(31,48,76,0.1), inset 0 1px 0 rgba(255,255,255,0.95) !important; }
         .weather-main-card > div:first-child { background: linear-gradient(145deg, rgba(255,255,255,0.55), rgba(236,246,255,0.48)) !important; }
         .weather-main-right { background: linear-gradient(145deg, rgba(244,249,255,0.6), rgba(235,246,245,0.48)) !important; border-color: rgba(255,255,255,0.78) !important; backdrop-filter: blur(18px); }
         .app-footer { background: rgba(248,251,255,0.72) !important; backdrop-filter: blur(20px); border-top: 1px solid rgba(255,255,255,0.85) !important; border-radius: 0 !important; }
@@ -48,7 +45,6 @@ const APP_SHELL_CSS = `
 
         /* Wide mountain workspace: itinerary left, forecast context right. */
         .main-container.is-mountain-mode { max-width: 1680px !important; box-sizing: border-box; grid-template-columns: minmax(0, 1fr) minmax(340px, 400px); padding: 24px clamp(20px, 2.5vw, 48px) !important; }
-        .top-nav.is-mountain-mode .top-nav-inner { max-width: 1584px !important; }
         .weather-status-shell.is-mountain-mode { max-width: 1680px; box-sizing: border-box; padding-inline: clamp(20px, 2.5vw, 48px); }
         .is-mountain-mode .main-side-column .main-outlook-card h3 { line-height: 1.5; }
         .is-mountain-mode .main-outlook-card button { padding: 10px 8px !important; line-height: 1.5; }
@@ -96,9 +92,6 @@ const APP_SHELL_CSS = `
           .main-container .main-login-card { order: 5; }
           .main-container.is-mountain-mode .hourly-forecast-card { order: 1; }
           .main-container.is-mountain-mode .detail-info-card { order: 2; }
-          .top-nav { padding: 10px 16px !important; }
-          .top-nav-inner { flex-direction: column !important; gap: 8px !important; }
-          .search-wrapper { width: 100% !important; max-width: 100% !important; }
           .weather-main-card { flex-direction: column !important; }
           .weather-main-right { border-left: none !important; border-top: 1px solid #e8edf3 !important; padding: 14px 16px !important; }
           .app-footer { flex-direction: column !important; gap: 8px !important; padding: 12px !important; text-align: center !important; }
@@ -110,7 +103,6 @@ const APP_SHELL_CSS = `
           .weather-status-shell.is-mountain-mode { padding-inline: 10px; }
           .main-container { padding: 12px 10px !important; gap: 12px !important; }
           .main-container > div { gap: 12px !important; }
-          .top-nav { padding: 10px 12px !important; }
           .main-container button, .main-container input, .main-container select { min-height: 40px; }
           .main-container input[type="checkbox"] { min-height: 18px; min-width: 18px; }
           .hourly-chart-wrapper { min-width: 0; }

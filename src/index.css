@@ -1,22 +1,25 @@
 @import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v3.2.1/dist/web/static/pretendard.css");
+@import "./styles/tokens.css";
+@import "./styles/ui.css";
 
 :root {
   font-family: "Pretendard", -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
-  color: #172b4d;
+  color: var(--text-main);
   background: #f4f7fb;
+  font-size: var(--font-body);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   --page-bg: #f4f7fb;
-  --surface: #ffffff;
+
   --surface-muted: #f7f9fc;
-  --ink: #172b4d;
-  --muted: #64748b;
-  --line: #e5ebf2;
-  --brand: #176b63;
-  --brand-soft: #e8f5f2;
-  --focus: #2563eb;
+  --ink: var(--text-main);
+  --muted: var(--text-sub);
+  --line: var(--border);
+  --brand: var(--primary);
+  --brand-soft: var(--primary-soft);
+  --focus: var(--info);
 }
 
 * {
@@ -54,7 +57,7 @@ input:focus-visible,
 select:focus-visible,
 a:focus-visible,
 summary:focus-visible {
-  outline: 3px solid rgba(37, 99, 235, 0.35);
+  outline: 2px solid var(--primary);
   outline-offset: 2px;
 }
 

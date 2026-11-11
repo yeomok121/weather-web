@@ -257,7 +257,7 @@ function App() {
         <Toast toast={toast} />
 
         <TopNav
-          search={search} isMountainMode={isMountainMode} isFishingPage={isFishingPage}
+          search={search} isMountainMode={isMountainMode} isFishingPage={isFishingPage} isNoticeOpen={isNoticeOpen}
           mountainsList={mountainsList} loadMountainWeather={loadMountainWeather}
           onOpenHikingPlanner={handleOpenHikingPlanner} onToggleFishing={handleToggleFishing} onOpenNotices={() => setIsNoticeOpen(true)}
         />
