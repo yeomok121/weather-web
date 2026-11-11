@@ -1,5 +1,5 @@
 // 공통: 관심 지역 목록(최대 5곳). 로그인 전에는 이 브라우저에, 로그인 후에는 계정에 저장합니다.
-import { useEffect, useState } from 'react';
+import { useEffect, useEffectEvent, useState } from 'react';
 import { requestJson } from '../lib/apiClient';
 
 // onLocationReady(location): 관심 지역 목록을 처음 보여줄 때 첫 번째 지역으로 호출됩니다.
@@ -7,9 +7,8 @@ import { requestJson } from '../lib/apiClient';
 export function useFavorites({ loggedInUser, setLoggedInUser, showToast, onLocationReady }) {
   const [favorites, setFavorites] = useState([]);
 
-  useEffect(() => {
+  const initializeFavorites = useEffectEvent((isCancelled) => {
     const defaultFav = [{ name: '부천시', lat: 37.5034, lon: 126.7660 }];
-    let cancelled = false;
     const getStoredList = (key) => {
       try {
         const stored = JSON.parse(localStorage.getItem(key) || '[]');
@@ -26,7 +25,7 @@ export function useFavorites({ loggedInUser, setLoggedInUser, showToast, onLocat
       const hasPendingSync = localStorage.getItem(pendingKey) !== null;
       const pendingFavorites = getStoredList(pendingKey);
       const showFallback = (items) => {
-        if (cancelled) return;
+        if (isCancelled()) return;
         const visible = items.length ? items : defaultFav;
         setFavorites(visible);
         onLocationReady(visible[0]);
@@ -51,7 +50,7 @@ export function useFavorites({ loggedInUser, setLoggedInUser, showToast, onLocat
               body: JSON.stringify({ favorites: mergedFavorites }),
             });
           }
-          if (cancelled) return;
+          if (isCancelled()) return;
           localStorage.setItem(userKey, JSON.stringify(mergedFavorites));
           localStorage.removeItem(pendingKey);
           if (remainingGuestFavorites.length) localStorage.setItem('guestFavorites', JSON.stringify(remainingGuestFavorites));
@@ -61,7 +60,7 @@ export function useFavorites({ loggedInUser, setLoggedInUser, showToast, onLocat
           if (remainingGuestFavorites.length) showToast('계정에는 관심 지역 5곳을 저장했고, 나머지는 이 브라우저에 남겨뒀어요.');
           else if (guestFavorites.length) showToast('이 기기의 관심 지역을 계정에 저장했어요.');
         } catch (error) {
-          if (cancelled) return;
+          if (isCancelled()) return;
           if (error.status === 401) {
             const recoverable = hasPendingSync ? pendingFavorites : (localAccountFavorites.length ? localAccountFavorites : guestFavorites);
             if (recoverable.length && !guestFavorites.length) localStorage.setItem('guestFavorites', JSON.stringify(recoverable));
@@ -80,6 +79,10 @@ export function useFavorites({ loggedInUser, setLoggedInUser, showToast, onLocat
       const initialLocation = guestFavorites[0] || defaultFav[0];
       onLocationReady(initialLocation);
     }
+  });
+  useEffect(() => {
+    let cancelled = false;
+    queueMicrotask(() => { if (!cancelled) initializeFavorites(() => cancelled); });
     return () => { cancelled = true; };
   }, [loggedInUser?.id, loggedInUser?.accessToken]);
 

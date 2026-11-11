@@ -45,7 +45,8 @@ export default function HikingPlannerPanel({
   const notify = message => { setSuccess(message); onShowToast?.(message); };
   const partyStorageKey = `hiking:last-party:${user?.id || 'guest'}`;
 
-  useEffect(() => { setTab(focusSection); }, [focusSection]);
+  const [previousFocusSection, setPreviousFocusSection] = useState(focusSection);
+  if (previousFocusSection !== focusSection) { setPreviousFocusSection(focusSection); setTab(focusSection); }
   useEffect(() => { onInvitationCountChange?.(invitations.length); }, [invitations.length, onInvitationCountChange]);
   const loadParty = useCallback(async (id, accessToken = token) => {
     if (!id || !accessToken) return;
@@ -83,6 +84,10 @@ export default function HikingPlannerPanel({
   }, [token, loadParty]);
 
   useEffect(() => {
+    let cancelled = false;
+    // Discard the setup of an unmounted or replaced account before touching storage or starting requests.
+    queueMicrotask(() => {
+    if (cancelled) return;
     setPlans([]); setParties([]); setInvitations([]); setParty(null);
     setError(''); setSuccess(''); setSavedPlan(null);
     setItemFilter('all'); setCreateOpen(false); setSavedOpen(false);
@@ -93,6 +98,8 @@ export default function HikingPlannerPanel({
     setSelectedPartyId(selectedRef.current);
     if (deepLink || remembered) setTab('party');
     if (token) refresh(token);
+    });
+    return () => { cancelled = true; };
   }, [token, partyStorageKey, refresh]);
 
   useEffect(() => {

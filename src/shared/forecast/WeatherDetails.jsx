@@ -4,7 +4,11 @@ import { isWeatherNumber } from '../lib/forecastCache';
 function WeatherDetails({ airQuality = {}, current = {}, isMountainMode = false, mountainInfo = null, weatherFetchedAt = null }) {
   const sunrise = current.sunrise || '06:00';
   const sunset = current.sunset || '18:00';
-  const [celestial, setCelestial] = useState({ position: 50, icon: '☀️', isNight: false });
+  const [clockAt, setClockAt] = useState(() => Date.now());
+  useEffect(() => {
+    const interval = setInterval(() => setClockAt(Date.now()), 60000);
+    return () => clearInterval(interval);
+  }, []);
 
   const hasData = current.hasData === true && isWeatherNumber(current.temp);
   const temp = isWeatherNumber(current.temp) ? Number(current.temp) : null;
@@ -114,9 +118,8 @@ function WeatherDetails({ airQuality = {}, current = {}, isMountainMode = false,
     : ['기온·바람·습도: 평지 예보 기반 산악 추정값'];
   if (isMountainMode) mountainSources.push('현재 대기질: OpenWeather');
 
-  useEffect(() => {
-    const calculatePosition = () => {
-      const now = new Date();
+  const celestial = (() => {
+      const now = new Date(clockAt);
       const currentMinutes = now.getHours() * 60 + now.getMinutes();
 
       const parseTime = (str, fallbackH) => {
@@ -141,12 +144,7 @@ function WeatherDetails({ airQuality = {}, current = {}, isMountainMode = false,
         const pos = Math.min(95, Math.max(5, (passedNight / totalNight) * 100));
         return { position: pos, icon: '🌙', isNight: true };
       }
-    };
-
-    setCelestial(calculatePosition());
-    const interval = setInterval(() => setCelestial(calculatePosition()), 60000);
-    return () => clearInterval(interval);
-  }, [sunrise, sunset]);
+  })();
 
   if (!hasData) return <section className="glass-card detail-info-card weather-empty"><h3>상세 날씨 정보</h3><p>기상 자료를 받지 못했습니다.</p><dl className="empty-weather-values"><div><dt>습도</dt><dd>자료 없음</dd></div><div><dt>풍속</dt><dd>자료 없음</dd></div><div><dt>대기질</dt><dd>자료 없음</dd></div></dl><p>자료가 확인되면 옷차림과 활동 안내를 제공합니다.</p></section>;
   return (

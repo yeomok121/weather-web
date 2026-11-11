@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useEffectEvent, useRef } from 'react';
 import { FiChevronLeft, FiChevronRight, FiShare2, FiPlus, FiX, FiRotateCcw, FiMapPin, FiEye, FiInfo } from 'react-icons/fi';
 import { LineChart, Line, YAxis, ResponsiveContainer } from 'recharts';
 import { PACE_OPTIONS } from '../../pages/mountain/paceOptions.js';
@@ -82,7 +82,10 @@ function HourlyForecast({
   const [visibleStep, setVisibleStep] = useState('hike-schedule');
   const previousDraftOwner = useRef(null);
   const hasWeatherData = weatherData.hasData === true;
-  useEffect(() => { setDepartureDraft(departureInputValue(departureAt)); setDepartureError(''); }, [departureAt]);
+  const [previousDepartureAt, setPreviousDepartureAt] = useState(null);
+  if (previousDepartureAt !== departureAt) {
+    setPreviousDepartureAt(departureAt); setDepartureDraft(departureInputValue(departureAt)); setDepartureError('');
+  }
 
   const [gearList, setGearList] = useState([]);
   const [checklist, setChecklist] = useState({});
@@ -227,13 +230,12 @@ function HourlyForecast({
     return items;
   };
 
-  useEffect(() => {
-    setCurrentIndex(0);
-  }, [hourlyData]);
+  const [previousHourlyData, setPreviousHourlyData] = useState(hourlyData);
+  if (previousHourlyData !== hourlyData) { setPreviousHourlyData(hourlyData); setCurrentIndex(0); }
 
   const draftOwner = loggedInUser?.id || 'guest';
   const draftKey = `hiking:draft:${draftOwner}:${mountainInfo?.name || 'none'}:${weatherData.forecastDate || weatherData.date}`;
-  useEffect(() => {
+  const hydrateDraft = useEffectEvent(() => {
     if (!isMountainMode || !hasWeatherData || !mountainInfo?.name) return;
     if (applyingSavedPlanRef.current) { setHydratedDraftKey(draftKey); return; }
     let draft = readHikingDraft(draftKey);
@@ -252,6 +254,11 @@ function HourlyForecast({
     }
     previousDraftOwner.current = draftOwner;
     setHydratedDraftKey(draftKey);
+  });
+  useEffect(() => {
+    let cancelled = false;
+    queueMicrotask(() => { if (!cancelled) hydrateDraft(); });
+    return () => { cancelled = true; };
   }, [draftKey, hasWeatherData, isMountainMode]);
 
   useEffect(() => {

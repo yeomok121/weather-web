@@ -41,8 +41,9 @@ export function useFishingSummary(area) {
   }, []);
 
   useEffect(() => {
-    load();
-    return () => { requestRef.current?.abort(); requestRef.current = null; };
+    let cancelled = false;
+    queueMicrotask(() => { if (!cancelled) load(); });
+    return () => { cancelled = true; requestRef.current?.abort(); requestRef.current = null; };
   }, [areaKey, load]);
 
   return { data, error, loading, reload: load };

@@ -1,34 +1,30 @@
 // 관리자 페이지 ( /admin )
 // 들어올 때 관리자 권한을 확인합니다.
 //   로그인한 상태면 계정 토큰으로, 아니면 관리자 비밀번호로 확인합니다.
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useEffectEvent, useState } from 'react';
 import { API } from '../../shared/lib/config';
-import { readStoredJson } from '../../shared/lib/browserStorage';
 import AdminPage from './AdminPage';
 
 export default function AdminRoute({ loggedInUser, onExit }) {
   const [session, setSession] = useState(null); // { password, token, role }
-  const [isPasswordOpen, setIsPasswordOpen] = useState(false);
   const [adminPasswordInput, setAdminPasswordInput] = useState('');
-  const checkedRef = useRef(false);
-
+  const denyAccess = useEffectEvent(message => { alert(message); onExit(); });
+  const token = loggedInUser?.accessToken;
   useEffect(() => {
-    if (checkedRef.current) return;
-    checkedRef.current = true;
-    // 주소로 바로 들어온 경우 로그인 정보가 아직 복원되지 않았을 수 있어 저장된 값도 확인합니다.
-    const stored = readStoredJson('loggedInUser', null);
-    const user = loggedInUser || (typeof stored?.accessToken === 'string' && typeof stored?.id === 'string' ? stored : null);
-    if (!user?.accessToken) { setIsPasswordOpen(true); return; }
+    if (!token) return;
+    const controller = new AbortController();
     (async () => {
       try {
-        const res = await fetch(`${API}/api/admin/verify`, { method: 'POST', headers: { Authorization: `Bearer ${user.accessToken}` } });
-        if (res.status === 403) { alert('관리자 권한이 없는 계정입니다.'); onExit(); return; }
-        if (!res.ok) { alert('로그인 상태를 확인할 수 없습니다. 다시 로그인해 주세요.'); onExit(); return; }
+        const res = await fetch(`${API}/api/admin/verify`, { method: 'POST', headers: { Authorization: `Bearer ${token}` }, signal: controller.signal });
+        if (controller.signal.aborted) return;
+        if (res.status === 403) { denyAccess('관리자 권한이 없는 계정입니다.'); return; }
+        if (!res.ok) { denyAccess('로그인 상태를 확인할 수 없습니다. 다시 로그인해 주세요.'); return; }
         const data = await res.json();
-        setSession({ password: '', token: user.accessToken, role: data.role });
-      } catch { alert('관리자 권한을 확인하지 못했습니다. 잠시 후 다시 시도해 주세요.'); onExit(); }
+        if (!controller.signal.aborted) setSession({ password: '', token, role: data.role });
+      } catch { if (!controller.signal.aborted) denyAccess('관리자 권한을 확인하지 못했습니다. 잠시 후 다시 시도해 주세요.'); }
     })();
-  }, [loggedInUser, onExit]);
+    return () => controller.abort();
+  }, [token]);
 
   const handleAdminAuth = async () => {
     try {
@@ -36,14 +32,14 @@ export default function AdminRoute({ loggedInUser, onExit }) {
       if (!res.ok) { alert('비밀번호가 틀렸습니다. 접근 권한이 없습니다.'); setAdminPasswordInput(''); return; }
       const data = await res.json();
       setSession({ password: adminPasswordInput, token: '', role: data.role || 'superadmin' });
-      setIsPasswordOpen(false); setAdminPasswordInput('');
+      setAdminPasswordInput('');
     } catch { alert('서버에 연결할 수 없습니다.'); }
   };
 
-  if (session) {
+  if (session && (session.password ? !token : session.token === token)) {
     return <AdminPage adminPassword={session.password} adminToken={session.password ? '' : session.token} adminRole={session.role} onClose={() => { setSession(null); onExit(); }} />;
   }
-  if (!isPasswordOpen) return null;
+  if (token) return <p role="status" className="weather-status-shell">관리자 권한을 확인하고 있습니다...</p>;
   return (
     <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 9999 }}>
       <div className="glass-card" style={{ padding: '24px', borderRadius: '16px', width: '320px', textAlign: 'center' }}>

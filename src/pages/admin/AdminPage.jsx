@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useEffectEvent } from 'react';
 import { FiTrash2, FiEdit, FiCheck, FiX, FiSearch, FiUserPlus } from 'react-icons/fi';
 import { API } from '../../shared/lib/config';
 import { koreanDate } from '../mountain/lib/hikingPlan';
@@ -274,10 +274,15 @@ function AdminPage({ onClose, adminPassword, adminToken, adminRole }) {
   );
 
   // 초기 데이터 불러오기 (공지사항 + 회원 목록) - 둘 다 서버(MySQL)에서 가져옴
-  useEffect(() => {
+  const loadInitialData = useEffectEvent(() => {
     loadNotices();
     if (canMembers) { loadUsers(); loadAudit(); }
-  }, []);
+  });
+  useEffect(() => {
+    let cancelled = false;
+    queueMicrotask(() => { if (!cancelled) loadInitialData(); });
+    return () => { cancelled = true; };
+  }, [adminPassword, adminToken, adminRole]);
 
   return (
     <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: '#f4f7f6', zIndex: 9999, overflowY: 'auto' }}>

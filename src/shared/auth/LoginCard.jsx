@@ -21,7 +21,11 @@ function LoginCard({ loginPrompt = 0, onSignUpClick, onFindPasswordClick, logged
   const [loginBusy, setLoginBusy] = useState(false);
   const [loginError, setLoginError] = useState('');
   const [roleState, setRoleState] = useState({ token: '', label: '' });
-  useEffect(() => { if (loginPrompt > 0) setShowLoginForm(true); }, [loginPrompt]);
+  const [handledLoginPrompt, setHandledLoginPrompt] = useState(loginPrompt);
+  if (handledLoginPrompt !== loginPrompt) {
+    setHandledLoginPrompt(loginPrompt);
+    if (loginPrompt > 0) setShowLoginForm(true);
+  }
   useEffect(() => {
     const token = loggedInUser?.accessToken;
     if (!token) return undefined;

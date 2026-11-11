@@ -1,6 +1,6 @@
 // 공통: 날씨·산악 예보 불러오기와 화면에 표시할 예보 상태.
 // 날씨 페이지와 산악 페이지가 함께 사용합니다. 수정할 때는 팀에 먼저 공유해 주세요.
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import { requestJson, requestForecastJson } from '../lib/apiClient';
 import { forecastKey, isUsableForecast, isWeatherNumber, readForecastCache, writeForecastCache } from '../lib/forecastCache';
 import { koreanDate } from '../../pages/mountain/lib/hikingPlan';
@@ -150,12 +150,11 @@ export function useForecast({ mountainsList, onNewForecast }) {
   const retryForecast = () => loadForecast(lastWeatherRequestRef.current);
 
   useEffect(() => { recoveryStateRef.current = connectionState; }, [connectionState]);
+  const recoverForecast = useEffectEvent(() => {
+    if (navigator.onLine && ['error', 'stale'].includes(recoveryStateRef.current.phase)) loadForecast(lastWeatherRequestRef.current);
+  });
   useEffect(() => {
-    const recover = () => {
-      if (navigator.onLine && ['error', 'stale'].includes(recoveryStateRef.current.phase)) {
-        loadForecast(lastWeatherRequestRef.current);
-      }
-    };
+    const recover = () => recoverForecast();
     window.addEventListener('online', recover);
     window.addEventListener('focus', recover);
     return () => { window.removeEventListener('online', recover); window.removeEventListener('focus', recover); forecastControllerRef.current?.abort(); };

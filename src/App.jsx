@@ -7,7 +7,7 @@
 //
 // 페이지 안의 기능은 각 pages/ 폴더에서 작업하고, 여러 페이지가 같이 쓰는 기능은 shared/에 있습니다.
 // 새 페이지를 만들면 아래 <Routes>에 <Route> 한 줄을 추가하세요.
-import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react';
+import { Suspense, lazy, useEffect, useEffectEvent, useMemo, useRef, useState } from 'react';
 import { Navigate, Route, Routes, matchPath, useLocation, useNavigate } from 'react-router-dom';
 import { FiSettings } from 'react-icons/fi';
 import './App.css';
@@ -106,16 +106,23 @@ function App() {
     navigate(path);
   };
 
-  // 뒤로가기·주소 입력처럼 버튼 없이 날씨/산악 화면이 바뀐 경우 그 화면의 기본 예보를 불러옵니다.
-  useEffect(() => {
-    if (routeMode === null || routeMode === mainMode) return;
-    setMainMode(routeMode);
+  // Remember the last main mode while the user visits fishing or admin pages.
+  if (routeMode !== null && routeMode !== mainMode) setMainMode(routeMode);
+  const previousRouteMode = useRef(routeMode);
+  const syncRouteForecast = useEffectEvent(() => {
+    if (routeMode === null || routeMode === previousRouteMode.current) return;
+    previousRouteMode.current = routeMode;
     if (skipModeLoadRef.current) { skipModeLoadRef.current = false; return; }
     if (routeMode) loadMountainWeather(routeMountainName || mountainInfo?.name || DEFAULT_MOUNTAIN);
     else {
       const targetFav = favorites[0] || DEFAULT_LOCATION;
       loadWeather(targetFav.lat, targetFav.lon, targetFav.name);
     }
+  });
+  useEffect(() => {
+    let cancelled = false;
+    queueMicrotask(() => { if (!cancelled) syncRouteForecast(); });
+    return () => { cancelled = true; };
   }, [routeMode]);
 
   useEffect(() => {
