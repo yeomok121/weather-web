@@ -40,3 +40,9 @@
   .header-navigation { margin-left: auto; gap: var(--space-1); }
   .header-nav-item { font-size: var(--font-caption); padding: var(--space-2); gap: var(--space-1); }
 }
+
+.header-brand{display:inline-flex;align-items:center;gap:8px;flex-shrink:0;padding:0;border:0;background:transparent;color:var(--primary);font:inherit;font-size:20px;font-weight:800;letter-spacing:-.5px;cursor:pointer;min-height:40px}
+.header-brand-plus{color:var(--primary);margin-left:2px}
+.header-brand:focus-visible{outline:2px solid var(--primary);outline-offset:4px;border-radius:10px}
+.header-navigation{margin-left:auto}
+@media(max-width:768px){.header-brand{font-size:16px;gap:4px}.header-brand>svg{width:20px}.top-nav-inner{flex-wrap:nowrap}.header-navigation{gap:0}}

@@ -211,16 +211,6 @@ function App() {
     );
   };
 
-  const handleOpenHikingPlanner = () => {
-    if (isMountainMode) {
-      if (routeMode !== true) navigate(mountainPath(mountainInfo?.name));
-    } else {
-      goToMode(true, mountainPath(DEFAULT_MOUNTAIN));
-      loadMountainWeather(DEFAULT_MOUNTAIN);
-    }
-    setTimeout(() => { window.dispatchEvent(new Event('weather:open-hiking-planner')); document.getElementById('hiking-planner')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 100);
-  };
-
   // 낚시 페이지에서 '날씨 홈'을 누르면 마지막으로 보던 날씨/산악 화면으로 돌아갑니다.
   const mainPath = isMountainMode ? mountainPath(mountainInfo?.name) : '/';
   const handleToggleFishing = () => navigate(isFishingPage ? mainPath : '/fishing');
@@ -259,7 +249,7 @@ function App() {
         <TopNav
           search={search} isMountainMode={isMountainMode} isFishingPage={isFishingPage} isNoticeOpen={isNoticeOpen}
           mountainsList={mountainsList} loadMountainWeather={loadMountainWeather}
-          onOpenHikingPlanner={handleOpenHikingPlanner} onToggleFishing={handleToggleFishing} onOpenNotices={() => setIsNoticeOpen(true)}
+          onToggleMountainMode={handleToggleMountainMode} onGoHome={() => { if (isMountainMode) handleToggleMountainMode(); else navigate('/'); }} onToggleFishing={handleToggleFishing} onOpenNotices={() => setIsNoticeOpen(true)}
         />
 
         {routeMode !== null && <div className={`weather-status-shell ${isMountainMode ? "is-mountain-mode" : ""}`}><WeatherConnectionStatus state={forecast.connectionState} hasData={forecast.weatherData.hasData} fetchedAt={forecast.weatherFetchedAt} onRetry={forecast.retryForecast} /></div>}

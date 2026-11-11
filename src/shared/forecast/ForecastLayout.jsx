@@ -14,7 +14,7 @@ export default function ForecastLayout({ extras = null }) {
   const {
     activeWeather, aiBriefing, aiMessage, connectionState, departureOffsetHours, effectiveMountainInfo,
     forecastError, handleApplyHikingPlan, handleCurrentLocation, handleDeleteAccount, handleFavoriteClick, handleLogin,
-    handleLogout, handleOpenAddRegion, handleRemoveFavorite, handleToggleMountainMode, handleUpdateUser, hikingPlanSummary,
+    handleLogout, handleOpenAddRegion, handleRemoveFavorite,  handleUpdateUser, hikingPlanSummary,
     hourlyData, isAiLoading, isMountainMode, lastWeatherRequestRef, loadMountainWeather, loadWeather,
     loggedInUser, loginPrompt, mountainInfo, mountainsList, paceType, promptLogin,
     restoredDepartureAt, selectedCourseIdx, selectedDateIdx, setCustomGearList, setDepartureOffsetHours, setIsFindPasswordOpen,
@@ -41,7 +41,6 @@ export default function ForecastLayout({ extras = null }) {
           isLoggedIn={!!loggedInUser}
           onCurrentLocationClick={handleCurrentLocation}
           isMountainMode={isMountainMode}
-          onToggleMountainMode={handleToggleMountainMode}
           mountainInfo={mountainInfo}
           mountainsList={mountainsList}
           onSelectMountain={(mName) => loadMountainWeather(mName)}

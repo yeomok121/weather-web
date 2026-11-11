@@ -5,7 +5,7 @@ function WeatherMain({
   weatherData, hourlyData = [], weeklyData = [],
   selectedDateIdx, onSelectDate,
   isAiLoading, aiMessage, favorites, onAddClick, onFavoriteClick, onRemoveFavorite, onCurrentLocationClick,
-  isMountainMode, onToggleMountainMode, mountainInfo, mountainsList = [], onSelectMountain, isLoggedIn = false
+  isMountainMode, mountainInfo, mountainsList = [], onSelectMountain, isLoggedIn = false
 }) {
   const [hoveredIndex, setHoveredIndex] = useState(null);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
@@ -103,21 +103,6 @@ function WeatherMain({
             {weatherAlert.text}
           </div>
         )}
-
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '8px' }}>
-          <button
-            onClick={onToggleMountainMode}
-            style={{
-              padding: '6px 12px', borderRadius: '16px', fontSize: '11.5px', fontWeight: 'bold', cursor: 'pointer',
-              border: isMountainMode ? '1px solid rgba(22,163,74,0.3)' : '1px solid rgba(37,99,235,0.3)',
-              backgroundColor: isMountainMode ? 'rgba(22,163,74,0.9)' : 'rgba(255,255,255,0.6)',
-              color: isMountainMode ? '#ffffff' : '#1e3a8a',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.04)', transition: 'all 0.2s ease'
-            }}
-          >
-            {isMountainMode ? '⛰️ 일반 날씨로 전환 ↺' : '⛰️ 산악 기상 모드'}
-          </button>
-        </div>
 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', flexWrap: 'wrap', marginBottom: '6px' }}>
           <h3 style={{ margin: '0', fontSize: '18px', fontWeight: '800' }}>{weatherData.region}</h3>
