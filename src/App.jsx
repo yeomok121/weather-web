@@ -262,7 +262,7 @@ function App() {
           onOpenHikingPlanner={handleOpenHikingPlanner} onToggleFishing={handleToggleFishing} onOpenNotices={() => setIsNoticeOpen(true)}
         />
 
-        {routeMode !== null && <div className="weather-status-shell"><WeatherConnectionStatus state={forecast.connectionState} hasData={forecast.weatherData.hasData} fetchedAt={forecast.weatherFetchedAt} onRetry={forecast.retryForecast} /></div>}
+        {routeMode !== null && <div className={`weather-status-shell ${isMountainMode ? "is-mountain-mode" : ""}`}><WeatherConnectionStatus state={forecast.connectionState} hasData={forecast.weatherData.hasData} fetchedAt={forecast.weatherFetchedAt} onRetry={forecast.retryForecast} /></div>}
 
         <Suspense fallback={<div role="status" className="weather-status-shell">화면을 불러오는 중입니다...</div>}>
         <Routes>

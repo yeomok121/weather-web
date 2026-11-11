@@ -3,7 +3,7 @@ import { FiSearch, FiBell, FiClock } from 'react-icons/fi';
 
 export default function TopNav({ search, isMountainMode, isFishingPage, mountainsList, loadMountainWeather, onOpenHikingPlanner, onToggleFishing, onOpenNotices }) {
   return (
-    <nav className="top-nav" style={{ position: 'sticky', top: 0, zIndex: 100, background: 'rgba(255, 255, 255, 0.25)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(255, 255, 255, 0.3)', padding: '12px 40px', display: 'flex', justifyContent: 'center' }}>
+    <nav className={`top-nav ${isMountainMode && !isFishingPage ? "is-mountain-mode" : ""}`} style={{ position: 'sticky', top: 0, zIndex: 100, background: 'rgba(255, 255, 255, 0.25)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(255, 255, 255, 0.3)', padding: '12px 40px', display: 'flex', justifyContent: 'center' }}>
       <div className="top-nav-inner" style={{ display: 'flex', width: '100%', maxWidth: '1320px', justifyContent: 'space-between', alignItems: 'center' }}>
         
         <div className="search-wrapper" style={{ position: 'relative', display: 'flex', width: '44%', maxWidth: '520px' }}>

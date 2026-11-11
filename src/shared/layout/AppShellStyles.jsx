@@ -46,8 +46,25 @@ const APP_SHELL_CSS = `
         .mobile-mtn-pills { display: none; }
         .desktop-mtn-list { display: block; }
 
+        /* Wide mountain workspace: itinerary left, forecast context right. */
+        .main-container.is-mountain-mode { max-width: 1920px !important; box-sizing: border-box; grid-template-columns: minmax(0, 2.2fr) minmax(340px, 1fr); padding: 24px clamp(20px, 2.5vw, 48px) !important; }
+        .top-nav.is-mountain-mode .top-nav-inner { max-width: 1824px !important; }
+        .weather-status-shell.is-mountain-mode { max-width: 1920px; box-sizing: border-box; padding-inline: clamp(20px, 2.5vw, 48px); }
+        .is-mountain-mode .main-side-column .main-outlook-card h3 { line-height: 1.5; }
+        .is-mountain-mode .main-outlook-card button { padding: 10px 8px !important; line-height: 1.5; }
+        .is-mountain-mode .main-outlook-card p { line-height: 1.7; overflow-wrap: anywhere; }
+        @media (min-width: 1200px) {
+          .is-mountain-mode .mountain-journey { padding: 24px !important; }
+          .is-mountain-mode .mountain-plan-controls label, .is-mountain-mode .mountain-plan-controls legend { font-size: 14px; }
+          .is-mountain-mode .mountain-plan-controls select, .is-mountain-mode .mountain-plan-controls input { font-size: 14px; }
+          .is-mountain-mode .mountain-score-basis { font-size: 12px !important; }
+          .is-mountain-mode .mountain-route-result { font-size: 14px; }
+        }
+
         /* 💡 레이아웃 전체 간격(gap) 축소 및 모바일 최적화 */
         @media (max-width: 900px) {
+          .main-container.is-mountain-mode { padding: 18px 16px !important; }
+          .weather-status-shell.is-mountain-mode { padding-inline: 16px; }
           .main-container { grid-template-columns: minmax(0, 1fr) !important; display: grid !important; padding: 18px 16px !important; gap: 14px !important; }
           .main-primary-column, .main-side-column { display: contents !important; }
           .main-container .detail-info-card { order: 1; }
@@ -67,6 +84,8 @@ const APP_SHELL_CSS = `
           .desktop-mtn-list { display: none !important; }
         }
         @media (max-width: 640px) {
+          .main-container.is-mountain-mode { padding: 12px 10px !important; }
+          .weather-status-shell.is-mountain-mode { padding-inline: 10px; }
           .main-container { padding: 12px 10px !important; gap: 12px !important; }
           .main-container > div { gap: 12px !important; }
           .top-nav { padding: 10px 12px !important; }
