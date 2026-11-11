@@ -1,3 +1,5 @@
+import { createPortal } from 'react-dom';
+import MountainSummaryCard from '../../pages/mountain/components/MountainSummaryCard';
 import React, { useState, useEffect, useEffectEvent, useRef } from 'react';
 import { FiChevronLeft, FiChevronRight, FiShare2, FiPlus, FiX, FiRotateCcw, FiMapPin, FiEye, FiInfo } from 'react-icons/fi';
 import { LineChart, Line, YAxis, ResponsiveContainer } from 'recharts';
@@ -43,6 +45,7 @@ function MountainInfo({ label, children }) {
 }
 
 function HourlyForecast({
+  summaryHost = null,
   hourlyData = EMPTY_HOURLY,
   isLoading = false,
   error = '',
@@ -68,6 +71,7 @@ function HourlyForecast({
   isStale = false,
   onApplyHikingPlan
 }) {
+  const tomorrowButtonRef = useRef(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [localCourseIdx, setLocalCourseIdx] = useState(0);
   const [localPaceType, setLocalPaceType] = useState('normal');
@@ -600,6 +604,14 @@ function HourlyForecast({
         }
       `}</style>
 
+      {summaryHost && (isMountainMode || mountainInfo?.course_available === false) && createPortal(<MountainSummaryCard
+        mountainName={mountainInfo?.name} weatherData={weatherData}
+        timeline={timeline} departureAt={departureAt} finishTime={itineraryTime(adjustedTimeMins)}
+        safeDescentTime={safeDescentTime} sunset={hikingPlanSummary?.solar?.sunset || weatherData?.sunset}
+        decisionSummary={decisionSummary} isStale={isStale} canPlan={isMountainMode && !!hikingPlanSummary}
+        onTomorrow={() => tomorrowButtonRef.current?.click()} onEdit={() => jumpTo('hike-schedule')}
+      />, summaryHost)}
+
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '12px' }}>
         <div>
           <h4 style={{ margin: 0, fontSize: '16px', fontWeight: '800', color: isMountainMode ? '#166534' : '#1e293b' }}>
@@ -627,6 +639,7 @@ function HourlyForecast({
 
       </nav>}
       {isMountainMode && hikingPlanSummary && <MountainPlanControls
+        tomorrowButtonRef={tomorrowButtonRef}
         mountainName={mountainInfo?.name} onReview={() => jumpTo('mountain-conditions')}
         courses={courses} courseIndex={activeCourseIdx} onCourse={setCourseIdx} paces={PACE_OPTIONS} pace={activePace} onPace={setPace}
         departureDraft={departureDraft} departureError={departureError} onDepartureDraft={editDeparture} onDeparture={changeDeparture}
@@ -635,16 +648,8 @@ function HourlyForecast({
       />}
       {isMountainMode && (!hasWeatherData || isLoading) && <HikingPlannerPanel user={loggedInUser} mountainInfo={mountainInfo} selectedCourse={selectedCourse} courseIndex={activeCourseIdx} weatherDate={weatherData} selectedDateIdx={selectedDateIdx} pace={activePace} departureOffsetHours={activeDepOffset} departureTime="" gearList={[]} checklist={{}} canSave={false} onApplyPlan={handleApplySavedPlan} onRequireLogin={onRequireLogin} onShowToast={onShowToast} focusSection={plannerSection} />}
 
-      {isMountainMode && hasWeatherData && !isLoading && (
-        <div id="mountain-conditions" tabIndex={-1} className="mountain-safety" role={timeline.status === 'danger' ? 'alert' : 'status'} aria-live="polite" style={{
-          display: 'flex', alignItems: 'flex-start', gap: '8px', padding: '10px 12px', marginBottom: '12px',
-          borderRadius: '10px', border: `1px solid ${timeline.safetyColor}55`,
-          backgroundColor: timeline.safetyBg, color: timeline.safetyColor,
-        }}>
-          <strong style={{ flexShrink: 0, fontSize: '12px' }}>{timeline.safetyBadge}</strong>
-          <span style={{ fontSize: '12px', lineHeight: '1.45', fontWeight: '700', wordBreak: 'keep-all' }}>{decisionSummary}</span>
-        </div>
-      )}
+      {isMountainMode && hasWeatherData && !isLoading && <div id="mountain-conditions" tabIndex={-1} />}
+
 
       {isMountainMode && hasWeatherData && !isLoading && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '20px' }}>
@@ -653,6 +658,7 @@ function HourlyForecast({
 
             <div className="mtn-score-altitude-box" style={{ flex: '1 1 250px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
 
+              <details className="mountain-score-details"><summary>자세히 보기 · 기상·조망 점수</summary>
               <div className="mtn-dual-score-row" style={{ display: 'flex', gap: '8px' }}>
                 <div style={{ flex: 1, backgroundColor: 'rgba(240,253,244,0.75)', borderRadius: '12px', padding: '10px 8px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(22,163,74,0.2)' }}>
                   <span style={{ fontSize: '12px', color: '#166534', fontWeight: '800', marginBottom: '4px', whiteSpace: 'nowrap' }}>🌤️ 기상 조건 점수</span>
@@ -702,6 +708,8 @@ function HourlyForecast({
                 <div>오늘 산행은 출발부터 예상 하산까지 시간별 예보 중 가장 낮은 점수를 표시합니다. 시간별 예보가 부족하면 사용 가능한 구간만 반영합니다. 선택일이 미래면 일 단위 예보만 반영되어 출발 시각별 차이는 계산하지 않습니다.</div>
                 <div>두 점수는 기상 요소를 바탕으로 한 참고 지표입니다. 산행 허가나 안전을 보증하지 않으며, 조망 점수도 실제 조망 확률이 아닙니다. 운고·실측 시정·노면 상태는 반영되지 않을 수 있습니다.</div>
               </MountainInfo>
+
+              </details>
 
               <div style={{ backgroundColor: 'rgba(255,255,255,0.55)', borderRadius: '12px', padding: '12px', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '6px', fontSize: '11.5px' }}>
                 <strong style={{ fontSize: '12px', color: '#334155' }}>{isFuture ? '선택일 고도별 기온' : '현재 고도별 기온'} <span className="mountain-reference-label">참고 추정</span></strong>

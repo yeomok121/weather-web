@@ -1,0 +1,23 @@
+.mountain-summary-host { order: -1; }
+.mountain-summary { display: grid; gap: var(--space-4); }
+.mountain-summary-heading { display: flex; justify-content: space-between; align-items: center; gap: var(--space-4); flex-wrap: wrap; }
+.mountain-summary-heading p { margin: 0 0 var(--space-1); }
+.mountain-summary-heading h2 { margin: 0; font-size: var(--font-title); color: var(--text-main); }
+.mountain-summary-actions { display: flex; gap: var(--space-2); flex-wrap: wrap; }
+.mountain-summary-departure { margin: 0; color: var(--text-sub); font-size: var(--font-body); line-height: 1.6; }
+.mountain-summary-departure strong { color: var(--text-main); }
+.mountain-summary-status { padding: var(--space-3) var(--space-4); border-radius: var(--radius-control); font-size: var(--font-emphasis); font-weight: 750; line-height: 1.6; background: var(--surface-soft); color: var(--text-sub); }
+.mountain-summary-metrics { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: var(--space-4); margin: 0; }
+.mountain-summary-metrics div { min-width: 0; display: flex; flex-direction: column; gap: var(--space-2); }
+.mountain-summary-metrics dt { color: var(--text-sub); font-size: var(--font-body); line-height: 1.5; }
+.mountain-summary-metrics dd { margin: 0; font-size: var(--font-metric); font-weight: 800; color: var(--text-main); overflow-wrap: anywhere; }
+.mountain-summary-metrics span { color: var(--text-sub); font-size: var(--font-caption); line-height: 1.6; }
+.mountain-summary-finish { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--space-2); margin: 0; padding-top: var(--space-4); border-top: 1px solid var(--border); font-size: var(--font-body); color: var(--text-sub); }
+.mountain-summary-finish strong { color: var(--text-main); font-size: var(--font-emphasis); }
+.mountain-summary-message, .mountain-summary-stale { margin: 0; padding: var(--space-3) var(--space-4); border-radius: var(--radius-control); background: var(--surface-soft); color: var(--text-main); font-size: var(--font-body); line-height: 1.6; }
+.mountain-summary-message.is-danger { color: var(--danger); background: color-mix(in srgb, var(--danger) 8%, var(--surface)); border-left: var(--space-1) solid var(--danger); }
+.mountain-summary-stale { color: var(--warning); }
+.mountain-score-details > summary { padding: var(--space-3); font-size: var(--font-body); font-weight: 700; color: var(--primary); cursor: pointer; }
+.mountain-score-details[open] > summary { margin-bottom: var(--space-3); }
+@media(max-width: 1100px) { .mountain-summary-metrics { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+@media(max-width: 640px) { .mountain-summary { padding: var(--space-4); } .mountain-summary-heading { align-items: flex-start; } }

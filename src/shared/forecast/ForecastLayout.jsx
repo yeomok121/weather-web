@@ -2,6 +2,7 @@
 //   왼쪽: 현재 날씨, (페이지별 추가 영역), 시간별 예보, 도시 날씨 전망
 //   오른쪽: 로그인, 상세 날씨, 주간 예보, 산악 전망
 // extras: 페이지마다 현재 날씨 카드 아래에 추가로 보여줄 내용 (예: 산악 페이지의 직접 입력 코스)
+import { useState } from 'react';
 import { useApp } from '../AppContext';
 import LoginCard from '../auth/LoginCard';
 import WeatherMain from './WeatherMain';
@@ -22,6 +23,8 @@ export default function ForecastLayout({ extras = null }) {
     showToast, weatherData, weatherFetchedAt, weeklyData, favorites,
   } = useApp();
 
+  const [summaryHost, setSummaryHost] = useState(null);
+
   const outlook = (
     <div className="main-outlook-card" style={{ display: 'flex', flexDirection: 'column' }}>
           {activeWeather.hasData ? <WeatherOutlook
@@ -39,6 +42,7 @@ export default function ForecastLayout({ extras = null }) {
     <main className={`main-container ${isMountainMode ? 'is-mountain-mode' : ''}`} style={{ flexGrow: 1, maxWidth: '1320px', margin: '0 auto', width: '100%', zIndex: 1, padding: '28px 24px' }}>
       <div className="main-primary-column" style={{ display: 'flex', flexDirection: 'column', gap: '16px', minWidth: 0 }}>
 
+        {isMountainMode && <div className="mountain-summary-host" ref={setSummaryHost} />}
         <WeatherMain
           weatherData={activeWeather}
           hourlyData={hourlyData}
@@ -62,6 +66,7 @@ export default function ForecastLayout({ extras = null }) {
 
         {extras}
         <HourlyForecast
+          summaryHost={summaryHost}
           hourlyData={hourlyData}
           isLoading={isAiLoading && !weatherData.hasData}
           error={forecastError}
