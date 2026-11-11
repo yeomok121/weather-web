@@ -1,10 +1,10 @@
 import test, { afterEach } from 'node:test';
 import assert from 'node:assert/strict';
-import { requestJson, requestForecastJson } from '../src/lib/apiClient.js';
-import { forecastKey, isUsableForecast, readForecastCache, writeForecastCache } from '../src/lib/forecastCache.js';
-import { planDepartureAt, readHikingDraft, writeHikingDraft } from '../src/lib/hikingPlan.js';
-import { assessHikingForecastWindow } from '../src/components/mountainAssessment.js';
-import { readStoredJson } from '../src/lib/browserStorage.js';
+import { requestJson, requestForecastJson } from '../src/shared/lib/apiClient.js';
+import { forecastKey, isUsableForecast, readForecastCache, writeForecastCache } from '../src/shared/lib/forecastCache.js';
+import { planDepartureAt, readHikingDraft, writeHikingDraft } from '../src/pages/mountain/lib/hikingPlan.js';
+import { assessHikingForecastWindow } from '../src/pages/mountain/components/mountainAssessment.js';
+import { readStoredJson } from '../src/shared/lib/browserStorage.js';
 
 const originalFetch = globalThis.fetch;
 afterEach(() => { globalThis.fetch = originalFetch; });

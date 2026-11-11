@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { summarizeMountainWindow } from '../src/lib/mountainWindow.js';
+import { summarizeMountainWindow } from '../src/pages/mountain/lib/mountainWindow.js';
 const makeRows = () => Array.from({ length: 7 }, (_, i) => ({ valid_at: new Date(Date.parse('2026-11-12T09:00:00+09:00') + i * 3600000).toISOString(), temp: 4-i, wind_speed: i+1, humidity: 70+i, pop: i === 2 ? 0.6 : 0, description: '맑음' }));
 
 test('uses selected forecast interval and exposes worst conditions', () => {

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FiAnchor, FiRefreshCw, FiWind, FiActivity, FiClock, FiInfo, FiMapPin, FiDroplet } from 'react-icons/fi';
-import { API } from '../config';
+import { API } from '../../shared/lib/config';
 
 const FISHING_AREAS = [
   { id: 'chuja', place: '추자도 해상', region: '12D00000', regionName: '제주도 전해상', lat: 33.96194, lon: 126.44527 },

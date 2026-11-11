@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FiTrash2, FiEdit, FiCheck, FiX, FiSearch, FiUserPlus } from 'react-icons/fi';
-import { API } from '../config';
-import { koreanDate } from '../lib/hikingPlan';
+import { API } from '../../shared/lib/config';
+import { koreanDate } from '../mountain/lib/hikingPlan';
 
 const newNotice = () => ({ type: '안내', title: '', date: koreanDate() });
 

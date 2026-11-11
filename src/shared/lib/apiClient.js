@@ -1,4 +1,4 @@
-import { API } from '../config.js';
+import { API } from './config.js';
 
 export class ApiError extends Error {
   constructor(message, { status = 0, requestId = '', timeout = false } = {}) {

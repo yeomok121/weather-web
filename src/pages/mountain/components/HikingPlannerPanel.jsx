@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { FiBell, FiCheck, FiSave, FiTrash2, FiUserPlus, FiUsers, FiRefreshCw, FiShare2 } from 'react-icons/fi';
-import { requestJson } from '../lib/apiClient';
+import { requestJson } from '../../../shared/lib/apiClient';
 import './HikingPlannerPanel.css';
 
 const displayDeparture = value => Number.isFinite(Date.parse(value)) ? new Date(value).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : value || '미정';

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { API } from '../config';
+import { API } from '../lib/config';
 
 function NoticeModal({ onClose }) {
   const [notices, setNotices] = useState([]);

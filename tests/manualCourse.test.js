@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { makeManualCourse, parseManualCourse } from '../src/lib/manualCourse.js';
+import { makeManualCourse, parseManualCourse } from '../src/pages/mountain/lib/manualCourse.js';
 test('manual courses round trip through saved course name', () => {
  const course = makeManualCourse({name:'휴양림 왕복', distance:'8.25', minutes:'240'});
  assert.deepEqual(parseManualCourse(course.name), course);

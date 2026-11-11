@@ -2,12 +2,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import { FiChevronLeft, FiChevronRight, FiShare2, FiPlus, FiX, FiRotateCcw, FiMapPin, FiEye, FiInfo } from 'react-icons/fi';
 import { LineChart, Line, YAxis, ResponsiveContainer } from 'recharts';
 import { getEmojiIcon } from './WeeklyForecast';
-import { assessMountainWeather, estimateSummitView, getHourlyForecastIndex } from './mountainAssessment';
-import HikingPlannerPanel from './HikingPlannerPanel';
-import MountainPlanControls from './MountainPlanControls';
-import MountainQuickGuide from './MountainQuickGuide';
+import { assessMountainWeather, estimateSummitView, getHourlyForecastIndex } from '../../pages/mountain/components/mountainAssessment';
+import HikingPlannerPanel from '../../pages/mountain/components/HikingPlannerPanel';
+import MountainPlanControls from '../../pages/mountain/components/MountainPlanControls';
+import MountainQuickGuide from '../../pages/mountain/components/MountainQuickGuide';
 import './MountainJourney.css';
-import { readHikingDraft, writeHikingDraft, koreanDate } from '../lib/hikingPlan';
+import { readHikingDraft, writeHikingDraft, koreanDate } from '../../pages/mountain/lib/hikingPlan';
 
 const ITEMS_TO_SHOW = 6;
 const EMPTY_HOURLY = [];
