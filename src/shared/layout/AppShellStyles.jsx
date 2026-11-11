@@ -47,9 +47,9 @@ const APP_SHELL_CSS = `
         .desktop-mtn-list { display: block; }
 
         /* Wide mountain workspace: itinerary left, forecast context right. */
-        .main-container.is-mountain-mode { max-width: 1920px !important; box-sizing: border-box; grid-template-columns: minmax(0, 2.2fr) minmax(340px, 1fr); padding: 24px clamp(20px, 2.5vw, 48px) !important; }
-        .top-nav.is-mountain-mode .top-nav-inner { max-width: 1824px !important; }
-        .weather-status-shell.is-mountain-mode { max-width: 1920px; box-sizing: border-box; padding-inline: clamp(20px, 2.5vw, 48px); }
+        .main-container.is-mountain-mode { max-width: 1680px !important; box-sizing: border-box; grid-template-columns: minmax(0, 1fr) minmax(340px, 400px); padding: 24px clamp(20px, 2.5vw, 48px) !important; }
+        .top-nav.is-mountain-mode .top-nav-inner { max-width: 1584px !important; }
+        .weather-status-shell.is-mountain-mode { max-width: 1680px; box-sizing: border-box; padding-inline: clamp(20px, 2.5vw, 48px); }
         .is-mountain-mode .main-side-column .main-outlook-card h3 { line-height: 1.5; }
         .is-mountain-mode .main-outlook-card button { padding: 10px 8px !important; line-height: 1.5; }
         .is-mountain-mode .main-outlook-card p { line-height: 1.7; overflow-wrap: anywhere; }
@@ -59,6 +59,28 @@ const APP_SHELL_CSS = `
           .is-mountain-mode .mountain-plan-controls select, .is-mountain-mode .mountain-plan-controls input { font-size: 14px; }
           .is-mountain-mode .mountain-score-basis { font-size: 12px !important; }
           .is-mountain-mode .mountain-route-result { font-size: 14px; }
+        }
+
+        .member-intro { padding: 20px; }
+        .member-intro h3 { margin: 0 0 8px; font-size: 16px; color: #1e293b; }
+        .member-intro p { margin: 0 0 14px; font-size: 13px; line-height: 1.65; color: #526176; }
+        .member-intro-actions { display: flex; gap: 8px; }
+        .member-intro-actions button { flex: 1; min-height: 40px; border: 1px solid #bed8d0; border-radius: 8px; color: #176b63; background: #fff; font-weight: 700; cursor: pointer; }
+        .member-intro-actions button:first-child { background: #176b63; color: #fff; }
+        .summit-key-metrics { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 8px; margin: 8px 0; padding: 10px 4px; border-block: 1px solid #deebe7; }
+        .summit-key-metrics dt { font-size: 12px; color: #526176; }
+        .summit-key-metrics dd { margin: 4px 0 0; font-size: 15px; font-weight: 750; color: #243e38; }
+        .is-mountain-mode .weather-summary { justify-content: flex-start !important; padding: 16px !important; }
+        .is-mountain-mode .desktop-mtn-list { max-height: 110px !important; }
+        .is-mountain-mode .mountain-safety { flex-wrap: wrap; border-left-width: 4px !important; padding: 14px 16px !important; }
+        .is-mountain-mode .mountain-safety strong { font-size: 15px !important; }
+        .is-mountain-mode .mountain-safety span { font-size: 14px !important; }
+        .is-mountain-mode .mountain-results { align-items: flex-start !important; }
+        .is-mountain-mode .mtn-score-altitude-box { flex: 0.9 1 260px !important; }
+        .is-mountain-mode .mountain-route-result { flex: 1.2 1 320px !important; }
+        @media (max-width: 640px) {
+          .summit-key-metrics { grid-template-columns: repeat(2, minmax(0,1fr)); }
+          .is-mountain-mode .mtn-score-altitude-box, .is-mountain-mode .mountain-route-result { flex: 1 1 100% !important; }
         }
 
         /* 💡 레이아웃 전체 간격(gap) 축소 및 모바일 최적화 */

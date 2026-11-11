@@ -96,7 +96,7 @@ function WeatherMain({
     <div className="weather-main-card glass-card" style={{ borderRadius: '16px', display: 'flex', flexDirection: 'row', overflow: 'hidden' }}>
       
       {/* 💡 전체 패딩 대폭 축소 (16px 20px) 및 요소 밀착 */}
-      <div style={{ flex: 2, padding: '16px 20px', textAlign: 'center', color: '#1e293b', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+      <div className="weather-summary" style={{ flex: 2, padding: '16px 20px', textAlign: 'center', color: '#1e293b', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
         
         {weatherAlert && (
           <div style={{ backgroundColor: weatherAlert.bg, color: weatherAlert.color, borderRadius: '6px', padding: '6px 10px', fontSize: '11.5px', fontWeight: 'bold', marginBottom: '8px', wordBreak: 'keep-all', lineHeight: '1.3' }}>
@@ -163,6 +163,13 @@ function WeatherMain({
           {hasData ? (isMountainMode ? `정상 ${weatherData.condition}` : weatherData.condition) : (isAiLoading ? '날씨 확인 중' : '기상 자료 없음')}
         </p>
         <p style={{ margin: '0 0 8px 0', color: '#475569', fontSize: '12px', fontWeight: '500' }}>{hasData ? weatherData.highLow : '기온 · 습도 · 바람 자료를 확인해 주세요.'}</p>
+
+        {isMountainMode && hasData && <dl className="summit-key-metrics">
+          <div><dt>체감온도</dt><dd>{weatherData.feelsLike ?? '—'}°C</dd></div>
+          <div><dt>능선 풍속</dt><dd>{weatherData.wind_speed ?? '—'} m/s</dd></div>
+          <div><dt>습도</dt><dd>{weatherData.humidity ?? '—'}%</dd></div>
+          <div><dt>오늘 일몰</dt><dd>{weatherData.sunset || '자료 없음'}</dd></div>
+        </dl>}
 
         {diffBadge && <div style={{ display: 'flex', justifyContent: 'center' }}>
           <span style={{ display: 'inline-block', backgroundColor: diffBadge.bg, color: diffBadge.color, borderRadius: '6px', padding: '4px 10px', fontSize: '11px', fontWeight: 'bold' }}>
