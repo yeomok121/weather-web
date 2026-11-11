@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FiAnchor, FiRefreshCw, FiWind, FiActivity, FiClock, FiInfo, FiMapPin, FiDroplet } from 'react-icons/fi';
 import { API } from '../config';
 
@@ -55,9 +55,9 @@ function DataRows({ rows, type }) {
   })}</div>;
 }
 
-async function fetchFishingSummary(area) {
+async function fetchFishingSummary(area, signal) {
   const query = new URLSearchParams({ place: area.place, region: area.region, lat: String(area.lat), lon: String(area.lon) });
-  const response = await fetch(`${API}/api/fishing/summary?${query}`);
+  const response = await fetch(`${API}/api/fishing/summary?${query}`, { signal });
   const body = await response.json();
   if (!response.ok) throw new Error(body.detail || '해양 자료를 불러오지 못했습니다.');
   return body;
@@ -65,26 +65,33 @@ async function fetchFishingSummary(area) {
 
 export default function FishingPage() {
   const [areaId, setAreaId] = useState(FISHING_AREAS[0].id);
-  const [data, setData] = useState(null);
+  const [result, setResult] = useState(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
+  const requestRef = useRef(null);
   const area = FISHING_AREAS.find((item) => item.id === areaId) || FISHING_AREAS[0];
+  const data = result?.areaId === areaId ? result.data : null;
   const load = useCallback(async (requestedArea = area) => {
+    requestRef.current?.abort();
+    const controller = new AbortController();
+    requestRef.current = controller;
+    const timer = setTimeout(() => controller.abort('timeout'), 90000);
     setLoading(true); setError('');
-    try { setData(await fetchFishingSummary(requestedArea)); }
-    catch (e) { setError(e.message || '서버에 연결할 수 없습니다.'); }
-    finally { setLoading(false); }
+    try {
+      const body = await fetchFishingSummary(requestedArea, controller.signal);
+      if (requestRef.current === controller) setResult({ areaId: requestedArea.id, data: body });
+    } catch (e) {
+      if (requestRef.current === controller) setError(controller.signal.aborted ? '응답이 지연되고 있습니다. 다시 시도해 주세요.' : (e.message || '서버에 연결할 수 없습니다.'));
+    } finally {
+      clearTimeout(timer);
+      if (requestRef.current === controller) setLoading(false);
+    }
   }, [area]);
 
   useEffect(() => {
-    let active = true;
-    setLoading(true); setError('');
-    fetchFishingSummary(area)
-      .then((result) => { if (active) setData(result); })
-      .catch((e) => { if (active) setError(e.message || '서버에 연결할 수 없습니다.'); })
-      .finally(() => { if (active) setLoading(false); });
-    return () => { active = false; };
-  }, [area]);
+    load(area);
+    return () => { requestRef.current?.abort(); requestRef.current = null; };
+  }, [area, load]);
 
   const sources = data?.sources || {};
   const buoyRows = sources.buoy?.records || [];
