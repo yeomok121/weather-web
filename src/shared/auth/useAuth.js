@@ -1,17 +1,15 @@
 // 공통: 로그인 상태, 로그인·로그아웃, 내 정보 수정, 회원 탈퇴
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { API } from '../lib/config';
 import { requestJson } from '../lib/apiClient';
 import { readStoredJson, writeStoredJson } from '../lib/browserStorage';
 
 export function useAuth(showToast) {
-  const [loggedInUser, setLoggedInUser] = useState(null);
+  const [loggedInUser, setLoggedInUser] = useState(() => {
+    const saved = readStoredJson('loggedInUser', null);
+    return typeof saved?.accessToken === 'string' && typeof saved?.id === 'string' ? saved : null;
+  });
   const [loginPrompt, setLoginPrompt] = useState(0);
-
-  useEffect(() => {
-    const savedUser = readStoredJson('loggedInUser', null);
-    if (typeof savedUser?.accessToken === 'string' && typeof savedUser?.id === 'string') setLoggedInUser(savedUser);
-  }, []);
 
   const handleLogin = (user) => {
     const guestFavorites = readStoredJson('guestFavorites', []).filter(item => item?.name);

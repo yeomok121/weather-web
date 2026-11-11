@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { requestJson, requestForecastJson } from '../lib/apiClient';
 import { forecastKey, isUsableForecast, isWeatherNumber, readForecastCache, writeForecastCache } from '../lib/forecastCache';
 import { koreanDate } from '../../pages/mountain/lib/hikingPlan';
-import { getEmojiIcon } from './WeeklyForecast';
+import { getEmojiIcon } from './weatherIcons';
 
 
 

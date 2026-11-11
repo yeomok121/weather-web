@@ -1,5 +1,5 @@
 // 공통: 주간 예보에서 다른 날짜를 고르면, 그 날짜 기준으로 화면에 보여줄 날씨 값을 만듭니다.
-import { getEmojiIcon } from './WeeklyForecast';
+import { getEmojiIcon } from './weatherIcons';
 
 export function buildActiveWeather({ weatherData, weeklyData, selectedDateIdx, isMountainMode }) {
   if (selectedDateIdx === 0 || !weeklyData[selectedDateIdx]) return weatherData;

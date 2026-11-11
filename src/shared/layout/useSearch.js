@@ -1,26 +1,20 @@
 // 공통: 상단 검색창 (날씨 페이지는 지역 검색, 산악 페이지는 산 검색)
-import { useEffect, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { API } from '../lib/config';
 import { readStoredJson } from '../lib/browserStorage';
 import { KOREA_REGIONS } from '../../pages/weather/regions';
 
 export function useSearch({ isMountainMode, mountainsList, loadWeather, loadMountainWeather, setIsAiLoading, showToast }) {
   const [searchInput, setSearchInput] = useState('');
-  const [recentSearches, setRecentSearches] = useState([]);
-  const [autoCompleteList, setAutoCompleteList] = useState([]);
+  const [recentSearches, setRecentSearches] = useState(() => readStoredJson('recentSearches', []).filter(value => typeof value === 'string'));
   const [isSearchFocused, setIsSearchFocused] = useState(false);
 
-  useEffect(() => {
+  const autoCompleteList = useMemo(() => {
     const query = searchInput.trim().toLowerCase();
-    if (!query) { setAutoCompleteList([]); return; }
+    if (!query) return [];
     const candidates = isMountainMode ? mountainsList.map(item => item.name) : KOREA_REGIONS;
-    setAutoCompleteList(candidates.filter(name => name.toLowerCase().includes(query)));
+    return candidates.filter(name => name.toLowerCase().includes(query));
   }, [searchInput, mountainsList, isMountainMode]);
-
-  useEffect(() => {
-    const storedSearches = readStoredJson('recentSearches', []).filter(value => typeof value === 'string');
-    setRecentSearches(storedSearches);
-  }, []);
 
   const executeSearch = async (query) => {
     if (!query) return;
@@ -51,7 +45,7 @@ export function useSearch({ isMountainMode, mountainsList, loadWeather, loadMoun
   };
 
   const clearRecentSearches = () => { setRecentSearches([]); localStorage.setItem('recentSearches', '[]'); };
-  const resetSearch = () => { setSearchInput(''); setAutoCompleteList([]); };
+  const resetSearch = () => setSearchInput('');
 
   return {
     searchInput, setSearchInput, recentSearches, clearRecentSearches, autoCompleteList,

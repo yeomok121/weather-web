@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { summarizeMountainWindow } from '../lib/mountainWindow.js';
 import { solarTimes } from '../lib/solarTimes.js';
 import { koreanDate } from '../lib/hikingPlan.js';
@@ -7,15 +7,12 @@ import './MountainWeatherPanel.css';
 const timeText = value => new Intl.DateTimeFormat('ko-KR', {timeZone: 'Asia/Seoul', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hourCycle: 'h23'}).format(new Date(value));
 
 export default function MountainWeatherPanel({ mountainInfo, weatherData, hourlyData, isStale }) {
-  const [start, setStart] = useState('');
+  const [selectedStart, setStart] = useState('');
+  const [referenceAt] = useState(() => Date.now());
   const [duration, setDuration] = useState('3');
   const [checked, setChecked] = useState({});
   const rows = useMemo(() => (Array.isArray(hourlyData) ? hourlyData : []).filter(row => Number.isFinite(Date.parse(row.valid_at))).sort((a, b) => Date.parse(a.valid_at) - Date.parse(b.valid_at)), [hourlyData]);
-  useEffect(() => {
-    const next = rows.find(row => Date.parse(row.valid_at) >= Date.now() - 3600000) || rows[0];
-    setStart(previous => rows.some(row => row.valid_at === previous) ? previous : next?.valid_at || '');
-  }, [rows, mountainInfo?.name]);
-  useEffect(() => { setChecked({}); }, [mountainInfo?.name]);
+  const start = rows.some(row => row.valid_at === selectedStart) ? selectedStart : (rows.find(row => Date.parse(row.valid_at) >= referenceAt - 3600000) || rows[0])?.valid_at || '';
   const dustMatch = (weatherData?.dust || '').match(/\((\d+(?:\.\d+)?)\)/);
   const pm25 = dustMatch ? Number(dustMatch[1]) : null;
   const summary = useMemo(() => summarizeMountainWindow({hourlyData: rows, start, durationHours: Number(duration), pm25}), [rows, start, duration, pm25]);

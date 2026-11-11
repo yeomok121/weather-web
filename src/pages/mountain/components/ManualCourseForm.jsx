@@ -1,17 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { makeManualCourse, parseManualCourse } from '../lib/manualCourse.js';
 import './ManualCourseForm.css';
 
 export default function ManualCourseForm({ mountain, course, onApply }) {
-  const [name, setName] = useState('');
-  const [distance, setDistance] = useState('');
-  const [minutes, setMinutes] = useState('');
+  const match = parseManualCourse(course?.name)?.name.match(/^직접 입력: (.+?) · ([\d.]+)km · (\d+)분$/);
+  const [name, setName] = useState(() => match?.[1] || '');
+  const [distance, setDistance] = useState(() => match?.[2] || '');
+  const [minutes, setMinutes] = useState(() => match?.[3] || '');
   const [error, setError] = useState('');
-  useEffect(() => {
-    const stored = parseManualCourse(course?.name);
-    const match = stored?.name.match(/^직접 입력: (.+?) · ([\d.]+)km · (\d+)분$/);
-    setName(match?.[1] || ''); setDistance(match?.[2] || ''); setMinutes(match?.[3] || ''); setError('');
-  }, [mountain, course?.name]);
   const submit = event => {
     event.preventDefault();
     const value = makeManualCourse({name, distance, minutes});

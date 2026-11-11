@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { FiChevronLeft, FiChevronRight, FiShare2, FiPlus, FiX, FiRotateCcw, FiMapPin, FiEye, FiInfo } from 'react-icons/fi';
 import { LineChart, Line, YAxis, ResponsiveContainer } from 'recharts';
 import { PACE_OPTIONS } from '../../pages/mountain/paceOptions.js';
-import { getEmojiIcon } from './WeeklyForecast';
+import { getEmojiIcon } from './weatherIcons';
 import { assessMountainWeather, estimateSummitView, getHourlyForecastIndex } from '../../pages/mountain/components/mountainAssessment';
 import HikingPlannerPanel from '../../pages/mountain/components/HikingPlannerPanel';
 import MountainPlanControls from '../../pages/mountain/components/MountainPlanControls';

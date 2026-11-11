@@ -9,7 +9,6 @@ export function useMountainCatalog() {
   const [mountainCatalogAttempt, setMountainCatalogAttempt] = useState(0);
   useEffect(() => {
     const controller = new AbortController();
-    setMountainCatalogState('loading');
     requestJson('/api/mountain/list', { signal: controller.signal, timeoutMs: 90000 }).then(rows => {
       if (!Array.isArray(rows)) throw new Error('목록을 확인할 수 없습니다');
       const known = new Map(MOUNTAINS_LIST.map(item => [item.name, item]));
@@ -21,6 +20,6 @@ export function useMountainCatalog() {
     return () => controller.abort();
   }, [mountainCatalogAttempt]);
 
-  const retryMountainCatalog = () => setMountainCatalogAttempt(value => value + 1);
+  const retryMountainCatalog = () => { setMountainCatalogState('loading'); setMountainCatalogAttempt(value => value + 1); };
   return { mountainsList, mountainCatalogState, retryMountainCatalog };
 }

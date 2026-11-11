@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { assessHikingForecastWindow } from './mountainAssessment';
 import './HikingScheduleComparison.css';
 
@@ -6,7 +6,8 @@ const dateFormatter = new Intl.DateTimeFormat('ko-KR', { timeZone: 'Asia/Seoul',
 const timeFormatter = new Intl.DateTimeFormat('ko-KR', { timeZone: 'Asia/Seoul', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
 
 export default function HikingScheduleComparison({ hourlyData, weatherData = {}, durationMinutes, activeOffset = 0, onSelectOffset, restoredDepartureAt, onSelectDeparture }) {
-  const now = new Date();
+  const [referenceAt] = useState(() => Date.now());
+  const now = new Date(referenceAt);
   const restoredTime = Date.parse(restoredDepartureAt);
   const offsetHours = Number.isFinite(Number(activeOffset)) ? Number(activeOffset) : 0;
   // The caller passes the resolved absolute departure, including relative offsets.
@@ -21,7 +22,7 @@ export default function HikingScheduleComparison({ hourlyData, weatherData = {},
     const offset = (date.getTime() - now.getTime()) / 3600000;
     const assessment = assessHikingForecastWindow({ hourlyData, now, departureOffsetHours: offset, durationMinutes: duration,
       fallbackWeather: { temp: weatherData.temp, wind: weatherData.wind_speed, condition: weatherData.condition,
-        humidity: weatherData.humidity, pm25: pm25 ? Number(pm25[0]) : 15, targetPop: weatherData.targetPop },
+        humidity: weatherData.humidity, pm25: pm25 ? Number(pm25[0]) : null, targetPop: weatherData.targetPop },
     });
     const covered = assessment.mode === 'course_window' || assessment.mode === 'partial_window';
     return { hours, date, offset, assessment, finish: new Date(date.getTime() + duration * 60000),
