@@ -12,6 +12,15 @@ import { readHikingDraft, writeHikingDraft, koreanDate } from '../../pages/mount
 
 const ITEMS_TO_SHOW = 6;
 const EMPTY_HOURLY = [];
+// Presentation bands only: assessment scores and status messages stay unchanged.
+const scoreDisplayColor = score => {
+  if (score === null || score === undefined || !Number.isFinite(score)) return '#64748b';
+  if (score >= 80) return '#15803d';
+  if (score >= 60) return '#987000';
+  if (score >= 40) return '#c25808';
+  return '#b91c1c';
+};
+
 const departureInputValue = value => value && Number.isFinite(Date.parse(value)) ? new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date(value)).replace(' ', 'T') : '';
 
 const DEPARTURE_OFFSETS = Array.from({ length: 25 }, (_, value) => ({ value, label: value === 0 ? '지금 출발' : `+${value}시간 뒤` }));
@@ -655,12 +664,12 @@ function HourlyForecast({
               <div className="mountain-score-stack">
                 <div className="mountain-score-card">
                   <span className="mountain-score-card__label">기상 조건 점수 · 참고</span>
-                  <strong className="mountain-score-card__value" style={{ color: weatherScore === null ? undefined : weatherAssessment.color }}>{weatherScore ?? '—'}</strong>
+                  <strong className="mountain-score-card__value" style={{ color: scoreDisplayColor(weatherScore) }}>{weatherScore ?? '—'}</strong>
                   <span className="mountain-score-card__status">{weatherAssessment.status}</span>
                 </div>
                 <div className="mountain-score-card">
                   <span className="mountain-score-card__label">조망 환경 참고 점수</span>
-                  <strong className="mountain-score-card__value" style={{ color: viewEstimate.score === null ? undefined : viewEstimate.gradeColor }}>{viewEstimate.score ?? '—'}</strong>
+                  <strong className="mountain-score-card__value" style={{ color: scoreDisplayColor(viewEstimate.score) }}>{viewEstimate.score ?? '—'}</strong>
                   <span className="mountain-score-card__status">{viewEstimate.gradeText}</span>
                 </div>
               </div>

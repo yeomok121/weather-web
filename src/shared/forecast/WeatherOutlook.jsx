@@ -43,11 +43,11 @@ function WeatherOutlook({
       </h3>
       
       <div style={{ display: 'flex', borderRadius: '8px', overflow: 'hidden', marginBottom: '16px', border: '1px solid rgba(0,0,0,0.08)', backgroundColor: 'rgba(255,255,255,0.4)' }}>
-        <button onClick={() => setActiveTab('weekly')} style={{ flex: 1, padding: '10px 0', background: activeTab === 'weekly' ? 'rgba(255,255,255,0.8)' : 'transparent', border: 'none', borderRight: '1px solid rgba(0,0,0,0.08)', fontWeight: activeTab === 'weekly' ? 'bold' : '600', cursor: 'pointer', color: activeTab === 'weekly' ? (isMountainMode ? '#15803d' : '#0f172a') : '#64748b', transition: 'all 0.2s ease' }}>
+        <button onClick={() => setActiveTab('weekly')} style={{ flex: 1, minWidth: 0, padding: '10px 8px', fontFamily: 'inherit', fontSize: '14px', lineHeight: 1.5, wordBreak: 'keep-all', background: activeTab === 'weekly' ? 'rgba(255,255,255,0.8)' : 'transparent', border: 'none', borderRight: '1px solid rgba(0,0,0,0.08)', fontWeight: activeTab === 'weekly' ? 'bold' : '600', cursor: 'pointer', color: activeTab === 'weekly' ? (isMountainMode ? '#15803d' : '#0f172a') : '#64748b', transition: 'all 0.2s ease' }}>
           {isMountainMode ? '산간 종합 전망' : '주간 종합 전망'}
         </button>
-        <button onClick={() => setActiveTab('ai')} style={{ flex: 1, padding: '10px 0', background: activeTab === 'ai' ? 'rgba(255,255,255,0.8)' : 'transparent', border: 'none', fontWeight: activeTab === 'ai' ? 'bold' : '600', cursor: 'pointer', color: activeTab === 'ai' ? (isMountainMode ? '#15803d' : '#0f172a') : '#64748b', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px', transition: 'all 0.2s ease' }}>
-          {isMountainMode ? '🧗 AI 산행 의사결정 리포트' : '🤖 AI 브리핑'}
+        <button onClick={() => setActiveTab('ai')} style={{ flex: 1, minWidth: 0, padding: '10px 8px', fontFamily: 'inherit', fontSize: '14px', lineHeight: 1.5, wordBreak: 'keep-all', background: activeTab === 'ai' ? 'rgba(255,255,255,0.8)' : 'transparent', border: 'none', fontWeight: activeTab === 'ai' ? 'bold' : '600', cursor: 'pointer', color: activeTab === 'ai' ? (isMountainMode ? '#15803d' : '#0f172a') : '#64748b', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px', transition: 'all 0.2s ease' }}>
+          <span aria-hidden="true">{isMountainMode ? '🧗' : '🤖'}</span><span>{isMountainMode ? 'AI 산행 리포트' : 'AI 브리핑'}</span>
         </button>
       </div>
 
