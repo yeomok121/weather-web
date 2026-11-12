@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import L from 'leaflet';
 import { requestJson } from '../../shared/lib/apiClient';
-import { windArrowRotation, windColor, windDirectionLabel } from './weatherMap';
+import { windArrowRotation, windColor, windDirectionLabel, windTravelLabel } from './weatherMap';
 
 const observedLabel = value => new Intl.DateTimeFormat('ko-KR', {
   timeZone: 'Asia/Seoul', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
@@ -45,17 +45,22 @@ export default function WindLayer({ map, latitude, longitude, revision }) {
       if (rotation !== null) arrow.style.transform = `rotate(${rotation}deg)`;
       const speed = document.createElement('strong');
       speed.textContent = station.speed.toFixed(1);
-      content.append(arrow, speed);
-      const title = `${station.name} · ${station.speed.toFixed(1)}m/s · ${windDirectionLabel(station.direction)}`;
+      const name = document.createElement('small');
+      name.textContent = station.name;
+      const values = document.createElement('div');
+      values.className = 'wind-station__values';
+      values.append(arrow, speed);
+      content.append(name, values);
+      const title = `${station.name} · ${station.speed.toFixed(1)}m/s · ${windTravelLabel(station.direction, station.speed)}`;
       L.marker([station.lat, station.lon], {
-        icon: L.divIcon({ html: content, className: 'wind-station-icon', iconSize: [62, 32], iconAnchor: [31, 16] }),
+        icon: L.divIcon({ html: content, className: 'wind-station-icon', iconSize: [80, 52], iconAnchor: [40, 26] }),
         title, keyboard: true, riseOnHover: true,
       }).addTo(group).bindPopup(() => {
         const popup = document.createElement('div');
         popup.className = 'wind-station-popup';
-        popup.textContent = `${station.name}\n풍속 ${station.speed.toFixed(1)}m/s · ${windDirectionLabel(station.direction)}\n돌풍 ${station.gust === null ? '자료 없음' : `${station.gust.toFixed(1)}m/s`}\n${observedLabel(station.observed_at)} 관측 (한국 시간)`;
+        popup.textContent = `${station.name}\n${windTravelLabel(station.direction, station.speed)}\n풍속 ${station.speed.toFixed(1)}m/s · ${windDirectionLabel(station.direction)}\n돌풍 ${station.gust === null ? '자료 없음' : `${station.gust.toFixed(1)}m/s`}\n${observedLabel(station.observed_at)} 관측 (한국 시간)`;
         return popup;
-      });
+      }, { minWidth: 220, maxWidth: 280, className: 'wind-popup' });
     });
     return () => group.remove();
   }, [map, result]);
@@ -66,6 +71,7 @@ export default function WindLayer({ map, latitude, longitude, revision }) {
   const age = result ? Math.max(0, Math.floor((clock - Date.parse(result.latest_at)) / 60000)) : 0;
 
   return <div className="wind-panel" aria-label="바람 관측 정보">
+    <p className="wind-panel__direction-guide">화살표 끝이 바람이 향하는 쪽입니다. 예: 서쪽 → 동쪽은 서풍 · 숫자는 풍속(m/s)</p>
     {!result && !error && <p role="status">기상청 관측소의 바람을 불러오고 있어요.</p>}
     {error && <p className="radar-card__error" role="alert">{error}</p>}
     {result && <>
@@ -80,6 +86,7 @@ export default function WindLayer({ map, latitude, longitude, revision }) {
           onClick={() => map.setView([station.lat, station.lon], 10)}>
           <span>{station.name} <small>약 {station.distance.toFixed(1)}km</small></span>
           <strong style={{ color: windColor(station.speed) }}>{station.speed.toFixed(1)} <small>m/s</small></strong>
+          <span className="wind-panel__travel">{windTravelLabel(station.direction, station.speed)}</span>
           <small>{windDirectionLabel(station.direction)} · {observedLabel(station.observed_at)}</small>
         </button>)}
       </div>}

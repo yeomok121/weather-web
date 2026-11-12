@@ -20,3 +20,11 @@ export function windDirectionLabel(degrees) {
 export function windArrowRotation(degrees) {
   return Number.isFinite(degrees) ? (degrees + 180) % 360 : null;
 }
+
+export function windTravelLabel(degrees, speed) {
+  if (speed === 0) return '바람 거의 없음';
+  if (!Number.isFinite(degrees)) return '방향 자료 없음';
+  const points = ['북', '북동', '동', '남동', '남', '남서', '서', '북서'];
+  const from = Math.round(degrees / 45) % 8;
+  return `${points[from]}쪽 → ${points[(from + 4) % 8]}쪽`;
+}
