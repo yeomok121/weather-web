@@ -30,6 +30,20 @@
 .radar-card__help summary { cursor: pointer; min-height: 24px; }
 .radar-card__help a { color: #176b5b; }
 .radar-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.weather-map-tabs { display: inline-flex; gap: 4px; padding: 4px; margin-bottom: 16px; background: #eaf3ef; border-radius: 10px; }
+.weather-map-tabs button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 40px; padding: 8px 24px; border: 0; border-radius: 10px; color: #25584f; background: transparent; cursor: pointer; font: inherit; font-size: 14px; font-weight: 700; }
+.weather-map-tabs button[aria-pressed=true] { background: #176b5b; color: #fff; }
+.weather-map-tabs button:focus-visible { outline: 3px solid #1978d2; outline-offset: 2px; }
+.wind-station { display: flex; align-items: center; justify-content: center; gap: 4px; height: 32px; background: #fffffff5; border: 1px solid currentColor; border-radius: 10px; box-shadow: 0 2px 6px #0f172a18; font-size: 14px; }
+.wind-station__arrow { display: inline-block; font-size: 20px; line-height: 1; font-weight: 700; }
+.wind-station-popup { white-space: pre-line; font-size: 14px; line-height: 1.8; }
+.wind-panel { font-size: 14px; color: #334155; line-height: 1.6; }
+.wind-panel__time { margin: 16px 0 12px; }
+.wind-panel__nearby { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 16px 0; }
+.wind-panel__station { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: 12px; background: #f5faf9; border: 1px solid #cee1da; border-radius: 10px; font: inherit; color: #334155; cursor: pointer; text-align: left; }
+.wind-panel__station strong { font-size: 20px; }
+.wind-panel__station small { font-size: 12px; }
+.wind-panel__station:focus-visible { outline: 3px solid #1978d2; outline-offset: 2px; }
 @media (max-width: 600px) {
   .radar-card { padding: 16px; }
   .radar-card__map { height: 320px; }
@@ -37,6 +51,7 @@
   .radar-card__timeline { flex-basis: 100%; }
   .radar-card__error { flex-wrap: wrap; }
   .radar-card__heading { align-items: flex-start; }
+  .wind-panel__nearby { grid-template-columns: 1fr; }
 }
 @media (max-width: 768px) {
   .main-container .radar-card { order: 2; }

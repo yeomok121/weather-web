@@ -1,16 +1,17 @@
 import { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { FiCloudRain, FiCrosshair, FiPause, FiPlay, FiRefreshCw } from 'react-icons/fi';
+import { FiCloudRain, FiCrosshair, FiPause, FiPlay, FiRefreshCw, FiWind } from 'react-icons/fi';
 import { API } from '../../shared/lib/config';
 import { requestJson } from '../../shared/lib/apiClient';
 import './RadarCard.css';
+import WindLayer from './WindLayer';
 
 const timeLabel = value => new Intl.DateTimeFormat('ko-KR', {
   timeZone: 'Asia/Seoul', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
 }).format(new Date(value));
 
-export default function RadarCard({ latitude, longitude, region }) {
+export default function RadarCard({ latitude, longitude, region, preferredLayer = null }) {
   const container = useRef(null);
   const mapRef = useRef(null);
   const markerRef = useRef(null);
@@ -26,6 +27,12 @@ export default function RadarCard({ latitude, longitude, region }) {
   const [mapMoving, setMapMoving] = useState(false);
   const [frameState, setFrameState] = useState(null);
   const [clock, setClock] = useState(() => Date.now());
+  const [automaticLayer, setAutomaticLayer] = useState(null);
+  const [manualLayer, setManualLayer] = useState(null);
+  const [windRevision, setWindRevision] = useState(0);
+  if (automaticLayer === null && preferredLayer) setAutomaticLayer(preferredLayer);
+  const layer = manualLayer || automaticLayer || 'rain';
+  const isRain = layer === 'rain';
   const hasLocation = Number.isFinite(latitude) && Number.isFinite(longitude);
   const selectedFrame = manifest?.frames[index];
   const currentFrame = frameState?.id === selectedFrame?.id ? frameState : null;
@@ -34,6 +41,10 @@ export default function RadarCard({ latitude, longitude, region }) {
   const visibleError = error || currentFrame?.error;
 
   const refresh = () => {
+    if (!isRain) {
+      setWindRevision(value => value + 1);
+      return;
+    }
     setLoading(true);
     setPlaying(false);
     setError('');
@@ -84,20 +95,25 @@ export default function RadarCard({ latitude, longitude, region }) {
   }, [map, hasLocation, latitude, longitude, region]);
 
   useEffect(() => {
+    if (!isRain || manifest) return;
     const controller = new AbortController();
     requestJson('/api/weather/radar/frames', { signal: controller.signal, timeoutMs: 90000 })
       .then(data => {
         if (!Array.isArray(data.frames) || data.frames.length === 0) throw new Error('표시할 레이더 관측 자료가 없습니다.');
         setIndex(data.frames.length - 1);
+        setError('');
+        setLoading(false);
         setManifest(data);
       })
       .catch(reason => {
-        if (!controller.signal.aborted) setError(reason.status === 404
-          ? '레이더 기능이 아직 서버에 반영되지 않았습니다. 잠시 후 다시 확인해 주세요.' : reason.message);
-      })
-      .finally(() => { if (!controller.signal.aborted) setLoading(false); });
+        if (!controller.signal.aborted) {
+          setError(reason.status === 404
+            ? '레이더 기능이 아직 서버에 반영되지 않았습니다. 잠시 후 다시 확인해 주세요.' : reason.message);
+          setLoading(false);
+        }
+      });
     return () => controller.abort();
-  }, [revision]);
+  }, [revision, isRain, manifest]);
 
   useEffect(() => () => {
     images.current.forEach(url => URL.revokeObjectURL(url));
@@ -105,7 +121,7 @@ export default function RadarCard({ latitude, longitude, region }) {
   }, []);
 
   useEffect(() => {
-    if (!map || !selectedFrame) return;
+    if (!isRain || !map || !selectedFrame) return;
     const controller = new AbortController();
     let cancelled = false;
     let overlay;
@@ -162,23 +178,31 @@ export default function RadarCard({ latitude, longitude, region }) {
       setPlaying(false);
     });
     return () => { cancelled = true; clearTimeout(timeout); controller.abort(); overlay?.remove(); };
-  }, [map, selectedFrame, manifest]);
+  }, [map, selectedFrame, manifest, isRain]);
 
   useEffect(() => {
-    if (!playing || imageLoading || !displayedAt || visibleError) return;
+    if (!isRain || !playing || imageLoading || !displayedAt || visibleError) return;
     const timer = setTimeout(() => setIndex(value => (value + 1) % manifest.frames.length), 1000);
     return () => clearTimeout(timer);
-  }, [playing, imageLoading, displayedAt, visibleError, manifest]);
+  }, [playing, imageLoading, displayedAt, visibleError, manifest, isRain]);
 
   const latestAge = manifest ? Math.max(0, Math.floor((clock - Date.parse(manifest.latest_at)) / 60000)) : 0;
   return (
     <section className="glass-card radar-card" aria-labelledby="radar-title">
       <div className="radar-card__heading">
-        <div><h2 id="radar-title"><FiCloudRain aria-hidden="true" /> 비구름 레이더</h2>
-          <p>최근 강수 관측 · {hasLocation ? region : '전국'} 주변</p></div>
-        <button type="button" className="radar-button" disabled={loading || imageLoading}
+        <div><h2 id="radar-title">{isRain ? <FiCloudRain aria-hidden="true" /> : <FiWind aria-hidden="true" />}{isRain ? '비구름 레이더' : '바람 지도'}</h2>
+          <p>{isRain ? '최근 강수 관측' : '관측소별 풍향·풍속'} · {hasLocation ? region : '전국'} 주변</p></div>
+        <button type="button" className="radar-button" disabled={isRain && (loading || imageLoading)}
           onClick={refresh}><FiRefreshCw aria-hidden="true" /> 새로고침</button>
       </div>
+      <div className="weather-map-tabs" role="group" aria-label="날씨 지도 종류">
+        <button type="button" aria-pressed={isRain} onClick={() => {
+          setManualLayer('rain'); setPlaying(false);
+          if (!manifest) { setLoading(true); setError(''); }
+        }}><FiCloudRain aria-hidden="true" /> 강수</button>
+        <button type="button" aria-pressed={!isRain} onClick={() => { setManualLayer('wind'); setPlaying(false); }}><FiWind aria-hidden="true" /> 바람</button>
+      </div>
+      {!manualLayer && automaticLayer === 'wind' && <p className="radar-card__note">현재 풍속을 참고해 바람 지도를 먼저 열었어요. 강수 탭도 선택할 수 있습니다.</p>}
       <div className="radar-card__map-wrap">
         <div ref={container} className="radar-card__map" aria-label="기상청 강수 관측 지도" />
         {hasLocation && <button type="button" className="radar-button radar-card__recenter" aria-label="조회 지역으로 지도 이동"
@@ -189,15 +213,16 @@ export default function RadarCard({ latitude, longitude, region }) {
             else mapRef.current?.dragging.enable();
             setMapMoving(value => !value);
           }}>{mapMoving ? '지도 이동 끄기' : '지도 이동 켜기'}</button>
-        {(loading || imageLoading) && <div className="radar-card__status" role="status">
+        {isRain && (loading || imageLoading) && <div className="radar-card__status" role="status">
           {loading ? '기상청 레이더 자료를 확인하고 있어요.' : '선택한 시각의 영상을 불러오고 있어요.'}
         </div>}
-        {!loading && !imageLoading && !displayedAt && <div className="radar-card__status">레이더 관측 영상 없음</div>}
+        {isRain && !loading && !imageLoading && !displayedAt && <div className="radar-card__status">레이더 관측 영상 없음</div>}
       </div>
-      {visibleError && <div className="radar-card__error" role="alert"><span>{visibleError}</span>
+      {isRain && visibleError && <div className="radar-card__error" role="alert"><span>{visibleError}</span>
         <button type="button" className="radar-button" onClick={refresh}>다시 시도</button></div>}
       {mapError && <p className="radar-card__error">배경 지도를 일부 불러오지 못했습니다. 인터넷 연결을 확인해 주세요.</p>}
-      {manifest && <>
+      {!isRain && <WindLayer key={windRevision} map={map} latitude={latitude} longitude={longitude} revision={windRevision} />}
+      {isRain && manifest && <>
         <div className="radar-card__playback">
           <button type="button" className="radar-button radar-button--primary" disabled={!!visibleError || (imageLoading && !playing)}
             aria-label={playing ? '레이더 영상 일시정지' : '레이더 영상 재생'} aria-pressed={playing}
@@ -214,10 +239,10 @@ export default function RadarCard({ latitude, longitude, region }) {
         </div>
         <p className="radar-card__note">최근 관측은 {latestAge}분 전 자료입니다.{latestAge > 30 ? ' 최신 자료 갱신이 지연되고 있습니다.' : ''} 회색은 자료 없음, 투명 영역은 에코 없음 또는 0dBZ 미만입니다.</p>
       </>}
-      <p className="radar-card__note">기상청 HSR 합성 관측 · 관측 범위 밖의 강수는 확인할 수 없습니다. 현재 선택한 예보 날짜와 관계없이 최근 관측을 표시합니다.</p>
+      <p className="radar-card__note">{isRain && '기상청 HSR 합성 관측 · 관측 범위 밖의 강수는 확인할 수 없습니다. '}현재 선택한 예보 날짜와 관계없이 최근 관측을 표시합니다.</p>
       <details className="radar-card__help"><summary>지도 조작·자료 안내</summary>
-        <p>휴대폰에서는 ‘지도 이동 켜기’를 누르면 지도를 움직일 수 있어요. 페이지를 스크롤하려면 지도 이동을 꺼주세요. 색상은 레이더 반사도를 나타내며 강수확률과 다른 정보입니다.</p>
-        <a href="https://www.weather.go.kr/w/image/radar.do" target="_blank" rel="noreferrer">기상청 레이더 확인 ↗</a>
+        <p>휴대폰에서는 ‘지도 이동 켜기’를 누르면 지도를 움직일 수 있어요. 페이지를 스크롤하려면 지도 이동을 꺼주세요. {isRain ? '색상은 레이더 반사도를 나타내며 강수확률과 다른 정보입니다.' : '색상은 풍속 구간을 나타냅니다. 관측소 사이의 바람은 지형·고도에 따라 달라집니다.'}</p>
+        <a href={isRain ? 'https://www.weather.go.kr/w/image/radar.do' : 'https://www.weather.go.kr/w/obs-climate/land/city-obs.do'} target="_blank" rel="noreferrer">기상청 {isRain ? '레이더' : '관측'} 확인 ↗</a>
       </details>
     </section>
   );

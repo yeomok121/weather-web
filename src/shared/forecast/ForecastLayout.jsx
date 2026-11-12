@@ -10,6 +10,7 @@ import WeatherOutlook from './WeatherOutlook';
 import WeatherDetails from './WeatherDetails';
 import WeeklyForecast from './WeeklyForecast';
 import { lazy, Suspense } from 'react';
+import { preferredWeatherLayer } from '../../pages/weather/weatherMap';
 
 const RadarCard = lazy(() => import('../../pages/weather/RadarCard'));
 
@@ -82,7 +83,8 @@ export default function ForecastLayout({ extras = null }) {
         />
 
         {!isMountainMode && <Suspense fallback={<div className="glass-card weather-empty">레이더 지도를 준비하고 있어요.</div>}>
-          <RadarCard latitude={forecastLocation?.lat} longitude={forecastLocation?.lon} region={weatherData.region} />
+          <RadarCard latitude={forecastLocation?.lat} longitude={forecastLocation?.lon} region={weatherData.region}
+            preferredLayer={preferredWeatherLayer(weatherData)} />
         </Suspense>}
       </div>
 
