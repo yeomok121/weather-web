@@ -9,11 +9,14 @@ import HourlyForecast from './HourlyForecast';
 import WeatherOutlook from './WeatherOutlook';
 import WeatherDetails from './WeatherDetails';
 import WeeklyForecast from './WeeklyForecast';
+import { lazy, Suspense } from 'react';
+
+const RadarCard = lazy(() => import('../../pages/weather/RadarCard'));
 
 export default function ForecastLayout({ extras = null }) {
   const {
     activeWeather, aiBriefing, aiMessage, connectionState, departureOffsetHours, effectiveMountainInfo,
-    forecastError, handleApplyHikingPlan, handleCurrentLocation, handleDeleteAccount, handleFavoriteClick, handleLogin,
+    forecastError, forecastLocation, handleApplyHikingPlan, handleCurrentLocation, handleDeleteAccount, handleFavoriteClick, handleLogin,
     handleLogout, handleOpenAddRegion, handleRemoveFavorite,  handleUpdateUser, hikingPlanSummary,
     hourlyData, isAiLoading, isMountainMode, lastWeatherRequestRef, loadMountainWeather, loadWeather,
     loggedInUser, loginPrompt, mountainInfo, mountainsList, paceType, promptLogin,
@@ -78,7 +81,9 @@ export default function ForecastLayout({ extras = null }) {
           onRequireLogin={() => { promptLogin(); document.getElementById('member-login')?.scrollIntoView({ behavior: 'smooth', block: 'center' }); showToast('로그인하면 작성 중인 산행 계획을 이어서 저장할 수 있어요.'); }}
         />
 
-
+        {!isMountainMode && <Suspense fallback={<div className="glass-card weather-empty">레이더 지도를 준비하고 있어요.</div>}>
+          <RadarCard latitude={forecastLocation?.lat} longitude={forecastLocation?.lon} region={weatherData.region} />
+        </Suspense>}
       </div>
 
       <div className="main-side-column" style={{ display: 'flex', flexDirection: 'column', gap: '16px', minWidth: 0 }}>

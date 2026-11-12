@@ -40,6 +40,7 @@ export function useForecast({ mountainsList, onNewForecast }) {
   const [bgTheme, setBgTheme] = useState('clear-day');
 
   const [weatherData, setWeatherData] = useState(() => emptyWeather());
+  const [forecastLocation, setForecastLocation] = useState(null);
   const lastWeatherRequestRef = useRef({ kind: 'weather', lat: 37.5034, lon: 126.7660, regionName: '부천시' });
   const forecastControllerRef = useRef(null);
   const displayedForecastKeyRef = useRef('');
@@ -83,6 +84,7 @@ export function useForecast({ mountainsList, onNewForecast }) {
     const controller = new AbortController();
     forecastControllerRef.current = controller;
     lastWeatherRequestRef.current = request;
+    setForecastLocation(request.kind === 'weather' ? { lat: request.lat, lon: request.lon } : null);
     const key = forecastKey(request);
     const preservePlan = displayedForecastKeyRef.current === key;
     const cached = readForecastCache(key);
@@ -164,6 +166,6 @@ export function useForecast({ mountainsList, onNewForecast }) {
   return {
     weatherData, hourlyData, weeklyData, mountainInfo, forecastError, weatherFetchedAt,
     connectionState, bgTheme, aiMessage, aiBriefing, isAiLoading, setIsAiLoading,
-    loadForecast, retryForecast, lastWeatherRequestRef,
+    loadForecast, retryForecast, lastWeatherRequestRef, forecastLocation,
   };
 }
