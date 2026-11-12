@@ -77,7 +77,7 @@ export default function WindLayer({ map, latitude, longitude, revision }) {
       </div>
       {nearby.length > 0 && <div className="wind-panel__nearby">
         {nearby.map(station => <button type="button" key={station.id} className="wind-panel__station"
-          onClick={() => map.setView([station.lat, station.lon], 9)}>
+          onClick={() => map.setView([station.lat, station.lon], 10)}>
           <span>{station.name} <small>약 {station.distance.toFixed(1)}km</small></span>
           <strong style={{ color: windColor(station.speed) }}>{station.speed.toFixed(1)} <small>m/s</small></strong>
           <small>{windDirectionLabel(station.direction)} · {observedLabel(station.observed_at)}</small>

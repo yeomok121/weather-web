@@ -7,6 +7,8 @@ import { requestJson } from '../../shared/lib/apiClient';
 import './RadarCard.css';
 import WindLayer from './WindLayer';
 
+const LOCAL_MAP_ZOOM = 9.5;
+
 const timeLabel = value => new Intl.DateTimeFormat('ko-KR', {
   timeZone: 'Asia/Seoul', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
 }).format(new Date(value));
@@ -61,7 +63,8 @@ export default function RadarCard({ latitude, longitude, region, preferredLayer 
 
   useEffect(() => {
     const instance = L.map(container.current, {
-      center: [36.2, 127.5], zoom: 7, minZoom: 5, maxZoom: 11,
+      center: [36.2, 127.5], zoom: 7, minZoom: 5, maxZoom: 18,
+      zoomSnap: 0.5, zoomDelta: 0.5,
       scrollWheelZoom: false, dragging: !L.Browser.mobile,
     });
     const tiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -83,7 +86,7 @@ export default function RadarCard({ latitude, longitude, region, preferredLayer 
 
   useEffect(() => {
     if (!map || !hasLocation) return;
-    map.setView([latitude, longitude], 8);
+    map.setView([latitude, longitude], LOCAL_MAP_ZOOM);
     markerRef.current?.remove();
     markerRef.current = L.circleMarker([latitude, longitude], {
       radius: 7, color: '#ffffff', weight: 3, fillColor: '#1978d2', fillOpacity: 1,
@@ -204,9 +207,9 @@ export default function RadarCard({ latitude, longitude, region, preferredLayer 
       </div>
       {!manualLayer && automaticLayer === 'wind' && <p className="radar-card__note">현재 풍속을 참고해 바람 지도를 먼저 열었어요. 강수 탭도 선택할 수 있습니다.</p>}
       <div className="radar-card__map-wrap">
-        <div ref={container} className="radar-card__map" aria-label="기상청 강수 관측 지도" />
+        <div ref={container} className="radar-card__map" aria-label={isRain ? '기상청 강수 관측 지도' : '기상청 바람 관측 지도'} />
         {hasLocation && <button type="button" className="radar-button radar-card__recenter" aria-label="조회 지역으로 지도 이동"
-          onClick={() => mapRef.current?.setView([latitude, longitude], 8)}><FiCrosshair aria-hidden="true" /></button>}
+          onClick={() => mapRef.current?.setView([latitude, longitude], LOCAL_MAP_ZOOM)}><FiCrosshair aria-hidden="true" /></button>}
         <button type="button" className="radar-button radar-card__move" aria-pressed={mapMoving}
           onClick={() => {
             if (mapMoving) mapRef.current?.dragging.disable();
@@ -241,6 +244,7 @@ export default function RadarCard({ latitude, longitude, region, preferredLayer 
       </>}
       <p className="radar-card__note">{isRain && '기상청 HSR 합성 관측 · 관측 범위 밖의 강수는 확인할 수 없습니다. '}현재 선택한 예보 날짜와 관계없이 최근 관측을 표시합니다.</p>
       <details className="radar-card__help"><summary>지도 조작·자료 안내</summary>
+        <p>확대·축소 버튼은 반 단계씩 조절됩니다. 지도를 확대해도 관측소 수나 레이더 자료의 해상도가 높아지지는 않습니다.</p>
         <p>휴대폰에서는 ‘지도 이동 켜기’를 누르면 지도를 움직일 수 있어요. 페이지를 스크롤하려면 지도 이동을 꺼주세요. {isRain ? '색상은 레이더 반사도를 나타내며 강수확률과 다른 정보입니다.' : '색상은 풍속 구간을 나타냅니다. 관측소 사이의 바람은 지형·고도에 따라 달라집니다.'}</p>
         <a href={isRain ? 'https://www.weather.go.kr/w/image/radar.do' : 'https://www.weather.go.kr/w/obs-climate/land/city-obs.do'} target="_blank" rel="noreferrer">기상청 {isRain ? '레이더' : '관측'} 확인 ↗</a>
       </details>
