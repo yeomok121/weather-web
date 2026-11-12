@@ -13,6 +13,7 @@
 .radar-card__map .leaflet-image-layer { image-rendering: pixelated; }
 .radar-card__map .leaflet-control-attribution { font-size: 12px; }
 .radar-card__recenter { position: absolute; right: 12px; top: 12px; z-index: 2; }
+.radar-card__move { display: none; position: absolute; right: 12px; bottom: 24px; z-index: 2; }
 .radar-card__status { position: absolute; bottom: 24px; left: 12px; right: 12px; z-index: 2; padding: 12px; text-align: center; border-radius: 10px; background: #fffffff2; color: #334155; font-size: 14px; box-shadow: 0 2px 8px #0f172a15; }
 .radar-card__error { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 12px 0; padding: 12px; background: #fff2f2; color: #a12525; border-radius: 10px; font-size: 14px; }
 .radar-card__playback { display: flex; align-items: center; gap: 12px; margin: 16px 0; }
@@ -39,4 +40,7 @@
 }
 @media (max-width: 768px) {
   .main-container .radar-card { order: 2; }
+}
+@media (pointer: coarse) {
+  .radar-card__move { display: inline-flex; }
 }

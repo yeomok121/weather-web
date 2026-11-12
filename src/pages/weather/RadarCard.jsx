@@ -23,6 +23,7 @@ export default function RadarCard({ latitude, longitude, region }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [mapError, setMapError] = useState(false);
+  const [mapMoving, setMapMoving] = useState(false);
   const [frameState, setFrameState] = useState(null);
   const [clock, setClock] = useState(() => Date.now());
   const hasLocation = Number.isFinite(latitude) && Number.isFinite(longitude);
@@ -38,6 +39,7 @@ export default function RadarCard({ latitude, longitude, region }) {
     setError('');
     setManifest(null);
     setFrameState(null);
+    if (mapError) mapRef.current?.eachLayer(layer => { if (layer instanceof L.TileLayer) layer.redraw(); });
     setRevision(value => value + 1);
   };
 
@@ -56,6 +58,7 @@ export default function RadarCard({ latitude, longitude, region }) {
       maxZoom: 19,
     }).addTo(instance);
     tiles.on('tileerror', () => setMapError(true));
+    tiles.on('loading', () => setMapError(false));
     const observer = new ResizeObserver(() => instance.invalidateSize());
     observer.observe(container.current);
     mapRef.current = instance;
@@ -117,7 +120,12 @@ export default function RadarCard({ latitude, longitude, region }) {
       let url = images.current.get(selectedFrame.id);
       if (!url) {
         const response = await fetch(`${API}${selectedFrame.path}`, { signal: controller.signal });
-        if (!response.ok) throw new Error('선택한 시각의 레이더 자료를 받지 못했습니다. 다른 시각을 선택하거나 다시 시도해 주세요.');
+        if (!response.ok) {
+          const failure = await response.json().catch(() => null);
+          throw new Error(failure?.error_code === 'expired_time'
+            ? '관측 목록이 오래되었습니다. 새로고침하면 최근 관측을 확인할 수 있어요.'
+            : failure?.detail || '선택한 시각의 레이더 자료를 받지 못했습니다. 다른 시각을 선택하거나 다시 시도해 주세요.');
+        }
         if (!response.headers.get('content-type')?.includes('image/png')) throw new Error('레이더 영상 형식을 확인하지 못했습니다.');
         const blob = await response.blob();
         if (controller.signal.aborted) return;
@@ -130,7 +138,7 @@ export default function RadarCard({ latitude, longitude, region }) {
         }
       }
       if (controller.signal.aborted) return;
-      overlay = L.imageOverlay(url, manifest.bounds, { opacity: 0.85, interactive: false }).addTo(map);
+      overlay = L.imageOverlay(url, manifest.bounds, { opacity: 0.85, interactive: false });
       overlay.once('load', () => {
         if (controller.signal.aborted) return;
         clearTimeout(timeout);
@@ -139,9 +147,13 @@ export default function RadarCard({ latitude, longitude, region }) {
       overlay.once('error', () => {
         if (controller.signal.aborted) return;
         clearTimeout(timeout);
+        images.current.delete(selectedFrame.id);
+        URL.revokeObjectURL(url);
+        overlay.remove();
         setFrameState({ id: selectedFrame.id, error: '레이더 영상을 표시하지 못했습니다. 다시 시도해 주세요.' });
         setPlaying(false);
       });
+      overlay.addTo(map);
     }
     showFrame().catch(reason => {
       if (cancelled) return;
@@ -171,6 +183,12 @@ export default function RadarCard({ latitude, longitude, region }) {
         <div ref={container} className="radar-card__map" aria-label="기상청 강수 관측 지도" />
         {hasLocation && <button type="button" className="radar-button radar-card__recenter" aria-label="조회 지역으로 지도 이동"
           onClick={() => mapRef.current?.setView([latitude, longitude], 8)}><FiCrosshair aria-hidden="true" /></button>}
+        <button type="button" className="radar-button radar-card__move" aria-pressed={mapMoving}
+          onClick={() => {
+            if (mapMoving) mapRef.current?.dragging.disable();
+            else mapRef.current?.dragging.enable();
+            setMapMoving(value => !value);
+          }}>{mapMoving ? '지도 이동 끄기' : '지도 이동 켜기'}</button>
         {(loading || imageLoading) && <div className="radar-card__status" role="status">
           {loading ? '기상청 레이더 자료를 확인하고 있어요.' : '선택한 시각의 영상을 불러오고 있어요.'}
         </div>}
@@ -181,10 +199,10 @@ export default function RadarCard({ latitude, longitude, region }) {
       {mapError && <p className="radar-card__error">배경 지도를 일부 불러오지 못했습니다. 인터넷 연결을 확인해 주세요.</p>}
       {manifest && <>
         <div className="radar-card__playback">
-          <button type="button" className="radar-button radar-button--primary" disabled={!!visibleError || imageLoading}
+          <button type="button" className="radar-button radar-button--primary" disabled={!!visibleError || (imageLoading && !playing)}
             aria-label={playing ? '레이더 영상 일시정지' : '레이더 영상 재생'} aria-pressed={playing}
             onClick={() => setPlaying(value => !value)}>{playing ? <FiPause /> : <FiPlay />}</button>
-          <output aria-live="polite">{displayedAt ? timeLabel(displayedAt) : '영상 확인 중'}<small>한국 시간 관측</small></output>
+          <output aria-live="polite">{displayedAt ? timeLabel(displayedAt) : visibleError ? '영상 조회 실패' : '영상 확인 중'}<small>한국 시간 관측</small></output>
           <label className="radar-card__timeline"><span className="radar-sr-only">레이더 관측 시각 선택</span>
             <input type="range" min="0" max={manifest.frames.length - 1} step="1" value={index}
               aria-valuetext={timeLabel(selectedFrame.observed_at)} onChange={event => { setPlaying(false); setIndex(Number(event.target.value)); }} />
@@ -198,7 +216,7 @@ export default function RadarCard({ latitude, longitude, region }) {
       </>}
       <p className="radar-card__note">기상청 HSR 합성 관측 · 관측 범위 밖의 강수는 확인할 수 없습니다. 현재 선택한 예보 날짜와 관계없이 최근 관측을 표시합니다.</p>
       <details className="radar-card__help"><summary>지도 조작·자료 안내</summary>
-        <p>휴대폰에서는 확대·축소 버튼으로 확인하고 두 손가락으로 지도를 확대할 수 있어요. 색상은 레이더 반사도를 나타내며 강수확률과 다른 정보입니다.</p>
+        <p>휴대폰에서는 ‘지도 이동 켜기’를 누르면 지도를 움직일 수 있어요. 페이지를 스크롤하려면 지도 이동을 꺼주세요. 색상은 레이더 반사도를 나타내며 강수확률과 다른 정보입니다.</p>
         <a href="https://www.weather.go.kr/w/image/radar.do" target="_blank" rel="noreferrer">기상청 레이더 확인 ↗</a>
       </details>
     </section>
