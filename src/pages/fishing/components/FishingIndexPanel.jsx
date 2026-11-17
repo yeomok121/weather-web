@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { FiTarget } from 'react-icons/fi';
 import { formatRange, gradeTone, indexDayLabel, sessionLabel } from '../fishingFormat';
+import BestDayCard from './BestDayCard';
 
 function Session({ session }) {
   const best = session.species[0];
@@ -19,9 +20,10 @@ function Session({ session }) {
   </article>;
 }
 
-export default function FishingIndexPanel({ index, error }) {
+export default function FishingIndexPanel({ index, error, warnings }) {
   const days = index?.days || [];
   const [selected, setSelected] = useState(null);
+  const [now] = useState(() => Date.now());
   const day = days.find((item) => item.date === selected) || days[0];
   const point = index?.point;
 
@@ -30,7 +32,8 @@ export default function FishingIndexPanel({ index, error }) {
       <p>국립해양조사원 · {point ? `${point.name} ${index.gubun || ''} 포인트 · 기준 위치에서 약 ${point.distance_km} km` : '가까운 낚시 포인트 기준'}</p></div></div>
 
     {day ? <>
-      {days.length > 1 && <div className="fish-index-days" role="tablist" aria-label="날짜 선택">{days.map((item) => <button type="button" role="tab" key={item.date} aria-selected={item.date === day.date} className={item.date === day.date ? 'active' : ''} onClick={() => setSelected(item.date)}>{indexDayLabel(item.date)}</button>)}</div>}
+      <BestDayCard days={days} warnings={warnings || []} now={now} onSelectDay={setSelected} />
+      {days.length > 1 && <div className="fish-index-days" role="tablist" aria-label="날짜 선택">{days.map((item) => <button type="button" role="tab" key={item.date} aria-selected={item.date === day.date} className={item.date === day.date ? 'active' : ''} onClick={() => setSelected(item.date)}>{indexDayLabel(item.date, now)}</button>)}</div>}
       <div className={`fish-index-sessions ${day.sessions.length === 1 ? 'single' : ''}`}>{day.sessions.map((session) => <Session key={session.session} session={session} />)}</div>
     </> : !error && <p className="fish-empty">{point === null && index?.nearby?.length
       ? `선택한 해역 80 km 안에 바다낚시지수 포인트가 없습니다. 가장 가까운 포인트: ${index.nearby.map((item) => `${item.name}(약 ${Math.round(item.distance_km)} km)`).join(', ')}`

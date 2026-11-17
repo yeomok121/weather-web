@@ -121,3 +121,36 @@
 .fish-warning-tag.severe { background:#b42318; color:#fff; }
 .fish-warning-tag.warning { background:#e6750f; color:#fff; }
 .fish-warning-tag.watch { background:#f0d64a; color:#4d3f00; }
+
+/* 이번 주 추천 */
+.fish-best { display:flex; align-items:center; gap:14px; padding:14px 16px; margin-bottom:12px; border-radius:15px; border:1px solid rgba(13,122,79,.25); background:linear-gradient(135deg,rgba(234,248,240,.95),rgba(220,244,236,.9)); color:#174a36; }
+.fish-best > svg { flex:none; font-size:22px; color:#0d7a4f; }
+.fish-best > div { display:flex; flex-direction:column; gap:3px; min-width:0; flex:1; }
+.fish-best span { font-size:12px; font-weight:700; color:#3f6e5b; }
+.fish-best b { font-size:18px; color:#123f2e; }
+.fish-best small { font-size:12.5px; color:#3f5f52; }
+.fish-best .fish-best-warning { color:#9a4a0b; font-weight:700; }
+.fish-best .fish-best-note { color:#5f7790; }
+.fish-best button { flex:none; padding:8px 14px; border:0; border-radius:999px; background:#0d7a4f; color:#fff; font-weight:700; cursor:pointer; }
+.fish-best.normal, .fish-best.none { border-color:rgba(119,153,178,.3); background:rgba(240,246,250,.9); color:#36536e; }
+.fish-best.none > svg, .fish-best.normal > svg { color:#6f8298; }
+
+/* 새벽·해질녘 */
+.fish-sun-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+.fish-sun-item { display:flex; flex-direction:column; gap:6px; padding:14px; border-radius:13px; background:rgba(255,255,255,.6); }
+.fish-sun-item span { display:flex; align-items:center; gap:6px; color:#6f8298; font-size:12px; font-weight:700; }
+.fish-sun-item b { color:#193651; font-size:19px; }
+.fish-sun-item small { color:#71849a; font-size:12px; }
+
+/* 준비물 */
+.fish-gear-tip { margin:0 0 10px; padding:9px 12px; border-radius:11px; background:#fff3e2; color:#7a4310; font-size:13px; font-weight:700; }
+.fish-gear-list { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px; margin:0; padding:0; list-style:none; }
+.fish-gear-list label { display:flex; gap:9px; align-items:flex-start; padding:9px 10px; border-radius:11px; background:rgba(255,255,255,.6); cursor:pointer; }
+.fish-gear-list input { margin-top:3px; width:16px; height:16px; accent-color:#0f7f86; flex:none; }
+.fish-gear-list span { display:flex; flex-direction:column; gap:2px; min-width:0; }
+.fish-gear-list b { color:#193651; font-size:13.5px; }
+.fish-gear-list em { font-style:normal; color:#0f7f86; font-size:11.5px; font-weight:700; }
+.fish-gear-list small { color:#71849a; font-size:11.5px; }
+.fish-gear-list li.done b { color:#8a9aab; text-decoration:line-through; }
+.fish-gear-reset { margin-top:10px; padding:6px 12px; border:1px solid rgba(119,153,178,.35); border-radius:999px; background:transparent; color:#4f6275; font-size:12px; cursor:pointer; }
+@media (max-width:720px) { .fish-gear-list, .fish-sun-grid { grid-template-columns:1fr; } .fish-best { flex-wrap:wrap; } }

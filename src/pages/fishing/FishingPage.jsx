@@ -15,6 +15,8 @@ import ForecastOutlook from './components/ForecastOutlook';
 import BuoyPanel from './components/BuoyPanel';
 import TidePanel from './components/TidePanel';
 import MarineForecastPanel from './components/MarineForecastPanel';
+import SunPanel from './components/SunPanel';
+import GearChecklist from './components/GearChecklist';
 
 export default function FishingPage() {
   const areas = useFishingAreas();
@@ -35,13 +37,18 @@ export default function FishingPage() {
 
     {data && <WarningBanner warnings={sources.warnings} error={errors.warnings} />}
 
-    <FishingIndexPanel key={area.id} index={sources.fishing_index} error={errors.fishing_index} />
+    <FishingIndexPanel key={area.id} index={sources.fishing_index} error={errors.fishing_index} warnings={sources.warnings?.items || []} />
 
     <ForecastOutlook forecastRows={forecastRows} />
 
     <section className="fish-metrics">
       <BuoyPanel area={area} buoyRows={sources.buoy?.records || []} error={errors.buoy} />
       <TidePanel area={area} tideSource={sources.tide} error={errors.tide} />
+    </section>
+
+    <section className="fish-metrics">
+      <SunPanel area={area} />
+      <GearChecklist area={area} indexDays={sources.fishing_index?.days || []} forecastRows={forecastRows} warnings={sources.warnings?.items || []} />
     </section>
 
     <MarineForecastPanel regionName={data?.region_name || area.region_name} forecastRows={forecastRows} error={errors.forecast} />

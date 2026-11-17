@@ -118,3 +118,83 @@ test('fishing index day-long sessions are labeled', () => {
   assert.equal(sessionLabel('오전'), '오전');
   assert.equal(sessionLabel(''), '—');
 });
+
+import { bestFishingDay, recommendFishingDay, warningBlockedDates } from '../src/pages/fishing/lib/bestDay.js';
+import { fishingLightWindows, sunTimesFor } from '../src/pages/fishing/lib/sunTimes.js';
+import { conditionalGear, todayConditions } from '../src/pages/fishing/lib/gear.js';
+
+const session = (name, grades, wave = 1, wind = 5) => ({ session: name, tide_phase: '중조기', wave_m: { min: wave, max: wave }, wind_ms: { min: wind, max: wind },
+  species: grades.map(([n, g]) => ({ name: n, index: g })) });
+
+test('best day picks the highest grade, then more good species, then calmer sea', () => {
+  const now = Date.parse('2026-11-17T09:00:00+09:00');
+  const days = [
+    { date: '2026-11-17', sessions: [session('오전', [['볼락', '보통']]), session('오후', [['감성돔', '매우나쁨']])] },
+    { date: '2026-11-22', sessions: [session('일', [['감성돔', '좋음'], ['농어', '좋음']], 0.8, 2.8)] },
+    { date: '2026-11-23', sessions: [session('일', [['감성돔', '매우좋음'], ['기타어종', '매우좋음'], ['볼락', '좋음']], 0.2, 3.9)] },
+    { date: '2026-11-24', sessions: [session('일', [['돌돔', '매우좋음']], 1.5, 8)] },
+  ];
+  const { best } = bestFishingDay(days, { now });
+  assert.equal(best.date, '2026-11-23');
+  assert.equal(best.topGrade, '매우좋음');
+  assert.deepEqual(best.topSpecies, ['감성돔', '기타어종']);
+});
+
+test('best day skips past sessions and reports none when everything is bad', () => {
+  const afternoon = Date.parse('2026-11-17T15:00:00+09:00');
+  const days = [{ date: '2026-11-17', sessions: [session('오전', [['볼락', '좋음']]), session('오후', [['볼락', '나쁨']])] }];
+  assert.equal(bestFishingDay(days, { now: afternoon }).best, null);
+  assert.equal(bestFishingDay(days, { now: Date.parse('2026-11-17T08:00:00+09:00') }).best.session.session, '오전');
+  assert.deepEqual(bestFishingDay([], {}), { best: null, checked: 0 });
+});
+
+test('sun times give dawn before sunrise and dusk after sunset in Korea time', () => {
+  const t = sunTimesFor(Date.parse('2026-11-17T12:00:00+09:00'), 33.96, 126.44);
+  assert.match(t.sunrise, /^07:\d\d$/);
+  assert.match(t.sunset, /^17:\d\d$/);
+  assert.ok(t.dawn < t.sunrise && t.dusk > t.sunset);
+  assert.equal(sunTimesFor(Date.now(), null, 126), null);
+  const evening = fishingLightWindows(Date.parse('2026-11-17T20:00:00+09:00'), 33.96, 126.44);
+  assert.equal(evening.morningIsToday, false);
+  const early = fishingLightWindows(Date.parse('2026-11-17T04:00:00+09:00'), 33.96, 126.44);
+  assert.equal(early.morningIsToday, true);
+});
+
+test('gear adds items from today\'s sea conditions', () => {
+  const conditions = todayConditions({
+    indexDays: [{ date: '2026-11-17', sessions: [session('오전', [['볼락', '보통']], 0.7, 13.7)] }].map((d) => ({ ...d, sessions: d.sessions.map((s) => ({ ...s, air_temp_c: { min: 8.5, max: 12 } })) })),
+    forecastRows: [{ WS1: '10', WS2: '16', WH1: '1.5', WH2: '4.0', PREP: '1' }],
+    warnings: [{ kind: '풍랑', level: '주의' }, { kind: '호우', level: '주의' }],
+    tideLabel: '7물',
+  });
+  assert.equal(conditions.windMax, 16);
+  assert.equal(conditions.waveMax, 4);
+  assert.deepEqual(conditions.warningKinds, ['풍랑']);
+  const ids = conditionalGear(conditions).map((item) => item.id);
+  assert.deepEqual(ids, ['windbreaker', 'warm', 'rain', 'wave', 'current', 'lamp']);
+  assert.deepEqual(conditionalGear({}).map((item) => item.id), ['lamp']);
+});
+
+test('days until a warning is lifted are skipped from the recommendation', () => {
+  const now = Date.parse('2026-11-17T09:00:00+09:00');
+  const days = ['2026-11-17', '2026-11-18', '2026-11-21', '2026-11-22', '2026-11-23'].map((date, i) => ({ date,
+    sessions: [session('일', [['감성돔', i < 3 ? '매우좋음' : i === 3 ? '좋음' : '보통']])] }));
+  const warnings = [{ level: '주의', title: '풍랑주의보', release_hint: '21일 오전(09시~12시)' }, { level: '예비', title: '강풍 예비특보', release_hint: '' }];
+  assert.deepEqual([...warningBlockedDates(days, warnings, { now })], ['2026-11-17', '2026-11-18', '2026-11-21']);
+  const result = recommendFishingDay(days, warnings, { now });
+  assert.equal(result.best.date, '2026-11-22');
+  assert.equal(result.insideWarning, false);
+  // 예비특보만 있으면 빼지 않음
+  assert.equal(recommendFishingDay(days, [warnings[1]], { now }).best.date, '2026-11-17');
+  // 해제 예고가 없으면 오늘만 뺌
+  assert.deepEqual([...warningBlockedDates(days, [{ level: '경보', release_hint: '' }], { now })], ['2026-11-17']);
+  // 특보 기간 밖에 좋은 날이 없으면 특보 기간 안에서 고르고 표시
+  const onlyBlocked = recommendFishingDay(days.slice(0, 3), warnings, { now });
+  assert.equal(onlyBlocked.insideWarning, true);
+  // 해제 예고일이 자료 범위 밖이어도 그날까지의 자료는 모두 뺌
+  assert.deepEqual([...warningBlockedDates(days.slice(0, 2), warnings, { now })], ['2026-11-17', '2026-11-18']);
+  // 월말: 30일 기준 "2일"은 다음 달 2일
+  const monthEnd = Date.parse('2026-11-30T09:00:00+09:00');
+  const decDays = ['2026-11-30', '2026-12-01', '2026-12-02', '2026-12-03'].map((date) => ({ date, sessions: [session('일', [['감성돔', '좋음']])] }));
+  assert.deepEqual([...warningBlockedDates(decDays, [{ level: '주의', release_hint: '2일 밤(21시~24시)' }], { now: monthEnd })], ['2026-11-30', '2026-12-01', '2026-12-02']);
+});
