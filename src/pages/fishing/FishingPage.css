@@ -101,3 +101,22 @@
 .fish-index-conditions dt { color:#6f8298; font-size:11px; }
 .fish-index-conditions dd { margin:3px 0 0; color:#193651; font-size:13px; font-weight:700; overflow-wrap:anywhere; }
 @media (max-width:720px) { .fish-index-sessions { grid-template-columns:1fr; } .fish-index-conditions { grid-template-columns:repeat(3,minmax(0,1fr)); } }
+
+/* 기상특보 */
+.fish-warning { display:flex; gap:14px; align-items:flex-start; padding:16px 20px; border-radius:18px; border:1px solid; color:#3b2a14; }
+.fish-warning > svg { flex:none; font-size:22px; margin-top:2px; }
+.fish-warning > div { display:flex; flex-direction:column; gap:8px; min-width:0; flex:1; }
+.fish-warning b { font-size:16px; }
+.fish-warning span { font-size:13px; }
+.fish-warning ul { display:flex; flex-direction:column; gap:6px; margin:0; padding:0; list-style:none; }
+.fish-warning li { display:flex; flex-wrap:wrap; align-items:center; gap:4px 10px; font-size:13px; }
+.fish-warning li small, .fish-warning-note { color:inherit; opacity:.8; font-size:12px; }
+.fish-warning-tag { font-style:normal; font-weight:800; font-size:12px; padding:2px 9px; border-radius:999px; }
+.fish-warning.severe { background:#fdecea; border-color:#f3b4ae; color:#7a1b12; }
+.fish-warning.warning { background:#fff3e2; border-color:#f6c98f; color:#7a4310; }
+.fish-warning.watch { background:#fffbe6; border-color:#ecdc91; color:#5f5110; }
+.fish-warning.clear { background:#ecf8f1; border-color:#b5e2c8; color:#1f5a3c; }
+.fish-warning.unknown { background:#f1f4f7; border-color:#d3dbe3; color:#45586b; }
+.fish-warning-tag.severe { background:#b42318; color:#fff; }
+.fish-warning-tag.warning { background:#e6750f; color:#fff; }
+.fish-warning-tag.watch { background:#f0d64a; color:#4d3f00; }
