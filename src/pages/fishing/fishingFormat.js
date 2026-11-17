@@ -108,3 +108,6 @@ export function indexDayLabel(date, now = Date.now()) {
   const weekday = '일월화수목금토'[new Date(time).getUTCDay()];
   return `${date.slice(5).replace('-', '/')} (${weekday})`;
 }
+
+// 바다낚시지수 시간대: 며칠 뒤 자료는 오전/오후 대신 하루 단위("일")로 옵니다. (2026-11-17 실제 응답 확인)
+export const sessionLabel = (value) => ({ 일: '하루 전체' })[value] || value || '—';

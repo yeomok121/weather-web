@@ -110,3 +110,11 @@ test('fishing index helpers format ranges, grades and day labels', () => {
   assert.equal(indexDayLabel('2026-11-18', now), '내일');
   assert.equal(indexDayLabel('2026-11-19', now), '11/19 (목)');
 });
+
+import { sessionLabel } from '../src/pages/fishing/fishingFormat.js';
+
+test('fishing index day-long sessions are labeled', () => {
+  assert.equal(sessionLabel('일'), '하루 전체');
+  assert.equal(sessionLabel('오전'), '오전');
+  assert.equal(sessionLabel(''), '—');
+});

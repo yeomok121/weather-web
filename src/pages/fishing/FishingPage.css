@@ -81,6 +81,7 @@
 .fish-index-days button { padding:7px 13px; border:1px solid rgba(119,153,178,.3); border-radius:999px; background:rgba(255,255,255,.6); color:#36536e; font-size:13px; font-weight:700; cursor:pointer; }
 .fish-index-days button.active { background:#0f7f86; border-color:#0f7f86; color:#fff; }
 .fish-index-sessions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+.fish-index-sessions.single { grid-template-columns:1fr; }
 .fish-index-session { display:flex; flex-direction:column; gap:10px; padding:16px; border-radius:15px; background:rgba(255,255,255,.62); border:1px solid rgba(119,153,178,.2); }
 .fish-index-session header { display:flex; align-items:center; gap:8px; }
 .fish-index-session header b { color:#173a5c; font-size:17px; }
