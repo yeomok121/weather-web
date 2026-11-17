@@ -94,3 +94,19 @@ test('tide timeline keeps recent points and upcoming extremes only', () => {
   assert.deepEqual(timeline.upcoming.map((e) => e.type), ['high']);
   assert.deepEqual(tideTimeline(undefined), { points: [], upcoming: [], station: '' });
 });
+
+import { formatRange, gradeTone, indexDayLabel } from '../src/pages/fishing/fishingFormat.js';
+
+test('fishing index helpers format ranges, grades and day labels', () => {
+  assert.equal(formatRange({ min: 0.6, max: 0.9 }, ' m'), '0.6–0.9 m');
+  assert.equal(formatRange({ min: 16, max: 16 }, '°C'), '16.0°C');
+  assert.equal(formatRange({ min: null, max: 0.6 }, '', 2), '0.60');
+  assert.equal(formatRange(null), '—');
+  assert.equal(gradeTone('매우좋음'), 'best');
+  assert.equal(gradeTone('나쁨'), 'bad');
+  assert.equal(gradeTone('?'), 'unknown');
+  const now = Date.parse('2026-11-17T09:00:00+09:00');
+  assert.equal(indexDayLabel('2026-11-17', now), '오늘');
+  assert.equal(indexDayLabel('2026-11-18', now), '내일');
+  assert.equal(indexDayLabel('2026-11-19', now), '11/19 (목)');
+});
