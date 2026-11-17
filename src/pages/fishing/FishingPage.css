@@ -75,3 +75,29 @@
 .fish-tide-extreme small { color:#71849a; font-size:12px; }
 .fish-tide-chart { margin-top:12px; padding:8px 4px 0; border-radius:13px; background:rgba(255,255,255,.45); }
 .fish-tide-note { margin:10px 0 0; color:#7a8ca0; font-size:11px; line-height:1.6; }
+
+/* 바다낚시지수 */
+.fish-index-days { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px; }
+.fish-index-days button { padding:7px 13px; border:1px solid rgba(119,153,178,.3); border-radius:999px; background:rgba(255,255,255,.6); color:#36536e; font-size:13px; font-weight:700; cursor:pointer; }
+.fish-index-days button.active { background:#0f7f86; border-color:#0f7f86; color:#fff; }
+.fish-index-sessions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+.fish-index-session { display:flex; flex-direction:column; gap:10px; padding:16px; border-radius:15px; background:rgba(255,255,255,.62); border:1px solid rgba(119,153,178,.2); }
+.fish-index-session header { display:flex; align-items:center; gap:8px; }
+.fish-index-session header b { color:#173a5c; font-size:17px; }
+.fish-index-session header span { padding:3px 8px; border-radius:999px; background:rgba(61,95,158,.1); color:#3d5f9e; font-size:12px; font-weight:700; }
+.fish-index-best { margin:0; color:#557286; font-size:13px; }
+.fish-index-best b { color:#123f56; font-size:15px; }
+.fish-index-species { display:flex; flex-wrap:wrap; gap:6px; margin:0; padding:0; list-style:none; }
+.fish-index-species li { display:inline-flex; align-items:center; gap:6px; padding:5px 6px 5px 10px; border-radius:999px; background:rgba(240,246,250,.9); color:#24435f; font-size:13px; }
+.fish-grade { font-style:normal; font-size:12px; font-weight:800; padding:2px 8px; border-radius:999px; }
+.fish-grade.best { background:#0d7a4f; color:#fff; }
+.fish-grade.good { background:#d7f2e3; color:#0d6b45; }
+.fish-grade.normal { background:#eef1f4; color:#4f6275; }
+.fish-grade.bad { background:#fde8d4; color:#a24d0f; }
+.fish-grade.worst { background:#b42318; color:#fff; }
+.fish-grade.unknown { background:#eef1f4; color:#6f8298; }
+.fish-index-conditions { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:6px; margin:0; }
+.fish-index-conditions div { padding:8px; border-radius:10px; background:rgba(240,246,250,.75); }
+.fish-index-conditions dt { color:#6f8298; font-size:11px; }
+.fish-index-conditions dd { margin:3px 0 0; color:#193651; font-size:13px; font-weight:700; overflow-wrap:anywhere; }
+@media (max-width:720px) { .fish-index-sessions { grid-template-columns:1fr; } .fish-index-conditions { grid-template-columns:repeat(3,minmax(0,1fr)); } }

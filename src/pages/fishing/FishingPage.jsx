@@ -3,12 +3,13 @@
 //   fishingFormat.js   화면용 값 변환      components/        화면 영역별 컴포넌트
 //   FishingPage.css    낚시 페이지 전용 스타일
 // 물때 계산은 lib/tideCalendar.js 에 있습니다.
-// 새 영역(예: 기상특보, 바다낚시지수)은 components/에 만들고 아래 순서에 끼워 넣으면 됩니다.
+// 새 영역(예: 기상특보)은 components/에 만들고 아래 순서에 끼워 넣으면 됩니다.
 import { useState } from 'react';
 import { FiClock, FiInfo, FiRefreshCw } from 'react-icons/fi';
 import './FishingPage.css';
 import { useFishingAreas, useFishingSummary } from './useFishingData';
 import FishingHero from './components/FishingHero';
+import FishingIndexPanel from './components/FishingIndexPanel';
 import ForecastOutlook from './components/ForecastOutlook';
 import BuoyPanel from './components/BuoyPanel';
 import TidePanel from './components/TidePanel';
@@ -30,6 +31,8 @@ export default function FishingPage() {
     {error && <div className="fish-error" role="alert"><FiInfo /> {error}<button onClick={reload}>다시 시도</button></div>}
     {loading && !data && <div className="fish-loading" role="status"><FiRefreshCw className="fish-spin" /><div><b>해양 기관 자료를 불러오고 있어요</b><span>첫 요청은 서버 준비로 다소 오래 걸릴 수 있습니다.</span></div></div>}
     <div className="fish-data-meta"><FiClock /> 자료 조회 시각 {data?.updated_at || '확인 전'} <span>· 예보 발표·관측 시각은 각 항목에 표시</span></div>
+
+    <FishingIndexPanel key={area.id} index={sources.fishing_index} error={errors.fishing_index} />
 
     <ForecastOutlook forecastRows={forecastRows} />
 

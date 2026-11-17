@@ -82,3 +82,29 @@ export function tideTimeline(tideSource, { now = Date.now(), extremeLimit = 4 } 
     .slice(0, extremeLimit);
   return { points, upcoming, station: tideSource?.station || '' };
 }
+
+// 바다낚시지수 등급 → 화면 색 구분용 이름
+const GRADE_TONES = { 매우좋음: 'best', 좋음: 'good', 보통: 'normal', 나쁨: 'bad', 매우나쁨: 'worst' };
+export const gradeTone = (grade) => GRADE_TONES[grade] || 'unknown';
+
+// {min, max} → "0.6–0.9 m" (같으면 한 값)
+export function formatRange(range, unit = '', digits = 1) {
+  const fmt = (value) => (value === null || value === undefined || value === '' || !Number.isFinite(Number(value)) ? null : Number(value).toFixed(digits));
+  const low = fmt(range?.min);
+  const high = fmt(range?.max);
+  if (low === null && high === null) return '—';
+  const text = low === null || high === null || low === high ? (low ?? high) : `${low}–${high}`;
+  return `${text}${unit}`;
+}
+
+// "2026-11-17" → "오늘", "내일", "11/19 (목)"
+export function indexDayLabel(date, now = Date.now()) {
+  const time = Date.parse(`${date}T12:00:00+09:00`);
+  if (!Number.isFinite(time)) return date || '—';
+  const today = Date.parse(`${kstDate.format(now)}T12:00:00+09:00`);
+  const days = Math.round((time - today) / 86400000);
+  if (days === 0) return '오늘';
+  if (days === 1) return '내일';
+  const weekday = '일월화수목금토'[new Date(time).getUTCDay()];
+  return `${date.slice(5).replace('-', '/')} (${weekday})`;
+}
