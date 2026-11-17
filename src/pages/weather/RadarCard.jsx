@@ -69,6 +69,7 @@ export default function RadarCard({ latitude, longitude, region, preferredLayer 
     });
     const tiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      className: 'weather-map-basemap',
       maxZoom: 19,
     }).addTo(instance);
     tiles.on('tileerror', () => setMapError(true));
@@ -242,8 +243,9 @@ export default function RadarCard({ latitude, longitude, region, preferredLayer 
         </div>
         <p className="radar-card__note">최근 관측은 {latestAge}분 전 자료입니다.{latestAge > 30 ? ' 최신 자료 갱신이 지연되고 있습니다.' : ''} 회색은 자료 없음, 투명 영역은 에코 없음 또는 0dBZ 미만입니다.</p>
       </>}
-      <p className="radar-card__note">{isRain && '기상청 HSR 합성 관측 · 관측 범위 밖의 강수는 확인할 수 없습니다. '}현재 선택한 예보 날짜와 관계없이 최근 관측을 표시합니다.</p>
+      <p className="radar-card__note">{isRain ? '레이더 반사 신호이며 실제 지상 강수와 다를 수 있습니다.' : '현재 선택한 예보 날짜와 관계없이 최근 관측을 표시합니다.'}</p>
       <details className="radar-card__help"><summary>지도 조작·자료 안내</summary>
+        {isRain && <p>기상청 HSR 합성 관측 · 원본 500m 격자를 지도 좌표로 변환한 영상입니다. 최근 관측을 표시하며 선택한 예보 날짜의 영상이 아닙니다. 관측 범위 밖의 강수는 확인할 수 없습니다.</p>}
         <p>확대·축소 버튼은 반 단계씩 조절됩니다. 지도를 확대해도 관측소 수나 레이더 자료의 해상도가 높아지지는 않습니다.</p>
         <p>휴대폰에서는 ‘지도 이동 켜기’를 누르면 지도를 움직일 수 있어요. 페이지를 스크롤하려면 지도 이동을 꺼주세요. {isRain ? '색상은 레이더 반사도를 나타내며 강수확률과 다른 정보입니다.' : '색상은 풍속 구간을 나타냅니다. 관측소 사이의 바람은 지형·고도에 따라 달라집니다.'}</p>
         <a href={isRain ? 'https://www.weather.go.kr/w/image/radar.do' : 'https://www.weather.go.kr/w/obs-climate/land/city-obs.do'} target="_blank" rel="noreferrer">기상청 {isRain ? '레이더' : '관측'} 확인 ↗</a>
