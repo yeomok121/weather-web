@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { FiInfo, FiRefreshCw, FiTarget, FiX } from 'react-icons/fi';
 import { fetchPointIndex } from '../fishingApi';
-import { gradeTone, indexDayLabel, sessionLabel } from '../fishingFormat';
+import { gradeTone, indexDayLabel, namedSpecies, sessionLabel } from '../fishingFormat';
 import { explainFactors, explainReason } from '../lib/indexExplain';
 
 const GRADES = [
@@ -21,7 +21,9 @@ function SessionDetail({ session }) {
     <ul className="fish-modal-factors">{explainFactors(session).map((factor) => <li key={factor.id}>
       <span>{factor.name}</span><b>{factor.value}</b><em className={`fish-factor ${factor.tone}`}>{factor.label}</em><small>{factor.note}</small>
     </li>)}</ul>
-    <div className="fish-modal-species"><span>어종별</span>{session.species.map((item) => <span key={item.name}>{item.name} <em className={`fish-grade ${gradeTone(item.index)}`}>{item.index}</em></span>)}</div>
+    {namedSpecies(session.species).length > 0
+      ? <div className="fish-modal-species"><span>어종별</span>{namedSpecies(session.species).map((item) => <span key={item.name}>{item.name} <em className={`fish-grade ${gradeTone(item.index)}`}>{item.index}</em></span>)}</div>
+      : <div className="fish-modal-species"><span>어종별</span><span>이 포인트는 어종 구분 없이 지수 하나만 제공됩니다.</span></div>}
   </article>;
 }
 

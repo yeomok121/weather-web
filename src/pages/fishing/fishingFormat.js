@@ -111,3 +111,7 @@ export function indexDayLabel(date, now = Date.now()) {
 
 // 바다낚시지수 시간대: 며칠 뒤 자료는 오전/오후 대신 하루 단위("일")로 옵니다. (2026-11-17 실제 응답 확인)
 export const sessionLabel = (value) => ({ 일: '하루 전체' })[value] || value || '—';
+
+// 바다낚시지수 어종 이름: 국립해양조사원이 어종 대신 '-'를 주는 포인트가 있습니다(어종 구분 없는 지수). (2026-11-18 인천항서측 확인)
+export const hasSpeciesName = (name) => typeof name === 'string' && !/^[\s\-–—]*$/.test(name);
+export const namedSpecies = (species = []) => species.filter((item) => hasSpeciesName(item?.name));

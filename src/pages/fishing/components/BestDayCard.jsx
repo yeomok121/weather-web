@@ -1,14 +1,14 @@
 // 낚시 페이지: 이번 주 가장 좋은 날 추천 (바다낚시지수 7일치 기준)
 import { FiStar } from 'react-icons/fi';
 import { recommendFishingDay } from '../lib/bestDay';
-import { formatRange, gradeTone, indexDayLabel, sessionLabel } from '../fishingFormat';
+import { formatRange, gradeTone, hasSpeciesName, indexDayLabel, sessionLabel } from '../fishingFormat';
 
 export default function BestDayCard({ days, warnings = [], now, onSelectDay }) {
   if (!days?.length) return null;
   const { best, blockedDates, insideWarning } = recommendFishingDay(days, warnings, { now });
   const activeWarning = warnings.find((item) => item.level === '주의' || item.level === '경보');
   if (!best) return <div className="fish-best none"><FiStar /><div><b>이번 주에는 지수가 '보통' 이상인 날이 없습니다</b><span>바다 상태가 좋지 않은 한 주입니다. 다른 포인트나 다음 주 예보를 확인해 보세요.</span></div></div>;
-  const species = best.topSpecies.filter((name) => name !== '기타어종');
+  const species = best.topSpecies.filter((name) => hasSpeciesName(name) && name !== '기타어종');
   return <div className={`fish-best ${gradeTone(best.topGrade)}`}>
     <FiStar />
     <div>

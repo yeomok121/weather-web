@@ -341,3 +341,11 @@ test('nearest fishing point to the user location', () => {
   assert.equal(nearestPoint(points, null), null);
   assert.equal(nearestPoint([], { lat: 35, lon: 129 }), null);
 });
+
+import { hasSpeciesName, namedSpecies } from '../src/pages/fishing/fishingFormat.js';
+
+test("species '-' from KHOA is treated as no species name", () => {
+  assert.deepEqual(['감성돔', '기타어종', '-', ' - ', '—', '', null, undefined].map(hasSpeciesName), [true, true, false, false, false, false, false, false]);
+  assert.deepEqual(namedSpecies([{ name: '-', index: '매우나쁨' }]), []);
+  assert.deepEqual(namedSpecies([{ name: '-', index: '보통' }, { name: '우럭', index: '좋음' }]).map((item) => item.name), ['우럭']);
+});

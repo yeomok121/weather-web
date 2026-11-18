@@ -1,15 +1,18 @@
 // 낚시 페이지: 국립해양조사원 바다낚시지수 (가장 가까운 포인트의 날짜·오전/오후·어종별 지수)
 import { useState } from 'react';
 import { FiInfo, FiTarget } from 'react-icons/fi';
-import { formatRange, gradeTone, indexDayLabel, sessionLabel } from '../fishingFormat';
+import { formatRange, gradeTone, indexDayLabel, namedSpecies, sessionLabel } from '../fishingFormat';
 import BestDayCard from './BestDayCard';
 
 function Session({ session }) {
-  const best = session.species[0];
+  const named = namedSpecies(session.species);
+  const best = named[0];
+  const overall = session.species[0]; // 어종 이름 없이 지수만 오는 포인트
   return <article className="fish-index-session">
     <header><b>{sessionLabel(session.session)}</b>{session.tide_phase && <span>{session.tide_phase}</span>}</header>
-    {best && <p className="fish-index-best">가장 좋은 어종 <b>{best.name}</b> <em className={`fish-grade ${gradeTone(best.index)}`}>{best.index}</em></p>}
-    <ul className="fish-index-species">{session.species.map((item) => <li key={item.name}><span>{item.name}</span><em className={`fish-grade ${gradeTone(item.index)}`}>{item.index || '—'}</em></li>)}</ul>
+    {best ? <p className="fish-index-best">가장 좋은 어종 <b>{best.name}</b> <em className={`fish-grade ${gradeTone(best.index)}`}>{best.index}</em></p>
+      : overall && <p className="fish-index-best">어종 구분 없이 <em className={`fish-grade ${gradeTone(overall.index)}`}>{overall.index || '—'}</em></p>}
+    {named.length > 0 && <ul className="fish-index-species">{named.map((item) => <li key={item.name}><span>{item.name}</span><em className={`fish-grade ${gradeTone(item.index)}`}>{item.index || '—'}</em></li>)}</ul>}
     <dl className="fish-index-conditions">
       <div><dt>파고</dt><dd>{formatRange(session.wave_m, ' m')}</dd></div>
       <div><dt>풍속</dt><dd>{formatRange(session.wind_ms, ' m/s')}</dd></div>
