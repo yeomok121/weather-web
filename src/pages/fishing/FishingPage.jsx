@@ -26,6 +26,7 @@ import TidePanel from './components/TidePanel';
 import MarineForecastPanel from './components/MarineForecastPanel';
 import SunPanel from './components/SunPanel';
 import GearChecklist from './components/GearChecklist';
+import FishingLoginCard from './components/FishingLoginCard';
 import FishingTabs, { TabPanel } from './components/FishingTabs';
 import { DEFAULT_TAB, tabFromQuery } from './lib/tabs';
 
@@ -77,15 +78,18 @@ export default function FishingPage() {
   const forecastRows = sources.forecast?.records || [];
 
   return <main className="fishing-page">
-    <FishingHero areas={areas} area={area} onAreaChange={setAreaId} loading={loading} onReload={reload}
-      pointMode={pointMode} pickerOpen={pickerOpen} onOpenPicker={() => setPickerOpen((open) => !open)} isFavorite={isFavorite(pointId)} onToggleFavorite={() => toggle(pointId)}
-      favoritePoints={favorites} onSelectPoint={selectPoint} data={data} />
-
-
-    {error && <div className="fish-error" role="alert"><FiInfo /> {error}<button onClick={reload}>다시 시도</button></div>}
-    {loading && !data && <div className="fish-loading" role="status"><FiRefreshCw className="fish-spin" /><div><b>해양 기관 자료를 불러오고 있어요</b><span>첫 요청은 서버 준비로 다소 오래 걸릴 수 있습니다.</span></div></div>}
-
-    {data && <WarningBanner warnings={sources.warnings} error={errors.warnings} />}
+    {/* 위쪽: 왼쪽은 오늘 요약·특보, 오른쪽은 로그인 (좁은 화면에서는 로그인이 맨 아래로) */}
+    <div className="fish-top-row">
+      <div className="fish-top-main">
+        <FishingHero areas={areas} area={area} onAreaChange={setAreaId} loading={loading} onReload={reload}
+          pointMode={pointMode} pickerOpen={pickerOpen} onOpenPicker={() => setPickerOpen((open) => !open)} isFavorite={isFavorite(pointId)} onToggleFavorite={() => toggle(pointId)}
+          favoritePoints={favorites} onSelectPoint={selectPoint} data={data} />
+        {error && <div className="fish-error" role="alert"><FiInfo /> {error}<button onClick={reload}>다시 시도</button></div>}
+        {loading && !data && <div className="fish-loading" role="status"><FiRefreshCw className="fish-spin" /><div><b>해양 기관 자료를 불러오고 있어요</b><span>첫 요청은 서버 준비로 다소 오래 걸릴 수 있습니다.</span></div></div>}
+        {data && <WarningBanner warnings={sources.warnings} error={errors.warnings} />}
+      </div>
+      <FishingLoginCard />
+    </div>
 
     {pointMode && pickerOpen && (status === 'ready'
       ? <PointPicker points={points} selectedId={pointId} favorites={favorites} onSelect={selectPoint} onToggleFavorite={toggle} onClose={() => setPickerOpen(false)} isLoggedIn={Boolean(loggedInUser)}

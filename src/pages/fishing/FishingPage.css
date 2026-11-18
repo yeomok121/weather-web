@@ -293,3 +293,13 @@ button.fish-area-picker em { font-style:normal; font-size:12px; font-weight:700;
 .fish-tabpanel { display:flex; flex-direction:column; gap:18px; }
 .fish-tabpanel[hidden] { display:none; }
 @media (max-width:720px) { .fish-tabs { padding:4px; border-radius:13px; } .fish-tabs button { flex-direction:column; gap:2px; min-height:48px; padding:6px 2px; font-size:12px; } .fish-tabs button svg { font-size:16px; } }
+/* 위쪽 2단: 오늘 요약·특보 | 로그인 (날씨·산악 페이지처럼 오른쪽 위) */
+.fish-top-row { display:grid; grid-template-columns:minmax(0,1fr) 320px; gap:18px; align-items:start; }
+.fish-top-main { display:flex; flex-direction:column; gap:18px; min-width:0; }
+.fish-login-card { border-radius:20px; overflow:hidden; }
+.fish-gear-login button { margin-left:6px; padding:0; border:0; background:none; color:#0f6f76; font:inherit; font-weight:800; text-decoration:underline; cursor:pointer; }
+@media (max-width:900px) {
+  .fish-top-row { display:contents; }
+  .fish-login-card { order:1; }
+  .fishing-page > .fish-source-details, .fishing-page > .fish-disclaimer { order:2; }
+}

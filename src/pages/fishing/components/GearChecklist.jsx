@@ -7,11 +7,12 @@ import { readStoredJson, writeStoredJson } from '../../../shared/lib/browserStor
 import { BASE_GEAR, GEAR_LIMITS, REQUIRED_GEAR, addGearItem, conditionalGear, gearListFor, todayConditions } from '../lib/gear';
 import { tideCalendar } from '../lib/tideCalendar';
 import { useGearSetup } from '../useGearSetup';
+import { openFishingLogin } from '../lib/loginPrompt';
 
 const STORAGE_KEY = 'fishing:gear-checked:v1';
 
 export default function GearChecklist({ area, indexDays, forecastRows, warnings }) {
-  const { loggedInUser, showToast } = useApp();
+  const { loggedInUser, showToast, promptLogin } = useApp();
   const { setup, save, isLoggedIn } = useGearSetup({ loggedInUser, showToast });
   const [editing, setEditing] = useState(false);
   const [today] = useState(() => Date.now());
@@ -32,7 +33,7 @@ export default function GearChecklist({ area, indexDays, forecastRows, warnings 
     <div className="fish-panel-title fish-gear-title"><FiCheckSquare /><div><h2>바다낚시 준비물</h2><p>{done}/{items.length} 준비 · 오늘 바다 조건에 맞춘 항목을 위에 표시합니다</p></div>
       {isLoggedIn && !editing && <button type="button" className="fish-gear-edit" onClick={() => setEditing(true)}><FiEdit2 /> 내 준비물 편집</button>}
     </div>
-    {!isLoggedIn && <p className="fish-gear-login">로그인하면 나만의 준비물 목록을 만들 수 있어요. 계정에 저장돼서 어느 기기에서 로그인해도 그대로 보여요.</p>}
+    {!isLoggedIn && <p className="fish-gear-login">로그인하면 나만의 준비물 목록을 만들 수 있어요. 계정에 저장돼서 어느 기기에서 로그인해도 그대로 보여요.<button type="button" onClick={() => openFishingLogin(promptLogin)}>로그인하기</button></p>}
     {editing && <GearEditor setup={setup} onCancel={() => setEditing(false)} onSave={async (next) => { if (await save(next)) setEditing(false); }} />}
     {extra.filter((item) => item.tip).map((item) => <p className="fish-gear-tip" key={item.id}>⚠ {item.name} · {item.reason}</p>)}
     <ul className="fish-gear-list">{items.map((item) => <li key={item.id} className={`${checked.has(item.id) ? 'done' : ''} ${item.mine ? 'mine' : ''}`}>
