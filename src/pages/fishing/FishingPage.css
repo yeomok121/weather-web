@@ -304,3 +304,5 @@ button.fish-area-picker em { font-style:normal; font-size:12px; font-weight:700;
   .fish-login-card { order:1; }
   .fishing-page > .fish-source-details, .fishing-page > .fish-disclaimer { order:2; }
 }
+.fish-hero-meta { display:inline-flex; flex-wrap:wrap; align-items:center; gap:4px 8px; }
+.fish-nearby { display:inline-block; padding:2px 9px; border-radius:999px; background:rgba(15,127,134,.1); color:#0f6f76; font-style:normal; font-size:12px; font-weight:800; }

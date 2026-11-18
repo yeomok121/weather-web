@@ -325,3 +325,19 @@ test('fishing tabs come from the address and fall back to the first tab', () => 
   assert.equal(tabFromQuery(null), 'index');
   assert.equal(tabFromQuery('<script>'), 'index');
 });
+
+import { distanceKm, nearestPoint } from '../src/pages/fishing/lib/nearest.js';
+
+test('nearest fishing point to the user location', () => {
+  const points = [
+    { id: '가거도', lat: 34.07308, lon: 125.08805 }, { id: '추자도', lat: 33.9541, lon: 126.3108 },
+    { id: '김녕', lat: 33.5609, lon: 126.74018 }, { id: '생도', lat: 35.0386, lon: 129.0904 }, { id: '좌표없음', lat: null, lon: null },
+  ];
+  assert.ok(Math.abs(distanceKm({ lat: 37.5665, lon: 126.978 }, { lat: 35.1796, lon: 129.0756 }) - 325) < 5); // 서울–부산 약 325 km
+  const busan = nearestPoint(points, { lat: 35.1, lon: 129.04 });
+  assert.equal(busan.point.id, '생도');
+  assert.ok(busan.distanceKm > 7 && busan.distanceKm < 9);
+  assert.equal(nearestPoint(points, { lat: 33.5, lon: 126.53 }).point.id, '김녕'); // 제주시
+  assert.equal(nearestPoint(points, null), null);
+  assert.equal(nearestPoint([], { lat: 35, lon: 129 }), null);
+});

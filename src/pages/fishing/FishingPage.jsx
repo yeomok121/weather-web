@@ -15,6 +15,8 @@ import { useApp } from '../../shared/AppContext';
 import { readStoredJson, writeStoredJson } from '../../shared/lib/browserStorage';
 import { useFishingAreas, useFishingPoints, useFishingSummary } from './useFishingData';
 import { useFavoritePoints } from './useFavoritePoints';
+import { useMyLocation } from './useMyLocation';
+import { nearestPoint } from './lib/nearest';
 import FishingHero from './components/FishingHero';
 import PointPicker from './components/PointPicker';
 import FishingIndexModal from './components/FishingIndexModal';
@@ -40,20 +42,26 @@ export default function FishingPage() {
   const { points, status } = useFishingPoints();
   const { favorites, toggle, isFavorite } = useFavoritePoints({ loggedInUser, showToast });
   const [areaId, setAreaId] = useState(areas[0].id);
-  const [chosenPoint, setChosenPoint] = useState(() => searchParams.get('point') || readStoredJson(LAST_POINT_KEY, null) || DEFAULT_POINT);
+  // 기본 포인트: 주소(?point=) → 마지막으로 고른 포인트 → 내 위치에서 가장 가까운 포인트 → 추자도
+  const [chosenPoint, setChosenPoint] = useState(() => searchParams.get('point') || readStoredJson(LAST_POINT_KEY, null) || null);
+  const myLocation = useMyLocation(!chosenPoint);
   // 포인트 고르기 창은 처음 들어오면 항상 열어 둡니다. 포인트를 고르면 닫히고, '포인트 바꾸기'로 다시 엽니다.
   const [pickerOpen, setPickerOpen] = useState(true);
   const [indexModal, setIndexModal] = useState(null); // { pointId, pointName, index?, guide? }
 
   // 포인트 목록을 못 받으면(예전 서버·키 없음) 예전처럼 해역 3곳으로 동작합니다.
   const pointMode = status !== 'failed';
-  const pointId = status === 'ready' && !points.some((point) => point.id === chosenPoint)
-    ? (points.find((point) => point.id === DEFAULT_POINT) || points[0]).id : chosenPoint;
+  const nearby = !chosenPoint && myLocation.phase === 'found' && status === 'ready' ? nearestPoint(points, myLocation.coords) : null;
+  // 위치를 확인하는 동안(또는 위치는 찾았는데 포인트 목록이 아직이면) 바다 정보를 부르지 않고 기다립니다.
+  const waitingForNearby = !chosenPoint && pointMode && (myLocation.phase === 'locating' || (myLocation.phase === 'found' && status !== 'ready'));
+  const wanted = chosenPoint || nearby?.point.id || DEFAULT_POINT;
+  const pointId = status === 'ready' && !points.some((point) => point.id === wanted)
+    ? (points.find((point) => point.id === DEFAULT_POINT) || points[0]).id : wanted;
   const listed = points.find((point) => point.id === pointId);
   const fallbackArea = areas.find((item) => item.id === areaId) || areas[0];
-  const { data, error, loading, reload } = useFishingSummary(pointMode ? { id: `point:${pointId}`, pointId } : fallbackArea);
+  const { data, error, loading, reload } = useFishingSummary(pointMode ? { id: `point:${pointId}`, pointId } : fallbackArea, { enabled: !waitingForNearby });
   const area = pointMode ? {
-    id: `point:${pointId}`, pointId, place: listed?.name || pointId,
+    id: `point:${pointId}`, pointId, place: waitingForNearby ? '가까운 포인트 찾는 중…' : listed?.name || pointId,
     lat: listed?.lat ?? data?.coordinates?.lat, lon: listed?.lon ?? data?.coordinates?.lon,
     tide_system: listed?.tide_system ?? data?.tide_system ?? 8,
     region_name: listed?.region_name || data?.region_name || '',
@@ -83,7 +91,8 @@ export default function FishingPage() {
       <div className="fish-top-main">
         <FishingHero areas={areas} area={area} onAreaChange={setAreaId} loading={loading} onReload={reload}
           pointMode={pointMode} pickerOpen={pickerOpen} onOpenPicker={() => setPickerOpen((open) => !open)} isFavorite={isFavorite(pointId)} onToggleFavorite={() => toggle(pointId)}
-          favoritePoints={favorites} onSelectPoint={selectPoint} data={data} />
+          favoritePoints={favorites} onSelectPoint={selectPoint} data={data}
+          nearbyKm={nearby && nearby.point.id === pointId ? nearby.distanceKm : null} />
         {error && <div className="fish-error" role="alert"><FiInfo /> {error}<button onClick={reload}>다시 시도</button></div>}
         {loading && !data && <div className="fish-loading" role="status"><FiRefreshCw className="fish-spin" /><div><b>해양 기관 자료를 불러오고 있어요</b><span>첫 요청은 서버 준비로 다소 오래 걸릴 수 있습니다.</span></div></div>}
         {data && <WarningBanner warnings={sources.warnings} error={errors.warnings} />}

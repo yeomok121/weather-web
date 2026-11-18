@@ -25,7 +25,8 @@ export function useFishingPoints() {
   return state;
 }
 
-export function useFishingSummary(area) {
+// enabled=false 이면(예: 내 위치로 가까운 포인트를 찾는 중) 아직 불러오지 않고 기다립니다.
+export function useFishingSummary(area, { enabled = true } = {}) {
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
@@ -54,10 +55,11 @@ export function useFishingSummary(area) {
   }, []);
 
   useEffect(() => {
+    if (!enabled) return undefined;
     let cancelled = false;
     queueMicrotask(() => { if (!cancelled) load(); });
     return () => { cancelled = true; requestRef.current?.abort(); requestRef.current = null; };
-  }, [areaKey, load]);
+  }, [areaKey, load, enabled]);
 
   return { data, error, loading, reload: load };
 }
