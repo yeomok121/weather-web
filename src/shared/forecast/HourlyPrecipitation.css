@@ -9,11 +9,6 @@
   line-height: 1;
 }
 
-.hourly-weather-symbol[data-quiet-rain='true'] > span:first-child {
-  font-size: 16px;
-  opacity: .72;
-}
-
 .hourly-weather-description {
   max-width: 100%;
   overflow: hidden;

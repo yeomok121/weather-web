@@ -341,9 +341,18 @@ function HourlyForecast({
       })
     : [];
 
-  const maxIndex = Math.max(0, rawForecastData.length - ITEMS_TO_SHOW);
+  const [compactHours, setCompactHours] = useState(() => window.matchMedia('(max-width: 600px)').matches);
+  useEffect(() => {
+    const query = window.matchMedia('(max-width: 600px)');
+    const sync = () => setCompactHours(query.matches);
+    query.addEventListener('change', sync);
+    sync();
+    return () => query.removeEventListener('change', sync);
+  }, []);
+  const hoursPerPage = !isMountainMode && !mountainInfo && compactHours ? 4 : ITEMS_TO_SHOW;
+  const maxIndex = Math.max(0, rawForecastData.length - hoursPerPage);
   const visibleIndex = Math.min(currentIndex, maxIndex);
-  const visibleSlice = rawForecastData.slice(visibleIndex, visibleIndex + ITEMS_TO_SHOW);
+  const visibleSlice = rawForecastData.slice(visibleIndex, visibleIndex + hoursPerPage);
   const peakRainHour = !isMountainMode && !mountainInfo
     ? rawForecastData.reduce((peak, item) => item.pop > (peak?.pop ?? 0) ? item : peak, null)
     : null;
@@ -359,8 +368,8 @@ function HourlyForecast({
     plotTemp: item.tempNum === null ? null : Math.min(yMax - 0.2, Math.max(yMin + 0.2, item.tempNum))
   }));
 
-  const handlePrev = () => setCurrentIndex(Math.max(0, visibleIndex - ITEMS_TO_SHOW));
-  const handleNext = () => setCurrentIndex(Math.min(maxIndex, visibleIndex + ITEMS_TO_SHOW));
+  const handlePrev = () => setCurrentIndex(Math.max(0, visibleIndex - hoursPerPage));
+  const handleNext = () => setCurrentIndex(Math.min(maxIndex, visibleIndex + hoursPerPage));
 
   const prevDisabled = isLoading || visibleIndex === 0;
   const nextDisabled = isLoading || visibleIndex >= maxIndex;
@@ -934,7 +943,7 @@ function HourlyForecast({
         <div>
         {peakRainHour && <p className="hourly-precip-peak">표시 기간 최고 강수확률 <strong>{peakRainHour.pop}%</strong> · {Number.isFinite(Date.parse(peakRainHour.valid_at)) ? koreanDate(peakRainHour.valid_at).slice(5).replace('-', '/') + ' ' : ''}{peakRainHour.time}</p>}
         <div className="hourly-chart-wrapper" style={{ overflow: 'hidden', width: '100%', position: 'relative' }}>
-          <div style={{ transition: 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)', transform: `translateX(-${(visibleIndex / forecastData.length) * 100}%)`, width: `${(forecastData.length / ITEMS_TO_SHOW) * 100}%`, position: 'relative' }}>
+          <div style={{ transition: 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)', transform: `translateX(-${(visibleIndex / forecastData.length) * 100}%)`, width: `${(forecastData.length / hoursPerPage) * 100}%`, position: 'relative' }}>
 
             <div style={{ position: 'absolute', top: '68px', left: 0, right: 0, height: '100px', zIndex: 1, padding: `0 ${100 / (2 * forecastData.length)}%`, boxSizing: 'border-box' }}>
               <ResponsiveContainer width="100%" height="100%">
@@ -948,16 +957,16 @@ function HourlyForecast({
             <div style={{ display: 'flex', width: '100%', position: 'relative', zIndex: 2 }}>
               {forecastData.map((item) => {
                 const emoji = getEmojiIcon(item.icon);
-                const quietRain = !mountainInfo && !isMountainMode && emoji === '🌧️' && item.pop !== null && item.pop < 60;
+                const cloudOnly = !mountainInfo && !isMountainMode && emoji === '🌧️' && item.pop !== null && item.pop < 50;
                 return (
                 <div key={item.id} style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                   <span style={{ fontSize: '12px', color: '#475569', height: '18px', lineHeight: '18px', marginBottom: '6px', fontWeight: '600' }}>{item.time}</span>
-                  <div className="hourly-weather-symbol" data-quiet-rain={quietRain} title={item.description || undefined}>
-                    <span aria-hidden="true">{emoji}</span>
-                    {item.description && <span className="hourly-weather-description">{item.description}</span>}
+                  <div className="hourly-weather-symbol" title={item.description || undefined}>
+                    <span aria-hidden="true">{cloudOnly ? '☁️' : emoji}</span>
+                    {item.description && <span className="hourly-weather-description">{cloudOnly ? '비 가능성' : item.description}</span>}
                   </div>
                   <div style={{ height: '100px', marginBottom: '6px' }} />
-                  <span className="hourly-precip-value" data-emphasis={item.pop >= 60} aria-label={item.pop === null ? '강수확률 자료 없음' : `강수확률 ${item.pop}%`}>
+                  <span className="hourly-precip-value" data-emphasis={item.pop >= 50} aria-label={item.pop === null ? '강수확률 자료 없음' : `강수확률 ${item.pop}%`}>
                     <span>강수</span> <strong>{item.pop === null ? '—' : `${item.pop}%`}</strong>
                   </span>
                 </div>
