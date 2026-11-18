@@ -62,7 +62,6 @@ function HourlyForecast({
   weatherData = {},
   onShowToast,
   selectedCourseIdx = 0,
-  radarLink = null,
   onSelectCourseIdx,
   paceType = 'normal',
   onSelectPaceType,
@@ -355,7 +354,7 @@ function HourlyForecast({
   const visibleIndex = Math.min(currentIndex, maxIndex);
   const visibleSlice = rawForecastData.slice(visibleIndex, visibleIndex + hoursPerPage);
   const peakRainHour = !isMountainMode && !mountainInfo
-    ? visibleSlice.reduce((peak, item) => item.pop > (peak?.pop ?? 0) ? item : peak, null)
+    ? rawForecastData.reduce((peak, item) => item.pop > (peak?.pop ?? 0) ? item : peak, null)
     : null;
   const visibleTemps = visibleSlice.map(d => d.tempNum).filter(v => v !== null);
   const sliceMin = visibleTemps.length > 0 ? Math.min(...visibleTemps) : 10;
@@ -942,7 +941,7 @@ function HourlyForecast({
         <p style={{ margin: '8px 0', fontSize: '13px', color: '#475569' }}>예보 데이터가 없습니다.</p>
       ) : (
         <div>
-        {peakRainHour && <p className="hourly-precip-peak">이 시간대 최고 강수확률 <strong>{peakRainHour.pop}%</strong> · {Number.isFinite(Date.parse(peakRainHour.valid_at)) ? koreanDate(peakRainHour.valid_at).slice(5).replace('-', '/') + ' ' : ''}{peakRainHour.time}</p>}
+        {peakRainHour && <p className="hourly-precip-peak">표시 기간 최고 강수확률 <strong>{peakRainHour.pop}%</strong> · {Number.isFinite(Date.parse(peakRainHour.valid_at)) ? koreanDate(peakRainHour.valid_at).slice(5).replace('-', '/') + ' ' : ''}{peakRainHour.time}</p>}
         <div className="hourly-chart-wrapper" style={{ overflow: 'hidden', width: '100%', position: 'relative' }}>
           <div style={{ transition: 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)', transform: `translateX(-${(visibleIndex / forecastData.length) * 100}%)`, width: `${(forecastData.length / hoursPerPage) * 100}%`, position: 'relative' }}>
 
@@ -975,7 +974,6 @@ function HourlyForecast({
             </div>
           </div>
         </div>
-        {radarLink && <div className="weather-map-actions">{radarLink}</div>}
         </div>
       )}
     </div>

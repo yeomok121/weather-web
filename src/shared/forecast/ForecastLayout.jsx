@@ -9,11 +9,8 @@ import HourlyForecast from './HourlyForecast';
 import WeatherOutlook from './WeatherOutlook';
 import WeatherDetails from './WeatherDetails';
 import WeeklyForecast from './WeeklyForecast';
-import { lazy, Suspense, useState } from 'react';
+import { lazy, Suspense } from 'react';
 import { preferredWeatherLayer } from '../../pages/weather/weatherMap';
-
-import WeatherFavorites from './WeatherFavorites';
-import './WeatherHome.css';
 
 const RadarCard = lazy(() => import('../../pages/weather/RadarCard'));
 
@@ -29,10 +26,70 @@ export default function ForecastLayout({ extras = null }) {
     showToast, weatherData, weatherFetchedAt, weeklyData, favorites,
   } = useApp();
 
-  const [rainRequest, setRainRequest] = useState(0);
+  return (
+    <main className={`main-container ${isMountainMode ? 'is-mountain-mode' : ''}`} style={{ flexGrow: 1, maxWidth: '1320px', margin: '0 auto', width: '100%', zIndex: 1, padding: '28px 24px' }}>
+      <div className="main-primary-column" style={{ display: 'flex', flexDirection: 'column', gap: '16px', minWidth: 0 }}>
 
-  const loginCard = (
-    <div id="member-login" className="glass-card main-login-card" style={{ borderRadius: '16px', overflow: 'hidden' }}>
+        <WeatherMain
+          weatherData={activeWeather}
+          hourlyData={hourlyData}
+          weeklyData={weeklyData}
+          selectedDateIdx={selectedDateIdx}
+          onSelectDate={(idx) => { setSelectedDateIdx(idx); setRestoredDepartureAt(null); setDepartureOffsetHours(0); setPlanReferenceAt(Date.now()); }}
+          isAiLoading={isAiLoading && !weatherData.hasData}
+          aiMessage={aiMessage}
+          favorites={favorites}
+          onAddClick={handleOpenAddRegion}
+          onFavoriteClick={handleFavoriteClick}
+          onRemoveFavorite={handleRemoveFavorite}
+          isLoggedIn={!!loggedInUser}
+          onCurrentLocationClick={handleCurrentLocation}
+          isMountainMode={isMountainMode}
+          mountainInfo={mountainInfo}
+          mountainsList={mountainsList}
+          onSelectMountain={(mName) => loadMountainWeather(mName)}
+        />
+
+        {extras}
+        <HourlyForecast
+          hourlyData={hourlyData}
+          isLoading={isAiLoading && !weatherData.hasData}
+          error={forecastError}
+          onRetry={() => {
+            const request = lastWeatherRequestRef.current;
+            if (request.kind === 'mountain') loadMountainWeather(request.mountainName);
+            else loadWeather(request.lat, request.lon, request.regionName);
+          }}
+          isMountainMode={isMountainMode && effectiveMountainInfo?.course_available !== false}
+          mountainInfo={effectiveMountainInfo}
+          weatherData={activeWeather}
+          onShowToast={showToast}
+          selectedCourseIdx={selectedCourseIdx}
+          onSelectCourseIdx={setSelectedCourseIdx}
+          paceType={paceType}
+          onSelectPaceType={setPaceType}
+          departureOffsetHours={departureOffsetHours}
+          onSelectDepartureOffset={hours => { setDepartureOffsetHours(hours); setRestoredDepartureAt(null); setPlanReferenceAt(Date.now()); }}
+          departureAt={hikingPlanSummary?.departureAt}
+          restoredDepartureAt={restoredDepartureAt}
+          onRestoreDeparture={value => { setSelectedDateIdx(0); setRestoredDepartureAt(value); setDepartureOffsetHours(0); }}
+          isStale={connectionState.phase !== 'success'}
+          onGearListChange={setCustomGearList}
+          loggedInUser={loggedInUser}
+          selectedDateIdx={selectedDateIdx}
+          hikingPlanSummary={hikingPlanSummary}
+          onApplyHikingPlan={handleApplyHikingPlan}
+          onRequireLogin={() => { promptLogin(); document.getElementById('member-login')?.scrollIntoView({ behavior: 'smooth', block: 'center' }); showToast('로그인하면 작성 중인 산행 계획을 이어서 저장할 수 있어요.'); }}
+        />
+
+        {!isMountainMode && <Suspense fallback={<div className="glass-card weather-empty">레이더 지도를 준비하고 있어요.</div>}>
+          <RadarCard latitude={forecastLocation?.lat} longitude={forecastLocation?.lon} region={weatherData.region}
+            preferredLayer={preferredWeatherLayer(weatherData)} />
+        </Suspense>}
+      </div>
+
+      <div className="main-side-column" style={{ display: 'flex', flexDirection: 'column', gap: '16px', minWidth: 0 }}>
+        <div id="member-login" className="glass-card main-login-card" style={{ borderRadius: '16px', overflow: 'hidden' }}>
            <LoginCard
             loginPrompt={loginPrompt}
             onSignUpClick={() => setIsSignUpOpen(true)}
@@ -44,75 +101,6 @@ export default function ForecastLayout({ extras = null }) {
             onDeleteAccount={handleDeleteAccount}
           />
         </div>
-  );
-
-  return (
-    <main className={`main-container ${isMountainMode ? 'is-mountain-mode' : 'weather-home'}`} style={{ flexGrow: 1, maxWidth: '1320px', margin: '0 auto', width: '100%', zIndex: 1, padding: '28px 24px' }}>
-      <div className="main-primary-column" style={{ display: 'flex', flexDirection: 'column', gap: '16px', minWidth: 0 }}>
-
-        <div className={isMountainMode ? "mountain-forecast-group" : "glass-card weather-home-summary"}>
-          <WeatherMain
-            weatherData={activeWeather}
-            weeklyData={weeklyData}
-            selectedDateIdx={selectedDateIdx}
-            onSelectDate={(idx) => { setSelectedDateIdx(idx); setRestoredDepartureAt(null); setDepartureOffsetHours(0); setPlanReferenceAt(Date.now()); }}
-            isAiLoading={isAiLoading && !weatherData.hasData}
-            aiMessage={aiMessage}
-            isMountainMode={isMountainMode}
-            mountainInfo={mountainInfo}
-            mountainsList={mountainsList}
-            onSelectMountain={(mName) => loadMountainWeather(mName)}
-          />
-
-          {extras}
-          <HourlyForecast
-            hourlyData={hourlyData}
-            isLoading={isAiLoading && !weatherData.hasData}
-            error={forecastError}
-            onRetry={() => {
-              const request = lastWeatherRequestRef.current;
-              if (request.kind === 'mountain') loadMountainWeather(request.mountainName);
-              else loadWeather(request.lat, request.lon, request.regionName);
-            }}
-            isMountainMode={isMountainMode && effectiveMountainInfo?.course_available !== false}
-            mountainInfo={effectiveMountainInfo}
-            weatherData={activeWeather}
-            onShowToast={showToast}
-            selectedCourseIdx={selectedCourseIdx}
-            onSelectCourseIdx={setSelectedCourseIdx}
-            paceType={paceType}
-            onSelectPaceType={setPaceType}
-            departureOffsetHours={departureOffsetHours}
-            onSelectDepartureOffset={hours => { setDepartureOffsetHours(hours); setRestoredDepartureAt(null); setPlanReferenceAt(Date.now()); }}
-            departureAt={hikingPlanSummary?.departureAt}
-            restoredDepartureAt={restoredDepartureAt}
-            onRestoreDeparture={value => { setSelectedDateIdx(0); setRestoredDepartureAt(value); setDepartureOffsetHours(0); }}
-            isStale={connectionState.phase !== 'success'}
-            onGearListChange={setCustomGearList}
-            loggedInUser={loggedInUser}
-            selectedDateIdx={selectedDateIdx}
-            hikingPlanSummary={hikingPlanSummary}
-            onApplyHikingPlan={handleApplyHikingPlan}
-            radarLink={!isMountainMode ? <a className="weather-map-jump" href="#weather-map" onClick={() => setRainRequest(value => value + 1)}>비구름 확인 <span aria-hidden="true">↓</span></a> : null}
-            onRequireLogin={() => { promptLogin(); document.getElementById('member-login')?.scrollIntoView({ behavior: 'smooth', block: 'center' }); showToast('로그인하면 작성 중인 산행 계획을 이어서 저장할 수 있어요.'); }}
-          />
-
-        </div>
-
-        {!isMountainMode && <section id="weather-map" className="weather-home-map" tabIndex={-1} aria-label="기상 지도"><Suspense fallback={<div className="glass-card weather-empty">레이더 지도를 준비하고 있어요.</div>}>
-          <RadarCard latitude={forecastLocation?.lat} longitude={forecastLocation?.lon} region={weatherData.region}
-            preferredLayer={preferredWeatherLayer(weatherData)} rainRequest={rainRequest} />
-        </Suspense></section>}
-      </div>
-
-      <div className="main-side-column" style={{ display: 'flex', flexDirection: 'column', gap: '16px', minWidth: 0 }}>
-        {!isMountainMode && <>
-          <div className="weather-weekly-slot"><WeeklyForecast weeklyData={weeklyData} isLoading={isAiLoading} /></div>
-          <WeatherFavorites favorites={favorites} isLoggedIn={!!loggedInUser} weatherData={activeWeather}
-            onCurrentLocationClick={handleCurrentLocation} onAddClick={handleOpenAddRegion}
-            onFavoriteClick={handleFavoriteClick} onRemoveFavorite={handleRemoveFavorite} />
-        </>}
-        {isMountainMode && loginCard}
 
         <WeatherDetails
           current={{
@@ -142,9 +130,9 @@ export default function ForecastLayout({ extras = null }) {
           weatherFetchedAt={weatherFetchedAt}
         />
 
-        {isMountainMode && <div className="main-weekly-card" style={{ display: 'flex', flexDirection: 'column' }}>
+        <div className="main-weekly-card" style={{ display: 'flex', flexDirection: 'column' }}>
           <WeeklyForecast weeklyData={weeklyData} isLoading={isAiLoading} />
-        </div>}
+        </div>
 
         <div className="main-outlook-card" style={{ display: 'flex', flexDirection: 'column' }}>
           {activeWeather.hasData ? <WeatherOutlook
@@ -156,7 +144,6 @@ export default function ForecastLayout({ extras = null }) {
             hikingPlanSummary={hikingPlanSummary}
           /> : <div className="glass-card weather-empty"><strong>날씨 전망</strong><p>예보 자료가 확인되면 전망과 활동 안내를 제공합니다.</p></div>}
         </div>
-        {!isMountainMode && loginCard}
       </div>
     </main>
   );
