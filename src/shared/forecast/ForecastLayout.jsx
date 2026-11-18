@@ -11,6 +11,7 @@ import WeatherDetails from './WeatherDetails';
 import WeeklyForecast from './WeeklyForecast';
 import { lazy, Suspense } from 'react';
 import { preferredWeatherLayer } from '../../pages/weather/weatherMap';
+import './WeatherGlass.css';
 
 const RadarCard = lazy(() => import('../../pages/weather/RadarCard'));
 
@@ -27,7 +28,7 @@ export default function ForecastLayout({ extras = null }) {
   } = useApp();
 
   return (
-    <main className={`main-container ${isMountainMode ? 'is-mountain-mode' : ''}`} style={{ flexGrow: 1, maxWidth: '1320px', margin: '0 auto', width: '100%', zIndex: 1, padding: '28px 24px' }}>
+    <main className={`main-container ${isMountainMode ? 'is-mountain-mode' : 'weather-glass-home'}`} style={{ flexGrow: 1, maxWidth: '1320px', margin: '0 auto', width: '100%', zIndex: 1, padding: '28px 24px' }}>
       <div className="main-primary-column" style={{ display: 'flex', flexDirection: 'column', gap: '16px', minWidth: 0 }}>
 
         <WeatherMain
