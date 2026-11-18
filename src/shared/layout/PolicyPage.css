@@ -1,0 +1,16 @@
+.policy-page {
+  width: min(760px, calc(100% - 32px));
+  margin: 24px auto;
+  padding: clamp(20px, 5vw, 40px);
+  box-sizing: border-box;
+  color: #1e293b;
+  line-height: 1.75;
+}
+
+.policy-page h1 { margin: 0; }
+.policy-page section { margin-block: 24px; }
+.policy-page h2 { margin: 0 0 6px; font-size: 18px; }
+.policy-page p { margin-block: 0 12px; }
+.policy-page nav { display: flex; flex-wrap: wrap; gap: 16px; }
+.policy-page a { color: #155e50; text-decoration: underline; }
+.app-footer a { color: inherit; text-underline-offset: 3px; }

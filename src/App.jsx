@@ -8,7 +8,7 @@
 // 페이지 안의 기능은 각 pages/ 폴더에서 작업하고, 여러 페이지가 같이 쓰는 기능은 shared/에 있습니다.
 // 새 페이지를 만들면 아래 <Routes>에 <Route> 한 줄을 추가하세요.
 import { Suspense, lazy, useEffect, useEffectEvent, useMemo, useRef, useState } from 'react';
-import { Navigate, Route, Routes, matchPath, useLocation, useNavigate } from 'react-router-dom';
+import { Link, Navigate, Route, Routes, matchPath, useLocation, useNavigate } from 'react-router-dom';
 import { FiSettings } from 'react-icons/fi';
 import './App.css';
 import { AppContext } from './shared/AppContext';
@@ -19,6 +19,7 @@ import Toast from './shared/layout/Toast';
 import { useToast } from './shared/layout/useToast';
 import TopNav from './shared/layout/TopNav';
 import NoticeModal from './shared/layout/NoticeModal';
+import PolicyPage from './shared/layout/PolicyPage';
 import { useSearch } from './shared/layout/useSearch';
 import { useAuth } from './shared/auth/useAuth';
 import { useFavorites } from './shared/auth/useFavorites';
@@ -260,6 +261,8 @@ function App() {
           <Route path="/mountain" element={<MountainPage />} />
           <Route path="/mountain/:name" element={<MountainPage />} />
           <Route path="/fishing" element={<FishingPage />} />
+          <Route path="/terms" element={<PolicyPage kind="terms" />} />
+          <Route path="/privacy" element={<PolicyPage kind="privacy" />} />
           <Route path="/admin" element={<AdminRoute loggedInUser={loggedInUser} onExit={exitAdmin} />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
@@ -268,8 +271,8 @@ function App() {
         <footer className="app-footer glass-card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 40px', color: '#1e293b', fontSize: '12px', borderRadius: '0', border: 'none', borderTop: '1px solid rgba(255,255,255,0.4)' }}>
           <div>
             <span style={{ fontWeight: '500' }}>© 2026 Weather Web Project.</span><span style={{ margin: '0 12px', color: '#94a3b8' }}>|</span>
-            <span style={{ cursor: 'pointer' }} onClick={() => showToast('이용약관 페이지는 준비 중입니다.')}>이용약관</span><span style={{ margin: '0 12px', color: '#94a3b8' }}>|</span>
-            <span style={{ cursor: 'pointer' }} onClick={() => showToast('개인정보처리방침 페이지는 준비 중입니다.')}>개인정보처리방침</span>
+            <Link to="/terms">이용약관</Link><span style={{ margin: '0 12px', color: '#94a3b8' }}>|</span>
+            <Link to="/privacy">개인정보처리방침</Link>
           </div>
           <button onClick={() => navigate('/admin')} style={{ background: 'none', border: 'none', color: '#1e293b', cursor: 'pointer', opacity: 0.3 }} title="Admin"><FiSettings size={16} /></button>
         </footer>
