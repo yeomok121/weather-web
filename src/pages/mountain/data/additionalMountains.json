@@ -1,0 +1,152 @@
+[
+  {
+    "name": "방태산",
+    "elevation": 1446,
+    "region": "강원특별자치도 인제군"
+  },
+  {
+    "name": "화악산",
+    "elevation": 1468,
+    "region": "경기도 가평군"
+  },
+  {
+    "name": "명지산",
+    "elevation": 1252,
+    "region": "경기도 가평군"
+  },
+  {
+    "name": "운악산",
+    "elevation": 935,
+    "region": "경기도 포천시"
+  },
+  {
+    "name": "용문산",
+    "elevation": 1157,
+    "region": "경기도 양평군"
+  },
+  {
+    "name": "소요산",
+    "elevation": 588,
+    "region": "경기도 동두천시"
+  },
+  {
+    "name": "천마산",
+    "elevation": 810,
+    "region": "경기도 남양주시"
+  },
+  {
+    "name": "금오산",
+    "elevation": 976,
+    "region": "경상북도 구미시"
+  },
+  {
+    "name": "재약산",
+    "elevation": 1119,
+    "region": "경상남도 밀양시"
+  },
+  {
+    "name": "황매산",
+    "elevation": 1113,
+    "region": "경상남도 합천군"
+  },
+  {
+    "name": "화왕산",
+    "elevation": 758,
+    "region": "경상남도 창녕군"
+  },
+  {
+    "name": "천성산",
+    "elevation": 920,
+    "region": "경상남도 양산시"
+  },
+  {
+    "name": "무학산",
+    "elevation": 761,
+    "region": "경상남도 창원시"
+  },
+  {
+    "name": "두륜산",
+    "elevation": 700,
+    "region": "전라남도 해남군"
+  },
+  {
+    "name": "선운산",
+    "elevation": 335,
+    "region": "전라북도 고창군"
+  },
+  {
+    "name": "강천산",
+    "elevation": 586,
+    "region": "전라북도 순창군"
+  },
+  {
+    "name": "칠갑산",
+    "elevation": 560,
+    "region": "충청남도 청양군"
+  },
+  {
+    "name": "민주지산",
+    "elevation": 1242,
+    "region": "충청북도 영동군"
+  },
+  {
+    "name": "삼악산",
+    "elevation": 656,
+    "region": "강원특별자치도 춘천시"
+  },
+  {
+    "name": "오봉산",
+    "elevation": 778,
+    "region": "강원특별자치도 춘천시"
+  },
+  {
+    "name": "공작산",
+    "elevation": 887,
+    "region": "강원특별자치도 홍천군"
+  },
+  {
+    "name": "구병산",
+    "elevation": 876,
+    "region": "충청북도 보은군"
+  },
+  {
+    "name": "도락산",
+    "elevation": 965,
+    "region": "충청북도 단양군"
+  },
+  {
+    "name": "대야산",
+    "elevation": 931,
+    "region": "경상북도 문경시"
+  },
+  {
+    "name": "주흘산",
+    "elevation": 1108,
+    "region": "경상북도 문경시"
+  },
+  {
+    "name": "금수산",
+    "elevation": 1016,
+    "region": "충청북도 제천시"
+  },
+  {
+    "name": "장안산",
+    "elevation": 1237,
+    "region": "전라북도 장수군"
+  },
+  {
+    "name": "적상산",
+    "elevation": 1031,
+    "region": "전라북도 무주군"
+  },
+  {
+    "name": "운장산",
+    "elevation": 1126,
+    "region": "전라북도 진안군"
+  },
+  {
+    "name": "조계산",
+    "elevation": 887,
+    "region": "전라남도 순천시"
+  }
+]

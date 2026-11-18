@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { koreanDate } from '../lib/hikingPlan';
+import CourseSource from './CourseSource';
 import HikingScheduleComparison from './HikingScheduleComparison';
 
 // All itinerary inputs live together; forecast results stay directly below them.
@@ -24,6 +25,7 @@ export default function MountainPlanControls({ courses, courseIndex, onCourse, p
         {[6, 8, 10].map(hour => <button key={hour} type="button" onClick={() => tomorrow(hour)}>내일 {hour}시</button>)}
       </div>
     </div>
+    <CourseSource source={courses[courseIndex]?.provenance} />
     {departureError && <p id="departure-error" className="mountain-input-error" role="alert">{departureError} 아래 결과는 마지막으로 선택한 유효한 일정입니다.</p>}
     <div className="mountain-schedule-tools">
       <details className="mountain-offset-picker"><summary>1~24시간 뒤 선택</summary>

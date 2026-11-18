@@ -1,0 +1,8 @@
+.course-source { margin-block: 12px; color: var(--text-sub, #475569); font-size: 14px; line-height: 1.6; overflow-wrap: anywhere; }
+.course-source summary { cursor: pointer; color: var(--primary, #166b59); }
+.course-source > div { padding: 12px; background: var(--primary-soft, #edf7f3); border-radius: 10px; }
+.course-source p { margin: 8px 0; }
+.course-source a { color: var(--primary, #166b59); text-decoration: underline; }
+.course-reference-list { display: grid; gap: 12px; margin-block: 16px; }
+.course-reference-list article { border: 1px solid var(--border, #cbd5e1); border-radius: 10px; padding: 12px; }
+.course-reference-list article > p { margin: 8px 0; font-size: 14px; }

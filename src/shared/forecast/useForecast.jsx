@@ -3,6 +3,7 @@
 import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import { requestJson, requestForecastJson } from '../lib/apiClient';
 import { forecastKey, isUsableForecast, isWeatherNumber, readForecastCache, writeForecastCache } from '../lib/forecastCache';
+import { mergeMountainForecast } from '../../pages/mountain/lib/courseCatalog';
 import { koreanDate } from '../../pages/mountain/lib/hikingPlan';
 import { getEmojiIcon } from './weatherIcons';
 
@@ -92,7 +93,7 @@ export function useForecast({ mountainsList, onNewForecast }) {
       ? mountainsList.find(item => item.name === request.mountainName) : null;
     const label = request.kind === 'mountain' ? request.mountainName : (request.regionName || '현재 위치');
     const apply = (data, fetchedAt) => {
-      const info = data.mountain_info ? { ...localMountain, ...data.mountain_info, courses: localMountain?.courses } : localMountain;
+      const info = mergeMountainForecast(localMountain, data.mountain_info);
       updateWeatherState(data, request.kind === 'mountain' ? data.mountain_name : request.regionName,
         data.elevation || 0, info, { fetchedAt, preservePlan });
       displayedForecastKeyRef.current = key;

@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { makeManualCourse, parseManualCourse } from '../lib/manualCourse.js';
 import './ManualCourseForm.css';
+import CourseSource from './CourseSource';
 
-export default function ManualCourseForm({ mountain, course, onApply }) {
+export default function ManualCourseForm({ mountain, references = [], course, onApply }) {
   const match = parseManualCourse(course?.name)?.name.match(/^직접 입력: (.+?) · ([\d.]+)km · (\d+)분$/);
   const [name, setName] = useState(() => match?.[1] || '');
   const [distance, setDistance] = useState(() => match?.[2] || '');
@@ -15,7 +16,14 @@ export default function ManualCourseForm({ mountain, course, onApply }) {
     setError(''); onApply(value);
   };
   return <section className="glass-card manual-course" aria-label="코스 직접 입력">
-    <div><h3>{mountain} 코스 정보 {course ? '수정' : '입력'}</h3><p>이 산은 검증된 코스 자료가 없어 자동 제공할 수 없습니다. 공식 탐방 안내에서 확인한 왕복 거리와 총 소요시간을 입력하면 다른 산과 같은 일정·준비 화면을 사용할 수 있어요.</p></div>
+    <div><h3>{mountain} 코스 정보 {course ? '수정' : '입력'}</h3><p>이 산은 자동 일정에 필요한 전체 거리·시간을 아직 확인하지 못했습니다. 아래 공식 경로를 참고하고, 확인한 왕복 거리와 총 소요시간을 입력하면 다른 산과 같은 일정·준비 화면을 사용할 수 있어요.</p></div>
+    {references.length > 0 && <div className="course-reference-list" aria-label="공식 코스 참고 자료">
+      {references.map(reference => <article key={reference.source_url}>
+        <strong>공식 안내 경로</strong><p>{reference.name}</p>
+        <CourseSource source={reference} />
+        <button type="button" onClick={() => { setName(reference.name.slice(0, 60)); setDistance(''); setMinutes(''); setError(''); }}>이 경로로 직접 입력</button>
+      </article>)}
+    </div>}
     <form onSubmit={submit} className="manual-course__form">
       <label>코스 이름<input required maxLength={60} value={name} onChange={event => setName(event.target.value)} placeholder="예: 주차장 ↔ 정상" /></label>
       <label>왕복 거리 (km)<input required type="number" min="0.1" max="100" step="0.01" value={distance} onChange={event => setDistance(event.target.value)} placeholder="예: 8" /></label>
