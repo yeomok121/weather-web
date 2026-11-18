@@ -1,7 +1,8 @@
 /* 낚시 페이지 전용 스타일 (기존 App.css에서 옮김) */
+/* 폭·여백은 날씨·산악 페이지(.main-container: 최대 1320px, 좌우 24px)와 맞춤 → 로그인 칸 크기·위치가 같아짐 */
 #root .fishing-page {
-  width: min(1120px, calc(100% - 40px));
-  margin: 30px auto 64px;
+  width: min(1272px, calc(100% - 48px));
+  margin: 28px auto 64px;
   color: #eaf4ff;
   display: flex;
   flex-direction: column;
@@ -292,9 +293,9 @@ button.fish-area-picker em { font-style:normal; font-size:12px; font-weight:700;
 .fish-tabs button:focus-visible { outline:2px solid #0f7f86; outline-offset:2px; }
 .fish-tabpanel { display:flex; flex-direction:column; gap:18px; }
 .fish-tabpanel[hidden] { display:none; }
-@media (max-width:720px) { .fish-tabs { padding:4px; border-radius:13px; } .fish-tabs button { flex-direction:column; gap:2px; min-height:48px; padding:6px 2px; font-size:12px; } .fish-tabs button svg { font-size:16px; } }
+@media (max-width:720px) { .fish-tabs-anchor { margin-bottom:-12px; } .fish-tabs { padding:4px; border-radius:13px; } .fish-tabs button { flex-direction:column; gap:2px; min-height:48px; padding:6px 2px; font-size:12px; } .fish-tabs button svg { font-size:16px; } }
 /* 위쪽 2단: 오늘 요약·특보 | 로그인 (날씨·산악 페이지처럼 오른쪽 위) */
-.fish-top-row { display:grid; grid-template-columns:minmax(0,1fr) 320px; gap:18px; align-items:start; }
+.fish-top-row { display:grid; grid-template-columns:minmax(0,1.9fr) minmax(320px,.9fr); gap:24px; align-items:start; } /* 날씨·산악과 같은 비율 */
 .fish-top-main { display:flex; flex-direction:column; gap:18px; min-width:0; }
 .fish-login-card { border-radius:20px; overflow:hidden; }
 .fish-gear-login button { margin-left:6px; padding:0; border:0; background:none; color:#0f6f76; font:inherit; font-weight:800; text-decoration:underline; cursor:pointer; }
