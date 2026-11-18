@@ -17,7 +17,8 @@
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
 }
-.fish-hero { position: relative; }
+/* 유리 패널은 각각 0층으로 고정: 상단 메뉴(100)·탭(40) 아래에 그려지게 (Chrome에서 backdrop-filter·지도 층 때문에 순서가 뒤집히는 경우 방지) */
+.fish-hero, .fish-panel { position: relative; z-index: 0; }
 .fish-place { display:flex; align-items:center; gap:7px; color:#213d59; font-weight:750; }
 .fish-place span { color:#708198; font-size:13px; font-weight:500; }
 .fish-metrics { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
@@ -173,7 +174,8 @@ button.fish-area-picker em { font-style:normal; font-size:12px; font-weight:700;
 .fish-point-search input { border:0; outline:0; background:transparent; font:inherit; color:#193651; width:100%; }
 .fish-point-seas { display:flex; gap:6px; flex-wrap:wrap; }
 .fish-point-body { display:grid; grid-template-columns:minmax(0,1.2fr) minmax(0,1fr); gap:12px; }
-.fish-point-map { height:380px; border-radius:14px; overflow:hidden; border:1px solid rgba(119,153,178,.25); }
+/* Leaflet 지도 안쪽 층(z-index 400~1000)이 상단 메뉴·탭 위로 올라오지 않게 지도를 따로 묶음 */
+.fish-point-map { position:relative; z-index:0; isolation:isolate; height:380px; border-radius:14px; overflow:hidden; border:1px solid rgba(119,153,178,.25); }
 .fish-point-list { display:flex; flex-direction:column; gap:4px; max-height:380px; overflow-y:auto; margin:0; padding:0 4px 0 0; list-style:none; }
 .fish-point-list li { display:flex; align-items:center; gap:6px; padding:4px 6px 4px 4px; border-radius:11px; }
 .fish-point-list li.active { background:rgba(15,127,134,.1); }
