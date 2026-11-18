@@ -34,6 +34,7 @@ export default function TidePanel({ area, tideSource, error }) {
       ? <div className="fish-tide-values">{legacy.rows.map((item, index) => <div className="fish-tide-item" key={`${item.obsrvnDt}-${index}`}><span>{prettyKey('obsrvnDt')}</span><b>{item.obsrvnDt || '—'}</b><span>{prettyKey('obsrvnHgt')}</span><b>{item.obsrvnHgt ?? '—'} cm</b></div>)}</div>
       : <p className="fish-empty">앞으로의 조위 자료가 없습니다. 잠시 뒤 새로고침해 주세요.</p>)}
     {error && <p className="fish-inline-error">{error}</p>}
+    {tideSource?.location?.shifted_km >= 1 && <p className="fish-tide-note">포인트가 섬 위에 있어 조위는 약 {tideSource.location.shifted_km} km 떨어진 가까운 바다를 기준으로 예측했습니다.</p>}
     <p className="fish-tide-note">만조·간조 시각은 1시간 간격 예측으로 추정한 값이고, 물때는 음력으로 계산한 참고값입니다. 지역 관습에 따라 하루 정도 다르게 부를 수 있습니다.</p>
   </article>;
 }
