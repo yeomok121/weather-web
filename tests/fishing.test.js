@@ -236,3 +236,54 @@ test('factor list covers each condition with tide explanation', () => {
   assert.equal(factors.find((f) => f.id === 'tide').label, '물살 셈');
   assert.equal(factors.find((f) => f.id === 'wave').value, '2.4 m');
 });
+
+import { currentForecastRow, seaWeather, skyIcon, todayBestGrade, todayVerdict } from '../src/pages/fishing/lib/seaToday.js';
+
+// 2026-11-18 11:22 배포 서버 추자도 실제 응답 일부
+const REAL_NOW = Date.parse('2026-11-18T11:22:00+09:00');
+const REAL_FORECAST = [
+  { TM_EF: '202611181200', WF: '구름많고 가끔 비', WS1: '9', WS2: '15', WH1: '1.5', WH2: '3.5' },
+  { TM_EF: '202611190000', WF: '구름많고 한때 비', WS1: '10', WS2: '15', WH1: '2.0', WH2: '3.5' },
+];
+const REAL_BUOYS = [{ STN_KO: '추자도', TM: '202611181100', WH: '1.7', WS: '9.0', TW: '19.5', TA: '13.5', distance_km: 23.8 }];
+const realSession = (name, grade) => ({ session: name, tide_phase: '소조기', wave_m: { min: 1.3, max: 1.3 }, wind_ms: { min: 9.7, max: 11.1 },
+  air_temp_c: { min: 13.1, max: 13.5 }, water_temp_c: { min: 17.1, max: 17.1 }, species: [{ name: '감성돔', index: grade }] });
+const REAL_DAYS = [{ date: '2026-11-18', sessions: [realSession('오전', '매우나쁨'), realSession('오후', '매우나쁨')] },
+  { date: '2026-11-22', sessions: [realSession('일', '보통')] }];
+const REAL_WARNINGS = [
+  { title: '풍랑주의보', level: '주의', effective: '17일 19:00', release_hint: '21일 오전(09시~12시)' },
+  { title: '강풍 예비특보', level: '예비', effective: '18일 오후(12시~18시)', release_hint: '' },
+];
+
+test('sea weather line uses the near buoy for live values and the forecast for the sky', () => {
+  assert.equal(currentForecastRow(REAL_FORECAST, REAL_NOW).TM_EF, '202611181200'); // 아직 12시 전이면 첫 예보
+  assert.equal(currentForecastRow(REAL_FORECAST, Date.parse('2026-11-19T03:00:00+09:00')).TM_EF, '202611190000');
+  const weather = seaWeather({ forecastRows: REAL_FORECAST, buoyRows: REAL_BUOYS, indexDays: REAL_DAYS, now: REAL_NOW });
+  assert.deepEqual([weather.sky, weather.icon, weather.airTemp, weather.wind, weather.wave, weather.waterTemp], ['구름많고 가끔 비', '🌧', '13.5°C', '9 m/s', '1.7 m', '19.5°C']);
+  assert.deepEqual(weather.buoy, { name: '추자도', distance: 23.8, hour: '11' });
+  const far = seaWeather({ forecastRows: REAL_FORECAST, buoyRows: [{ ...REAL_BUOYS[0], distance_km: 100 }], indexDays: REAL_DAYS, now: REAL_NOW });
+  assert.deepEqual([far.wind, far.wave, far.airTemp, far.buoy], ['9–15 m/s', '1.5–3.5 m', '13.1–13.5°C', null]);
+  assert.equal(seaWeather({}), null);
+  assert.deepEqual(['맑음', '구름많음', '흐림', '비', '눈'].map(skyIcon), ['☀', '⛅', '☁', '🌧', '🌨']);
+});
+
+test('today verdict: real 추자도 day is 비추천 with the strongest reasons first', () => {
+  const verdict = todayVerdict({ warnings: REAL_WARNINGS, indexDays: REAL_DAYS, forecastRows: REAL_FORECAST, buoyRows: REAL_BUOYS, now: REAL_NOW });
+  assert.equal(verdict.tone, 'stop');
+  assert.equal(verdict.title, '오늘은 출조 비추천');
+  assert.deepEqual(verdict.reasons, ['풍랑주의보 발효', '오늘 낚시지수 매우나쁨', '파고 최대 3.5 m']);
+});
+
+test('today verdict levels from index, wave, wind and preliminary warnings', () => {
+  const calm = [{ TM_EF: '202611221200', WF: '맑음', WS1: '2', WS2: '4', WH1: '0.5', WH2: '0.5' }];
+  const day = (grade) => [{ date: '2026-11-22', sessions: [realSession('일', grade)] }];
+  const at = Date.parse('2026-11-22T13:00:00+09:00');
+  assert.equal(todayVerdict({ indexDays: day('좋음'), forecastRows: calm, now: at }).tone, 'go');
+  assert.equal(todayVerdict({ indexDays: day('보통'), forecastRows: calm, now: at }).tone, 'okay');
+  assert.equal(todayVerdict({ indexDays: day('좋음'), forecastRows: [{ ...calm[0], WS2: '11' }], now: at }).tone, 'caution');
+  const pre = todayVerdict({ indexDays: day('좋음'), forecastRows: calm, now: at, warnings: [{ title: '강풍 예비특보', level: '예비', effective: '22일 오후(12시~18시)' }] });
+  assert.deepEqual([pre.tone, pre.reasons[0]], ['caution', '강풍 예비특보 (오늘 오후(12시~18시))']);
+  assert.equal(todayVerdict({}), null);
+  // 정오가 지나면 끝난 오전 지수는 보지 않음
+  assert.equal(todayBestGrade([{ date: '2026-11-22', sessions: [realSession('오전', '매우좋음'), realSession('오후', '나쁨')] }], at), '나쁨');
+});

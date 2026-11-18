@@ -8,7 +8,7 @@
 // 새 영역은 components/에 만들고 아래 순서에 끼워 넣으면 됩니다.
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { FiClock, FiInfo, FiRefreshCw } from 'react-icons/fi';
+import { FiInfo, FiRefreshCw } from 'react-icons/fi';
 import './FishingPage.css';
 import { useApp } from '../../shared/AppContext';
 import { readStoredJson, writeStoredJson } from '../../shared/lib/browserStorage';
@@ -68,7 +68,7 @@ export default function FishingPage() {
   return <main className="fishing-page">
     <FishingHero areas={areas} area={area} onAreaChange={setAreaId} loading={loading} onReload={reload}
       pointMode={pointMode} onOpenPicker={() => setPickerOpen((open) => !open)} isFavorite={isFavorite(pointId)} onToggleFavorite={() => toggle(pointId)}
-      favoritePoints={favorites} onSelectPoint={selectPoint} />
+      favoritePoints={favorites} onSelectPoint={selectPoint} data={data} />
     {pointMode && pickerOpen && (status === 'ready'
       ? <PointPicker points={points} selectedId={pointId} favorites={favorites} onSelect={selectPoint} onToggleFavorite={toggle} onClose={() => setPickerOpen(false)} isLoggedIn={Boolean(loggedInUser)}
           onShowIndex={(point) => setIndexModal({ pointId: point.id, pointName: point.name })} />
@@ -76,7 +76,6 @@ export default function FishingPage() {
 
     {error && <div className="fish-error" role="alert"><FiInfo /> {error}<button onClick={reload}>다시 시도</button></div>}
     {loading && !data && <div className="fish-loading" role="status"><FiRefreshCw className="fish-spin" /><div><b>해양 기관 자료를 불러오고 있어요</b><span>첫 요청은 서버 준비로 다소 오래 걸릴 수 있습니다.</span></div></div>}
-    <div className="fish-data-meta"><FiClock /> 자료 조회 시각 {data?.updated_at || '확인 전'} <span>· 예보 발표·관측 시각은 각 항목에 표시</span></div>
 
     {data && <WarningBanner warnings={sources.warnings} error={errors.warnings} />}
 
