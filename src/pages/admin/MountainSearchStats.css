@@ -1,0 +1,11 @@
+.mountain-search-stats { background: white; padding: 20px; border-radius: 12px; color: #1e293b; }
+.mountain-search-stats h3 { margin-top: 0; }
+.mountain-search-filters { display: flex; gap: 12px; align-items: center; }
+.mountain-search-stats select, .mountain-search-stats button { padding: 6px 10px; }
+.mountain-search-totals, .mountain-search-rankings { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 170px), 1fr)); }
+.mountain-search-totals > div, .mountain-search-rankings > section { background: #f1f5f9; padding: 12px; border-radius: 10px; }
+.mountain-search-totals dd { margin: 4px 0 0; font-size: 20px; font-weight: 700; }
+.mountain-search-rankings h4 { margin-top: 0; }
+.mountain-search-table { overflow-x: auto; }
+.mountain-search-table table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+.mountain-search-table th, .mountain-search-table td { padding: 8px; border-bottom: 1px solid #e2e8f0; text-align: left; }

@@ -1,0 +1,62 @@
+import { useEffect, useState } from 'react';
+import { requestJson } from '../../shared/lib/apiClient';
+import './MountainSearchStats.css';
+
+const labels = { course: '코스 선택 가능', no_course: '코스 미제공', not_found: '결과 없음', error: '조회 오류' };
+const timeFormat = new Intl.DateTimeFormat('ko-KR', { timeZone: 'Asia/Seoul', dateStyle: 'short', timeStyle: 'short' });
+
+export default function MountainSearchStats({ adminToken, adminPassword }) {
+  const [days, setDays] = useState(7);
+  const [outcome, setOutcome] = useState('all');
+  const [revision, setRevision] = useState(0);
+  const [result, setResult] = useState(null);
+  const [error, setError] = useState('');
+  const requestKey = `${days}:${outcome}:${revision}`;
+
+  useEffect(() => {
+    const controller = new AbortController();
+    const headers = adminToken ? { Authorization: `Bearer ${adminToken}` } : { 'x-admin-password': adminPassword || '' };
+    requestJson(`/api/admin/mountain-searches?days=${days}&outcome=${outcome}`, { headers, signal: controller.signal })
+      .then(data => { if (!controller.signal.aborted) setResult({ requestKey, data }); })
+      .catch(() => { if (!controller.signal.aborted) setError(requestKey); });
+    return () => controller.abort();
+  }, [adminToken, adminPassword, days, outcome, requestKey]);
+
+  const data = result?.requestKey === requestKey ? result.data : null;
+  const total = Object.values(data?.totals || {}).reduce((sum, count) => sum + count, 0);
+  return <section className="mountain-search-stats" aria-labelledby="mountain-search-title">
+    <h3 id="mountain-search-title">산 검색 현황</h3>
+    <p>검색 실행과 검색창 결과 선택을 기록합니다. 최근 로그는 최대 100건입니다.</p>
+    <div className="mountain-search-filters">
+      <label>기간 <select value={days} onChange={event => setDays(Number(event.target.value))}>
+        <option value={7}>최근 7일</option><option value={30}>최근 30일</option>
+      </select></label>
+      <button type="button" onClick={() => setRevision(value => value + 1)}>새로고침</button>
+    </div>
+    {error === requestKey ? <p role="alert">검색 현황을 불러오지 못했습니다.</p> : !data ? <p role="status">검색 현황을 불러오는 중…</p> : <>
+      <dl className="mountain-search-totals">
+        <div><dt>기록된 검색</dt><dd>{total.toLocaleString()}건</dd></div>
+        <div><dt>결과 없음 비율</dt><dd>{total ? `${((data.totals.not_found || 0) / total * 100).toFixed(1)}%` : '—'}</dd></div>
+        {Object.entries(labels).map(([key, label]) => <div key={key}><dt>{label}</dt><dd>{(data.totals[key] || 0).toLocaleString()}건</dd></div>)}
+      </dl>
+      <div className="mountain-search-rankings">
+        {[['not_found', '추가 후보 · 결과 없음 TOP 10'], ['no_course', '코스 보강 후보 TOP 10']].map(([key, title]) => (
+          <section key={key}><h4>{title}</h4>
+            {data.rankings[key].length ? <ol>{data.rankings[key].map(row => <li key={row.term}>{row.term} <strong>{row.count}건</strong></li>)}</ol> : <p>해당 기록이 없습니다.</p>}
+          </section>
+        ))}
+      </div>
+    </>}
+    <h4>최근 검색 로그</h4>
+    <label>결과 <select value={outcome} onChange={event => setOutcome(event.target.value)}>
+      <option value="all">전체</option>
+      {Object.entries(labels).map(([key, label]) => <option key={key} value={key}>{label}</option>)}
+    </select></label>
+    {data && (data.recent.length ? <div className="mountain-search-table"><table>
+      <thead><tr><th scope="col">검색 시각 (한국)</th><th scope="col">산 이름</th><th scope="col">결과</th></tr></thead>
+      <tbody>{data.recent.map(row => <tr key={row.id}>
+        <td>{timeFormat.format(new Date(row.searched_at))}</td><td>{row.term}</td><td>{labels[row.outcome]}</td>
+      </tr>)}</tbody>
+    </table></div> : <p>선택한 조건의 기록이 없습니다.</p>)}
+  </section>;
+}

@@ -2,7 +2,7 @@
 import { useRef, useState } from 'react';
 import { FiSearch, FiBell, FiClock, FiMap, FiAnchor, FiSun, FiX } from 'react-icons/fi';
 
-export default function TopNav({ search, isMountainMode, isFishingPage, isNoticeOpen, mountainsList, loadMountainWeather, onToggleMountainMode, onGoHome, onToggleFishing, onOpenNotices }) {
+export default function TopNav({ search, isMountainMode, isFishingPage, isNoticeOpen, mountainsList, onToggleMountainMode, onGoHome, onToggleFishing, onOpenNotices }) {
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const inputRef = useRef(null);
   const toggleRef = useRef(null);
@@ -10,8 +10,7 @@ export default function TopNav({ search, isMountainMode, isFishingPage, isNotice
   const isMountainList = !search.searchInput.trim() && isMountainMode;
   const closeSearch = () => { setMobileSearchOpen(false); search.setIsSearchFocused(false); };
   const choose = name => {
-    if (isMountainList) loadMountainWeather(name);
-    else search.executeSearch(name);
+    search.executeSearch(name);
     closeSearch();
   };
   const openSearch = () => {

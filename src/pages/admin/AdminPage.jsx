@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useEffectEvent } from 'react';
 import { FiTrash2, FiEdit, FiCheck, FiX, FiSearch, FiUserPlus } from 'react-icons/fi';
+import MountainSearchStats from './MountainSearchStats';
 import { API } from '../../shared/lib/config';
 import { koreanDate } from '../mountain/lib/hikingPlan';
 
@@ -308,10 +309,17 @@ function AdminPage({ onClose, adminPassword, adminToken, adminRole }) {
           >
             📢 공지사항 관리 ({notices.length}건)
           </button>}
+          {adminRole === 'superadmin' && <button type="button" aria-pressed={activeTab === 'searches'}
+            onClick={() => setActiveTab('searches')}
+            style={{ flex: 1, padding: '14px', borderRadius: '10px', border: 0, cursor: 'pointer',
+              fontWeight: 'bold', background: activeTab === 'searches' ? '#3182ce' : 'white',
+              color: activeTab === 'searches' ? 'white' : '#475569' }}>산 검색 현황</button>}
         </div>
 
         {/* ================= [탭 1] 회원 관리 화면 ================= */}
-        {activeTab === 'users' ? (
+        {activeTab === 'searches' && adminRole === 'superadmin' ? (
+          <MountainSearchStats adminToken={adminToken} adminPassword={adminPassword} />
+        ) : activeTab === 'users' ? (
           <>
             {/* 신규 회원 직접 추가 폼 */}
             <div style={{ backgroundColor: 'white', padding: '25px 30px', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', marginBottom: '25px' }}>

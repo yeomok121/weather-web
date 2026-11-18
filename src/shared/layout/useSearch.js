@@ -4,6 +4,18 @@ import { API } from '../lib/config';
 import { readStoredJson } from '../lib/browserStorage';
 import { KOREA_REGIONS } from '../../pages/weather/regions';
 
+function recordMountainSearch(term, outcome) {
+  term = term.trim().replace(/\s+/g, ' ');
+  if (!/^[가-힣 ]{2,24}$/.test(term)) return;
+  if ((outcome === 'not_found' || outcome === 'error') && !/(산|봉|악|오름)$/.test(term)) return;
+  void fetch(`${API}/api/mountain/search-events`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ term, outcome }),
+    keepalive: true,
+  }).catch(() => {});
+}
+
 export function useSearch({ isMountainMode, mountainsList, loadWeather, loadMountainWeather, setIsAiLoading, showToast }) {
   const [searchInput, setSearchInput] = useState('');
   const [recentSearches, setRecentSearches] = useState(() => readStoredJson('recentSearches', []).filter(value => typeof value === 'string'));
@@ -20,18 +32,34 @@ export function useSearch({ isMountainMode, mountainsList, loadWeather, loadMoun
     if (!query) return;
     setIsSearchFocused(false);
     setSearchInput('');
+    let recorded = false;
+    const record = (term, outcome) => {
+      if (!recorded && isMountainMode) recordMountainSearch(term, outcome);
+      recorded = true;
+    };
+    const openMountain = async mountain => {
+      record(mountain.name, mountain.course_available ? 'course' : 'no_course');
+      await loadMountainWeather(mountain.name);
+    };
     try {
       setIsAiLoading(true);
       if (isMountainMode) {
         const exact = mountainsList.find(item => item.name === query);
-        if (exact) { await loadMountainWeather(exact.name); return; }
+        if (exact) { await openMountain(exact); return; }
         const matches = mountainsList.filter(item => item.name.toLowerCase().includes(query.toLowerCase()));
         if (matches.length > 1) { setSearchInput(query); setIsSearchFocused(true); setIsAiLoading(false); showToast('일치하는 산이 여러 곳입니다. 목록에서 산을 선택해 주세요.'); return; }
-        if (matches.length === 1) { await loadMountainWeather(matches[0].name); return; }
+        if (matches.length === 1) { await openMountain(matches[0]); return; }
         const res = await fetch(`${API}/api/mountain/search?q=${encodeURIComponent(query)}`);
-        if (!res.ok) { showToast('지원하지 않는 산 이름입니다.'); setIsAiLoading(false); return; }
+        if (res.status === 404) {
+          record(query, 'not_found');
+          showToast('지원하지 않는 산 이름입니다.');
+          setIsAiLoading(false);
+          return;
+        }
+        if (!res.ok) throw new Error('Mountain search failed');
         const loc = await res.json();
-        await loadMountainWeather(loc.name);
+        if (!loc?.name) throw new Error("Invalid mountain result");
+        await openMountain(mountainsList.find(mountain => mountain.name === loc.name) || { name: loc.name });
       } else {
         const res = await fetch(`${API}/api/location/search?q=${encodeURIComponent(query)}`);
         if (!res.ok) { showToast('해당 지역을 찾을 수 없습니다.'); setIsAiLoading(false); return; }
@@ -41,7 +69,7 @@ export function useSearch({ isMountainMode, mountainsList, loadWeather, loadMoun
         localStorage.setItem('recentSearches', JSON.stringify(updatedSearches));
         await loadWeather(loc.lat, loc.lon, loc.name);
       }
-    } catch { showToast('검색 중 오류가 발생했습니다.'); setIsAiLoading(false); }
+    } catch { if (!recorded) record(query, 'error'); showToast('검색 중 오류가 발생했습니다.'); setIsAiLoading(false); }
   };
 
   const clearRecentSearches = () => { setRecentSearches([]); localStorage.setItem('recentSearches', '[]'); };

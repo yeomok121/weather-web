@@ -249,7 +249,7 @@ function App() {
 
         <TopNav
           search={search} isMountainMode={isMountainMode} isFishingPage={isFishingPage} isNoticeOpen={isNoticeOpen}
-          mountainsList={mountainsList} loadMountainWeather={loadMountainWeather}
+          mountainsList={mountainsList}
           onToggleMountainMode={handleToggleMountainMode} onGoHome={() => { if (isMountainMode) handleToggleMountainMode(); else navigate('/'); }} onToggleFishing={handleToggleFishing} onOpenNotices={() => setIsNoticeOpen(true)}
         />
 
