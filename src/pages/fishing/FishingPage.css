@@ -250,3 +250,35 @@ button.fish-area-picker em { font-style:normal; font-size:12px; font-weight:700;
 .fish-verdict.stop { background:#fdecea; border-color:#f3b4ae; color:#7a1b12; }
 @media (max-width:720px) { .fish-hero-compact { padding:14px; gap:10px; } .fish-hero-top .fish-area-picker { width:auto; flex:1 1 auto; min-width:0; } .fish-hero-meta { order:3; width:100%; } .fish-weather-strip { display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:6px; } .fish-weather-strip > div { padding:7px 8px; } .fish-weather-strip b { font-size:14.5px; } .fish-weather-strip .fish-weather-sky { grid-column:1 / -1; padding:6px 10px; } .fish-weather-sky span { font-size:22px; } }
 @media (min-width:1000px) { .fish-gear-list { grid-template-columns:repeat(3,minmax(0,1fr)); } }
+/* 내 준비물 (계정 저장) */
+.fish-gear-title { align-items:flex-start; }
+.fish-gear-title > div { flex:1; min-width:0; }
+.fish-gear-edit { display:inline-flex; align-items:center; gap:6px; flex:none; padding:7px 12px; border:1px solid rgba(15,127,134,.35); border-radius:999px; background:rgba(15,127,134,.08); color:#0f6f76; font-size:12.5px; font-weight:800; cursor:pointer; }
+.fish-gear-login { margin:0 0 10px; padding:9px 12px; border-radius:11px; background:rgba(15,127,134,.07); color:#2f5b66; font-size:12.5px; }
+.fish-gear-list li.mine label { background:rgba(234,247,246,.9); }
+.fish-gear-list i { font-style:normal; color:#0f7f86; font-size:11.5px; }
+.fish-gear-editor { margin:0 0 14px; padding:14px; border-radius:14px; background:rgba(255,255,255,.75); border:1px solid rgba(15,127,134,.25); }
+.fish-gear-editor h3 { margin:0 0 8px; color:#193651; font-size:14px; }
+.fish-gear-editor h3 small { margin-left:6px; color:#71849a; font-size:11.5px; font-weight:600; }
+.fish-gear-editor h3 + * { margin-top:0; }
+.fish-gear-editor h3:not(:first-child) { margin-top:16px; }
+.fish-gear-mine { display:flex; flex-wrap:wrap; gap:6px; margin:0 0 10px; padding:0; list-style:none; }
+.fish-gear-mine li { display:flex; align-items:center; gap:6px; padding:6px 6px 6px 11px; border-radius:11px; background:#eaf7f6; }
+.fish-gear-mine span { display:flex; flex-direction:column; }
+.fish-gear-mine b { color:#173a5c; font-size:13px; }
+.fish-gear-mine small { color:#5f7790; font-size:11px; }
+.fish-gear-mine button { display:inline-flex; padding:4px; border:0; border-radius:999px; background:transparent; color:#7a8ca0; cursor:pointer; }
+.fish-gear-mine button:hover { background:rgba(0,0,0,.06); color:#a33; }
+.fish-gear-empty { margin:0 0 10px; color:#71849a; font-size:12.5px; }
+.fish-gear-add { display:flex; gap:6px; flex-wrap:wrap; }
+.fish-gear-add input { flex:1 1 160px; min-width:0; padding:8px 11px; border:1px solid rgba(119,153,178,.4); border-radius:10px; background:#fff; color:#173a5c; font:inherit; font-size:13px; }
+.fish-gear-add button, .fish-gear-actions button { display:inline-flex; align-items:center; gap:5px; padding:8px 14px; border:1px solid rgba(119,153,178,.4); border-radius:10px; background:#fff; color:#36536e; font:inherit; font-size:13px; font-weight:700; cursor:pointer; }
+.fish-gear-error { margin:6px 0 0; color:#b3261e; font-size:12.5px; }
+.fish-gear-base { display:flex; flex-wrap:wrap; gap:6px; }
+.fish-gear-base button { display:inline-flex; align-items:center; gap:5px; padding:6px 11px; border:1px solid rgba(119,153,178,.3); border-radius:999px; background:#fff; color:#36536e; font:inherit; font-size:12.5px; font-weight:700; cursor:pointer; }
+.fish-gear-base button.off { background:#f1f3f5; color:#9aa7b4; text-decoration:line-through; }
+.fish-gear-base button:disabled { cursor:default; opacity:.8; }
+.fish-gear-actions { display:flex; gap:8px; margin-top:16px; }
+.fish-gear-actions button.primary { background:#0f7f86; border-color:#0f7f86; color:#fff; }
+.fish-gear-actions button:disabled { opacity:.6; cursor:default; }
+@media (max-width:720px) { .fish-gear-title { flex-wrap:wrap; } .fish-gear-edit { margin-left:auto; } }

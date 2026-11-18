@@ -45,6 +45,15 @@ export function saveMyFishingPoints(token, points) {
   return requestJson('/api/users/me/fishing-points', { method: 'PUT', timeoutMs: 20000, headers: authHeaders(token), body: JSON.stringify({ points }) });
 }
 
+// 내 준비물 세팅 (계정 저장)
+export function fetchMyFishingGear(token, { signal } = {}) {
+  return requestJson('/api/users/me/fishing-gear', { signal, timeoutMs: 20000, headers: authHeaders(token) });
+}
+
+export function saveMyFishingGear(token, setup) {
+  return requestJson('/api/users/me/fishing-gear', { method: 'PUT', timeoutMs: 20000, headers: authHeaders(token), body: JSON.stringify(setup) });
+}
+
 // 포인트 하나의 바다낚시지수 자세히 (지수 설명 창)
 export function fetchPointIndex(pointId, { signal } = {}) {
   return requestJson(`/api/fishing/points/${encodeURIComponent(pointId)}/index`, { signal, timeoutMs: 90000 });

@@ -287,3 +287,32 @@ test('today verdict levels from index, wave, wind and preliminary warnings', () 
   // 정오가 지나면 끝난 오전 지수는 보지 않음
   assert.equal(todayBestGrade([{ date: '2026-11-22', sessions: [realSession('오전', '매우좋음'), realSession('오후', '나쁨')] }], at), '나쁨');
 });
+
+import { BASE_GEAR, EMPTY_GEAR_SETUP, addGearItem, cleanGearSetup, gearListFor, newGearId } from '../src/pages/fishing/lib/gear.js';
+
+test('my gear setup: add, validate, hide base items but never the life jacket', () => {
+  let setup = EMPTY_GEAR_SETUP;
+  const first = addGearItem(setup, { name: '  루어 박스 ', note: '스푼·지그' }, 'my-a1');
+  setup = first.setup;
+  assert.deepEqual(setup.items, [{ id: 'my-a1', name: '루어 박스', note: '스푼·지그' }]);
+  assert.equal(addGearItem(setup, { name: '루어 박스' }).error, '이미 목록에 있는 준비물이에요.');
+  assert.equal(addGearItem(setup, { name: '구명조끼' }).error, '이미 목록에 있는 준비물이에요.');
+  assert.equal(addGearItem(setup, { name: '   ' }).error, '준비물 이름을 입력해 주세요.');
+  assert.match(addGearItem(setup, { name: '가'.repeat(31) }).error, /30자/);
+  const full = { items: Array.from({ length: 30 }, (_, i) => ({ id: `my-${i}`, name: `항목${i}`, note: '' })), hidden: [] };
+  assert.match(addGearItem(full, { name: '하나 더' }).error, /최대 30개/);
+
+  // 서버에서 온 값 정리: 잘못된 id·중복·없는 기본 id·구명조끼 숨김은 버림
+  const cleaned = cleanGearSetup({ items: [...setup.items, { id: 'x', name: '나쁜 id' }, { id: 'my-b', name: '루어 박스' }],
+    hidden: ['bait', 'bait', 'lifejacket', 'nope'] });
+  assert.deepEqual(cleaned, { items: setup.items, hidden: ['bait'] });
+  assert.deepEqual(cleanGearSetup(null), { items: [], hidden: [] });
+
+  // 화면 순서: 오늘 조건 → 내 항목 → 기본(숨긴 것 제외)
+  const list = gearListFor(cleaned, [{ id: 'lamp', name: '헤드랜턴', reason: '새벽' }, { id: 'wave', name: '높은 파도', tip: true }]);
+  assert.deepEqual(list.slice(0, 2).map((item) => item.id), ['lamp', 'my-a1']);
+  assert.equal(list[1].mine, true);
+  assert.equal(list.some((item) => item.id === 'bait'), false);
+  assert.equal(list.length, 2 + BASE_GEAR.length - 1);
+  assert.match(newGearId(), /^my-[a-z0-9]{1,24}$/);
+});

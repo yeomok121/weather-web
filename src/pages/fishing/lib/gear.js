@@ -42,3 +42,48 @@ export function todayConditions({ indexDays = [], forecastRows = [], warnings = 
     tideLabel,
   };
 }
+
+// ── 내 준비물 세팅 (로그인하면 계정에 저장: 백엔드 /api/users/me/fishing-gear) ──
+// setup = { items: [{ id: 'my-…', name, note }], hidden: ['bait', …] }  (hidden = 숨긴 기본 항목 id)
+export const GEAR_LIMITS = { items: 30, name: 30, note: 60 };
+export const REQUIRED_GEAR = new Set(['lifejacket']); // 안전 필수 항목은 숨길 수 없습니다
+export const EMPTY_GEAR_SETUP = Object.freeze({ items: [], hidden: [] });
+const MY_ID = /^my-[a-z0-9]{1,24}$/;
+const BASE_IDS = new Set(BASE_GEAR.map((item) => item.id));
+const tidy = (value, limit) => String(value ?? '').replace(/[\u0000-\u001f\u007f]/g, '').trim().slice(0, limit); // eslint-disable-line no-control-regex
+
+// 서버·브라우저에서 읽은 값을 화면에서 쓸 수 있는 모양으로 (잘못된 항목은 버림)
+export function cleanGearSetup(raw) {
+  const items = [];
+  for (const item of Array.isArray(raw?.items) ? raw.items : []) {
+    const name = tidy(item?.name, GEAR_LIMITS.name);
+    if (!MY_ID.test(String(item?.id)) || !name || items.some((other) => other.id === item.id || other.name === name)) continue;
+    items.push({ id: item.id, name, note: tidy(item?.note, GEAR_LIMITS.note) });
+  }
+  const hidden = [...new Set((Array.isArray(raw?.hidden) ? raw.hidden : []).filter((id) => BASE_IDS.has(id) && !REQUIRED_GEAR.has(id)))];
+  return { items: items.slice(0, GEAR_LIMITS.items), hidden };
+}
+
+// 화면 순서: 오늘 바다 조건 항목 → 내 항목 → 기본 항목(숨긴 것 제외)
+export function gearListFor(setup = EMPTY_GEAR_SETUP, extra = []) {
+  const hidden = new Set(setup.hidden);
+  return [
+    ...extra.filter((item) => !item.tip),
+    ...setup.items.map((item) => ({ ...item, mine: true })),
+    ...BASE_GEAR.filter((item) => !hidden.has(item.id)),
+  ];
+}
+
+export const newGearId = (random = Math.random) => `my-${random().toString(36).slice(2, 12) || '0'}`;
+
+// 항목 하나 추가. 문제가 있으면 { error } (사용자용 문구)
+export function addGearItem(setup, { name, note } = {}, id = newGearId()) {
+  const cleanName = tidy(name, 1000);
+  const cleanNote = tidy(note, 1000);
+  if (!cleanName) return { error: '준비물 이름을 입력해 주세요.' };
+  if (cleanName.length > GEAR_LIMITS.name) return { error: `이름은 ${GEAR_LIMITS.name}자까지 쓸 수 있어요.` };
+  if (cleanNote.length > GEAR_LIMITS.note) return { error: `메모는 ${GEAR_LIMITS.note}자까지 쓸 수 있어요.` };
+  if (setup.items.length >= GEAR_LIMITS.items) return { error: `내 준비물은 최대 ${GEAR_LIMITS.items}개까지 만들 수 있어요.` };
+  if (setup.items.some((item) => item.name === cleanName) || BASE_GEAR.some((item) => item.name === cleanName)) return { error: '이미 목록에 있는 준비물이에요.' };
+  return { setup: { ...setup, items: [...setup.items, { id, name: cleanName, note: cleanNote }] } };
+}
