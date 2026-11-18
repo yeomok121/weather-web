@@ -39,7 +39,7 @@ export function useManualCourse({ loggedInUser, mountainInfo }) {
     ? { ...mountainInfo, course_available: true, courses: [manualCourse], manual_course: true } : mountainInfo;
   const saveManualCourse = (name, course) => {
     const key = manualCourseKey(name);
-    writeStoredJson(key, course.name);
+    writeStoredJson(key, course?.name || null);
     setManualCourses(previous => ({ ...previous, [key]: course }));
   };
 

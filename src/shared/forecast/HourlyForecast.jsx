@@ -151,7 +151,9 @@ function HourlyForecast({
 
   const summitFeelsLike = currentTemp <= 15 ? Math.round(currentTemp - (currentWind * 0.7)) : currentTemp;
 
-  const courses = mountainInfo?.courses || [{ name: '기본 탐방로', distance: '5km', time: 180, diff: '중' }];
+  // Weather-only mountains have an empty array. Keep non-hiking calculations
+  // renderable without exposing a fabricated trail as a selectable course.
+  const courses = mountainInfo?.courses?.length ? mountainInfo.courses : [{ name: '코스 자료 없음', distance: '자료 없음', time: 180, diff: '미확인' }];
   const selectedCourse = courses[activeCourseIdx] || courses[0];
 
   const currentPaceObj = PACE_OPTIONS.find(p => p.key === activePace) || PACE_OPTIONS[1];

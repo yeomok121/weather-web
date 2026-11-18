@@ -3,7 +3,7 @@ import { makeManualCourse, parseManualCourse } from '../lib/manualCourse.js';
 import './ManualCourseForm.css';
 import CourseSource from './CourseSource';
 
-export default function ManualCourseForm({ mountain, references = [], course, onApply }) {
+export default function ManualCourseForm({ mountain, references = [], course, onApply, onClear }) {
   const match = parseManualCourse(course?.name)?.name.match(/^직접 입력: (.+?) · ([\d.]+)km · (\d+)분$/);
   const [name, setName] = useState(() => match?.[1] || '');
   const [distance, setDistance] = useState(() => match?.[2] || '');
@@ -30,6 +30,7 @@ export default function ManualCourseForm({ mountain, references = [], course, on
       <label>총 소요시간 (분)<input required type="number" min="20" max="1440" step="1" value={minutes} onChange={event => setMinutes(event.target.value)} placeholder="예: 240" /></label>
       <button type="submit">{course ? '입력 정보 적용' : '일정에 적용'}</button>
     </form>
+    {course && onClear && <button type="button" onClick={onClear}>직접 입력한 코스 삭제</button>}
     {error && <p className="manual-course__error" role="alert">{error}</p>}
     <p className="manual-course__note"><a href={`https://map.naver.com/p/search/${encodeURIComponent(`${mountain} 등산 안내`)}`} target="_blank" rel="noreferrer">등산 안내 검색 ↗</a> · 위치 © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap 기여자</a></p>
     <p className="manual-course__note">직접 입력한 코스는 서비스가 검증하지 않았습니다. 소요시간은 보통 속도 기준으로 적용되며, 경로·난이도·통제 여부와 실제 하산 가능 시각은 출발 전 확인하세요.</p>
