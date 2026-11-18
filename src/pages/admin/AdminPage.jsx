@@ -363,7 +363,7 @@ function AdminPage({ onClose, adminPassword, adminToken, adminRole }) {
               </h3>
               <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
                 <input 
-                  type="text" placeholder="아이디" value={newUserForm.id} 
+                  type="text" aria-label="아이디 (영문과 숫자 포함 4~20자)" placeholder="예: weather25" maxLength={20} value={newUserForm.id}
                   onChange={e => setNewUserForm({...newUserForm, id: e.target.value})} 
                   style={{ flex: 1, minWidth: '140px', padding: '10px 12px', borderRadius: '6px', border: '1px solid #cbd5e1' }} 
                 />
