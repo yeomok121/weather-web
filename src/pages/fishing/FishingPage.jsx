@@ -40,9 +40,9 @@ export default function FishingPage() {
   const { points, status } = useFishingPoints();
   const { favorites, toggle, isFavorite } = useFavoritePoints({ loggedInUser, showToast });
   const [areaId, setAreaId] = useState(areas[0].id);
-  const [initialPoint] = useState(() => searchParams.get('point') || readStoredJson(LAST_POINT_KEY, null));
-  const [chosenPoint, setChosenPoint] = useState(initialPoint || DEFAULT_POINT);
-  const [pickerOpen, setPickerOpen] = useState(!initialPoint);
+  const [chosenPoint, setChosenPoint] = useState(() => searchParams.get('point') || readStoredJson(LAST_POINT_KEY, null) || DEFAULT_POINT);
+  // 포인트 고르기 창은 처음 들어오면 항상 열어 둡니다. 포인트를 고르면 닫히고, '포인트 바꾸기'로 다시 엽니다.
+  const [pickerOpen, setPickerOpen] = useState(true);
   const [indexModal, setIndexModal] = useState(null); // { pointId, pointName, index?, guide? }
 
   // 포인트 목록을 못 받으면(예전 서버·키 없음) 예전처럼 해역 3곳으로 동작합니다.
