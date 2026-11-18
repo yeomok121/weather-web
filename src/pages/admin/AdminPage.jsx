@@ -1,16 +1,23 @@
 import React, { useState, useEffect, useEffectEvent } from 'react';
 import { FiTrash2, FiEdit, FiCheck, FiX, FiSearch, FiUserPlus } from 'react-icons/fi';
+import { OperationsStatus, AdminActivity } from './AdminOperations';
+import MountainCandidates from './MountainCandidates';
 import MountainSearchStats from './MountainSearchStats';
 import { API } from '../../shared/lib/config';
 import { koreanDate } from '../mountain/lib/hikingPlan';
 
-const newNotice = () => ({ type: '안내', title: '', date: koreanDate() });
+const noticeStates = { draft: '초안', published: '게시', ended: '종료' };
+const newNotice = () => ({ state: 'published', type: '안내', title: '', date: koreanDate() });
 
 function AdminPage({ onClose, adminPassword, adminToken, adminRole }) {
   // 상단 탭 상태 ('notices' | 'users')
-  const [activeTab, setActiveTab] = useState(adminRole === 'notice_manager' ? 'notices' : 'users');
+  const [activeTab, setActiveTab] = useState(adminRole === 'superadmin' ? 'operations' : adminRole === 'notice_manager' ? 'notices' : 'users');
   const canMembers = adminRole === 'superadmin' || adminRole === 'member_manager';
   const canNotices = adminRole === 'superadmin' || adminRole === 'notice_manager';
+  const [selectedCandidate, setSelectedCandidate] = useState(null);
+  const [memberRole, setMemberRole] = useState('all');
+  const [memberSort, setMemberSort] = useState('default');
+  const [memberPage, setMemberPage] = useState(0);
   const [statusFilter, setStatusFilter] = useState('all');
   const [audit, setAudit] = useState([]);
   const [auditError, setAuditError] = useState('');
@@ -39,7 +46,7 @@ function AdminPage({ onClose, adminPassword, adminToken, adminRole }) {
 
   const loadNotices = async () => {
     try {
-      const res = await fetch(`${API}/api/notices`);
+      const res = await fetch(`${API}/api/admin/notices`, { headers: noticeHeaders });
       if (!res.ok) throw new Error('failed');
       setNotices(await res.json());
     } catch {
@@ -62,7 +69,7 @@ function AdminPage({ onClose, adminPassword, adminToken, adminRole }) {
         {
           method: wasEditing ? 'PUT' : 'POST',
           headers: noticeHeaders,
-          body: JSON.stringify({ type: form.type, title: form.title.trim(), date: form.date.replaceAll('-', '.') }),
+          body: JSON.stringify({ state: form.state, type: form.type, title: form.title.trim(), date: form.date.replaceAll('-', '.') }),
         }
       );
       const data = await res.json();
@@ -96,7 +103,7 @@ function AdminPage({ onClose, adminPassword, adminToken, adminRole }) {
 
   const handleEditNoticeClick = (notice) => {
     setEditId(notice.id);
-    setForm({ type: notice.type, title: notice.title, date: notice.date.replaceAll('.', '-') });
+    setForm({ state: notice.state || 'published', type: notice.type, title: notice.title, date: notice.date.replaceAll('.', '-') });
     setNoticeMessage('');
   };
 
@@ -272,7 +279,12 @@ function AdminPage({ onClose, adminPassword, adminToken, adminRole }) {
   const filteredUsers = users.filter(u =>
     (statusFilter === 'all' || (statusFilter === 'suspended') === u.suspended) &&
     (u.id.toLowerCase().includes(searchQuery.toLowerCase()) || u.name.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+  ).filter(user => memberRole === 'all' || (user.role || 'member') === memberRole);
+  const sortedMembers = memberSort === 'default' ? filteredUsers : [...filteredUsers].sort((a, b) =>
+    String(a.name || a.id).localeCompare(String(b.name || b.id), 'ko') * (memberSort === 'name' ? 1 : -1));
+  const lastMemberPage = Math.max(0, Math.ceil(filteredUsers.length / 20) - 1);
+  const visibleMemberPage = Math.min(memberPage, lastMemberPage);
+
 
   // 초기 데이터 불러오기 (공지사항 + 회원 목록) - 둘 다 서버(MySQL)에서 가져옴
   const loadInitialData = useEffectEvent(() => {
@@ -296,7 +308,11 @@ function AdminPage({ onClose, adminPassword, adminToken, adminRole }) {
       <div style={{ maxWidth: '850px', margin: '30px auto', padding: '0 20px', color: '#333' }}>
         
         {/* 상단 탭 전환 버튼 */}
-        <div style={{ display: 'flex', gap: '10px', marginBottom: '25px' }}>
+        <div style={{ display: 'flex', gap: '10px', marginBottom: '25px', flexWrap: 'wrap' }}>
+          {adminRole === 'superadmin' && [['operations', '운영 상태'], ['activity', '작업 기록'], ['candidates', '조사 후보']].map(([id, label]) => (
+            <button key={id} type="button" aria-pressed={activeTab === id} onClick={() => { setSelectedCandidate(null); setActiveTab(id); }}
+              style={{ padding: '14px', border: 0, borderRadius: '10px', background: activeTab === id ? '#3182ce' : 'white', color: activeTab === id ? 'white' : '#475569' }}>{label}</button>
+          ))}
           {canMembers && <button 
             onClick={() => setActiveTab('users')}
             style={{ flex: 1, padding: '14px', borderRadius: '10px', border: 'none', fontWeight: 'bold', fontSize: '15px', cursor: 'pointer', backgroundColor: activeTab === 'users' ? '#3182ce' : 'white', color: activeTab === 'users' ? 'white' : '#64748b', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', transition: 'all 0.2s' }}
@@ -317,8 +333,16 @@ function AdminPage({ onClose, adminPassword, adminToken, adminRole }) {
         </div>
 
         {/* ================= [탭 1] 회원 관리 화면 ================= */}
-        {activeTab === 'searches' && adminRole === 'superadmin' ? (
-          <MountainSearchStats adminToken={adminToken} adminPassword={adminPassword} />
+        {activeTab === 'operations' && adminRole === 'superadmin' ? (
+          <OperationsStatus adminToken={adminToken} adminPassword={adminPassword} />
+        ) : activeTab === 'activity' && adminRole === 'superadmin' ? (
+          <AdminActivity adminToken={adminToken} adminPassword={adminPassword} />
+        ) : activeTab === 'candidates' && adminRole === 'superadmin' ? (
+          <MountainCandidates adminToken={adminToken} adminPassword={adminPassword} selected={selectedCandidate}
+            onClose={selectedCandidate ? () => setActiveTab('searches') : undefined} />
+        ) : activeTab === 'searches' && adminRole === 'superadmin' ? (
+          <MountainSearchStats adminToken={adminToken} adminPassword={adminPassword}
+            onCandidate={(name, kind) => { setSelectedCandidate({ name, kind, status: 'pending', note: '' }); setActiveTab('candidates'); }} />
         ) : activeTab === 'users' ? (
           <>
             {/* 신규 회원 직접 추가 폼 */}
@@ -356,14 +380,20 @@ function AdminPage({ onClose, adminPassword, adminToken, adminRole }) {
             <div style={{ backgroundColor: 'white', padding: '30px', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '10px' }}>
                 <h3 style={{ margin: 0, fontSize: '16px' }}>📋 가입된 회원 목록 (총 {filteredUsers.length}명)</h3>
-                <label>상태 <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}><option value="all">전체</option><option value="active">정상</option><option value="suspended">정지</option></select></label>
+                <label>정렬 <select value={memberSort} onChange={e => { setMemberSort(e.target.value); setMemberPage(0); }}>
+                  <option value="default">기본 순서</option><option value="name">이름 오름차순</option><option value="name-desc">이름 내림차순</option>
+                </select></label>
+                <label>역할 <select value={memberRole} onChange={e => { setMemberRole(e.target.value); setMemberPage(0); }}>
+                  <option value="all">전체</option><option value="member">일반 회원</option><option value="member_manager">회원 관리자</option><option value="notice_manager">공지 관리자</option><option value="superadmin">최고 관리자</option>
+                </select></label>
+                <label>상태 <select value={statusFilter} onChange={e => { setStatusFilter(e.target.value); setMemberPage(0); }}><option value="all">전체</option><option value="active">정상</option><option value="suspended">정지</option></select></label>
                 
                 {/* 회원 검색창 */}
                 <div style={{ display: 'flex', alignItems: 'center', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '6px 12px', width: '240px' }}>
                   <FiSearch color="#94a3b8" style={{ marginRight: '8px' }} />
                   <input 
                     type="text" placeholder="아이디 또는 이름 검색..." value={searchQuery}
-                    onChange={e => setSearchQuery(e.target.value)}
+                    onChange={e => { setSearchQuery(e.target.value); setMemberPage(0); }}
                     style={{ border: 'none', outline: 'none', backgroundColor: 'transparent', width: '100%', fontSize: '13px', color: '#333' }}
                   />
                 </div>
@@ -382,12 +412,12 @@ function AdminPage({ onClose, adminPassword, adminToken, adminRole }) {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredUsers.map((user, idx) => {
+                    {sortedMembers.slice(visibleMemberPage * 20, (visibleMemberPage + 1) * 20).map((user, idx) => {
                       const isEditing = editingUserId === user.id;
                       return (
                         <tr key={user.id} style={{ borderBottom: '1px solid #f1f5f9', backgroundColor: isEditing ? '#f0f9ff' : 'transparent' }}>
                           <td style={{ padding: '14px 10px', textAlign: 'center', color: '#94a3b8', fontWeight: 'bold' }}>
-                            {idx + 1}
+                            {visibleMemberPage * 20 + idx + 1}
                           </td>
                           <td style={{ padding: '14px 10px', fontWeight: 'bold', color: '#1e293b' }}>
                             {isEditing ? (
@@ -437,6 +467,12 @@ function AdminPage({ onClose, adminPassword, adminToken, adminRole }) {
                     })}
                   </tbody>
                 </table>
+                {lastMemberPage > 0 && <nav aria-label="회원 목록 페이지" className="mountain-search-filters">
+                  <button type="button" disabled={visibleMemberPage === 0} onClick={() => setMemberPage(visibleMemberPage - 1)}>이전</button>
+                  <span>{visibleMemberPage + 1} / {lastMemberPage + 1}</span>
+                  <button type="button" disabled={visibleMemberPage === lastMemberPage} onClick={() => setMemberPage(visibleMemberPage + 1)}>다음</button>
+                </nav>}
+
 
                 {filteredUsers.length === 0 && (
                   <p style={{ textAlign: 'center', color: '#94a3b8', padding: '30px 0', margin: 0 }}>
@@ -477,6 +513,10 @@ function AdminPage({ onClose, adminPassword, adminToken, adminRole }) {
               <div style={{ padding: '14px', marginBottom: '15px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', overflowWrap: 'anywhere' }}><strong>방문자 화면 미리보기</strong><p><b style={{ color: form.type === '긴급' ? '#c53030' : '#2769a9' }}>[{form.type}]</b> {form.title.trim() || '공지 제목을 입력해 주세요'}</p><small>{form.date ? form.date.replaceAll('-', '.') : '날짜를 선택해 주세요'}</small></div>
               {noticeMessage && <p role="status" style={{ color: '#334155', lineHeight: 1.5 }}>{noticeMessage}</p>}
               <div style={{ display: 'flex', gap: '10px' }}>
+                <label>공개 상태 <select value={form.state} onChange={e => setForm({ ...form, state: e.target.value })}>
+                  {Object.entries(noticeStates).map(([key, label]) => <option key={key} value={key}>{label}</option>)}
+                </select></label>
+                {form.title.trim() && <details><summary>미리보기</summary><p>{form.type} · {form.date}</p><strong>{form.title}</strong></details>}
                 <button disabled={noticeBusy} onClick={handleSaveNotice} style={{ flex: 1, padding: '12px', backgroundColor: '#3182ce', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>
                   {noticeBusy ? '저장 중...' : editId ? '수정 완료' : '등록하기'}
                 </button>
@@ -494,7 +534,7 @@ function AdminPage({ onClose, adminPassword, adminToken, adminRole }) {
                   <li key={notice.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #eee', padding: '15px 0' }}>
                     <div>
                       <span style={{ fontWeight: 'bold', color: notice.color, marginRight: '8px' }}>[{notice.type}]</span>
-                      <span>{notice.title}</span>
+                      <span>{notice.title} · {noticeStates[notice.state] || '게시'}</span>
                       <div style={{ fontSize: '12px', color: '#888', marginTop: '5px' }}>{notice.date}</div>
                     </div>
                     <div style={{ display: 'flex', gap: '10px' }}>
