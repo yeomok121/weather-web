@@ -14,7 +14,7 @@ const timeLabel = value => new Intl.DateTimeFormat('ko-KR', {
   timeZone: 'Asia/Seoul', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
 }).format(new Date(value));
 
-export default function RadarCard({ latitude, longitude, region, preferredLayer = null }) {
+export default function RadarCard({ latitude, longitude, region, preferredLayer = null, rainRequest = 0 }) {
   const container = useRef(null);
   const mapRef = useRef(null);
   const markerRef = useRef(null);
@@ -33,9 +33,15 @@ export default function RadarCard({ latitude, longitude, region, preferredLayer 
   const [displayedAt, setDisplayedAt] = useState(null);
   const [clock, setClock] = useState(() => Date.now());
   const [automaticLayer, setAutomaticLayer] = useState(null);
-  const [manualLayer, setManualLayer] = useState(null);
+  const [manualLayer, setManualLayer] = useState(() => rainRequest > 0 ? 'rain' : null);
   const [windRevision, setWindRevision] = useState(0);
   if (automaticLayer === null && preferredLayer) setAutomaticLayer(preferredLayer);
+  const [lastRainRequest, setLastRainRequest] = useState(rainRequest);
+  if (rainRequest !== lastRainRequest) {
+    setLastRainRequest(rainRequest);
+    setManualLayer('rain');
+    setPlaying(false);
+  }
   const layer = manualLayer || automaticLayer || 'rain';
   const isRain = layer === 'rain';
   const hasLocation = Number.isFinite(latitude) && Number.isFinite(longitude);
@@ -260,6 +266,9 @@ export default function RadarCard({ latitude, longitude, region, preferredLayer 
               aria-valuetext={timeLabel(selectedFrame.observed_at)} onChange={event => { setPlaying(false); setIndex(Number(event.target.value)); }} />
             <span><small>{timeLabel(manifest.frames[0].observed_at)}</small><small>최근 관측</small></span>
           </label>
+          <button type="button" className="radar-button" aria-label="최신 레이더 관측으로 이동"
+            disabled={index === manifest.frames.length - 1 && !playing}
+            onClick={() => { setPlaying(false); setIndex(manifest.frames.length - 1); }}>최신</button>
         </div>
         <div className="radar-card__legend"><span>반사도(dBZ)</span>
           {manifest.legend.map(item => <span key={item.value}><i style={{ background: item.color }} />{item.value}{item.value === 50 ? '+' : ''}</span>)}
