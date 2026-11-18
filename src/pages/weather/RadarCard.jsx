@@ -17,6 +17,7 @@ export default function RadarCard({ latitude, longitude, region, preferredLayer 
   const container = useRef(null);
   const mapRef = useRef(null);
   const markerRef = useRef(null);
+  const displayedOverlay = useRef(null);
   const images = useRef(new Map());
   const [map, setMap] = useState(null);
   const [manifest, setManifest] = useState(null);
@@ -81,6 +82,7 @@ export default function RadarCard({ latitude, longitude, region, preferredLayer 
     return () => {
       observer.disconnect();
       instance.remove();
+      displayedOverlay.current = null;
       mapRef.current = null;
     };
   }, []);
@@ -162,6 +164,8 @@ export default function RadarCard({ latitude, longitude, region, preferredLayer 
       overlay.once('load', () => {
         if (controller.signal.aborted) return;
         clearTimeout(timeout);
+        displayedOverlay.current?.remove();
+        displayedOverlay.current = overlay;
         setFrameState({ id: selectedFrame.id, observedAt: selectedFrame.observed_at });
       });
       overlay.once('error', () => {
@@ -181,8 +185,20 @@ export default function RadarCard({ latitude, longitude, region, preferredLayer 
       setFrameState({ id: selectedFrame.id, error: controller.signal.aborted ? '레이더 영상 응답이 지연되고 있습니다. 다시 시도해 주세요.' : reason.message });
       setPlaying(false);
     });
-    return () => { cancelled = true; clearTimeout(timeout); controller.abort(); overlay?.remove(); };
+    return () => {
+      cancelled = true;
+      clearTimeout(timeout);
+      controller.abort();
+      if (overlay !== displayedOverlay.current) overlay?.remove();
+    };
   }, [map, selectedFrame, manifest, isRain]);
+
+  useEffect(() => {
+    if (!isRain || !manifest) {
+      displayedOverlay.current?.remove();
+      displayedOverlay.current = null;
+    }
+  }, [isRain, manifest]);
 
   useEffect(() => {
     if (!isRain || !playing || imageLoading || !displayedAt || visibleError) return;
