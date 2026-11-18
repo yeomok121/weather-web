@@ -44,3 +44,8 @@ export function fetchMyFishingPoints(token, { signal } = {}) {
 export function saveMyFishingPoints(token, points) {
   return requestJson('/api/users/me/fishing-points', { method: 'PUT', timeoutMs: 20000, headers: authHeaders(token), body: JSON.stringify({ points }) });
 }
+
+// 포인트 하나의 바다낚시지수 자세히 (지수 설명 창)
+export function fetchPointIndex(pointId, { signal } = {}) {
+  return requestJson(`/api/fishing/points/${encodeURIComponent(pointId)}/index`, { signal, timeoutMs: 90000 });
+}

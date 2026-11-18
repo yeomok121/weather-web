@@ -1,6 +1,6 @@
 // 낚시 페이지: 국립해양조사원 바다낚시지수 (가장 가까운 포인트의 날짜·오전/오후·어종별 지수)
 import { useState } from 'react';
-import { FiTarget } from 'react-icons/fi';
+import { FiInfo, FiTarget } from 'react-icons/fi';
 import { formatRange, gradeTone, indexDayLabel, sessionLabel } from '../fishingFormat';
 import BestDayCard from './BestDayCard';
 
@@ -20,7 +20,7 @@ function Session({ session }) {
   </article>;
 }
 
-export default function FishingIndexPanel({ index, error, warnings }) {
+export default function FishingIndexPanel({ index, error, warnings, onShowGuide }) {
   const days = index?.days || [];
   const [selected, setSelected] = useState(null);
   const [now] = useState(() => Date.now());
@@ -28,7 +28,7 @@ export default function FishingIndexPanel({ index, error, warnings }) {
   const point = index?.point;
 
   return <section className="fish-panel fish-index">
-    <div className="fish-panel-title"><FiTarget /><div><h2>바다낚시지수</h2>
+    <div className="fish-panel-title"><FiTarget /><div><h2>바다낚시지수 {onShowGuide && <button type="button" className="fish-guide-button" onClick={onShowGuide}><FiInfo /> 지수 설명</button>}</h2>
       <p>국립해양조사원 · {point ? `${point.name} ${index.gubun || ''} 포인트${point.distance_km >= 1 ? ` · 기준 위치에서 약 ${point.distance_km} km` : ''}` : '가까운 낚시 포인트 기준'}</p></div></div>
 
     {day ? <>

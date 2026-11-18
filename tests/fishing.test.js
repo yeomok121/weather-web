@@ -207,3 +207,32 @@ test('favorite points merge keeps account order, appends new browser ones, caps 
   const many = Array.from({ length: 12 }, (_, i) => `p${i}`);
   assert.equal(mergeFavoritePoints(many.slice(0, 8), many.slice(8)).length, MAX_FAVORITE_POINTS);
 });
+
+import { explainFactors, explainReason, judgeWave, judgeWind } from '../src/pages/fishing/lib/indexExplain.js';
+
+const conditionSession = (wave, wind, air, grades, tide = '소조기') => ({ tide_phase: tide, wave_m: { min: wave, max: wave }, wind_ms: { min: wind - 1, max: wind },
+  air_temp_c: { min: air, max: air + 1 }, water_temp_c: { min: 17, max: 17.2 }, current_speed: { min: 0.2, max: 0.4 }, species: grades.map((g, i) => ({ name: `어종${i}`, index: g })) });
+
+test('wave and wind thresholds', () => {
+  assert.deepEqual([0.4, 0.9, 1.3, 2.0, 3.0].map((v) => judgeWave(v).tone), ['good', 'normal', 'caution', 'bad', 'bad']);
+  assert.deepEqual([3, 6, 9, 13].map((v) => judgeWind(v).label), ['약함', '보통', '강함', '매우 강함']);
+  assert.equal(judgeWave(null), null);
+});
+
+test('reason sentence explains why the index is low or high (real 2026-11-18 추자도 values)', () => {
+  assert.equal(explainReason(conditionSession(1.3, 13.7, 13.1, ['매우나쁨'])), '파도가 다소 높고(최대 1.3 m), 바람이 매우 강해서(최대 13.7 m/s) 지수가 낮습니다.');
+  assert.equal(explainReason(conditionSession(0.9, 9, 13, ['나쁨'])), '바람이 강해서(최대 9.0 m/s) 지수가 낮습니다.');
+  assert.equal(explainReason(conditionSession(0.4, 3, 13, ['매우좋음'])), '파도와 바람이 잔잔해 낚시하기 좋은 조건입니다.');
+  assert.equal(explainReason(conditionSession(0.9, 6, 13, ['매우좋음'])), '파도와 바람이 무난해 낚시하기 좋은 조건입니다.');
+  assert.equal(explainReason(conditionSession(1.3, 9, 13, ['좋음'])), '파도 최대 1.3 m, 바람 최대 9.0 m/s로 다소 거칠지만 어종에 따라서는 좋은 조건입니다.');
+  assert.equal(explainReason(conditionSession(0.4, 3, 13, ['나쁨'])), '파도·바람은 무난하지만 수온·물때 등 어종별 조건이 맞지 않아 지수가 낮습니다.');
+  assert.equal(explainReason({ species: [] }), '지수 자료가 없습니다.');
+});
+
+test('factor list covers each condition with tide explanation', () => {
+  const factors = explainFactors(conditionSession(2.4, 16.3, 3, ['매우나쁨'], '대조기'));
+  assert.deepEqual(factors.map((f) => f.id), ['wave', 'wind', 'water', 'air', 'current', 'tide']);
+  assert.equal(factors.find((f) => f.id === 'air').label, '추움');
+  assert.equal(factors.find((f) => f.id === 'tide').label, '물살 셈');
+  assert.equal(factors.find((f) => f.id === 'wave').value, '2.4 m');
+});

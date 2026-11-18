@@ -6,7 +6,7 @@ import { gradeTone, sessionLabel } from '../fishingFormat';
 
 const SEAS = ['전체', '서해', '남해', '제주', '동해'];
 
-export default function PointPicker({ points, selectedId, favorites, onSelect, onToggleFavorite, onClose, isLoggedIn }) {
+export default function PointPicker({ points, selectedId, favorites, onSelect, onToggleFavorite, onClose, isLoggedIn, onShowIndex }) {
   const [query, setQuery] = useState('');
   const [sea, setSea] = useState('전체');
   const filtered = useMemo(() => points.filter((point) => (sea === '전체' || point.sea === sea)
@@ -15,7 +15,7 @@ export default function PointPicker({ points, selectedId, favorites, onSelect, o
 
   return <section className="fish-panel fish-point-picker" aria-label="낚시 포인트 고르기">
     <div className="fish-point-picker-head">
-      <h2>낚시 포인트 고르기 <small>{points.length}곳 · 오늘 바다낚시지수(갯바위)를 함께 표시합니다</small></h2>
+      <h2>낚시 포인트 고르기 <small>{points.length}곳 · '오늘 ○○'을 누르면 지수와 이유를 볼 수 있어요</small></h2>
       <button type="button" className="fish-icon-button" onClick={onClose} aria-label="닫기"><FiX /></button>
     </div>
 
@@ -38,7 +38,7 @@ export default function PointPicker({ points, selectedId, favorites, onSelect, o
           <button type="button" className="fish-point-name" onClick={() => onSelect(point.id)}>
             <b>{point.name}</b><small>{[point.sea, point.zone || '구역 미설정'].filter(Boolean).join(' · ')}</small>
           </button>
-          {point.today_grade && <em className={`fish-grade fish-point-grade ${gradeTone(point.today_grade)}`} title={`오늘 ${sessionLabel(point.today_session)} 바다낚시지수`}>오늘 {point.today_grade}</em>}
+          {point.today_grade && <button type="button" className={`fish-grade fish-point-grade ${gradeTone(point.today_grade)}`} onClick={() => onShowIndex?.(point)} title={`오늘 ${sessionLabel(point.today_session)} 바다낚시지수 · 눌러서 이유 보기`} aria-label={`${point.name} 오늘 바다낚시지수 ${point.today_grade}, 자세히 보기`}>오늘 {point.today_grade}</button>}
           <button type="button" className={`fish-star ${favorites.includes(point.id) ? 'on' : ''}`} onClick={() => onToggleFavorite(point.id)} aria-label={`${point.name} 즐겨찾기 ${favorites.includes(point.id) ? '해제' : '추가'}`} aria-pressed={favorites.includes(point.id)}><FiStar /></button>
         </li>)}
         {!filtered.length && <li className="fish-point-empty">검색 결과가 없습니다.</li>}

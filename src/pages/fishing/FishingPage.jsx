@@ -16,6 +16,7 @@ import { useFishingAreas, useFishingPoints, useFishingSummary } from './useFishi
 import { useFavoritePoints } from './useFavoritePoints';
 import FishingHero from './components/FishingHero';
 import PointPicker from './components/PointPicker';
+import FishingIndexModal from './components/FishingIndexModal';
 import FishingIndexPanel from './components/FishingIndexPanel';
 import WarningBanner from './components/WarningBanner';
 import ForecastOutlook from './components/ForecastOutlook';
@@ -38,6 +39,7 @@ export default function FishingPage() {
   const [chosenPoint, setChosenPoint] = useState(() => searchParams.get('point') || readStoredJson(LAST_POINT_KEY, null) || DEFAULT_POINT);
   // 포인트 고르기 화면은 처음부터 열어 둡니다. (✕로 접고 '바꾸기'로 다시 열기)
   const [pickerOpen, setPickerOpen] = useState(true);
+  const [indexModal, setIndexModal] = useState(null); // { pointId, pointName, index?, guide? }
 
   // 포인트 목록을 못 받으면(예전 서버·키 없음) 예전처럼 해역 3곳으로 동작합니다.
   const pointMode = status !== 'failed';
@@ -68,7 +70,8 @@ export default function FishingPage() {
       pointMode={pointMode} onOpenPicker={() => setPickerOpen((open) => !open)} isFavorite={isFavorite(pointId)} onToggleFavorite={() => toggle(pointId)}
       favoritePoints={favorites} onSelectPoint={selectPoint} />
     {pointMode && pickerOpen && (status === 'ready'
-      ? <PointPicker points={points} selectedId={pointId} favorites={favorites} onSelect={selectPoint} onToggleFavorite={toggle} onClose={() => setPickerOpen(false)} isLoggedIn={Boolean(loggedInUser)} />
+      ? <PointPicker points={points} selectedId={pointId} favorites={favorites} onSelect={selectPoint} onToggleFavorite={toggle} onClose={() => setPickerOpen(false)} isLoggedIn={Boolean(loggedInUser)}
+          onShowIndex={(point) => setIndexModal({ pointId: point.id, pointName: point.name })} />
       : <div className="fish-loading" role="status"><FiRefreshCw className="fish-spin" /><div><b>낚시 포인트 목록을 불러오고 있어요</b></div></div>)}
 
     {error && <div className="fish-error" role="alert"><FiInfo /> {error}<button onClick={reload}>다시 시도</button></div>}
@@ -77,7 +80,8 @@ export default function FishingPage() {
 
     {data && <WarningBanner warnings={sources.warnings} error={errors.warnings} />}
 
-    <FishingIndexPanel key={area.id} index={sources.fishing_index} error={errors.fishing_index} warnings={sources.warnings?.items || []} />
+    <FishingIndexPanel key={area.id} index={sources.fishing_index} error={errors.fishing_index} warnings={sources.warnings?.items || []}
+      onShowGuide={() => setIndexModal({ pointId: area.pointId, pointName: area.place, guide: true, index: sources.fishing_index?.days?.length ? sources.fishing_index : undefined })} />
 
     <ForecastOutlook forecastRows={forecastRows} />
 
@@ -93,6 +97,7 @@ export default function FishingPage() {
 
     <MarineForecastPanel regionName={data?.region_name || area.region_name} forecastRows={forecastRows} error={errors.forecast} />
     <details className="fish-source-details"><summary><FiInfo /> 자료 범위와 기준</summary><p>해상예보는 선택 해역 단위이며 개별 포인트의 예보가 아닙니다. 부이는 위치와 거리를 함께 표시한 참고 관측이고, TideBED 조위는 응답에 포함된 인근 기준 관측소의 예측입니다. 각 기관 자료의 발표·관측 시각을 확인해 최신성도 살펴보세요.</p></details>
+    {indexModal && <FishingIndexModal key={indexModal.pointId || 'guide'} pointId={indexModal.pointId} pointName={indexModal.pointName} initialIndex={indexModal.index} openGuide={Boolean(indexModal.guide)} onClose={() => setIndexModal(null)} />}
     <p className="fish-disclaimer"><FiInfo /> {data?.notice || '기관 예보와 관측을 참고용으로 제공합니다. 출조 전 기상특보와 현장 상황을 별도로 확인하세요.'}</p>
   </main>;
 }
