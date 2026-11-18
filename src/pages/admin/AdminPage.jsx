@@ -2,6 +2,7 @@ import React, { useState, useEffect, useEffectEvent } from 'react';
 import { FiTrash2, FiEdit, FiCheck, FiX, FiSearch, FiUserPlus } from 'react-icons/fi';
 import { OperationsStatus, AdminActivity } from './AdminOperations';
 import MountainCandidates from './MountainCandidates';
+import './AdminDashboard.css';
 import MountainSearchStats from './MountainSearchStats';
 import { API } from '../../shared/lib/config';
 import { koreanDate } from '../mountain/lib/hikingPlan';
@@ -297,42 +298,52 @@ function AdminPage({ onClose, adminPassword, adminToken, adminRole }) {
     return () => { cancelled = true; };
   }, [adminPassword, adminToken, adminRole]);
 
+  const isSuperadmin = adminRole === 'superadmin';
+  const groups = [
+    { title: '운영', items: isSuperadmin ? [['operations', '운영 상태'], ['searches', '검색 현황'], ['candidates', '산·코스 조사 후보']] : [] },
+    { title: '관리', items: [
+      ...(canMembers ? [['users', '회원 관리']] : []),
+      ...(canNotices ? [['notices', '공지사항']] : []),
+      ...(isSuperadmin ? [['activity', '작업 기록']] : []),
+    ] },
+  ].filter(group => group.items.length);
+  const activeTitle = groups.flatMap(group => group.items).find(([id]) => id === activeTab)?.[1];
+  const roleLabel = { superadmin: '최고 관리자', member_manager: '회원 관리자', notice_manager: '공지 관리자' }[adminRole];
+
+  function selectMenu(id) {
+    if (id === activeTab) return;
+    setSelectedCandidate(null);
+    setActiveTab(id);
+  }
+
   return (
-    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: '#f4f7f6', zIndex: 9999, overflowY: 'auto' }}>
-      {/* 상단 네비게이션 */}
-      <div style={{ backgroundColor: '#1a365d', color: 'white', padding: '15px 40px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h2 style={{ margin: 0, fontSize: '20px' }}>⚙️ 관리자 대시보드</h2>
-        <button onClick={onClose} style={{ background: 'white', color: '#1a365d', border: 'none', padding: '8px 16px', borderRadius: '20px', cursor: 'pointer', fontWeight: 'bold' }}>나가기</button>
-      </div>
-
-      <div style={{ maxWidth: '850px', margin: '30px auto', padding: '0 20px', color: '#333' }}>
-        
-        {/* 상단 탭 전환 버튼 */}
-        <div style={{ display: 'flex', gap: '10px', marginBottom: '25px', flexWrap: 'wrap' }}>
-          {adminRole === 'superadmin' && [['operations', '운영 상태'], ['activity', '작업 기록'], ['candidates', '조사 후보']].map(([id, label]) => (
-            <button key={id} type="button" aria-pressed={activeTab === id} onClick={() => { setSelectedCandidate(null); setActiveTab(id); }}
-              style={{ padding: '14px', border: 0, borderRadius: '10px', background: activeTab === id ? '#3182ce' : 'white', color: activeTab === id ? 'white' : '#475569' }}>{label}</button>
-          ))}
-          {canMembers && <button 
-            onClick={() => setActiveTab('users')}
-            style={{ flex: 1, padding: '14px', borderRadius: '10px', border: 'none', fontWeight: 'bold', fontSize: '15px', cursor: 'pointer', backgroundColor: activeTab === 'users' ? '#3182ce' : 'white', color: activeTab === 'users' ? 'white' : '#64748b', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', transition: 'all 0.2s' }}
-          >
-            👥 회원 관리 ({users.length}명)
-          </button>}
-          {canNotices && <button 
-            onClick={() => setActiveTab('notices')}
-            style={{ flex: 1, padding: '14px', borderRadius: '10px', border: 'none', fontWeight: 'bold', fontSize: '15px', cursor: 'pointer', backgroundColor: activeTab === 'notices' ? '#3182ce' : 'white', color: activeTab === 'notices' ? 'white' : '#64748b', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', transition: 'all 0.2s' }}
-          >
-            📢 공지사항 관리 ({notices.length}건)
-          </button>}
-          {adminRole === 'superadmin' && <button type="button" aria-pressed={activeTab === 'searches'}
-            onClick={() => setActiveTab('searches')}
-            style={{ flex: 1, padding: '14px', borderRadius: '10px', border: 0, cursor: 'pointer',
-              fontWeight: 'bold', background: activeTab === 'searches' ? '#3182ce' : 'white',
-              color: activeTab === 'searches' ? 'white' : '#475569' }}>검색 현황</button>}
+    <div className="admin-dashboard">
+      <header className="admin-dashboard-header">
+        <div className="admin-dashboard-header-inner">
+          <h1><span>Weather+</span> 관리자</h1>
+          <div className="admin-header-actions">
+            <span>{roleLabel}</span>
+            <button type="button" onClick={onClose}>나가기</button>
+          </div>
         </div>
+      </header>
+      <div className="admin-dashboard-layout">
+        <nav className="admin-sidebar" aria-label="관리자 메뉴">
+          {groups.map(group => <section key={group.title}>
+            <h2>{group.title}</h2>
+            {group.items.map(([id, label]) => <button key={id} type="button"
+              aria-current={activeTab === id ? 'page' : undefined} onClick={() => selectMenu(id)}>{label}</button>)}
+          </section>)}
+        </nav>
+        <label className="admin-mobile-menu">현재 메뉴
+          <select value={activeTab} onChange={event => selectMenu(event.target.value)}>
+            {groups.map(group => <optgroup key={group.title} label={group.title}>
+              {group.items.map(([id, label]) => <option key={id} value={id}>{label}</option>)}
+            </optgroup>)}
+          </select>
+        </label>
 
-        {/* ================= [탭 1] 회원 관리 화면 ================= */}
+        <main className="admin-workspace" aria-label={activeTitle}>
         {activeTab === 'operations' && adminRole === 'superadmin' ? (
           <OperationsStatus adminToken={adminToken} adminPassword={adminPassword} />
         ) : activeTab === 'activity' && adminRole === 'superadmin' ? (
@@ -400,6 +411,7 @@ function AdminPage({ onClose, adminPassword, adminToken, adminRole }) {
               </div>
 
               <div style={{ overflowX: 'auto' }}>
+                <div className="admin-table-scroll">
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px', textAlign: 'left' }}>
                   <thead>
                     <tr style={{ borderBottom: '2px solid #e2e8f0', color: '#64748b', backgroundColor: '#f8fafc' }}>
@@ -467,6 +479,7 @@ function AdminPage({ onClose, adminPassword, adminToken, adminRole }) {
                     })}
                   </tbody>
                 </table>
+                </div>
                 {lastMemberPage > 0 && <nav aria-label="회원 목록 페이지" className="mountain-search-filters">
                   <button type="button" disabled={visibleMemberPage === 0} onClick={() => setMemberPage(visibleMemberPage - 1)}>이전</button>
                   <span>{visibleMemberPage + 1} / {lastMemberPage + 1}</span>
@@ -550,6 +563,7 @@ function AdminPage({ onClose, adminPassword, adminToken, adminRole }) {
           </>
         )}
 
+        </main>
       </div>
     </div>
   );

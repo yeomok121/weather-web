@@ -67,22 +67,38 @@ export function OperationsStatus({ adminToken, adminPassword }) {
   }
 
   return <section className="mountain-search-stats">
-    <h3>운영 상태</h3>
-    <button type="button" onClick={() => { setStatus(null); setRevision(value => value + 1); }}>상태 새로고침</button>
+    <div className="admin-section-heading">
+      <div><h3>운영 상태</h3><p>회원 DB와 산 목록 공급 상태를 확인합니다.</p></div>
+      <button type="button" className="admin-operation-action" disabled={!status} onClick={() => { setStatus(null); setRevision(value => value + 1); }}>상태 새로고침</button>
+    </div>
     {!status ? <p role="status">상태 확인 중…</p> : <dl className="mountain-search-totals">
-      <div><dt>회원 DB</dt><dd>{statusLabels[status.db?.status] || '조회 실패'}</dd><small>{timeLabel(status.db?.checked_at)}</small></div>
-      <div><dt>산 목록 공급원</dt><dd>{statusLabels[status.mountains?.source_check?.status] || status.mountains?.source_check?.status || '조회 실패'}</dd>
+      <div><dt>회원 DB</dt><dd className="admin-state" data-tone={status.db?.status === 'available' ? 'ok' : undefined}>{statusLabels[status.db?.status] || '조회 실패'}</dd><small>{timeLabel(status.db?.checked_at)}</small></div>
+      <div><dt>산 목록 공급원</dt><dd className="admin-state" data-tone={status.mountains?.source_check?.status === 'ok' ? 'ok' : undefined}>{statusLabels[status.mountains?.source_check?.status] || status.mountains?.source_check?.status || '조회 실패'}</dd>
         {status.mountains && <small>제공 목록 {status.mountains.catalog_count}개 · 공급원 확인 {status.mountains.source_check?.valid_rows ?? 0}건</small>}
       </div>
     </dl>}
-    <h4>예보·레이더 표본 점검</h4>
-    <button type="button" disabled={checkingWeather} onClick={checkWeather}>{checkingWeather ? '점검 중…' : '지금 점검'}</button>
-    {weatherChecks && <ul>{weatherChecks.map(check => <li key={check.name}>{check.name} · {check.message} · {timeLabel(check.checkedAt)}</li>)}</ul>}
-    <h4>해양 API 점검</h4>
-    <button type="button" disabled={checking} onClick={checkMarine}>{checking ? '점검 중…' : '지금 점검'}</button>
-    {marine?.error && <p role="alert">해양 API 점검 결과를 받지 못했습니다.</p>}
-    {marine?.checks && <><p>{marine.success_count}/{marine.total_count} 연결 확인 · {timeLabel(marine.checked_at)}</p>
-      <ul>{marine.checks.map(item => <li key={item.name}><strong>{item.name}</strong> · {item.success ? '응답 확인' : '확인 필요'} · {item.detail}</li>)}</ul></>}
+    <div className="admin-check-panels">
+      <section className="admin-check-panel">
+        <div className="admin-section-heading">
+          <h4>예보·레이더 표본 점검</h4>
+          <button type="button" className="admin-operation-action" disabled={checkingWeather} onClick={checkWeather}>{checkingWeather ? '점검 중…' : '예보·레이더 점검'}</button>
+        </div>
+        {checkingWeather ? <p role="status">일반·산악 예보와 최근 레이더 영상 목록을 확인 중입니다.</p>
+          : weatherChecks ? <ul>{weatherChecks.map(check => <li key={check.name}>{check.name} · {check.message} · {timeLabel(check.checkedAt)}</li>)}</ul>
+          : <p>점검 전</p>}
+      </section>
+      <section className="admin-check-panel">
+        <div className="admin-section-heading">
+          <h4>해양 API 점검</h4>
+          <button type="button" className="admin-operation-action" disabled={checking} onClick={checkMarine}>{checking ? '점검 중…' : '해양 API 점검'}</button>
+        </div>
+        {checking && <p role="status">해양 자료 공급기관을 확인 중입니다.</p>}
+        {!checking && !marine && <p>점검 전</p>}
+        {marine?.error && <p role="alert">해양 API 점검 결과를 받지 못했습니다.</p>}
+        {marine?.checks && <><p>{marine.success_count}/{marine.total_count} 연결 확인 · {timeLabel(marine.checked_at)}</p>
+          <ul>{marine.checks.map(item => <li key={item.name}><strong>{item.name}</strong> · <span className="admin-state" data-tone={item.success ? 'ok' : 'bad'}>{item.success ? '응답 확인' : '확인 필요'}</span> · {item.detail}</li>)}</ul></>}
+      </section>
+    </div>
   </section>;
 }
 
