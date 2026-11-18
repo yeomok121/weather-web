@@ -83,16 +83,14 @@ export default function FishingPage() {
       onShowGuide={() => setIndexModal({ pointId: area.pointId, pointName: area.place, guide: true, index: sources.fishing_index?.days?.length ? sources.fishing_index : undefined })} />
 
     <ForecastOutlook forecastRows={forecastRows} />
+    <GearChecklist area={area} indexDays={sources.fishing_index?.days || []} forecastRows={forecastRows} warnings={sources.warnings?.items || []} />
 
     <section className="fish-metrics">
       <BuoyPanel area={area} buoyRows={sources.buoy?.records || []} error={errors.buoy} />
       <TidePanel area={area} tideSource={sources.tide} error={errors.tide} />
     </section>
 
-    <section className="fish-metrics">
-      <SunPanel area={area} />
-      <GearChecklist area={area} indexDays={sources.fishing_index?.days || []} forecastRows={forecastRows} warnings={sources.warnings?.items || []} />
-    </section>
+    <SunPanel area={area} />
 
     <MarineForecastPanel regionName={data?.region_name || area.region_name} forecastRows={forecastRows} error={errors.forecast} />
     <details className="fish-source-details"><summary><FiInfo /> 자료 범위와 기준</summary><p>해상예보는 선택 해역 단위이며 개별 포인트의 예보가 아닙니다. 부이는 위치와 거리를 함께 표시한 참고 관측이고, TideBED 조위는 응답에 포함된 인근 기준 관측소의 예측입니다. 각 기관 자료의 발표·관측 시각을 확인해 최신성도 살펴보세요.</p></details>

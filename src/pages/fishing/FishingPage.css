@@ -249,3 +249,4 @@ button.fish-area-picker em { font-style:normal; font-size:12px; font-weight:700;
 .fish-verdict.caution { background:#fff3e2; border-color:#f6c98f; color:#7a4310; }
 .fish-verdict.stop { background:#fdecea; border-color:#f3b4ae; color:#7a1b12; }
 @media (max-width:720px) { .fish-hero-compact { padding:14px; gap:10px; } .fish-hero-top .fish-area-picker { width:auto; flex:1 1 auto; min-width:0; } .fish-hero-meta { order:3; width:100%; } .fish-weather-strip { display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:6px; } .fish-weather-strip > div { padding:7px 8px; } .fish-weather-strip b { font-size:14.5px; } .fish-weather-strip .fish-weather-sky { grid-column:1 / -1; padding:6px 10px; } .fish-weather-sky span { font-size:22px; } }
+@media (min-width:1000px) { .fish-gear-list { grid-template-columns:repeat(3,minmax(0,1fr)); } }

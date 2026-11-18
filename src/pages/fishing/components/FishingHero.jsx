@@ -28,7 +28,7 @@ export default function FishingHero({ areas, area, onAreaChange, loading, onRelo
   return <section className="fish-hero fish-hero-compact glass-card" aria-label="지금 포인트와 오늘 바다 날씨">
     <div className="fish-hero-top">
       {pointMode ? <>
-        <button type="button" className="fish-area-picker" onClick={onOpenPicker} aria-label="낚시 포인트 바꾸기"><FiMapPin /><b>{area.place}</b><em>바꾸기</em></button>
+        <button type="button" className="fish-area-picker" onClick={onOpenPicker} aria-label="낚시 포인트 바꾸기"><FiMapPin /><b>{area.place}</b><em>포인트 바꾸기</em></button>
         <button type="button" className={`fish-star ${isFavorite ? 'on' : ''}`} onClick={onToggleFavorite} aria-pressed={isFavorite} aria-label={isFavorite ? '즐겨찾기 해제' : '즐겨찾기 추가'}><FiStar /></button>
       </> : <label className="fish-area-picker"><FiMapPin /><span>해역</span>
         <select value={area.id} onChange={(event) => onAreaChange(event.target.value)} aria-label="확인할 해역 선택">
