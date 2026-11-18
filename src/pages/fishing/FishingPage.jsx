@@ -36,7 +36,8 @@ export default function FishingPage() {
   const { favorites, toggle, isFavorite } = useFavoritePoints({ loggedInUser, showToast });
   const [areaId, setAreaId] = useState(areas[0].id);
   const [chosenPoint, setChosenPoint] = useState(() => searchParams.get('point') || readStoredJson(LAST_POINT_KEY, null) || DEFAULT_POINT);
-  const [pickerOpen, setPickerOpen] = useState(false);
+  // 포인트 고르기 화면은 처음부터 열어 둡니다. (✕로 접고 '바꾸기'로 다시 열기)
+  const [pickerOpen, setPickerOpen] = useState(true);
 
   // 포인트 목록을 못 받으면(예전 서버·키 없음) 예전처럼 해역 3곳으로 동작합니다.
   const pointMode = status !== 'failed';
@@ -56,7 +57,6 @@ export default function FishingPage() {
     setChosenPoint(id);
     writeStoredJson(LAST_POINT_KEY, id);
     setSearchParams((previous) => { const next = new URLSearchParams(previous); next.set('point', id); return next; }, { replace: true });
-    setPickerOpen(false);
   };
 
   const sources = data?.sources || {};

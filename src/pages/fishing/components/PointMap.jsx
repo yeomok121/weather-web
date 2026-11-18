@@ -32,7 +32,7 @@ export default function PointMap({ points, selectedId, favorites = [], onSelect 
       const marker = L.circleMarker([point.lat, point.lon], style(point.id === selectedId, favorites.includes(point.id))).addTo(layer);
       marker.bindTooltip(() => {
         const text = document.createElement('span');
-        text.textContent = point.name;
+        text.textContent = point.today_grade ? `${point.name} · 오늘 ${point.today_grade}` : point.name;
         return text;
       });
       marker.on('click', () => onSelectRef.current?.(point.id));

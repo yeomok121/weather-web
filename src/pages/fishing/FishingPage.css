@@ -190,3 +190,5 @@ button.fish-area-picker em { font-style:normal; font-size:12px; font-weight:700;
 .fish-point-name small { color:#71849a; font-size:11.5px; }
 .fish-point-empty { color:#71849a; font-size:13px; padding:12px; }
 @media (max-width:720px) { .fish-point-body { grid-template-columns:1fr; } .fish-point-map { height:260px; } .fish-point-list { max-height:320px; } }
+
+.fish-point-grade { flex:none; font-size:11px; padding:2px 7px; white-space:nowrap; }
