@@ -313,7 +313,7 @@ function AdminPage({ onClose, adminPassword, adminToken, adminRole }) {
             onClick={() => setActiveTab('searches')}
             style={{ flex: 1, padding: '14px', borderRadius: '10px', border: 0, cursor: 'pointer',
               fontWeight: 'bold', background: activeTab === 'searches' ? '#3182ce' : 'white',
-              color: activeTab === 'searches' ? 'white' : '#475569' }}>산 검색 현황</button>}
+              color: activeTab === 'searches' ? 'white' : '#475569' }}>검색 현황</button>}
         </div>
 
         {/* ================= [탭 1] 회원 관리 화면 ================= */}

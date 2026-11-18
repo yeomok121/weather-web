@@ -11,6 +11,7 @@ import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { FiInfo, FiRefreshCw } from 'react-icons/fi';
 import './FishingPage.css';
+import { recordSearch } from '../../shared/lib/searchEvents';
 import { useApp } from '../../shared/AppContext';
 import { readStoredJson, writeStoredJson } from '../../shared/lib/browserStorage';
 import { useFishingAreas, useFishingPoints, useFishingSummary } from './useFishingData';
@@ -101,7 +102,11 @@ export default function FishingPage() {
     </div>
 
     {pointMode && pickerOpen && (status === 'ready'
-      ? <PointPicker points={points} selectedId={pointId} favorites={favorites} onSelect={selectPoint} onToggleFavorite={toggle} onClose={() => setPickerOpen(false)} isLoggedIn={Boolean(loggedInUser)}
+      ? <PointPicker points={points} selectedId={pointId} favorites={favorites} onSelect={id => {
+          const point = points.find(item => item.id === id);
+          if (point) recordSearch('fishing', point.name, 'found');
+          selectPoint(id);
+        }} onToggleFavorite={toggle} onClose={() => setPickerOpen(false)} isLoggedIn={Boolean(loggedInUser)}
           onShowIndex={(point) => setIndexModal({ pointId: point.id, pointName: point.name })} />
       : <div className="fish-loading" role="status"><FiRefreshCw className="fish-spin" /><div><b>낚시 포인트 목록을 불러오고 있어요</b></div></div>)}
 

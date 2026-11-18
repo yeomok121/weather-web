@@ -1,20 +1,9 @@
 // 공통: 상단 검색창 (날씨 페이지는 지역 검색, 산악 페이지는 산 검색)
 import { useMemo, useState } from 'react';
+import { recordSearch } from '../lib/searchEvents';
 import { API } from '../lib/config';
 import { readStoredJson } from '../lib/browserStorage';
 import { KOREA_REGIONS } from '../../pages/weather/regions';
-
-function recordMountainSearch(term, outcome) {
-  term = term.trim().replace(/\s+/g, ' ');
-  if (!/^[가-힣 ]{2,24}$/.test(term)) return;
-  if ((outcome === 'not_found' || outcome === 'error') && !/(산|봉|악|오름)$/.test(term)) return;
-  void fetch(`${API}/api/mountain/search-events`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ term, outcome }),
-    keepalive: true,
-  }).catch(() => {});
-}
 
 export function useSearch({ isMountainMode, mountainsList, loadWeather, loadMountainWeather, setIsAiLoading, showToast }) {
   const [searchInput, setSearchInput] = useState('');
@@ -34,7 +23,7 @@ export function useSearch({ isMountainMode, mountainsList, loadWeather, loadMoun
     setSearchInput('');
     let recorded = false;
     const record = (term, outcome) => {
-      if (!recorded && isMountainMode) recordMountainSearch(term, outcome);
+      if (!recorded) recordSearch(isMountainMode ? 'mountain' : 'weather', term, outcome);
       recorded = true;
     };
     const openMountain = async mountain => {
@@ -62,8 +51,11 @@ export function useSearch({ isMountainMode, mountainsList, loadWeather, loadMoun
         await openMountain(mountainsList.find(mountain => mountain.name === loc.name) || { name: loc.name });
       } else {
         const res = await fetch(`${API}/api/location/search?q=${encodeURIComponent(query)}`);
-        if (!res.ok) { showToast('해당 지역을 찾을 수 없습니다.'); setIsAiLoading(false); return; }
+        if (res.status === 404) { record(query, 'not_found'); showToast('해당 지역을 찾을 수 없습니다.'); setIsAiLoading(false); return; }
+        if (!res.ok) throw new Error('Region search failed');
         const loc = await res.json();
+        if (!loc?.name) throw new Error("Invalid region result");
+        record(loc.name, 'found');
         const updatedSearches = [loc.name, ...recentSearches.filter(t => t !== loc.name)].slice(0, 5);
         setRecentSearches(updatedSearches);
         localStorage.setItem('recentSearches', JSON.stringify(updatedSearches));
