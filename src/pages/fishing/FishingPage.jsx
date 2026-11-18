@@ -36,9 +36,9 @@ export default function FishingPage() {
   const { points, status } = useFishingPoints();
   const { favorites, toggle, isFavorite } = useFavoritePoints({ loggedInUser, showToast });
   const [areaId, setAreaId] = useState(areas[0].id);
-  const [chosenPoint, setChosenPoint] = useState(() => searchParams.get('point') || readStoredJson(LAST_POINT_KEY, null) || DEFAULT_POINT);
-  // 포인트 고르기 화면은 처음부터 열어 둡니다. (✕로 접고 '바꾸기'로 다시 열기)
-  const [pickerOpen, setPickerOpen] = useState(true);
+  const [initialPoint] = useState(() => searchParams.get('point') || readStoredJson(LAST_POINT_KEY, null));
+  const [chosenPoint, setChosenPoint] = useState(initialPoint || DEFAULT_POINT);
+  const [pickerOpen, setPickerOpen] = useState(!initialPoint);
   const [indexModal, setIndexModal] = useState(null); // { pointId, pointName, index?, guide? }
 
   // 포인트 목록을 못 받으면(예전 서버·키 없음) 예전처럼 해역 3곳으로 동작합니다.
@@ -57,6 +57,7 @@ export default function FishingPage() {
 
   const selectPoint = (id) => {
     setChosenPoint(id);
+    setPickerOpen(false);
     writeStoredJson(LAST_POINT_KEY, id);
     setSearchParams((previous) => { const next = new URLSearchParams(previous); next.set('point', id); return next; }, { replace: true });
   };
@@ -67,17 +68,19 @@ export default function FishingPage() {
 
   return <main className="fishing-page">
     <FishingHero areas={areas} area={area} onAreaChange={setAreaId} loading={loading} onReload={reload}
-      pointMode={pointMode} onOpenPicker={() => setPickerOpen((open) => !open)} isFavorite={isFavorite(pointId)} onToggleFavorite={() => toggle(pointId)}
+      pointMode={pointMode} pickerOpen={pickerOpen} onOpenPicker={() => setPickerOpen((open) => !open)} isFavorite={isFavorite(pointId)} onToggleFavorite={() => toggle(pointId)}
       favoritePoints={favorites} onSelectPoint={selectPoint} data={data} />
-    {pointMode && pickerOpen && (status === 'ready'
-      ? <PointPicker points={points} selectedId={pointId} favorites={favorites} onSelect={selectPoint} onToggleFavorite={toggle} onClose={() => setPickerOpen(false)} isLoggedIn={Boolean(loggedInUser)}
-          onShowIndex={(point) => setIndexModal({ pointId: point.id, pointName: point.name })} />
-      : <div className="fish-loading" role="status"><FiRefreshCw className="fish-spin" /><div><b>낚시 포인트 목록을 불러오고 있어요</b></div></div>)}
+
 
     {error && <div className="fish-error" role="alert"><FiInfo /> {error}<button onClick={reload}>다시 시도</button></div>}
     {loading && !data && <div className="fish-loading" role="status"><FiRefreshCw className="fish-spin" /><div><b>해양 기관 자료를 불러오고 있어요</b><span>첫 요청은 서버 준비로 다소 오래 걸릴 수 있습니다.</span></div></div>}
 
     {data && <WarningBanner warnings={sources.warnings} error={errors.warnings} />}
+
+    {pointMode && pickerOpen && (status === 'ready'
+      ? <PointPicker points={points} selectedId={pointId} favorites={favorites} onSelect={selectPoint} onToggleFavorite={toggle} onClose={() => setPickerOpen(false)} isLoggedIn={Boolean(loggedInUser)}
+          onShowIndex={(point) => setIndexModal({ pointId: point.id, pointName: point.name })} />
+      : <div className="fish-loading" role="status"><FiRefreshCw className="fish-spin" /><div><b>낚시 포인트 목록을 불러오고 있어요</b></div></div>)}
 
     <FishingIndexPanel key={area.id} index={sources.fishing_index} error={errors.fishing_index} warnings={sources.warnings?.items || []}
       onShowGuide={() => setIndexModal({ pointId: area.pointId, pointName: area.place, guide: true, index: sources.fishing_index?.days?.length ? sources.fishing_index : undefined })} />

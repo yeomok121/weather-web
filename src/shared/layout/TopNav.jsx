@@ -21,7 +21,7 @@ export default function TopNav({ search, isMountainMode, isFishingPage, isNotice
   const results = isMountainList ? mountainsList.map(mountain => ({ name: mountain.name, meta: [mountain.peak, mountain.region, `해발 ${mountain.elevation}m`].filter(Boolean).join(' · ') }))
     : (isRecent ? search.recentSearches : search.autoCompleteList).map(name => ({ name }));
 
-  return <header className={`top-nav ${isMountainMode && !isFishingPage ? 'is-mountain-mode' : ''}`}>
+  return <header className={`top-nav ${isFishingPage ? 'is-fishing-page' : isMountainMode ? 'is-mountain-mode' : ''}`}>
       <button type="button" className="header-brand" onClick={() => { closeSearch(); onGoHome(); }} aria-label="Weather+ 일반 날씨 홈"><FiSun aria-hidden="true" size={24} /><span>Weather<span className="header-brand-plus">+</span></span></button>
     <div className="top-nav-inner">
       <div className={`header-search ${mobileSearchOpen ? 'is-expanded' : ''}`} onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget)) search.setIsSearchFocused(false); }}>

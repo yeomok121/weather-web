@@ -8,7 +8,7 @@ import { seaWeather, todayVerdict } from '../lib/seaToday';
 
 const timeOf = (iso) => (typeof iso === 'string' && iso.length >= 16 ? iso.slice(11, 16) : '');
 
-export default function FishingHero({ areas, area, onAreaChange, loading, onReload, pointMode, onOpenPicker, isFavorite, onToggleFavorite,
+export default function FishingHero({ areas, area, onAreaChange, loading, onReload, pointMode, pickerOpen, onOpenPicker, isFavorite, onToggleFavorite,
   favoritePoints = [], onSelectPoint, data }) {
   const [now] = useState(() => Date.now());
   const sources = data?.sources || {};
@@ -22,13 +22,13 @@ export default function FishingHero({ areas, area, onAreaChange, loading, onRelo
   // 오늘이 주의·비추천인데 "추천: 오늘"이라고 하면 모순이므로 그때는 이번 주 추천을 숨깁니다.
   const bestIsToday = best && indexDayLabel(best.date, now) === '오늘';
   const weekLine = insideWarning ? '이번 주는 특보 기간이라 따로 추천할 날이 없어요'
-    : best && !(bestIsToday && (verdict?.tone === 'caution' || verdict?.tone === 'stop')) ? `이번 주 추천: ${indexDayLabel(best.date, now)} ${sessionLabel(best.session.session)} · ${best.topGrade}` : '';
+    : best && !(bestIsToday && (verdict?.tone === 'caution' || verdict?.tone === 'stop')) ? `남은 예보 중 지수가 가장 높은 때 · ${indexDayLabel(best.date, now)} ${sessionLabel(best.session.session)} · ${best.topGrade}` : '';
   const updated = timeOf(data?.updated_at);
 
   return <section className="fish-hero fish-hero-compact glass-card" aria-label="지금 포인트와 오늘 바다 날씨">
     <div className="fish-hero-top">
       {pointMode ? <>
-        <button type="button" className="fish-area-picker" onClick={onOpenPicker} aria-label="낚시 포인트 바꾸기"><FiMapPin /><b>{area.place}</b><em>포인트 바꾸기</em></button>
+        <button type="button" className="fish-area-picker" onClick={onOpenPicker} aria-expanded={pickerOpen} aria-label="낚시 포인트 바꾸기"><FiMapPin /><b>{area.place}</b><em>포인트 바꾸기</em></button>
         <button type="button" className={`fish-star ${isFavorite ? 'on' : ''}`} onClick={onToggleFavorite} aria-pressed={isFavorite} aria-label={isFavorite ? '즐겨찾기 해제' : '즐겨찾기 추가'}><FiStar /></button>
       </> : <label className="fish-area-picker"><FiMapPin /><span>해역</span>
         <select value={area.id} onChange={(event) => onAreaChange(event.target.value)} aria-label="확인할 해역 선택">

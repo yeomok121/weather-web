@@ -12,11 +12,11 @@ export default function BestDayCard({ days, warnings = [], now, onSelectDay }) {
   return <div className={`fish-best ${gradeTone(best.topGrade)}`}>
     <FiStar />
     <div>
-      <span>이번 주 추천</span>
+      <span>남은 예보 중 지수가 가장 높은 때</span>
       <b>{indexDayLabel(best.date, now)} {sessionLabel(best.session.session)} · <em className={`fish-grade ${gradeTone(best.topGrade)}`}>{best.topGrade}</em></b>
       <small>{species.length ? `${species.slice(0, 3).join('·')}${species.length > 3 ? ` 외 ${species.length - 3}종` : ''} · ` : ''}파고 {formatRange(best.session.wave_m, ' m')} · 풍속 {formatRange(best.session.wind_ms, ' m/s')}{best.session.tide_phase ? ` · ${best.session.tide_phase}` : ''}</small>
-      {insideWarning && <small className="fish-best-warning">⚠ {activeWarning?.title} 기간이지만 이번 주에 다른 좋은 날이 없습니다 · 출조 전 특보 해제 여부를 꼭 확인하세요.</small>}
-      {!insideWarning && blockedDates.size > 0 && <small className="fish-best-note">{activeWarning?.title} 해제 예고일까지({[...blockedDates].map((date) => indexDayLabel(date, now)).join('·')})는 추천에서 뺐습니다.</small>}
+      {insideWarning && <small className="fish-best-warning">⚠ {activeWarning?.title} 기간이지만 이번 주에 다른 보통 이상 일정이 없습니다 · 출조 전 특보 해제 여부를 꼭 확인하세요.</small>}
+      {!insideWarning && blockedDates.size > 0 && <small className="fish-best-note">{activeWarning?.title} 해제 예고일까지({[...blockedDates].map((date) => indexDayLabel(date, now)).join('·')})는 비교 대상에서 제외했습니다.</small>}
     </div>
     {onSelectDay && <button type="button" onClick={() => onSelectDay(best.date)}>자세히</button>}
   </div>;
