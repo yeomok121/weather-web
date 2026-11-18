@@ -57,11 +57,13 @@ export default function FishingIndexModal({ pointId, pointName, initialIndex, op
   const title = state.index?.point?.name || pointName || '바다낚시지수';
 
   return <div className="fish-modal-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
-    <div className="fish-modal" role="dialog" aria-modal="true" aria-labelledby="fish-modal-title">
+    {/* 닫기 버튼은 스크롤되는 내용 밖(창 오른쪽 위 모서리 바깥)에 고정해 내용을 내려도 항상 보입니다. */}
+    <div className="fish-modal-frame" role="dialog" aria-modal="true" aria-labelledby="fish-modal-title">
+    <button type="button" ref={closeRef} className="fish-modal-close" onClick={onClose} aria-label="닫기"><FiX /></button>
+    <div className="fish-modal">
       <div className="fish-modal-head">
         <FiTarget />
         <div><h2 id="fish-modal-title">{title} 바다낚시지수</h2><p>국립해양조사원 · {state.index?.gubun || '갯바위'} 기준</p></div>
-        <button type="button" ref={closeRef} className="fish-icon-button" onClick={onClose} aria-label="닫기"><FiX /></button>
       </div>
 
       {state.status === 'loading' && <div className="fish-loading" role="status"><FiRefreshCw className="fish-spin" /><div><b>지수를 불러오고 있어요</b></div></div>}
@@ -78,6 +80,7 @@ export default function FishingIndexModal({ pointId, pointName, initialIndex, op
         <ul className="fish-modal-grades">{GRADES.map(([grade, text]) => <li key={grade}><em className={`fish-grade ${gradeTone(grade)}`}>{grade}</em><span>{text}</span></li>)}</ul>
         <p>지수는 바다 조건을 바탕으로 한 참고 정보입니다. 실제 조과를 보장하지 않으며, 출조 전에는 기상특보와 현장 상황을 꼭 확인하세요.</p>
       </details>
+    </div>
     </div>
   </div>;
 }

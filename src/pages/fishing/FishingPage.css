@@ -196,8 +196,12 @@ button.fish-area-picker em { font-style:normal; font-size:12px; font-weight:700;
 
 /* 바다낚시지수 설명 창 */
 .fish-guide-button { margin-left:8px; display:inline-flex; align-items:center; gap:4px; padding:3px 9px; border:1px solid rgba(15,127,134,.3); border-radius:999px; background:rgba(15,127,134,.08); color:#0f7f86; font-size:12px; font-weight:700; cursor:pointer; vertical-align:middle; }
-.fish-modal-backdrop { position:fixed; inset:0; z-index:1000; display:flex; align-items:center; justify-content:center; padding:16px; background:rgba(12,28,44,.55); }
-.fish-modal { width:min(760px,100%); max-height:calc(100vh - 32px); overflow-y:auto; display:flex; flex-direction:column; gap:14px; padding:22px; border-radius:20px; background:#f7fafc; color:#193651; box-shadow:0 24px 60px rgba(10,25,40,.35); }
+.fish-modal-backdrop { position:fixed; inset:0; z-index:1000; display:flex; align-items:center; justify-content:center; padding:28px 24px; background:rgba(12,28,44,.55); }
+.fish-modal-frame { position:relative; width:min(760px,100%); }
+.fish-modal-close { position:absolute; top:-14px; right:-14px; z-index:2; display:inline-flex; align-items:center; justify-content:center; width:38px; height:38px; border:0; border-radius:999px; background:#fff; color:#173a5c; font-size:19px; cursor:pointer; box-shadow:0 6px 18px rgba(10,25,40,.3); }
+.fish-modal-close:hover { background:#eef4f8; }
+.fish-modal-close:focus-visible { outline:3px solid #0f7f86; outline-offset:2px; }
+.fish-modal { width:100%; max-height:calc(100vh - 56px); overflow-y:auto; display:flex; flex-direction:column; gap:14px; padding:22px; border-radius:20px; background:#f7fafc; color:#193651; box-shadow:0 24px 60px rgba(10,25,40,.35); }
 .fish-modal-head { display:flex; align-items:center; gap:12px; }
 .fish-modal-head > svg { font-size:22px; color:#0f7f86; flex:none; }
 .fish-modal-head > div { flex:1; min-width:0; }
@@ -226,4 +230,4 @@ button.fish-area-picker em { font-style:normal; font-size:12px; font-weight:700;
 .fish-modal-grades { display:flex; flex-direction:column; gap:6px; margin:8px 0; padding:0; list-style:none; }
 .fish-modal-grades li { display:flex; align-items:center; gap:8px; }
 .fish-modal-grades .fish-grade { min-width:64px; text-align:center; }
-@media (max-width:720px) { .fish-modal { padding:16px; border-radius:16px; } .fish-modal-sessions { grid-template-columns:1fr; } }
+@media (max-width:720px) { .fish-modal-backdrop { padding:24px 16px; } .fish-modal { padding:16px; border-radius:16px; max-height:calc(100vh - 48px); } .fish-modal-close { top:-12px; right:-10px; width:36px; height:36px; } .fish-modal-sessions { grid-template-columns:1fr; } }
