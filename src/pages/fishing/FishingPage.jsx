@@ -2,13 +2,20 @@
 //   fishingApi.js      서버 요청          useFishingData.js  해역 목록·바다 정보 상태
 //   fishingFormat.js   화면용 값 변환      components/        화면 영역별 컴포넌트
 //   FishingPage.css    낚시 페이지 전용 스타일
+//   useFavoritePoints.js  즐겨찾는 포인트 (브라우저 / 로그인 시 계정)
 // 물때 계산은 lib/tideCalendar.js 에 있습니다.
+// 포인트를 고르면 주소가 /fishing?point=추자도 처럼 바뀌어 새로고침·공유해도 같은 포인트가 열립니다.
 // 새 영역은 components/에 만들고 아래 순서에 끼워 넣으면 됩니다.
 import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { FiClock, FiInfo, FiRefreshCw } from 'react-icons/fi';
 import './FishingPage.css';
-import { useFishingAreas, useFishingSummary } from './useFishingData';
+import { useApp } from '../../shared/AppContext';
+import { readStoredJson, writeStoredJson } from '../../shared/lib/browserStorage';
+import { useFishingAreas, useFishingPoints, useFishingSummary } from './useFishingData';
+import { useFavoritePoints } from './useFavoritePoints';
 import FishingHero from './components/FishingHero';
+import PointPicker from './components/PointPicker';
 import FishingIndexPanel from './components/FishingIndexPanel';
 import WarningBanner from './components/WarningBanner';
 import ForecastOutlook from './components/ForecastOutlook';
@@ -18,18 +25,51 @@ import MarineForecastPanel from './components/MarineForecastPanel';
 import SunPanel from './components/SunPanel';
 import GearChecklist from './components/GearChecklist';
 
+const DEFAULT_POINT = '추자도';
+const LAST_POINT_KEY = 'fishing:last-point';
+
 export default function FishingPage() {
+  const { loggedInUser, showToast } = useApp();
+  const [searchParams, setSearchParams] = useSearchParams();
   const areas = useFishingAreas();
+  const { points, status } = useFishingPoints();
+  const { favorites, toggle, isFavorite } = useFavoritePoints({ loggedInUser, showToast });
   const [areaId, setAreaId] = useState(areas[0].id);
-  const area = areas.find((item) => item.id === areaId) || areas[0];
-  const { data, error, loading, reload } = useFishingSummary(area);
+  const [chosenPoint, setChosenPoint] = useState(() => searchParams.get('point') || readStoredJson(LAST_POINT_KEY, null) || DEFAULT_POINT);
+  const [pickerOpen, setPickerOpen] = useState(false);
+
+  // 포인트 목록을 못 받으면(예전 서버·키 없음) 예전처럼 해역 3곳으로 동작합니다.
+  const pointMode = status !== 'failed';
+  const pointId = status === 'ready' && !points.some((point) => point.id === chosenPoint)
+    ? (points.find((point) => point.id === DEFAULT_POINT) || points[0]).id : chosenPoint;
+  const listed = points.find((point) => point.id === pointId);
+  const fallbackArea = areas.find((item) => item.id === areaId) || areas[0];
+  const { data, error, loading, reload } = useFishingSummary(pointMode ? { id: `point:${pointId}`, pointId } : fallbackArea);
+  const area = pointMode ? {
+    id: `point:${pointId}`, pointId, place: listed?.name || pointId,
+    lat: listed?.lat ?? data?.coordinates?.lat, lon: listed?.lon ?? data?.coordinates?.lon,
+    tide_system: listed?.tide_system ?? data?.tide_system ?? 8,
+    region_name: listed?.region_name || data?.region_name || '',
+  } : fallbackArea;
+
+  const selectPoint = (id) => {
+    setChosenPoint(id);
+    writeStoredJson(LAST_POINT_KEY, id);
+    setSearchParams((previous) => { const next = new URLSearchParams(previous); next.set('point', id); return next; }, { replace: true });
+    setPickerOpen(false);
+  };
 
   const sources = data?.sources || {};
   const errors = data?.errors || {};
   const forecastRows = sources.forecast?.records || [];
 
   return <main className="fishing-page">
-    <FishingHero areas={areas} area={area} onAreaChange={setAreaId} loading={loading} onReload={reload} />
+    <FishingHero areas={areas} area={area} onAreaChange={setAreaId} loading={loading} onReload={reload}
+      pointMode={pointMode} onOpenPicker={() => setPickerOpen((open) => !open)} isFavorite={isFavorite(pointId)} onToggleFavorite={() => toggle(pointId)}
+      favoritePoints={favorites} onSelectPoint={selectPoint} />
+    {pointMode && pickerOpen && (status === 'ready'
+      ? <PointPicker points={points} selectedId={pointId} favorites={favorites} onSelect={selectPoint} onToggleFavorite={toggle} onClose={() => setPickerOpen(false)} isLoggedIn={Boolean(loggedInUser)} />
+      : <div className="fish-loading" role="status"><FiRefreshCw className="fish-spin" /><div><b>낚시 포인트 목록을 불러오고 있어요</b></div></div>)}
 
     {error && <div className="fish-error" role="alert"><FiInfo /> {error}<button onClick={reload}>다시 시도</button></div>}
     {loading && !data && <div className="fish-loading" role="status"><FiRefreshCw className="fish-spin" /><div><b>해양 기관 자료를 불러오고 있어요</b><span>첫 요청은 서버 준비로 다소 오래 걸릴 수 있습니다.</span></div></div>}

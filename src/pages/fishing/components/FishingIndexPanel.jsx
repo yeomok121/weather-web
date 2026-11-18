@@ -29,7 +29,7 @@ export default function FishingIndexPanel({ index, error, warnings }) {
 
   return <section className="fish-panel fish-index">
     <div className="fish-panel-title"><FiTarget /><div><h2>바다낚시지수</h2>
-      <p>국립해양조사원 · {point ? `${point.name} ${index.gubun || ''} 포인트 · 기준 위치에서 약 ${point.distance_km} km` : '가까운 낚시 포인트 기준'}</p></div></div>
+      <p>국립해양조사원 · {point ? `${point.name} ${index.gubun || ''} 포인트${point.distance_km >= 1 ? ` · 기준 위치에서 약 ${point.distance_km} km` : ''}` : '가까운 낚시 포인트 기준'}</p></div></div>
 
     {day ? <>
       <BestDayCard days={days} warnings={warnings || []} now={now} onSelectDay={setSelected} />

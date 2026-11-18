@@ -198,3 +198,12 @@ test('days until a warning is lifted are skipped from the recommendation', () =>
   const decDays = ['2026-11-30', '2026-12-01', '2026-12-02', '2026-12-03'].map((date) => ({ date, sessions: [session('일', [['감성돔', '좋음']])] }));
   assert.deepEqual([...warningBlockedDates(decDays, [{ level: '주의', release_hint: '2일 밤(21시~24시)' }], { now: monthEnd })], ['2026-11-30', '2026-12-01', '2026-12-02']);
 });
+
+import { mergeFavoritePoints, MAX_FAVORITE_POINTS } from '../src/pages/fishing/lib/favorites.js';
+
+test('favorite points merge keeps account order, appends new browser ones, caps at 10', () => {
+  assert.deepEqual(mergeFavoritePoints(['추자도', '모항항'], ['모항항', '김녕']), ['추자도', '모항항', '김녕']);
+  assert.deepEqual(mergeFavoritePoints([], []), []);
+  const many = Array.from({ length: 12 }, (_, i) => `p${i}`);
+  assert.equal(mergeFavoritePoints(many.slice(0, 8), many.slice(8)).length, MAX_FAVORITE_POINTS);
+});

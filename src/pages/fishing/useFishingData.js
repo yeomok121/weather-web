@@ -1,6 +1,6 @@
 // 낚시 페이지: 해역 목록과 선택한 해역의 바다 정보를 불러오는 상태
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { FALLBACK_AREAS, fetchFishingAreas, fetchFishingSummary } from './fishingApi';
+import { FALLBACK_AREAS, fetchFishingAreas, fetchFishingPoints, fetchFishingSummary } from './fishingApi';
 
 export function useFishingAreas() {
   const [areas, setAreas] = useState(FALLBACK_AREAS);
@@ -12,6 +12,19 @@ export function useFishingAreas() {
   return areas;
 }
 
+// 낚시 포인트 목록. 서버가 목록을 못 주면(예전 서버·키 없음) status='failed' → 화면은 해역 3곳 선택으로 동작
+export function useFishingPoints() {
+  const [state, setState] = useState({ points: [], status: 'loading' });
+  useEffect(() => {
+    const controller = new AbortController();
+    fetchFishingPoints({ signal: controller.signal })
+      .then((points) => setState({ points, status: 'ready' }))
+      .catch(() => { if (!controller.signal.aborted) setState({ points: [], status: 'failed' }); });
+    return () => controller.abort();
+  }, []);
+  return state;
+}
+
 export function useFishingSummary(area) {
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
@@ -19,8 +32,8 @@ export function useFishingSummary(area) {
   const requestRef = useRef(null);
   const data = result?.areaId === area.id ? result.data : null;
 
-  // 서버 해역 목록으로 바뀌어도 같은 해역이면 다시 불러오지 않도록 내용으로 비교합니다.
-  const areaKey = `${area.id}|${area.region}|${area.lat}|${area.lon}`;
+  // 같은 해역·포인트면 다시 불러오지 않습니다. (포인트 목록이 늦게 와서 좌표가 채워져도 다시 요청하지 않음)
+  const areaKey = area.pointId ? `point:${area.pointId}` : `${area.id}|${area.region}|${area.lat}|${area.lon}`;
   const areaRef = useRef(area);
   useEffect(() => { areaRef.current = area; });
 
