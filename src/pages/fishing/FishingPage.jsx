@@ -5,7 +5,8 @@
 //   useFavoritePoints.js  즐겨찾는 포인트 (브라우저 / 로그인 시 계정)
 // 물때 계산은 lib/tideCalendar.js 에 있습니다.
 // 포인트를 고르면 주소가 /fishing?point=추자도 처럼 바뀌어 새로고침·공유해도 같은 포인트가 열립니다.
-// 새 영역은 components/에 만들고 아래 순서에 끼워 넣으면 됩니다.
+// 아래 내용은 탭(components/FishingTabs.jsx, lib/tabs.js)으로 나눠 하나씩 보여줍니다. ?tab=forecast 처럼 주소에 남습니다.
+// 새 영역은 components/에 만들고 알맞은 <TabPanel> 안에 넣으면 됩니다.
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { FiInfo, FiRefreshCw } from 'react-icons/fi';
@@ -25,6 +26,8 @@ import TidePanel from './components/TidePanel';
 import MarineForecastPanel from './components/MarineForecastPanel';
 import SunPanel from './components/SunPanel';
 import GearChecklist from './components/GearChecklist';
+import FishingTabs, { TabPanel } from './components/FishingTabs';
+import { DEFAULT_TAB, tabFromQuery } from './lib/tabs';
 
 const DEFAULT_POINT = '추자도';
 const LAST_POINT_KEY = 'fishing:last-point';
@@ -55,6 +58,13 @@ export default function FishingPage() {
     region_name: listed?.region_name || data?.region_name || '',
   } : fallbackArea;
 
+  const tab = tabFromQuery(searchParams.get('tab'));
+  const selectTab = (id) => setSearchParams((previous) => {
+    const next = new URLSearchParams(previous);
+    if (id === DEFAULT_TAB) next.delete('tab'); else next.set('tab', id);
+    return next;
+  }, { replace: true });
+
   const selectPoint = (id) => {
     setChosenPoint(id);
     setPickerOpen(false);
@@ -82,22 +92,34 @@ export default function FishingPage() {
           onShowIndex={(point) => setIndexModal({ pointId: point.id, pointName: point.name })} />
       : <div className="fish-loading" role="status"><FiRefreshCw className="fish-spin" /><div><b>낚시 포인트 목록을 불러오고 있어요</b></div></div>)}
 
-    <FishingIndexPanel key={area.id} index={sources.fishing_index} error={errors.fishing_index} warnings={sources.warnings?.items || []}
-      onShowGuide={() => setIndexModal({ pointId: area.pointId, pointName: area.place, guide: true, index: sources.fishing_index?.days?.length ? sources.fishing_index : undefined })} />
+    <FishingTabs active={tab} onChange={selectTab} />
 
-    <ForecastOutlook forecastRows={forecastRows} />
-    <GearChecklist area={area} indexDays={sources.fishing_index?.days || []} forecastRows={forecastRows} warnings={sources.warnings?.items || []} />
+    {/* 탭을 바꿔도 내용은 숨기기만 해서(hidden) 보던 날짜·편집 중인 내용이 그대로 남습니다. */}
+    <TabPanel id="index" active={tab}>
+      <FishingIndexPanel key={area.id} index={sources.fishing_index} error={errors.fishing_index} warnings={sources.warnings?.items || []}
+        onShowGuide={() => setIndexModal({ pointId: area.pointId, pointName: area.place, guide: true, index: sources.fishing_index?.days?.length ? sources.fishing_index : undefined })} />
+    </TabPanel>
 
-    <section className="fish-metrics">
-      <BuoyPanel area={area} buoyRows={sources.buoy?.records || []} error={errors.buoy} />
-      <TidePanel area={area} tideSource={sources.tide} error={errors.tide} />
-    </section>
+    <TabPanel id="forecast" active={tab}>
+      <ForecastOutlook forecastRows={forecastRows} />
+      <MarineForecastPanel regionName={data?.region_name || area.region_name} forecastRows={forecastRows} error={errors.forecast} />
+    </TabPanel>
 
-    <SunPanel area={area} />
+    <TabPanel id="sea" active={tab}>
+      <section className="fish-metrics">
+        <BuoyPanel area={area} buoyRows={sources.buoy?.records || []} error={errors.buoy} />
+        <TidePanel area={area} tideSource={sources.tide} error={errors.tide} />
+      </section>
+      <SunPanel area={area} />
+    </TabPanel>
 
-    <MarineForecastPanel regionName={data?.region_name || area.region_name} forecastRows={forecastRows} error={errors.forecast} />
+    <TabPanel id="gear" active={tab}>
+      <GearChecklist area={area} indexDays={sources.fishing_index?.days || []} forecastRows={forecastRows} warnings={sources.warnings?.items || []} />
+    </TabPanel>
+
     <details className="fish-source-details"><summary><FiInfo /> 자료 범위와 기준</summary><p>해상예보는 선택 해역 단위이며 개별 포인트의 예보가 아닙니다. 부이는 위치와 거리를 함께 표시한 참고 관측이고, TideBED 조위는 응답에 포함된 인근 기준 관측소의 예측입니다. 각 기관 자료의 발표·관측 시각을 확인해 최신성도 살펴보세요.</p></details>
     {indexModal && <FishingIndexModal key={indexModal.pointId || 'guide'} pointId={indexModal.pointId} pointName={indexModal.pointName} initialIndex={indexModal.index} openGuide={Boolean(indexModal.guide)} onClose={() => setIndexModal(null)} />}
     <p className="fish-disclaimer"><FiInfo /> {data?.notice || '기관 예보와 관측을 참고용으로 제공합니다. 출조 전 기상특보와 현장 상황을 별도로 확인하세요.'}</p>
   </main>;
 }
+

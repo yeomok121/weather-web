@@ -316,3 +316,12 @@ test('my gear setup: add, validate, hide base items but never the life jacket', 
   assert.equal(list.length, 2 + BASE_GEAR.length - 1);
   assert.match(newGearId(), /^my-[a-z0-9]{1,24}$/);
 });
+
+import { FISHING_TABS, tabFromQuery } from '../src/pages/fishing/lib/tabs.js';
+
+test('fishing tabs come from the address and fall back to the first tab', () => {
+  assert.deepEqual(FISHING_TABS.map((tab) => tab.id), ['index', 'forecast', 'sea', 'gear']);
+  assert.equal(tabFromQuery('gear'), 'gear');
+  assert.equal(tabFromQuery(null), 'index');
+  assert.equal(tabFromQuery('<script>'), 'index');
+});
