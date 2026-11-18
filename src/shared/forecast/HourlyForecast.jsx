@@ -8,6 +8,7 @@ import HikingPlannerPanel from '../../pages/mountain/components/HikingPlannerPan
 import MountainPlanControls from '../../pages/mountain/components/MountainPlanControls';
 import MountainQuickGuide from '../../pages/mountain/components/MountainQuickGuide';
 import './MountainJourney.css';
+import './HourlyPrecipitation.css';
 import { readHikingDraft, writeHikingDraft, koreanDate } from '../../pages/mountain/lib/hikingPlan';
 
 const ITEMS_TO_SHOW = 6;
@@ -335,7 +336,7 @@ function HourlyForecast({
           icon: item.icon,
           description: item.description,
           tempNum: t,
-          pop: pop === null ? 0 : Math.round(Math.max(0, Math.min(1, pop)) * 100),
+          pop: pop === null ? null : Math.round(Math.max(0, Math.min(1, pop)) * 100),
         };
       })
     : [];
@@ -343,6 +344,9 @@ function HourlyForecast({
   const maxIndex = Math.max(0, rawForecastData.length - ITEMS_TO_SHOW);
   const visibleIndex = Math.min(currentIndex, maxIndex);
   const visibleSlice = rawForecastData.slice(visibleIndex, visibleIndex + ITEMS_TO_SHOW);
+  const peakRainHour = !isMountainMode && !mountainInfo
+    ? rawForecastData.reduce((peak, item) => item.pop > (peak?.pop ?? 0) ? item : peak, null)
+    : null;
   const visibleTemps = visibleSlice.map(d => d.tempNum).filter(v => v !== null);
   const sliceMin = visibleTemps.length > 0 ? Math.min(...visibleTemps) : 10;
   const sliceMax = visibleTemps.length > 0 ? Math.max(...visibleTemps) : 20;
@@ -525,7 +529,7 @@ function HourlyForecast({
       : '없음';
 
     const arrivalWeatherLine = timeline.arrivalWeather.available
-      ? `⛰️ 정상 도착(${timeline.summitArrivalStr}경 / ${timeline.arrivalWeather.forecastHour} 예보): ${timeline.arrivalWeather.temp}°C (체감 ${timeline.arrivalWeather.feelsLike}°C · ${timeline.arrivalWeather.description} · 강수확률 ${timeline.arrivalWeather.pop}%)`
+      ? `⛰️ 정상 도착(${timeline.summitArrivalStr}경 / ${timeline.arrivalWeather.forecastHour} 예보): ${timeline.arrivalWeather.temp}°C (체감 ${timeline.arrivalWeather.feelsLike}°C · ${timeline.arrivalWeather.description} · 강수확률 ${timeline.arrivalWeather.pop === null ? '자료 없음' : `${timeline.arrivalWeather.pop === null ? '자료 없음' : `${timeline.arrivalWeather.pop}%`}`})`
       : `⛰️ 정상 도착(${timeline.summitArrivalStr}경): ${timeline.arrivalWeather.reason}`;
 
     const shareText = [
@@ -616,13 +620,13 @@ function HourlyForecast({
             {isMountainMode ? '⛰️ 산악 기상 & 등산 환경 대시보드' : mountainInfo?.course_available === false ? '시간별 산 정상 기온 · 강수확률' : '시간별 날씨 · 기온과 강수확률'}
           </h4>
           <div style={{ marginTop: '3px', fontSize: '10.5px', color: '#64748b' }}>
-            {isMountainMode || mountainInfo?.course_available === false ? '기상청 시간별 예보를 고도 보정한 산악 참고 추정값' : '기상청 동네예보 기준 · 강수확률은 시간대별 비 가능성입니다'}
+            {isMountainMode || mountainInfo?.course_available === false ? '기상청 시간별 예보를 고도 보정한 산악 참고 추정값' : '기상청 동네예보 기준 · 강수확률은 해당 시간에 비나 눈이 내릴 가능성입니다'}
           </div>
         </div>
         {!isMountainMode && (
           <div style={{ display: 'flex', gap: '8px' }}>
-            <button type="button" onClick={handlePrev} disabled={prevDisabled} style={{ ...buttonStyle, opacity: prevDisabled ? 0.3 : 1, cursor: prevDisabled ? 'default' : 'pointer' }}><FiChevronLeft size={16} /></button>
-            <button type="button" onClick={handleNext} disabled={nextDisabled} style={{ ...buttonStyle, opacity: nextDisabled ? 0.3 : 1, cursor: nextDisabled ? 'default' : 'pointer' }}><FiChevronRight size={16} /></button>
+            <button type="button" aria-label="이전 시간대" onClick={handlePrev} disabled={prevDisabled} style={{ ...buttonStyle, opacity: prevDisabled ? 0.3 : 1, cursor: prevDisabled ? 'default' : 'pointer' }}><FiChevronLeft size={16} /></button>
+            <button type="button" aria-label="다음 시간대" onClick={handleNext} disabled={nextDisabled} style={{ ...buttonStyle, opacity: nextDisabled ? 0.3 : 1, cursor: nextDisabled ? 'default' : 'pointer' }}><FiChevronRight size={16} /></button>
           </div>
         )}
       </div>
@@ -739,7 +743,7 @@ function HourlyForecast({
                     <span>{getEmojiIcon(timeline.arrivalWeather.icon)} {timeline.arrivalWeather.forecastHour}</span>
                     <strong>{timeline.arrivalWeather.temp}°C</strong>
                     <span>체감 {timeline.arrivalWeather.feelsLike}°C</span>
-                    <span>{timeline.arrivalWeather.description} · 강수확률 {timeline.arrivalWeather.pop}%</span>
+                    <span>{timeline.arrivalWeather.description} · 강수확률 {timeline.arrivalWeather.pop === null ? '자료 없음' : `${timeline.arrivalWeather.pop}%`}</span>
                   </div>
                 ) : (
                   <p className="mountain-arrival-weather__caption">ℹ️ {timeline.arrivalWeather.reason}</p>
@@ -900,8 +904,8 @@ function HourlyForecast({
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', borderTop: '2px dashed rgba(0,0,0,0.1)', paddingTop: '16px' }}>
               <h4 style={{ margin: 0, fontSize: '14px', fontWeight: '800', color: '#1e293b' }}>시간대별 산 정상 기온 변화</h4>
               <div style={{ display: 'flex', gap: '6px' }}>
-                <button type="button" onClick={handlePrev} disabled={prevDisabled} style={{ ...buttonStyle, opacity: prevDisabled ? 0.3 : 1, cursor: prevDisabled ? 'default' : 'pointer' }}><FiChevronLeft size={16} /></button>
-                <button type="button" onClick={handleNext} disabled={nextDisabled} style={{ ...buttonStyle, opacity: nextDisabled ? 0.3 : 1, cursor: nextDisabled ? 'default' : 'pointer' }}><FiChevronRight size={16} /></button>
+                <button type="button" aria-label="이전 시간대" onClick={handlePrev} disabled={prevDisabled} style={{ ...buttonStyle, opacity: prevDisabled ? 0.3 : 1, cursor: prevDisabled ? 'default' : 'pointer' }}><FiChevronLeft size={16} /></button>
+                <button type="button" aria-label="다음 시간대" onClick={handleNext} disabled={nextDisabled} style={{ ...buttonStyle, opacity: nextDisabled ? 0.3 : 1, cursor: nextDisabled ? 'default' : 'pointer' }}><FiChevronRight size={16} /></button>
               </div>
             </div>
           )}
@@ -927,6 +931,8 @@ function HourlyForecast({
       ) : forecastData.length === 0 ? (
         <p style={{ margin: '8px 0', fontSize: '13px', color: '#475569' }}>예보 데이터가 없습니다.</p>
       ) : (
+        <div>
+        {peakRainHour && <p className="hourly-precip-peak">표시 기간 최고 강수확률 <strong>{peakRainHour.pop}%</strong> · {Number.isFinite(Date.parse(peakRainHour.valid_at)) ? koreanDate(peakRainHour.valid_at).slice(5).replace('-', '/') + ' ' : ''}{peakRainHour.time}</p>}
         <div className="hourly-chart-wrapper" style={{ overflow: 'hidden', width: '100%', position: 'relative' }}>
           <div style={{ transition: 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)', transform: `translateX(-${(visibleIndex / forecastData.length) * 100}%)`, width: `${(forecastData.length / ITEMS_TO_SHOW) * 100}%`, position: 'relative' }}>
 
@@ -940,16 +946,25 @@ function HourlyForecast({
             </div>
 
             <div style={{ display: 'flex', width: '100%', position: 'relative', zIndex: 2 }}>
-              {forecastData.map((item) => (
-                <div key={item.id} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              {forecastData.map((item) => {
+                const emoji = getEmojiIcon(item.icon);
+                const quietRain = !mountainInfo && !isMountainMode && emoji === '🌧️' && item.pop !== null && item.pop < 60;
+                return (
+                <div key={item.id} style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                   <span style={{ fontSize: '12px', color: '#475569', height: '18px', lineHeight: '18px', marginBottom: '6px', fontWeight: '600' }}>{item.time}</span>
-                  <div style={{ height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '26px', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))' }}>{getEmojiIcon(item.icon)}</div>
-                  <div style={{ height: '100px', marginBottom: '6px' }}></div>
-                  <span style={{ fontSize: '11.5px', color: item.pop > 0 ? '#2563eb' : '#94a3b8', fontWeight: item.pop > 0 ? '800' : '600', minHeight: '16px' }}>💧 {item.pop ?? 0}%</span>
+                  <div className="hourly-weather-symbol" data-quiet-rain={quietRain} title={item.description || undefined}>
+                    <span aria-hidden="true">{emoji}</span>
+                    {item.description && <span className="hourly-weather-description">{item.description}</span>}
+                  </div>
+                  <div style={{ height: '100px', marginBottom: '6px' }} />
+                  <span className="hourly-precip-value" data-emphasis={item.pop >= 60} aria-label={item.pop === null ? '강수확률 자료 없음' : `강수확률 ${item.pop}%`}>
+                    <span>강수</span> <strong>{item.pop === null ? '—' : `${item.pop}%`}</strong>
+                  </span>
                 </div>
-              ))}
+              ); })}
             </div>
           </div>
+        </div>
         </div>
       )}
     </div>

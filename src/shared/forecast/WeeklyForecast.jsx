@@ -17,6 +17,7 @@ function WeeklyForecast({ weeklyData = [], isLoading = false }) {
         <p style={{ fontSize: '14px', color: '#475569', fontWeight: '500' }}>주간 날씨를 불러오는 중...</p>
       ) : weeklyData.length === 0 ? <p className="muted">주간 예보 자료가 없습니다. 최신 자료를 받은 뒤 표시합니다.</p> : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <p className="muted" style={{ margin: 0, fontSize: '12px' }}>강수확률은 날짜별 예보 중 최댓값입니다.</p>
           {weeklyData.map((day, idx) => {
             const minVal = Number(day.temp_min);
             const maxVal = Number(day.temp_max);
@@ -41,7 +42,7 @@ function WeeklyForecast({ weeklyData = [], isLoading = false }) {
                 
                 {/* 💡 수정된 부분: width를 56px로 늘리고 whiteSpace: 'nowrap'을 추가해 100% 글자 밀림 방지 */}
                 <span style={{ width: '56px', whiteSpace: 'nowrap', color: day.pop > 0 ? '#2563eb' : '#94a3b8', fontSize: '12.5px', textAlign: 'left', fontWeight: '800' }}>
-                  💧 {day.pop || 0}%
+                  {day.pop == null ? '—' : `💧 ${day.pop}%`}
                 </span>
                 
                 <span style={{ fontSize: '22px', width: '30px', textAlign: 'center', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))' }}>

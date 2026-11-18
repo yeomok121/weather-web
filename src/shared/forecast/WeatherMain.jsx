@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { FiTrash2, FiCalendar, FiChevronDown } from 'react-icons/fi';
 
 function WeatherMain({
-  weatherData, hourlyData = [], weeklyData = [],
+  weatherData, weeklyData = [],
   selectedDateIdx, onSelectDate,
   isAiLoading, aiMessage, favorites, onAddClick, onFavoriteClick, onRemoveFavorite, onCurrentLocationClick,
   isMountainMode, mountainInfo, mountainsList = [], onSelectMountain, isLoggedIn = false
@@ -50,23 +50,18 @@ function WeatherMain({
     const dustStr = weatherData.dust || '';
     const pm25Match = dustStr.match(/\d+/);
     const pm25 = pm25Match ? parseInt(pm25Match[0], 10) : 15;
-    const nextHours = Array.isArray(hourlyData) ? hourlyData.slice(0, 6) : [];
-    const peakRainHour = nextHours.reduce((peak, hour) => {
-      const probability = Math.round(Math.max(0, Math.min(1, Number(hour?.pop || 0))) * 100);
-      return probability > (peak?.probability ?? -1) ? { probability, time: hour?.time } : peak;
-    }, null);
-
-    if (cond.includes('비') || cond.includes('소나기') || cond.includes('눈')) return { text: '☔ 현재 비/눈이 내립니다. 우산을 챙기세요!', bg: 'rgba(37,99,235,0.15)', color: '#2563eb' };
-    if (peakRainHour?.probability >= 60) {
-      const timeLabel = peakRainHour.time && peakRainHour.time !== '시간 없음' ? ` · ${peakRainHour.time}` : '';
-      return { text: `🌂 시간별 예보에 강수 가능성이 있습니다${timeLabel} (강수확률 ${peakRainHour.probability}%).`, bg: 'rgba(37,99,235,0.15)', color: '#2563eb' };
-    }
+    if (cond.includes('비') || cond.includes('소나기') || cond.includes('눈')) return { text: '☔ 현재 시각 예보에 비나 눈이 표시됩니다. 외출 전 강수 상황을 확인하세요.', bg: 'rgba(37,99,235,0.15)', color: '#2563eb' };
     if (pm25 >= 36) return { text: `😷 미세먼지가 높습니다. 마스크를 착용하세요!`, bg: 'rgba(234,88,12,0.15)', color: '#ea580c' }; // 주황
     if (wind >= 8) return { text: `💨 강풍 주의! 바람이 강하게 붑니다 (${wind}m/s).`, bg: 'rgba(234,88,12,0.15)', color: '#ea580c' };
     if (temp >= 33) return { text: '🥵 폭염 주의! 야외 활동 자제 및 수분 섭취', bg: 'rgba(220,38,38,0.15)', color: '#dc2626' }; // 빨간색(경고)
     if (temp <= -8) return { text: '🥶 한파 주의! 기온이 매우 낮으니 보온 유의', bg: 'rgba(37,99,235,0.15)', color: '#2563eb' };
     return null;
   };
+
+  const updatedAt = Date.parse(weatherData.dataAsOf);
+  const updateLabel = !isMountainMode && !weatherData.isFuture && Number.isFinite(updatedAt)
+    ? new Intl.DateTimeFormat('ko-KR', {timeZone: 'Asia/Seoul', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hourCycle: 'h23'}).format(updatedAt)
+    : null;
 
   const getActiveGuideMessage = () => {
     if (!hasData) return isAiLoading ? '기상 자료를 확인하고 있어요.' : '기상 자료를 받지 못해 수치와 활동 추천을 표시하지 않습니다.';
@@ -157,7 +152,7 @@ function WeatherMain({
         </div>}
 
         <div style={{ marginTop: '10px', padding: '8px 12px', background: 'rgba(255,255,255,0.4)', borderRadius: '8px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: '3px', fontSize: '11.5px', border: '1px solid rgba(255,255,255,0.5)', textAlign: 'center', minHeight: '36px' }}>
-          <span style={{ color: '#64748b', fontSize: '9.5px', fontWeight: '700' }}>{weatherData.isFuture ? '예보 기반 안내 · 참고용' : 'AI 참고 안내 · 예보 자료 요약'}</span>
+          <span style={{ color: '#64748b', fontSize: '9.5px', fontWeight: '700' }}>{updateLabel && <time dateTime={new Date(updatedAt).toISOString()}>{updateLabel} 갱신 · </time>}{weatherData.isFuture ? '예보 기반 안내 · 참고용' : 'AI 참고 안내 · 예보 자료 요약'}</span>
           <span style={{ fontWeight: '600', color: '#1e293b', lineHeight: '1.4', wordBreak: 'keep-all' }}>{displayGuideMessage}</span>
         </div>
       </div>

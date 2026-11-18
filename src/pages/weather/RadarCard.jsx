@@ -213,7 +213,9 @@ export default function RadarCard({ latitude, longitude, region, preferredLayer 
     <section className="glass-card radar-card" aria-labelledby="radar-title">
       <div className="radar-card__heading">
         <div><h2 id="radar-title">{isRain ? <FiCloudRain aria-hidden="true" /> : <FiWind aria-hidden="true" />}{isRain ? '비구름 레이더' : '바람 지도'}</h2>
-          <p>{isRain ? '최근 강수 관측' : '관측소별 풍향·풍속'} · {hasLocation ? region : '전국'} 주변</p></div>
+          <p>{isRain ? '최근 관측 영상' : '관측소별 풍향·풍속'} · {hasLocation ? region : '전국'} 주변
+            {isRain && displayedAt && <> · 표시 시각 {timeLabel(displayedAt)}</>}
+          </p></div>
         <button type="button" className="radar-button" disabled={isRain && (loading || imageLoading)}
           onClick={refresh}><FiRefreshCw aria-hidden="true" /> 새로고침</button>
       </div>
