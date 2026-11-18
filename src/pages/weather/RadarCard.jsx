@@ -6,6 +6,7 @@ import { API } from '../../shared/lib/config';
 import { requestJson } from '../../shared/lib/apiClient';
 import './RadarCard.css';
 import WindLayer from './WindLayer';
+import { createRadarFrames } from './radarFrames';
 
 const LOCAL_MAP_ZOOM = 9.5;
 
@@ -18,7 +19,7 @@ export default function RadarCard({ latitude, longitude, region, preferredLayer 
   const mapRef = useRef(null);
   const markerRef = useRef(null);
   const displayedOverlay = useRef(null);
-  const images = useRef(new Map());
+  const [images] = useState(() => createRadarFrames(API));
   const [map, setMap] = useState(null);
   const [manifest, setManifest] = useState(null);
   const [revision, setRevision] = useState(0);
@@ -29,6 +30,7 @@ export default function RadarCard({ latitude, longitude, region, preferredLayer 
   const [mapError, setMapError] = useState(false);
   const [mapMoving, setMapMoving] = useState(false);
   const [frameState, setFrameState] = useState(null);
+  const [displayedAt, setDisplayedAt] = useState(null);
   const [clock, setClock] = useState(() => Date.now());
   const [automaticLayer, setAutomaticLayer] = useState(null);
   const [manualLayer, setManualLayer] = useState(null);
@@ -40,7 +42,6 @@ export default function RadarCard({ latitude, longitude, region, preferredLayer 
   const selectedFrame = manifest?.frames[index];
   const currentFrame = frameState?.id === selectedFrame?.id ? frameState : null;
   const imageLoading = !!selectedFrame && !currentFrame;
-  const displayedAt = currentFrame?.observedAt;
   const visibleError = error || currentFrame?.error;
 
   const refresh = () => {
@@ -53,6 +54,8 @@ export default function RadarCard({ latitude, longitude, region, preferredLayer 
     setError('');
     setManifest(null);
     setFrameState(null);
+    setDisplayedAt(null);
+    images.clear();
     if (mapError) mapRef.current?.eachLayer(layer => { if (layer instanceof L.TileLayer) layer.redraw(); });
     setRevision(value => value + 1);
   };
@@ -67,6 +70,7 @@ export default function RadarCard({ latitude, longitude, region, preferredLayer 
       center: [36.2, 127.5], zoom: 7, minZoom: 5, maxZoom: 18,
       zoomSnap: 0.5, zoomDelta: 0.5,
       scrollWheelZoom: false, dragging: !L.Browser.mobile,
+      touchZoom: !L.Browser.mobile, doubleClickZoom: !L.Browser.mobile,
     });
     const tiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
@@ -122,9 +126,26 @@ export default function RadarCard({ latitude, longitude, region, preferredLayer 
   }, [revision, isRain, manifest]);
 
   useEffect(() => () => {
-    images.current.forEach(url => URL.revokeObjectURL(url));
-    images.current.clear();
-  }, []);
+    images.clear();
+  }, [images]);
+
+  useEffect(() => {
+    if (!isRain || !manifest || !displayedAt) return;
+    let cancelled = false;
+    async function warmFrames() {
+      for (const frame of manifest.frames) {
+        if (cancelled) return;
+        try {
+          await images.load(frame);
+        } catch {
+          // Retry failed background downloads when the user selects that frame.
+          return;
+        }
+      }
+    }
+    warmFrames();
+    return () => { cancelled = true; };
+  }, [manifest, isRain, displayedAt, images]);
 
   useEffect(() => {
     if (!isRain || !map || !selectedFrame) return;
@@ -139,26 +160,7 @@ export default function RadarCard({ latitude, longitude, region, preferredLayer 
       setPlaying(false);
     }, 60000);
     async function showFrame() {
-      let url = images.current.get(selectedFrame.id);
-      if (!url) {
-        const response = await fetch(`${API}${selectedFrame.path}`, { signal: controller.signal });
-        if (!response.ok) {
-          const failure = await response.json().catch(() => null);
-          throw new Error(failure?.error_code === 'expired_time'
-            ? '관측 목록이 오래되었습니다. 새로고침하면 최근 관측을 확인할 수 있어요.'
-            : failure?.detail || '선택한 시각의 레이더 자료를 받지 못했습니다. 다른 시각을 선택하거나 다시 시도해 주세요.');
-        }
-        if (!response.headers.get('content-type')?.includes('image/png')) throw new Error('레이더 영상 형식을 확인하지 못했습니다.');
-        const blob = await response.blob();
-        if (controller.signal.aborted) return;
-        url = URL.createObjectURL(blob);
-        images.current.set(selectedFrame.id, url);
-        while (images.current.size > 14) {
-          const oldest = images.current.keys().next().value;
-          URL.revokeObjectURL(images.current.get(oldest));
-          images.current.delete(oldest);
-        }
-      }
+      const url = await images.load(selectedFrame);
       if (controller.signal.aborted) return;
       overlay = L.imageOverlay(url, manifest.bounds, { opacity: 0.85, interactive: false });
       overlay.once('load', () => {
@@ -166,13 +168,13 @@ export default function RadarCard({ latitude, longitude, region, preferredLayer 
         clearTimeout(timeout);
         displayedOverlay.current?.remove();
         displayedOverlay.current = overlay;
+        setDisplayedAt(selectedFrame.observed_at);
         setFrameState({ id: selectedFrame.id, observedAt: selectedFrame.observed_at });
       });
       overlay.once('error', () => {
         if (controller.signal.aborted) return;
         clearTimeout(timeout);
-        images.current.delete(selectedFrame.id);
-        URL.revokeObjectURL(url);
+        images.discard(selectedFrame);
         overlay.remove();
         setFrameState({ id: selectedFrame.id, error: '레이더 영상을 표시하지 못했습니다. 다시 시도해 주세요.' });
         setPlaying(false);
@@ -191,7 +193,7 @@ export default function RadarCard({ latitude, longitude, region, preferredLayer 
       controller.abort();
       if (overlay !== displayedOverlay.current) overlay?.remove();
     };
-  }, [map, selectedFrame, manifest, isRain]);
+  }, [map, selectedFrame, manifest, isRain, images]);
 
   useEffect(() => {
     if (!isRain || !manifest) {
@@ -229,8 +231,11 @@ export default function RadarCard({ latitude, longitude, region, preferredLayer 
           onClick={() => mapRef.current?.setView([latitude, longitude], LOCAL_MAP_ZOOM)}><FiCrosshair aria-hidden="true" /></button>}
         <button type="button" className="radar-button radar-card__move" aria-pressed={mapMoving}
           onClick={() => {
-            if (mapMoving) mapRef.current?.dragging.disable();
-            else mapRef.current?.dragging.enable();
+            const handlers = [mapRef.current?.dragging, mapRef.current?.touchZoom, mapRef.current?.doubleClickZoom];
+            handlers.forEach(handler => {
+              if (mapMoving) handler?.disable();
+              else handler?.enable();
+            });
             setMapMoving(value => !value);
           }}>{mapMoving ? '지도 이동 끄기' : '지도 이동 켜기'}</button>
         {isRain && (loading || imageLoading) && <div className="radar-card__status" role="status">
@@ -247,7 +252,7 @@ export default function RadarCard({ latitude, longitude, region, preferredLayer 
           <button type="button" className="radar-button radar-button--primary" disabled={!!visibleError || (imageLoading && !playing)}
             aria-label={playing ? '레이더 영상 일시정지' : '레이더 영상 재생'} aria-pressed={playing}
             onClick={() => setPlaying(value => !value)}>{playing ? <FiPause /> : <FiPlay />}</button>
-          <output aria-live="polite">{displayedAt ? timeLabel(displayedAt) : visibleError ? '영상 조회 실패' : '영상 확인 중'}<small>한국 시간 관측</small></output>
+          <output aria-live="polite">{displayedAt ? timeLabel(displayedAt) : visibleError ? '영상 조회 실패' : '영상 확인 중'}<small>{imageLoading && displayedAt ? '이전 영상 표시 · 다음 영상 준비 중' : '한국 시간 관측'}</small></output>
           <label className="radar-card__timeline"><span className="radar-sr-only">레이더 관측 시각 선택</span>
             <input type="range" min="0" max={manifest.frames.length - 1} step="1" value={index}
               aria-valuetext={timeLabel(selectedFrame.observed_at)} onChange={event => { setPlaying(false); setIndex(Number(event.target.value)); }} />
