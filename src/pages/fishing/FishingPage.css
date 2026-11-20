@@ -402,3 +402,4 @@ button.fish-area-picker em { font-style:normal; font-size:12px; font-weight:700;
 .fish-closed-badge { margin-left:5px; padding:1px 6px; border-radius:999px; background:#c0392b; color:#fff; font-size:10.5px; font-weight:800; vertical-align:1px; }
 @media (max-width:1000px) { .fish-species-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @media (max-width:720px) { .fish-species-grid { grid-template-columns:1fr; } }
+.fish-nearby.asking { background:rgba(119,153,178,.14); color:#4f6275; font-weight:700; }

@@ -10,7 +10,7 @@ import { clock, windowReason } from '../lib/fishingTime';
 const timeOf = (iso) => (typeof iso === 'string' && iso.length >= 16 ? iso.slice(11, 16) : '');
 
 export default function FishingHero({ areas, area, onAreaChange, loading, onReload, pointMode, pickerOpen, onOpenPicker, isFavorite, onToggleFavorite,
-  favoritePoints = [], onSelectPoint, data, nearbyKm = null, timing = null, onShowTiming }) {
+  favoritePoints = [], onSelectPoint, data, nearbyKm = null, timing = null, onShowTiming, askingLocation = false }) {
   const [now] = useState(() => Date.now());
   const sources = data?.sources || {};
   const forecastRows = sources.forecast?.records || [];
@@ -36,7 +36,7 @@ export default function FishingHero({ areas, area, onAreaChange, loading, onRelo
           {areas.map((item) => <option key={item.id} value={item.id}>{item.place}</option>)}
         </select>
       </label>}
-      <span className="fish-hero-meta">{nearbyKm != null && <em className="fish-nearby">내 위치에서 가장 가까운 포인트 · 약 {nearbyKm < 10 ? nearbyKm.toFixed(1) : Math.round(nearbyKm)} km</em>}{area.region_name || '예보 구역 확인 중'}{updated ? ` · ${updated} 기준` : ''}</span>
+      <span className="fish-hero-meta">{askingLocation && <em className="fish-nearby asking">위치를 허용하면 가장 가까운 포인트로 바꿔요</em>}{nearbyKm != null && <em className="fish-nearby">내 위치에서 가장 가까운 포인트 · 약 {nearbyKm < 10 ? nearbyKm.toFixed(1) : Math.round(nearbyKm)} km</em>}{area.region_name || '예보 구역 확인 중'}{updated ? ` · ${updated} 기준` : ''}</span>
       <button type="button" className="fish-icon-button" onClick={onReload} disabled={loading} aria-label="최신 자료 불러오기" title="최신 자료 불러오기"><FiRefreshCw className={loading ? 'fish-spin' : ''} /></button>
     </div>
 

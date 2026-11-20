@@ -18,9 +18,10 @@ function DayCell({ day, best }) {
   </td>;
 }
 
-export default function FavoriteCompare({ favorites, currentPoint, onSelectPoint }) {
+// ready=false(지금 포인트의 바다 정보를 아직 받는 중)면 비교용 요청을 미뤄 첫 화면을 먼저 띄웁니다.
+export default function FavoriteCompare({ favorites, currentPoint, onSelectPoint, ready = true }) {
   const [now] = useState(() => Date.now());
-  const indexes = useFavoriteIndexes(favorites);
+  const indexes = useFavoriteIndexes(ready ? favorites : []);
   if (!favorites.length) {
     return <section className="fish-panel fish-compare empty">
       <div className="fish-panel-title"><FiBarChart2 /><div><h2>내 포인트 한눈에 비교</h2>
