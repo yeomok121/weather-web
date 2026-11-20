@@ -60,7 +60,7 @@ export default function FishingPage() {
     ? (points.find((point) => point.id === DEFAULT_POINT) || points[0]).id : wanted;
   const listed = points.find((point) => point.id === pointId);
   const fallbackArea = areas.find((item) => item.id === areaId) || areas[0];
-  const { data, error, loading, reload } = useFishingSummary(pointMode ? { id: `point:${pointId}`, pointId } : fallbackArea, { enabled: !waitingForNearby });
+  const { data, error, loading, reload, cachedAt } = useFishingSummary(pointMode ? { id: `point:${pointId}`, pointId } : fallbackArea, { enabled: !waitingForNearby });
   const area = pointMode ? {
     id: `point:${pointId}`, pointId, place: waitingForNearby ? '가까운 포인트 찾는 중…' : listed?.name || pointId,
     lat: listed?.lat ?? data?.coordinates?.lat, lon: listed?.lon ?? data?.coordinates?.lon,
@@ -94,7 +94,8 @@ export default function FishingPage() {
           pointMode={pointMode} pickerOpen={pickerOpen} onOpenPicker={() => setPickerOpen((open) => !open)} isFavorite={isFavorite(pointId)} onToggleFavorite={() => toggle(pointId)}
           favoritePoints={favorites} onSelectPoint={selectPoint} data={data}
           nearbyKm={nearby && nearby.point.id === pointId ? nearby.distanceKm : null} />
-        {error && <div className="fish-error" role="alert"><FiInfo /> {error}<button onClick={reload}>다시 시도</button></div>}
+        {cachedAt != null && <StaleNotice cachedAt={cachedAt} loading={loading} error={error} onRetry={reload} />}
+        {error && cachedAt == null && <div className="fish-error" role="alert"><FiInfo /> {error}<button onClick={reload}>다시 시도</button></div>}
         {loading && !data && <div className="fish-loading" role="status"><FiRefreshCw className="fish-spin" /><div><b>해양 기관 자료를 불러오고 있어요</b><span>첫 요청은 서버 준비로 다소 오래 걸릴 수 있습니다.</span></div></div>}
         {data && <WarningBanner warnings={sources.warnings} error={errors.warnings} />}
       </div>
@@ -141,3 +142,13 @@ export default function FishingPage() {
   </main>;
 }
 
+// 서버가 느리거나 막혔을 때: 이 브라우저에 저장해 둔 마지막 자료를 보여주고 있다는 안내
+function StaleNotice({ cachedAt, loading, error, onRetry }) {
+  const time = new Intl.DateTimeFormat('ko-KR', { timeZone: 'Asia/Seoul', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(cachedAt);
+  return <div className={`fish-stale ${error ? 'failed' : ''}`} role="status">
+    {loading ? <FiRefreshCw className="fish-spin" /> : <FiInfo />}
+    <span>{loading ? <>지난번에 받은 <b>{time}</b> 자료를 먼저 보여주고 있어요. 최신 자료를 불러오는 중…</>
+      : <>서버가 응답하지 않아 <b>{time}</b>에 받은 자료를 보여주고 있어요. 지금 바다와 다를 수 있어요.</>}</span>
+    {!loading && <button type="button" onClick={onRetry}>다시 시도</button>}
+  </div>;
+}

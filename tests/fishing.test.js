@@ -349,3 +349,38 @@ test("species '-' from KHOA is treated as no species name", () => {
   assert.deepEqual(namedSpecies([{ name: '-', index: '매우나쁨' }]), []);
   assert.deepEqual(namedSpecies([{ name: '-', index: '보통' }, { name: '우럭', index: '좋음' }]).map((item) => item.name), ['우럭']);
 });
+
+import { readCachedPoints, readCachedSummary, saveCachedPoints, saveCachedSummary, shouldRetry, withRetry } from '../src/pages/fishing/lib/resilience.js';
+
+const memoryStorage = () => { const map = new Map(); return { getItem: (k) => map.get(k) ?? null, setItem: (k, v) => map.set(k, String(v)) }; };
+
+test('fishing requests retry only on temporary failures', async () => {
+  assert.deepEqual([{ status: 0 }, { status: 429 }, { status: 503 }, { status: 404 }, { status: 401 }, { status: 0, timeout: true }, { name: 'AbortError' }].map(shouldRetry),
+    [true, true, true, false, false, false, false]);
+  let calls = 0;
+  const waits = [];
+  const ok = await withRetry(async () => { calls += 1; if (calls < 3) throw { status: 429 }; return 'ok'; }, { wait: async (ms) => waits.push(ms) });
+  assert.equal(ok, 'ok'); assert.equal(calls, 3); assert.deepEqual(waits, [2000, 5000]);
+  calls = 0;
+  await assert.rejects(withRetry(async () => { calls += 1; throw { status: 404 }; }, { wait: async () => {} }));
+  assert.equal(calls, 1); // 404는 다시 묻지 않음
+  calls = 0;
+  await assert.rejects(withRetry(async () => { calls += 1; throw { status: 0 }; }, { wait: async () => {} }));
+  assert.equal(calls, 3); // 처음 + 두 번까지
+});
+
+test('last fishing data is kept per point for 12 hours', () => {
+  const storage = memoryStorage();
+  const t0 = Date.parse('2026-11-20T09:00:00+09:00');
+  saveCachedSummary('point:추자도', { region_name: '남해서부서쪽먼바다' }, { now: t0, storage });
+  assert.equal(readCachedSummary('point:추자도', { now: t0 + 60 * 60 * 1000, storage }).data.region_name, '남해서부서쪽먼바다');
+  assert.equal(readCachedSummary('point:추자도', { now: t0 + 13 * 60 * 60 * 1000, storage }), null); // 너무 오래된 자료는 안 보여줌
+  assert.equal(readCachedSummary('point:김녕', { now: t0, storage }), null);
+  for (let i = 0; i < 10; i += 1) saveCachedSummary(`point:p${i}`, { i }, { now: t0 + i, storage });
+  assert.equal(readCachedSummary('point:추자도', { now: t0, storage }), null); // 최근 8곳만 남김
+  assert.equal(readCachedSummary('point:p9', { now: t0, storage }).data.i, 9);
+  assert.equal(readCachedSummary('x', { storage: { getItem: () => '{broken' } }), null);
+  saveCachedPoints([{ id: '추자도' }], { now: t0, storage });
+  assert.deepEqual(readCachedPoints({ now: t0, storage }), [{ id: '추자도' }]);
+  assert.equal(readCachedPoints({ now: t0 + 8 * 24 * 60 * 60 * 1000, storage }), null);
+});
