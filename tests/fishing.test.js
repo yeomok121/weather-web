@@ -384,3 +384,27 @@ test('last fishing data is kept per point for 12 hours', () => {
   assert.deepEqual(readCachedPoints({ now: t0, storage }), [{ id: '추자도' }]);
   assert.equal(readCachedPoints({ now: t0 + 8 * 24 * 60 * 60 * 1000, storage }), null);
 });
+
+import { compareRows, daySummary } from '../src/pages/fishing/lib/compare.js';
+
+test('compare favorite points: today/tomorrow best grade and recommendation', () => {
+  const session = (name, grade, wave, wind) => ({ session: name, tide_phase: '소조기', wave_m: { min: 0.3, max: wave }, wind_ms: { min: 2, max: wind }, species: [{ name: '감성돔', index: grade }, { name: '-', index: '나쁨' }] });
+  const index = (todayAm, todayPm, tomorrow) => ({ status: 'ready', index: { days: [
+    { date: '2026-11-20', sessions: [session('오전', ...todayAm), session('오후', ...todayPm)] },
+    { date: '2026-11-21', sessions: [session('일', ...tomorrow)] }] } });
+  const pm = Date.parse('2026-11-20T14:00:00+09:00');
+  const byName = {
+    추자도: index(['매우좋음', 0.5, 4], ['나쁨', 1.8, 11], ['좋음', 0.9, 6]),
+    김녕: index(['보통', 0.6, 5], ['보통', 0.6, 5], ['좋음', 0.5, 4]),
+    가거도: { status: 'failed' },
+  };
+  const { rows, bestToday, bestTomorrow } = compareRows(['추자도', '김녕', '가거도', '모항항'], byName, pm);
+  // 오후 2시: 추자도 오전 '매우좋음'은 끝났으니 오후 '나쁨'만 봄
+  assert.deepEqual([rows[0].today.grade, rows[0].today.waveMax, rows[0].today.windMax], ['나쁨', 1.8, 11]);
+  assert.equal(bestToday, '김녕');
+  assert.equal(bestTomorrow, '김녕'); // 둘 다 '좋음'이면 파고가 낮은 곳
+  assert.deepEqual(rows.map((r) => r.status), ['ready', 'ready', 'failed', 'loading']);
+  assert.equal(compareRows(['추자도'], byName, Date.parse('2026-11-20T09:00:00+09:00')).bestToday, '추자도'); // 오전에는 오전 지수 포함
+  assert.equal(daySummary(undefined), null);
+  assert.equal(compareRows(['추자도'], { 추자도: index(['나쁨', 2, 12], ['나쁨', 2, 12], ['매우나쁨', 3, 15]) }, pm).bestToday, null);
+});

@@ -30,6 +30,7 @@ import MarineForecastPanel from './components/MarineForecastPanel';
 import SunPanel from './components/SunPanel';
 import GearChecklist from './components/GearChecklist';
 import FishingLoginCard from './components/FishingLoginCard';
+import FavoriteCompare from './components/FavoriteCompare';
 import FishingTabs, { TabPanel } from './components/FishingTabs';
 import { DEFAULT_TAB, tabFromQuery } from './lib/tabs';
 
@@ -115,6 +116,7 @@ export default function FishingPage() {
 
     {/* 탭을 바꿔도 내용은 숨기기만 해서(hidden) 보던 날짜·편집 중인 내용이 그대로 남습니다. */}
     <TabPanel id="index" active={tab}>
+      {pointMode && <FavoriteCompare favorites={favorites} currentPoint={pointId} onSelectPoint={selectPoint} />}
       <FishingIndexPanel key={area.id} index={sources.fishing_index} error={errors.fishing_index} warnings={sources.warnings?.items || []}
         onShowGuide={() => setIndexModal({ pointId: area.pointId, pointName: area.place, guide: true, index: sources.fishing_index?.days?.length ? sources.fishing_index : undefined })} />
     </TabPanel>
