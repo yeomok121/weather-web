@@ -1,36 +1,95 @@
-// 낚시 커뮤니티 ( /fishing/community ) — 준비 중 안내와 예시 화면
-// 실제 글쓰기·목록은 아직 없습니다. 예시 글은 lib/communitySamples.js
+// 낚시 커뮤니티 ( /fishing/community ) — 사진으로 조과 자랑, 낚시 팁, 관리자 공지
+//   community/useCommunityPosts.js  목록 상태     community/PostCard.jsx  글 하나
+//   community/WriteForm.jsx         글쓰기        community/PhotoViewer.jsx 사진 크게 보기
+//   lib/communityRules.js           글 확인(금어기·금지체장)·시간 표시
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { FiArrowLeft, FiCamera, FiFlag, FiHeart, FiLock, FiMapPin, FiMessageSquare, FiWind } from 'react-icons/fi';
+import { FiArrowLeft, FiEdit3, FiMessageSquare, FiRefreshCw } from 'react-icons/fi';
 import './FishingPage.css';
-import { COMMUNITY_SAMPLES } from './lib/communitySamples';
+import { useApp } from '../../shared/AppContext';
+import FishingLoginCard from './components/FishingLoginCard';
+import { deleteCommunityPost, fetchMyRole, likeCommunityPost, reportCommunityPost } from './communityApi';
+import { openFishingLogin } from './lib/loginPrompt';
+import { useCommunityPosts } from './community/useCommunityPosts';
+import PostCard from './community/PostCard';
+import WriteForm from './community/WriteForm';
+import PhotoViewer from './community/PhotoViewer';
 
-const PLANS = [
-  { icon: FiMapPin, title: '포인트별 현장 소식', text: '추자도·영흥도처럼 포인트마다 조황과 바다 상황을 짧게 남겨요. 정확한 자리(좌표)는 받지 않아요.' },
-  { icon: FiWind, title: '남길 때 바다 상태 자동 기록', text: '글을 쓴 시각의 파고·바람·물때가 함께 붙어서, 예보와 실제를 비교할 수 있어요.' },
-  { icon: FiLock, title: '읽기는 누구나, 쓰기는 로그인', text: '스팸을 막기 위해 글쓰기는 로그인한 사람만 할 수 있어요.' },
-  { icon: FiFlag, title: '공감 · 신고', text: '도움이 된 글에는 공감을, 문제가 있는 글은 신고할 수 있어요. 관리자가 확인해요.' },
-  { icon: FiCamera, title: '사진은 다음 단계', text: '처음에는 글과 선택 버튼(조황·어종·바다 상태)으로 시작해요.' },
-];
+const FILTERS = [{ id: '', label: '전체' }, { id: '자랑', label: '조과 자랑' }, { id: '팁', label: '낚시 팁' }];
+const NOTICE_ROLES = ['superadmin', 'notice_manager'];
 
 export default function CommunityPage() {
+  const { loggedInUser, showToast, promptLogin } = useApp();
+  const token = loggedInUser?.accessToken || '';
+  const [category, setCategory] = useState('');
+  const [writing, setWriting] = useState(false);
+  const [viewer, setViewer] = useState(null); // { post, index }
+  const [roleState, setRoleState] = useState({ token: '', role: 'member' });
+  const [now] = useState(() => Date.now());
+  const list = useCommunityPosts({ category, token });
+  const isAdmin = roleState.token === token && NOTICE_ROLES.includes(roleState.role);
+
+  useEffect(() => {
+    if (!token) return undefined;
+    const controller = new AbortController();
+    fetchMyRole(token, { signal: controller.signal }).then((body) => setRoleState({ token, role: body.role || 'member' })).catch(() => {});
+    return () => controller.abort();
+  }, [token]);
+
+  const needLogin = (message) => { showToast?.(message); openFishingLogin(promptLogin); };
+  const startWriting = () => (token ? setWriting(true) : needLogin('로그인하면 글을 쓸 수 있어요.'));
+  const like = async (post) => {
+    if (!token) { needLogin('로그인하면 공감할 수 있어요.'); return; }
+    try { list.update(post.id, await likeCommunityPost(token, post.id)); } catch (e) { showToast?.(e.message); }
+  };
+  const report = async (post) => {
+    if (!token) { needLogin('로그인하면 신고할 수 있어요.'); return; }
+    const reason = window.prompt('신고 사유를 적어 주세요. (예: 광고, 욕설, 남의 사진, 금어기 어종)');
+    if (reason === null) return;
+    try { showToast?.((await reportCommunityPost(token, post.id, reason)).message); } catch (e) { showToast?.(e.message); }
+  };
+  const remove = async (post) => {
+    if (!window.confirm(`'${post.title}' 글을 지울까요? 지운 글은 되돌릴 수 없어요.`)) return;
+    try { await deleteCommunityPost(token, post.id); list.remove(post.id); showToast?.('글을 지웠어요.'); } catch (e) { showToast?.(e.message); }
+  };
+  const handlers = { now, onLike: like, onReport: report, onDelete: remove, onOpenPhoto: (post, index) => setViewer({ post, index }) };
+
   return <main className="fishing-page fish-community-page">
     <Link className="fish-community-back" to="/fishing"><FiArrowLeft /> 바다 낚시로 돌아가기</Link>
-    <section className="fish-panel">
-      <div className="fish-panel-title"><FiMessageSquare /><div><h2>낚시 현장 소식 <span className="fish-community-soon">준비 중</span></h2>
-        <p>다녀온 사람의 생생한 소식을 포인트별로 모아 보는 커뮤니티를 만들고 있어요.</p></div></div>
-      <ul className="fish-community-plans">{PLANS.map(({ icon: Icon, title, text }) => <li key={title}><Icon aria-hidden="true" /><div><b>{title}</b><span>{text}</span></div></li>)}</ul>
-    </section>
+    <div className="fish-top-row">
+      <div className="fish-top-main">
+        <section className="fish-panel fish-board">
+          <div className="fish-panel-title fish-board-title"><FiMessageSquare /><div><h2>낚시 커뮤니티</h2><p>잡은 물고기 사진 자랑과 낚시 팁을 나누는 곳이에요.</p></div>
+            {!writing && <button type="button" className="fish-board-write" onClick={startWriting}><FiEdit3 /> 글쓰기</button>}</div>
 
-    <section className="fish-panel">
-      <div className="fish-panel-title"><FiMessageSquare /><div><h2>이런 모습이 될 거예요</h2>
-        <p>아래 글은 화면 예시예요. 실제 사용자가 쓴 글이 아닙니다.</p></div></div>
-      <ul className="fish-community-list">{COMMUNITY_SAMPLES.map((post) => <li key={post.id}>
-        <header><em className="kind">{post.kind}</em><span className="sample">예시</span><b>{post.title}</b></header>
-        <small>{post.point} · {post.ago}{post.sea && ` · 남길 때 바다: ${post.sea}`}</small>
-        <span className="likes"><FiHeart aria-hidden="true" /> {post.likes}</span>
-      </li>)}</ul>
-      <button type="button" className="fish-community-write" disabled title="준비 중이에요">글쓰기 (준비 중)</button>
-    </section>
+          {writing && <WriteForm token={token} isAdmin={isAdmin} onCancel={() => setWriting(false)}
+            onCreated={(post) => { list.add(post); setWriting(false); showToast?.('글을 올렸어요.'); }} />}
+
+          {list.notices.length > 0 && <div className="fish-board-notices">{list.notices.map((post) => <PostCard key={post.id} post={post} compact {...handlers} />)}</div>}
+
+          <div className="fish-board-filters" role="tablist" aria-label="글 분류">{FILTERS.map((f) => <button type="button" role="tab" key={f.id || 'all'}
+            aria-selected={category === f.id} className={category === f.id ? 'on' : ''} onClick={() => setCategory(f.id)}>{f.label}</button>)}</div>
+
+          {list.loading ? <p className="fish-board-status"><FiRefreshCw className="fish-spin" /> 글을 불러오고 있어요…</p>
+            : list.error ? <p className="fish-board-status error">{list.error} <button type="button" onClick={list.reload}>다시 시도</button></p>
+              : list.posts.length === 0 ? <p className="fish-board-status">아직 글이 없어요. 첫 {category === '팁' ? '낚시 팁' : '조과 자랑'}을 남겨 보세요!</p>
+                : <div className="fish-board-list">{list.posts.map((post) => <PostCard key={post.id} post={post} compact {...handlers} />)}</div>}
+          {list.hasMore && <button type="button" className="fish-board-more" onClick={list.loadMore} disabled={list.loadingMore}>{list.loadingMore ? '불러오는 중…' : '글 더 보기'}</button>}
+        </section>
+      </div>
+      <div className="fish-top-side">
+        <FishingLoginCard />
+        <section className="glass-card fish-board-rules">
+          <b>커뮤니티 규칙</b>
+          <ul>
+            <li>조과 자랑과 낚시 팁만 올려 주세요.</li>
+            <li>금지체장 이하·금어기 어종은 자랑할 수 없어요. 놓아주세요.</li>
+            <li>남의 사진, 광고, 욕설은 신고해 주세요. 5명이 신고하면 숨겨져요.</li>
+            <li>정확한 낚시 자리(좌표)나 개인정보는 적지 마세요.</li>
+          </ul>
+        </section>
+      </div>
+    </div>
+    {viewer && <PhotoViewer post={viewer.post} index={viewer.index} onChange={(index) => setViewer((v) => ({ ...v, index }))} onClose={() => setViewer(null)} />}
   </main>;
 }

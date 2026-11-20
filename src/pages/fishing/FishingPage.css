@@ -409,25 +409,82 @@ button.fish-area-picker em { font-style:normal; font-size:12px; font-weight:700;
 .fish-community-card header { display:flex; align-items:center; gap:7px; margin-bottom:8px; }
 .fish-community-card header svg { color:#0f7f86; font-size:17px; }
 .fish-community-card header b { font-size:15px; color:#173a5c; }
-.fish-community-card .soon, .fish-community-soon { margin-left:auto; padding:2px 8px; border-radius:999px; background:#eef2f6; color:#5f7790; font-size:11px; font-weight:800; }
-.fish-community-soon { margin-left:6px; vertical-align:3px; }
+.fish-community-card .soon { margin-left:auto; padding:2px 8px; border-radius:999px; background:#eef2f6; color:#5f7790; font-size:11px; font-weight:800; }
 .fish-community-card ul { display:flex; flex-direction:column; gap:2px; margin:0 0 10px; padding:0; list-style:none; }
 .fish-community-card li { padding:6px 2px; border-bottom:1px solid rgba(119,153,178,.18); min-width:0; }
 .fish-community-card li:last-child { border-bottom:0; }
 .fish-community-card li p { margin:0 0 2px; font-size:13px; color:#253f57; line-height:1.45; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .fish-community-card li small { color:#7a8ca0; font-size:11.5px; } .fish-community-card li small svg { vertical-align:-1px; }
-.fish-community-card .kind, .fish-community-list .kind { margin-right:4px; padding:1px 6px; border-radius:6px; background:rgba(15,127,134,.1); color:#0f6f76; font-style:normal; font-size:11px; font-weight:800; }
-.fish-community-card .sample, .fish-community-list .sample { margin-right:4px; padding:1px 5px; border-radius:6px; border:1px dashed #a9b7c6; color:#71849a; font-size:10.5px; font-weight:700; }
+.fish-community-card .kind { margin-right:4px; padding:1px 6px; border-radius:6px; background:rgba(15,127,134,.1); color:#0f6f76; font-style:normal; font-size:11px; font-weight:800; }
 .fish-community-go { display:flex; align-items:center; justify-content:center; gap:6px; padding:9px 12px; border-radius:11px; background:#0f7f86; color:#fff; font-size:13px; font-weight:800; text-decoration:none; }
 .fish-community-go:hover { background:#0c6b71; }
 @media (max-width:900px) { .fish-top-side { display:contents; } .fish-community-card { order:1; } }
-/* 커뮤니티 페이지 (준비 중) */
+/* 커뮤니티 미리보기: 사진 썸네일 */
+.fish-community-card li a { display:flex; gap:10px; align-items:center; color:inherit; text-decoration:none; min-width:0; }
+.fish-community-card li a:hover p { color:#0f6f76; }
+.fish-community-card li img { flex:none; width:44px; height:44px; border-radius:9px; object-fit:cover; background:#e6eef4; }
+.fish-community-card li a > span { min-width:0; flex:1; }
+.fish-community-card .kind.k-공지 { background:#fff1d6; color:#8a5300; }
+.fish-community-empty { margin:4px 0 12px; color:#71849a; font-size:13px; }
+
+/* 커뮤니티 페이지 */
 .fish-community-back { align-self:flex-start; display:inline-flex; align-items:center; gap:6px; padding:7px 12px; border-radius:999px; background:rgba(255,255,255,.75); color:#173a5c; font-size:13px; font-weight:700; text-decoration:none; }
-.fish-community-plans, .fish-community-list { display:flex; flex-direction:column; gap:8px; margin:0; padding:0; list-style:none; }
-.fish-community-plans li { display:flex; gap:12px; align-items:flex-start; padding:12px 14px; border-radius:13px; background:rgba(255,255,255,.62); }
-.fish-community-plans li > svg { flex:none; margin-top:2px; font-size:18px; color:#0f7f86; }
-.fish-community-plans li div { display:flex; flex-direction:column; gap:3px; font-size:13px; } .fish-community-plans b { color:#173a5c; font-size:14px; } .fish-community-plans span { color:#4f6275; }
-.fish-community-list li { position:relative; display:flex; flex-direction:column; gap:4px; padding:12px 56px 12px 14px; border-radius:13px; background:rgba(255,255,255,.62); }
-.fish-community-list header b { color:#173a5c; font-size:14px; } .fish-community-list small { color:#71849a; font-size:12px; }
-.fish-community-list .likes { position:absolute; top:12px; right:14px; color:#c0504d; font-size:12.5px; font-weight:700; }
-.fish-community-write { margin-top:12px; padding:10px 16px; border:0; border-radius:11px; background:#d6dee6; color:#5f7790; font:inherit; font-weight:800; cursor:not-allowed; }
+.fish-board-title { align-items:flex-start; } .fish-board-title > div { flex:1; min-width:0; }
+.fish-board-write { display:inline-flex; align-items:center; gap:6px; flex:none; padding:9px 16px; border:0; border-radius:999px; background:#0f7f86; color:#fff; font:inherit; font-size:14px; font-weight:800; cursor:pointer; }
+.fish-board-notices { display:flex; flex-direction:column; gap:8px; margin-bottom:14px; }
+.fish-board-filters { display:flex; gap:6px; margin:0 0 12px; }
+.fish-board-filters button { padding:7px 14px; border:1px solid rgba(119,153,178,.35); border-radius:999px; background:rgba(255,255,255,.7); color:#36536e; font:inherit; font-size:13px; font-weight:700; cursor:pointer; }
+.fish-board-filters button.on { background:#173a5c; border-color:#173a5c; color:#fff; }
+.fish-board-list { display:flex; flex-direction:column; gap:12px; }
+.fish-board-status { display:flex; align-items:center; gap:8px; margin:6px 0; color:#5f7790; font-size:13.5px; }
+.fish-board-status.error { color:#a3241a; } .fish-board-status button { margin-left:6px; padding:4px 10px; border:1px solid currentColor; border-radius:999px; background:none; color:inherit; font:inherit; cursor:pointer; }
+.fish-board-more { display:block; margin:14px auto 0; padding:9px 18px; border:1px solid rgba(119,153,178,.4); border-radius:999px; background:#fff; color:#36536e; font:inherit; font-weight:700; cursor:pointer; }
+.fish-board-rules { padding:16px 18px; border-radius:20px; color:#253f57; font-size:13px; }
+.fish-board-rules b { font-size:15px; color:#173a5c; } .fish-board-rules ul { margin:8px 0 0; padding-left:18px; line-height:1.6; }
+.fish-post { padding:14px 16px; border-radius:16px; background:rgba(255,255,255,.72); border:1px solid rgba(119,153,178,.2); }
+.fish-post.notice { background:#fffaf0; border-color:#f0d9a8; }
+.fish-post header { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+.fish-post h3 { margin:0; color:#173a5c; font-size:16px; min-width:0; overflow-wrap:anywhere; }
+.fish-post-kind { flex:none; padding:2px 8px; border-radius:7px; font-style:normal; font-size:11.5px; font-weight:800; background:rgba(15,127,134,.1); color:#0f6f76; }
+.fish-post-kind.k-팁 { background:#eaf0fb; color:#2f4f8f; } .fish-post-kind.k-공지 { background:#fff1d6; color:#8a5300; }
+.fish-post-photos { display:grid; gap:4px; margin-bottom:8px; border-radius:12px; overflow:hidden; }
+.fish-post-photos.n1 { grid-template-columns:1fr; } .fish-post-photos.n2 { grid-template-columns:1fr 1fr; } .fish-post-photos.n3 { grid-template-columns:2fr 1fr; grid-template-rows:1fr 1fr; }
+.fish-post-photos.n3 button:first-child { grid-row:1 / 3; }
+.fish-post-photos button { padding:0; border:0; background:#dde6ee; cursor:zoom-in; }
+.fish-post-photos img { display:block; width:100%; height:100%; max-height:420px; object-fit:cover; aspect-ratio:auto; }
+.fish-post-photos.n2 img, .fish-post-photos.n3 img { aspect-ratio:4/3; }
+.fish-post-facts { display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin:0 0 6px; font-size:13px; color:#36536e; }
+.fish-post-facts b { padding:2px 8px; border-radius:7px; background:#eef4f8; color:#173a5c; }
+.fish-post-facts svg { vertical-align:-2px; }
+.fish-post-body { margin:0; color:#253f57; font-size:14px; line-height:1.6; white-space:pre-wrap; overflow-wrap:anywhere; }
+.fish-post-body.clamped { display:-webkit-box; -webkit-line-clamp:5; -webkit-box-orient:vertical; overflow:hidden; }
+.fish-post-more { margin-top:2px; padding:0; border:0; background:none; color:#0f6f76; font:inherit; font-size:13px; font-weight:700; cursor:pointer; }
+.fish-post footer { display:flex; align-items:center; gap:6px; margin-top:10px; }
+.fish-post footer .who { flex:1; min-width:0; color:#71849a; font-size:12.5px; }
+.fish-post footer button { display:inline-flex; align-items:center; gap:4px; padding:5px 10px; border:1px solid rgba(119,153,178,.3); border-radius:999px; background:#fff; color:#5f7790; font:inherit; font-size:12.5px; cursor:pointer; }
+.fish-post footer button.like.on { border-color:#f2b8b5; background:#fdeceb; color:#c0392b; } .fish-post footer button.like.on svg { fill:#c0392b; }
+.fish-write { display:flex; flex-direction:column; gap:8px; margin-bottom:16px; padding:14px; border-radius:16px; background:rgba(255,255,255,.8); border:1px solid rgba(15,127,134,.25); }
+.fish-write input, .fish-write textarea { width:100%; box-sizing:border-box; padding:9px 12px; border:1px solid rgba(119,153,178,.4); border-radius:10px; background:#fff; color:#173a5c; font:inherit; font-size:14px; }
+.fish-write textarea { resize:vertical; }
+.fish-write-kinds { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:6px; }
+.fish-write-kinds button { display:flex; flex-direction:column; align-items:flex-start; gap:2px; padding:9px 12px; border:1px solid rgba(119,153,178,.35); border-radius:12px; background:#fff; color:#36536e; font:inherit; text-align:left; cursor:pointer; }
+.fish-write-kinds button.on { border-color:#0f7f86; background:rgba(15,127,134,.08); box-shadow:inset 0 0 0 1px #0f7f86; }
+.fish-write-kinds b { color:#173a5c; font-size:14px; } .fish-write-kinds small { color:#71849a; font-size:11.5px; }
+.fish-write-facts { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.fish-write-photos { display:flex; flex-wrap:wrap; gap:8px; }
+.fish-write-photos > span { position:relative; width:88px; height:88px; border-radius:10px; overflow:hidden; }
+.fish-write-photos > span img { width:100%; height:100%; object-fit:cover; }
+.fish-write-photos > span button { position:absolute; top:4px; right:4px; display:inline-flex; padding:3px; border:0; border-radius:999px; background:rgba(0,0,0,.55); color:#fff; cursor:pointer; }
+.fish-write-photos .add { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; width:88px; height:88px; border:1.5px dashed #9fb3c6; border-radius:10px; color:#5f7790; font-size:12px; cursor:pointer; }
+.fish-write-photos .add svg { font-size:20px; } .fish-write-photos .add input { display:none; }
+.fish-write-note { margin:0; color:#71849a; font-size:12px; }
+.fish-write-error { margin:0; color:#b3261e; font-size:13px; font-weight:700; }
+.fish-write-actions { display:flex; gap:8px; }
+.fish-write-actions button { padding:9px 18px; border:1px solid rgba(119,153,178,.4); border-radius:10px; background:#fff; color:#36536e; font:inherit; font-weight:800; cursor:pointer; }
+.fish-write-actions button.primary { background:#0f7f86; border-color:#0f7f86; color:#fff; } .fish-write-actions button:disabled { opacity:.6; cursor:default; }
+.fish-photo-viewer figure { position:relative; margin:0; max-width:min(92vw,1100px); }
+.fish-photo-viewer img { display:block; max-width:100%; max-height:82vh; border-radius:12px; }
+.fish-photo-viewer figcaption { margin-top:8px; color:#e8eef4; font-size:13px; text-align:center; }
+.fish-photo-viewer button { position:absolute; display:inline-flex; align-items:center; justify-content:center; width:40px; height:40px; border:0; border-radius:999px; background:#fff; color:#173a5c; font-size:20px; cursor:pointer; box-shadow:0 6px 18px rgba(10,25,40,.3); }
+.fish-photo-viewer .close { top:-14px; right:-14px; } .fish-photo-viewer .prev { left:8px; top:45%; } .fish-photo-viewer .next { right:8px; top:45%; }
+@media (max-width:720px) { .fish-write-facts { grid-template-columns:1fr; } .fish-post { padding:12px; } .fish-post footer { flex-wrap:wrap; } .fish-post footer .who { flex-basis:100%; } .fish-photo-viewer .close { top:-10px; right:-6px; } }

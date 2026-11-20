@@ -482,3 +482,22 @@ test('species rules match the law tables checked on law.go.kr (2026-11-20)', () 
   assert.equal(isClosedNow(greenling, at('2027-01-01')), false);
   assert.deepEqual(speciesStatus(findSpecies('참돔'), at('2026-05-10')), { kind: 'open', text: '금어기 없음' });
 });
+
+import { draftProblem, timeAgo } from '../src/pages/fishing/lib/communityRules.js';
+
+test('community draft checks, including closed season and minimum size', () => {
+  const nov = Date.parse('2026-11-20T12:00:00+09:00');
+  const brag = { category: '자랑', title: '감성돔', photos: ['x'], species: '감성돔', length_cm: 32 };
+  assert.equal(draftProblem(brag, { now: nov }), '');
+  assert.equal(draftProblem({ ...brag, length_cm: 25 }, { now: nov }), '감성돔은 전장 25cm 이하는 잡으면 안 돼요(금지체장). 놓아주세요.'); // 25cm '이하' 금지
+  assert.match(draftProblem({ ...brag, species: '농어', length_cm: 20 }, { now: nov }), /^농어는 /);
+  assert.match(draftProblem({ ...brag, species: '쥐노래미', length_cm: 30 }, { now: nov }), /지금 금어기/);
+  assert.match(draftProblem({ ...brag, photos: [] }, { now: nov }), /사진을 한 장 이상/);
+  assert.equal(draftProblem({ ...brag, species: '벵에돔', length_cm: 10 }, { now: nov }), ''); // 금지체장 없는 어종
+  assert.equal(draftProblem({ category: '팁', title: '채비', body: '' }), '내용을 입력해 주세요.');
+  assert.equal(draftProblem({ category: '공지', title: '규칙', body: 'b' }), '분류를 골라 주세요.');
+  assert.equal(draftProblem({ category: '공지', title: '규칙', body: 'b' }, { isAdmin: true }), '');
+  const now = Date.parse('2026-11-20T12:00:00Z');
+  assert.deepEqual(['2026-11-20T11:59:40Z', '2026-11-20T11:05:00Z', '2026-11-20T09:00:00Z', '2026-11-19T10:00:00Z', '2026-11-15T03:00:00Z'].map((t) => timeAgo(t, now)),
+    ['방금', '55분 전', '3시간 전', '어제', '11/15']);
+});
