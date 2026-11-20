@@ -36,6 +36,7 @@ import { useHikingPlan, useManualCourse } from './pages/mountain/useHikingPlan';
 import { buildHikingPlanSummary } from './pages/mountain/hikingPlanSummary';
 import { parseManualCourse } from './pages/mountain/lib/manualCourse.js';
 const FishingPage = lazy(() => import('./pages/fishing/FishingPage'));
+const FishingCommunityPage = lazy(() => import('./pages/fishing/CommunityPage'));
 const AdminRoute = lazy(() => import('./pages/admin/AdminRoute'));
 
 const DEFAULT_LOCATION = { name: '부천시', lat: 37.5034, lon: 126.7660 };
@@ -56,7 +57,7 @@ function App() {
   const location = useLocation();
   const routeMode = routeModeOf(location.pathname);
   const routeMountainName = routeMountainOf(location.pathname);
-  const isFishingPage = location.pathname === '/fishing';
+  const isFishingPage = location.pathname === '/fishing' || location.pathname.startsWith('/fishing/'); // /fishing/community 포함
 
   // 낚시·관리자 페이지에 있는 동안에도 마지막으로 보던 날씨/산악 모드를 기억합니다.
   const [mainMode, setMainMode] = useState(routeMode ?? false);
@@ -261,6 +262,7 @@ function App() {
           <Route path="/mountain" element={<MountainPage />} />
           <Route path="/mountain/:name" element={<MountainPage />} />
           <Route path="/fishing" element={<FishingPage />} />
+          <Route path="/fishing/community" element={<FishingCommunityPage />} />
           <Route path="/terms" element={<PolicyPage kind="terms" />} />
           <Route path="/privacy" element={<PolicyPage kind="privacy" />} />
           <Route path="/admin" element={<AdminRoute loggedInUser={loggedInUser} onExit={exitAdmin} />} />

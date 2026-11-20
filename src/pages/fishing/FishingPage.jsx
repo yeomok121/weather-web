@@ -30,6 +30,7 @@ import MarineForecastPanel from './components/MarineForecastPanel';
 import SunPanel from './components/SunPanel';
 import GearChecklist from './components/GearChecklist';
 import FishingLoginCard from './components/FishingLoginCard';
+import CommunityPreview from './components/CommunityPreview';
 import FavoriteCompare from './components/FavoriteCompare';
 import TimingPanel from './components/TimingPanel';
 import SpeciesPanel from './components/SpeciesPanel';
@@ -99,7 +100,7 @@ export default function FishingPage() {
   const showTiming = () => { selectTab('sea'); setTimeout(() => document.getElementById('fish-timing')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 120); }; // 탭이 그려진 뒤 이동
 
   return <main className="fishing-page">
-    {/* 위쪽: 왼쪽은 오늘 요약·특보, 오른쪽은 로그인 (좁은 화면에서는 로그인이 맨 아래로) */}
+    {/* 위쪽: 왼쪽은 오늘 요약·특보, 오른쪽은 로그인·커뮤니티 미리보기 (좁은 화면에서는 맨 아래로) */}
     <div className="fish-top-row">
       <div className="fish-top-main">
         <FishingHero areas={areas} area={area} onAreaChange={setAreaId} loading={loading} onReload={reload}
@@ -113,7 +114,10 @@ export default function FishingPage() {
         {loading && !data && <div className="fish-loading" role="status"><FiRefreshCw className="fish-spin" /><div><b>해양 기관 자료를 불러오고 있어요</b><span>첫 요청은 서버 준비로 다소 오래 걸릴 수 있습니다.</span></div></div>}
         {data && <WarningBanner warnings={sources.warnings} error={errors.warnings} />}
       </div>
-      <FishingLoginCard />
+      <div className="fish-top-side">
+        <FishingLoginCard />
+        <CommunityPreview />
+      </div>
     </div>
 
     {pointMode && pickerOpen && (status === 'ready'
