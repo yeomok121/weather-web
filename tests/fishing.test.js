@@ -320,7 +320,7 @@ test('my gear setup: add, validate, hide base items but never the life jacket', 
 import { FISHING_TABS, tabFromQuery } from '../src/pages/fishing/lib/tabs.js';
 
 test('fishing tabs come from the address and fall back to the first tab', () => {
-  assert.deepEqual(FISHING_TABS.map((tab) => tab.id), ['index', 'forecast', 'sea', 'gear']);
+  assert.deepEqual(FISHING_TABS.map((tab) => tab.id), ['index', 'forecast', 'sea', 'gear', 'species']);
   assert.equal(tabFromQuery('gear'), 'gear');
   assert.equal(tabFromQuery(null), 'index');
   assert.equal(tabFromQuery('<script>'), 'index');
@@ -460,4 +460,25 @@ test('no fishing time is recommended while a marine warning is active', () => {
   assert.deepEqual([stormy.recommended.length, stormy.blockedBy], [0, '풍랑주의보']);
   assert.ok(stormy.windows.every((w) => w.rough));
   assert.equal(timingSummary({ ...base, warnings: [{ title: '강풍 예비특보', level: '예비' }] }).blockedBy, ''); // 예비특보는 막지 않음
+});
+
+import { SPECIES, daysUntilClosed, findSpecies, isClosedNow, speciesStatus } from '../src/pages/fishing/lib/speciesRules.js';
+
+test('species rules match the law tables checked on law.go.kr (2026-11-20)', () => {
+  const size = Object.fromEntries(SPECIES.map((s) => [s.name, s.minSizeCm]));
+  assert.deepEqual(size, { 감성돔: 25, 참돔: 24, 돌돔: 24, 벵에돔: null, 농어: 30, 우럭: 23, 볼락: 15, 광어: 35, 쥐노래미: 20 });
+  assert.equal(findSpecies('조피볼락').name, '우럭');
+  assert.equal(findSpecies('넙치').name, '광어');
+  assert.equal(findSpecies('기타어종'), null);
+  assert.equal(findSpecies('노래미'), null); // 쥐노래미와 다른 종
+  const at = (iso) => Date.parse(`${iso}T12:00:00+09:00`);
+  const porgy = findSpecies('감성돔');
+  assert.deepEqual([isClosedNow(porgy, at('2026-04-30')), isClosedNow(porgy, at('2026-05-01')), isClosedNow(porgy, at('2026-05-31')), isClosedNow(porgy, at('2026-06-01'))], [false, true, true, false]);
+  assert.equal(daysUntilClosed(porgy, at('2026-04-21')), 10);
+  assert.deepEqual(speciesStatus(porgy, at('2026-04-21')), { kind: 'soon', text: '금어기 10일 전' });
+  const greenling = findSpecies('쥐노래미');
+  assert.deepEqual(speciesStatus(greenling, at('2026-11-20')), { kind: 'closed', text: '지금 금어기' }); // 오늘 실제로 금어기
+  assert.equal(isClosedNow(greenling, at('2026-10-31')), false);
+  assert.equal(isClosedNow(greenling, at('2027-01-01')), false);
+  assert.deepEqual(speciesStatus(findSpecies('참돔'), at('2026-05-10')), { kind: 'open', text: '금어기 없음' });
 });

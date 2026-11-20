@@ -3,6 +3,10 @@ import { useState } from 'react';
 import { FiInfo, FiTarget } from 'react-icons/fi';
 import { formatRange, gradeTone, indexDayLabel, namedSpecies, sessionLabel } from '../fishingFormat';
 import BestDayCard from './BestDayCard';
+import { findSpecies, isClosedNow } from '../lib/speciesRules';
+
+// 지금 금어기인 어종 옆에 붙이는 표시 (lib/speciesRules.js, 법령 기준)
+const ClosedBadge = ({ name }) => (isClosedNow(findSpecies(name)) ? <small className="fish-closed-badge" title="지금 금어기 — 잡으면 놓아주세요">금어기</small> : null);
 
 function Session({ session }) {
   const named = namedSpecies(session.species);
@@ -10,9 +14,9 @@ function Session({ session }) {
   const overall = session.species[0]; // 어종 이름 없이 지수만 오는 포인트
   return <article className="fish-index-session">
     <header><b>{sessionLabel(session.session)}</b>{session.tide_phase && <span>{session.tide_phase}</span>}</header>
-    {best ? <p className="fish-index-best">가장 좋은 어종 <b>{best.name}</b> <em className={`fish-grade ${gradeTone(best.index)}`}>{best.index}</em></p>
+    {best ? <p className="fish-index-best">가장 좋은 어종 <b>{best.name}</b> <ClosedBadge name={best.name} /><em className={`fish-grade ${gradeTone(best.index)}`}>{best.index}</em></p>
       : overall && <p className="fish-index-best">어종 구분 없이 <em className={`fish-grade ${gradeTone(overall.index)}`}>{overall.index || '—'}</em></p>}
-    {named.length > 0 && <ul className="fish-index-species">{named.map((item) => <li key={item.name}><span>{item.name}</span><em className={`fish-grade ${gradeTone(item.index)}`}>{item.index || '—'}</em></li>)}</ul>}
+    {named.length > 0 && <ul className="fish-index-species">{named.map((item) => <li key={item.name}><span>{item.name}<ClosedBadge name={item.name} /></span><em className={`fish-grade ${gradeTone(item.index)}`}>{item.index || '—'}</em></li>)}</ul>}
     <dl className="fish-index-conditions">
       <div><dt>파고</dt><dd>{formatRange(session.wave_m, ' m')}</dd></div>
       <div><dt>풍속</dt><dd>{formatRange(session.wind_ms, ' m/s')}</dd></div>

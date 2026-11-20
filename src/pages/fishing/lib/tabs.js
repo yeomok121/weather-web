@@ -4,6 +4,7 @@ export const FISHING_TABS = [
   { id: 'forecast', label: '예보' },
   { id: 'sea', label: '바다·물때' },
   { id: 'gear', label: '준비물' },
+  { id: 'species', label: '어종' },
 ];
 export const DEFAULT_TAB = FISHING_TABS[0].id;
 export const tabFromQuery = (value) => (FISHING_TABS.some((tab) => tab.id === value) ? value : DEFAULT_TAB);

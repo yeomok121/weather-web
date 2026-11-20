@@ -288,7 +288,7 @@ button.fish-area-picker em { font-style:normal; font-size:12px; font-weight:700;
 /* 탭 (낚시지수 · 예보 · 바다·물때 · 준비물) — 스크롤해도 상단 메뉴 바로 아래에 붙어 있음 */
 .fish-tabs-anchor { height:0; margin-bottom:-18px; scroll-margin-top:var(--header-height, 64px); }
 .fish-tabs { position:sticky; top:var(--header-height, 64px); z-index:40; padding:6px; border-radius:16px; background:rgba(240,247,252,.92); border:1px solid rgba(255,255,255,.7); box-shadow:0 8px 24px rgba(32,74,105,.12); backdrop-filter:blur(12px); }
-.fish-tabs [role="tablist"] { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:4px; }
+.fish-tabs [role="tablist"] { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:4px; }
 .fish-tabs button { display:inline-flex; align-items:center; justify-content:center; gap:7px; min-height:42px; padding:8px 10px; border:0; border-radius:11px; background:transparent; color:#4a6680; font:inherit; font-size:14.5px; font-weight:800; cursor:pointer; white-space:nowrap; }
 .fish-tabs button:hover { background:rgba(255,255,255,.7); color:#173a5c; }
 .fish-tabs button.active { background:#0f7f86; color:#fff; box-shadow:0 4px 12px rgba(15,127,134,.3); }
@@ -380,3 +380,25 @@ button.fish-area-picker em { font-style:normal; font-size:12px; font-weight:700;
 .fish-safety li.warn { background:#fff3e2; } .fish-safety li.warn > svg, .fish-safety li.warn b { color:#8a4f0b; }
 .fish-call { display:inline-flex; align-items:center; gap:5px; flex:none; align-self:center; padding:7px 12px; border-radius:999px; background:#0f4c81; color:#fff; font-weight:800; text-decoration:none; }
 @media (max-width:720px) { .fish-timing-day { grid-template-columns:36px 1fr; gap:8px; } .fish-timing-hours { margin-left:44px; } .fish-timing-bar .mark em { font-size:9.5px; } .fish-timing-picks li { flex:1 1 100%; } }
+/* 어종 정보 */
+.fish-species-alert { margin:0 0 12px; padding:10px 14px; border-radius:12px; background:#fdecea; color:#7a1b12; font-size:13.5px; }
+.fish-species-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin:0; padding:0; list-style:none; }
+.fish-species-grid li { display:flex; flex-direction:column; gap:8px; padding:13px 14px; border-radius:14px; background:rgba(255,255,255,.66); border:1px solid rgba(119,153,178,.2); }
+.fish-species-grid li.closed { border-color:#f3b4ae; background:#fff5f4; }
+.fish-species-grid li.soon { border-color:#f6c98f; }
+.fish-species-grid header { display:flex; flex-wrap:wrap; align-items:center; gap:6px; }
+.fish-species-grid header b { color:#173a5c; font-size:16px; }
+.fish-species-grid header small { color:#71849a; font-size:12px; }
+.fish-species-grid .here { padding:1px 7px; border-radius:999px; background:rgba(15,127,134,.12); color:#0f6f76; font-size:11px; font-weight:800; }
+.fish-species-status { margin-left:auto; padding:2px 8px; border-radius:999px; font-style:normal; font-size:11.5px; font-weight:800; }
+.fish-species-status.closed { background:#c0392b; color:#fff; } .fish-species-status.soon { background:#f6c98f; color:#6d4510; } .fish-species-status.open { background:#e8f2ec; color:#2f6b49; }
+.fish-species-grid dl { display:flex; flex-direction:column; gap:5px; margin:0; }
+.fish-species-grid dl div { display:grid; grid-template-columns:62px 1fr; gap:6px; font-size:13px; }
+.fish-species-grid dt { color:#6f8298; font-weight:700; } .fish-species-grid dd { margin:0; color:#253f57; }
+.fish-species-grid dd small { display:block; margin-top:2px; color:#71849a; font-size:11.5px; }
+.fish-species-grid .tip { margin:0; color:#5f7790; font-size:12px; }
+.fish-species-law { margin-top:14px; padding:12px 14px; border-radius:12px; background:rgba(255,255,255,.55); color:#4f6275; font-size:12.5px; line-height:1.55; }
+.fish-species-law p { margin:0 0 4px; } .fish-species-law a { color:#0f5f8a; font-weight:700; } .fish-species-law a svg { vertical-align:-1px; }
+.fish-closed-badge { margin-left:5px; padding:1px 6px; border-radius:999px; background:#c0392b; color:#fff; font-size:10.5px; font-weight:800; vertical-align:1px; }
+@media (max-width:1000px) { .fish-species-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media (max-width:720px) { .fish-species-grid { grid-template-columns:1fr; } }
