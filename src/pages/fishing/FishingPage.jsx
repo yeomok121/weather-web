@@ -31,6 +31,9 @@ import SunPanel from './components/SunPanel';
 import GearChecklist from './components/GearChecklist';
 import FishingLoginCard from './components/FishingLoginCard';
 import FavoriteCompare from './components/FavoriteCompare';
+import TimingPanel from './components/TimingPanel';
+import { timingSummary } from './lib/fishingTime';
+import { tideCalendar } from './lib/tideCalendar';
 import FishingTabs, { TabPanel } from './components/FishingTabs';
 import { DEFAULT_TAB, tabFromQuery } from './lib/tabs';
 
@@ -49,6 +52,7 @@ export default function FishingPage() {
   const myLocation = useMyLocation(!chosenPoint);
   // 포인트 고르기 창은 처음 들어오면 항상 열어 둡니다. 포인트를 고르면 닫히고, '포인트 바꾸기'로 다시 엽니다.
   const [pickerOpen, setPickerOpen] = useState(true);
+  const [now] = useState(() => Date.now()); // 출조 시간 계산 기준 (화면을 연 시각)
   const [indexModal, setIndexModal] = useState(null); // { pointId, pointName, index?, guide? }
 
   // 포인트 목록을 못 받으면(예전 서버·키 없음) 예전처럼 해역 3곳으로 동작합니다.
@@ -86,6 +90,12 @@ export default function FishingPage() {
   const sources = data?.sources || {};
   const errors = data?.errors || {};
   const forecastRows = sources.forecast?.records || [];
+  const timing = timingSummary({
+    tideSource: sources.tide, lat: area.lat, lon: area.lon, forecastRows, buoyRows: sources.buoy?.records || [],
+    warnings: sources.warnings?.items || [], tideLabel: tideCalendar(new Date(now), area.tide_system === 7 ? 7 : 8).label, now,
+  });
+  // 위쪽 요약의 '출조 시간' 줄을 누르면 바다·물때 탭의 출조 시간 칸으로
+  const showTiming = () => { selectTab('sea'); setTimeout(() => document.getElementById('fish-timing')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 120); }; // 탭이 그려진 뒤 이동
 
   return <main className="fishing-page">
     {/* 위쪽: 왼쪽은 오늘 요약·특보, 오른쪽은 로그인 (좁은 화면에서는 로그인이 맨 아래로) */}
@@ -94,7 +104,8 @@ export default function FishingPage() {
         <FishingHero areas={areas} area={area} onAreaChange={setAreaId} loading={loading} onReload={reload}
           pointMode={pointMode} pickerOpen={pickerOpen} onOpenPicker={() => setPickerOpen((open) => !open)} isFavorite={isFavorite(pointId)} onToggleFavorite={() => toggle(pointId)}
           favoritePoints={favorites} onSelectPoint={selectPoint} data={data}
-          nearbyKm={nearby && nearby.point.id === pointId ? nearby.distanceKm : null} />
+          nearbyKm={nearby && nearby.point.id === pointId ? nearby.distanceKm : null}
+          timing={data ? timing : null} onShowTiming={showTiming} />
         {cachedAt != null && <StaleNotice cachedAt={cachedAt} loading={loading} error={error} onRetry={reload} />}
         {error && cachedAt == null && <div className="fish-error" role="alert"><FiInfo /> {error}<button onClick={reload}>다시 시도</button></div>}
         {loading && !data && <div className="fish-loading" role="status"><FiRefreshCw className="fish-spin" /><div><b>해양 기관 자료를 불러오고 있어요</b><span>첫 요청은 서버 준비로 다소 오래 걸릴 수 있습니다.</span></div></div>}
@@ -127,6 +138,7 @@ export default function FishingPage() {
     </TabPanel>
 
     <TabPanel id="sea" active={tab}>
+      {data && <TimingPanel timing={timing} now={now} />}
       <section className="fish-metrics">
         <BuoyPanel area={area} buoyRows={sources.buoy?.records || []} error={errors.buoy} />
         <TidePanel area={area} tideSource={sources.tide} error={errors.tide} />

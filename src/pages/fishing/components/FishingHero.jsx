@@ -1,15 +1,16 @@
 // 낚시 페이지 맨 위: 지금 포인트 · 오늘 바다 날씨 · 오늘 출조 판단 (작게 한눈에)
 // 포인트 목록을 못 받으면 예전처럼 해역 3곳 선택 상자를 보여줍니다.
 import { useState } from 'react';
-import { FiAlertTriangle, FiCheckCircle, FiMapPin, FiRefreshCw, FiStar } from 'react-icons/fi';
+import { FiAlertTriangle, FiCheckCircle, FiChevronRight, FiClock, FiMapPin, FiRefreshCw, FiStar } from 'react-icons/fi';
 import { indexDayLabel, sessionLabel } from '../fishingFormat';
 import { recommendFishingDay } from '../lib/bestDay';
 import { seaWeather, todayVerdict } from '../lib/seaToday';
+import { clock, windowReason } from '../lib/fishingTime';
 
 const timeOf = (iso) => (typeof iso === 'string' && iso.length >= 16 ? iso.slice(11, 16) : '');
 
 export default function FishingHero({ areas, area, onAreaChange, loading, onReload, pointMode, pickerOpen, onOpenPicker, isFavorite, onToggleFavorite,
-  favoritePoints = [], onSelectPoint, data, nearbyKm = null }) {
+  favoritePoints = [], onSelectPoint, data, nearbyKm = null, timing = null, onShowTiming }) {
   const [now] = useState(() => Date.now());
   const sources = data?.sources || {};
   const forecastRows = sources.forecast?.records || [];
@@ -55,5 +56,21 @@ export default function FishingHero({ areas, area, onAreaChange, loading, onRelo
         {weekLine && <small>{weekLine}</small>}
       </div>
     </div>}
+    {timing && <TimingLine timing={timing} now={now} onClick={onShowTiming} />}
   </section>;
+}
+
+// 다음 추천 출조 시간 + 가장 급한 안전 알림 한 줄 (누르면 바다·물때 탭의 '출조 시간 · 안전'으로)
+function TimingLine({ timing, now, onClick }) {
+  const next = timing.recommended[0];
+  const urgent = timing.notes.find((note) => note.level !== 'info');
+  if (!next && !urgent) return null;
+  const kstDay = (time) => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul' }).format(time);
+  const day = next && kstDay(next.start) !== kstDay(now) ? '내일 ' : '오늘 ';
+  return <button type="button" className="fish-timing-line" onClick={onClick}>
+    <FiClock aria-hidden="true" />
+    <span>{next ? <><b>{next.score === 2 ? '골든타임' : '다음 좋은 때'}</b> {day}{clock(next.start)}–{clock(next.end)} · {windowReason(next)}</> : <><b>출조 시간</b> {timing.blockedBy ? '특보 중이라 추천 없음' : '추천할 때 없음'}</>}
+      {urgent && <em className={urgent.level}> · ⚠ {urgent.title}</em>}</span>
+    <FiChevronRight aria-hidden="true" />
+  </button>;
 }

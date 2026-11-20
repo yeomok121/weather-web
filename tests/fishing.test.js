@@ -408,3 +408,56 @@ test('compare favorite points: today/tomorrow best grade and recommendation', ()
   assert.equal(daySummary(undefined), null);
   assert.equal(compareRows(['추자도'], { 추자도: index(['나쁨', 2, 12], ['나쁨', 2, 12], ['매우나쁨', 3, 15]) }, pm).bestToday, null);
 });
+
+import { fishingWindows, parseExtremes, recommendedWindows, safetyNotes, windowReason, clock } from '../src/pages/fishing/lib/fishingTime.js';
+
+// 2026-11-20 추자도 실제 조위 극값(TideBED)
+const CHUJA_EXTREMES = parseExtremes([
+  { type: 'high', time: '2026-11-20T01:11+09:00' }, { type: 'low', time: '2026-11-20T07:23+09:00' },
+  { type: 'high', time: '2026-11-20T13:37+09:00' }, { type: 'low', time: '2026-11-20T19:49+09:00' },
+  { type: 'high', time: '2026-11-21T02:01+09:00' }, { type: 'low', time: '2026-11-21T08:14+09:00' },
+  { type: 'high', time: '2026-11-21T14:27+09:00' }, { type: 'low', time: '2026-11-21T20:40+09:00' },
+]);
+const CHUJA = { lat: 33.9541, lon: 126.3108 };
+
+test('golden time: tide windows overlapping dawn/dusk, never at night', () => {
+  const from = Date.parse('2026-11-20T05:00:00+09:00');
+  const windows = fishingWindows({ extremes: CHUJA_EXTREMES, ...CHUJA, from, to: Date.parse('2026-11-21T00:00:00+09:00') });
+  const golden = windows.filter((w) => w.score === 2);
+  assert.deepEqual(golden.map((w) => [clock(w.start), clock(w.end), windowReason(w)]), [['07:50', '08:10', '초들물 + 새벽']]);
+  assert.ok(windows.filter((w) => w.light === '밤').every((w) => w.score === 0)); // 20:19 초들물은 밤이라 추천 안 함
+  const rec = recommendedWindows(windows);
+  assert.deepEqual(rec.map((w) => `${clock(w.start)}-${clock(w.end)} ${windowReason(w)}`), ['07:50-08:10 초들물 + 새벽', '08:10-09:50 초들물', '11:40-14:40 만조 전후']);
+});
+
+test('golden time is not recommended when the forecast is rough', () => {
+  const rough = [{ TM_EF: '202611200000', WH1: '2.0', WH2: '3.0', WS1: '9', WS2: '12' }];
+  const windows = fishingWindows({ extremes: CHUJA_EXTREMES, ...CHUJA, from: Date.parse('2026-11-20T05:00:00+09:00'), to: Date.parse('2026-11-21T00:00:00+09:00'), forecastRows: rough });
+  assert.equal(recommendedWindows(windows).length, 0);
+  assert.ok(windows.every((w) => w.rough));
+});
+
+test('rocky shore safety notes from tide state, sea and warnings', () => {
+  const rising = safetyNotes({ extremes: CHUJA_EXTREMES, now: Date.parse('2026-11-20T10:00:00+09:00'), tideLabel: '7물', waveMax: 1.8 });
+  assert.deepEqual(rising.map((n) => `${n.level} ${n.title}`), ['warn 파도 주의 (최대 1.8 m)', 'warn 지금 들물 · 만조 13:37', 'warn 사리 물때 (7물)', 'info 구명조끼 · 해양 사고 신고 122']);
+  assert.match(rising[1].text, /12:37까지/); // 만조 1시간 전 철수
+  const falling = safetyNotes({ extremes: CHUJA_EXTREMES, now: Date.parse('2026-11-20T15:00:00+09:00'), sunsetAt: Date.parse('2026-11-20T17:28:00+09:00') });
+  assert.equal(falling[0].title, '지금 날물 · 간조 19:49');
+  const storm = safetyNotes({ extremes: CHUJA_EXTREMES, now: Date.parse('2026-11-20T16:40:00+09:00'), waveMax: 3.5, windMax: 15, warnings: [{ title: '풍랑주의보', level: '주의' }, { title: '강풍 예비특보', level: '예비' }],
+    sunsetAt: Date.parse('2026-11-20T17:28:00+09:00') });
+  assert.deepEqual(storm.filter((n) => n.level === 'danger').map((n) => n.title), ['풍랑주의보 발효 중', '높은 파도 (최대 3.5 m)', '강한 바람 (최대 15 m/s)']);
+  assert.ok(storm.some((n) => n.title === '어두워지는 시간')); // 일몰 1시간 전부터
+  assert.equal(storm.at(-1).call, '122');
+});
+
+import { timingSummary } from '../src/pages/fishing/lib/fishingTime.js';
+
+test('no fishing time is recommended while a marine warning is active', () => {
+  const tideSource = { extremes: [{ type: 'high', time: '2026-11-20T13:37+09:00' }, { type: 'low', time: '2026-11-20T19:49+09:00' }] };
+  const base = { tideSource, ...CHUJA, now: Date.parse('2026-11-20T10:00:00+09:00') };
+  assert.ok(timingSummary(base).recommended.length > 0);
+  const stormy = timingSummary({ ...base, warnings: [{ title: '풍랑주의보', level: '주의' }] });
+  assert.deepEqual([stormy.recommended.length, stormy.blockedBy], [0, '풍랑주의보']);
+  assert.ok(stormy.windows.every((w) => w.rough));
+  assert.equal(timingSummary({ ...base, warnings: [{ title: '강풍 예비특보', level: '예비' }] }).blockedBy, ''); // 예비특보는 막지 않음
+});

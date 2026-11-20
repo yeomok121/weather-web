@@ -11,7 +11,7 @@ export function sunTimesFor(date, lat, lon) {
   const t = getTimes(noon, Number(lat), Number(lon));
   return {
     dawn: time(t.dawn), sunrise: time(t.sunrise), sunset: time(t.sunset), dusk: time(t.dusk),
-    sunriseAt: t.sunrise?.getTime(), sunsetAt: t.sunset?.getTime(),
+    sunriseAt: t.sunrise?.getTime(), sunsetAt: t.sunset?.getTime(), dawnAt: t.dawn?.getTime(), duskAt: t.dusk?.getTime(),
   };
 }
 

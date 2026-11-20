@@ -338,3 +338,45 @@ button.fish-area-picker em { font-style:normal; font-size:12px; font-weight:700;
   .fish-compare-day small { display:block; margin-top:3px; white-space:normal; }
   .fish-compare-tide { display:none; } .fish-compare thead th:last-child { display:none; }
 }
+/* 출조 시간 · 안전 */
+.fish-timing-line { display:flex; align-items:center; gap:9px; width:100%; padding:10px 14px; border:1px solid rgba(15,127,134,.25); border-radius:14px; background:rgba(234,247,246,.8); color:#1f4b55; font:inherit; font-size:13px; text-align:left; cursor:pointer; }
+.fish-timing-line > svg { flex:none; font-size:16px; color:#0f7f86; }
+.fish-timing-line span { flex:1; min-width:0; }
+.fish-timing-line b { color:#0f6f76; }
+.fish-timing-line em { font-style:normal; font-weight:700; }
+.fish-timing-line em.danger { color:#b3261e; } .fish-timing-line em.warn { color:#9a5a0c; }
+.fish-timing-line:hover { background:rgba(234,247,246,1); }
+.fish-timing-legend { display:flex; flex-wrap:wrap; gap:6px 14px; margin-bottom:10px; color:#5f7790; font-size:12px; }
+.fish-timing-legend span { display:inline-flex; align-items:center; gap:5px; }
+.fish-timing-legend span[class]::before { content:''; width:14px; height:10px; border-radius:3px; }
+.fish-timing-legend .golden::before { background:#f2b630; } .fish-timing-legend .good::before { background:#7cc8b8; }
+.fish-timing-legend .night::before { background:#3a4f66; } .fish-timing-legend .rough::before { background:repeating-linear-gradient(45deg,#e8a29a 0 3px,#fff 3px 6px); }
+.fish-timing-day { display:grid; grid-template-columns:44px 1fr; align-items:center; gap:10px; margin-bottom:26px; }
+.fish-timing-day > b { color:#36536e; font-size:13px; }
+.fish-timing-bar { position:relative; height:22px; border-radius:7px; background:#e6eef4; }
+.fish-timing-bar .seg { position:absolute; top:0; bottom:0; }
+.fish-timing-bar .seg.night { background:#3a4f66; opacity:.85; }
+.fish-timing-bar .seg.plain { background:#e6eef4; }
+.fish-timing-bar .seg.good { background:#7cc8b8; }
+.fish-timing-bar .seg.golden { background:#f2b630; }
+.fish-timing-bar .seg.rough { background:repeating-linear-gradient(45deg,#e8a29a 0 3px,#fff 3px 6px); opacity:1; }
+.fish-timing-bar .seg:first-child { border-radius:7px 0 0 7px; } .fish-timing-bar .seg:last-of-type { border-radius:0 7px 7px 0; }
+.fish-timing-bar .mark { position:absolute; top:-2px; bottom:-2px; width:2px; margin-left:-1px; background:#173a5c; font-style:normal; }
+.fish-timing-bar .mark em { position:absolute; top:100%; left:50%; transform:translateX(-50%); margin-top:2px; color:#36536e; font-size:10.5px; font-style:normal; white-space:nowrap; }
+.fish-timing-bar .now { position:absolute; top:-5px; bottom:-5px; width:3px; margin-left:-1.5px; border-radius:2px; background:#d93a2b; }
+.fish-timing-hours { display:flex; justify-content:space-between; margin:0 0 4px 54px; color:#8a9aab; font-size:10.5px; }
+.fish-timing-picks { display:flex; flex-wrap:wrap; gap:8px; margin:0; padding:0; list-style:none; }
+.fish-timing-picks li { display:flex; flex-direction:column; gap:2px; padding:9px 13px; border-radius:12px; background:rgba(234,247,246,.9); border:1px solid rgba(15,127,134,.2); }
+.fish-timing-picks li.golden { background:#fff6dc; border-color:#f0c96a; }
+.fish-timing-picks b { color:#173a5c; font-size:14px; } .fish-timing-picks span { color:#5f7790; font-size:12px; }
+.fish-timing-none { margin:0; color:#71849a; font-size:13px; }
+.fish-safety-title { margin:18px 0 8px; color:#193651; font-size:15px; }
+.fish-safety { display:flex; flex-direction:column; gap:6px; margin:0; padding:0; list-style:none; }
+.fish-safety li { display:flex; align-items:flex-start; gap:10px; padding:10px 12px; border-radius:12px; background:rgba(255,255,255,.65); font-size:13px; }
+.fish-safety li > svg { flex:none; margin-top:2px; font-size:16px; color:#5f7790; }
+.fish-safety li > div { display:flex; flex-direction:column; gap:2px; flex:1; min-width:0; }
+.fish-safety li b { color:#193651; } .fish-safety li span { color:#4f6275; }
+.fish-safety li.danger { background:#fdecea; } .fish-safety li.danger > svg, .fish-safety li.danger b { color:#a3241a; }
+.fish-safety li.warn { background:#fff3e2; } .fish-safety li.warn > svg, .fish-safety li.warn b { color:#8a4f0b; }
+.fish-call { display:inline-flex; align-items:center; gap:5px; flex:none; align-self:center; padding:7px 12px; border-radius:999px; background:#0f4c81; color:#fff; font-weight:800; text-decoration:none; }
+@media (max-width:720px) { .fish-timing-day { grid-template-columns:36px 1fr; gap:8px; } .fish-timing-hours { margin-left:44px; } .fish-timing-bar .mark em { font-size:9.5px; } .fish-timing-picks li { flex:1 1 100%; } }
