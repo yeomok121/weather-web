@@ -45,6 +45,11 @@ export function createRadarFrames(api, fetchImage = fetch) {
   return {
     load,
     discard,
+    retain(paths) {
+      for (const path of entries.keys()) {
+        if (!paths.has(path)) discard({ path });
+      }
+    },
     clear() {
       for (const path of entries.keys()) discard({ path });
     },

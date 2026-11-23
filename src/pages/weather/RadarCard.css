@@ -27,6 +27,10 @@
 .radar-card__legend { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; font-size: 12px; color: #334155; }
 .radar-card__legend span { display: inline-flex; align-items: center; gap: 4px; }
 .radar-card__legend i { display: inline-block; width: 16px; height: 8px; border-radius: 4px; }
+.radar-card__local { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; padding: 12px; margin: 0 0 12px; background: #edf6f3; color: #205248; border-radius: 10px; font-size: 14px; }
+.radar-key-missing { background: repeating-linear-gradient(135deg, #cbd5e1 0 3px, #728197 3px 5px); }
+.radar-key-gray { background: #b7bfcb; }
+.radar-key-clear { background: transparent; border: 1px solid #829188; }
 .radar-card__help { font-size: 12px; line-height: 1.6; color: #475569; margin-top: 12px; }
 .radar-card__help summary { cursor: pointer; min-height: 24px; }
 .radar-card__help a { color: #176b5b; }
