@@ -26,5 +26,6 @@ export const fetchMyRole = (token, { signal } = {}) => requestJson('/api/users/m
 export const fetchComments = (postId, { token = '', signal } = {}) => requestJson(`/api/community/posts/${postId}/comments`, { signal, timeoutMs: 20000, headers: auth(token) });
 export const addComment = (token, postId, body) => requestJson(`/api/community/posts/${postId}/comments`, { method: 'POST', timeoutMs: 20000, headers: json(token), body: JSON.stringify({ body }) });
 export const deleteComment = (token, commentId) => requestJson(`/api/community/comments/${commentId}`, { method: 'DELETE', timeoutMs: 20000, headers: auth(token) });
+export const reportComment = (token, commentId, reason) => requestJson(`/api/community/comments/${commentId}/report`, { method: 'POST', timeoutMs: 20000, headers: json(token), body: JSON.stringify({ reason }) });
 export const heartComment = (token, commentId) => requestJson(`/api/community/comments/${commentId}/heart`, { method: 'POST', timeoutMs: 20000, headers: auth(token) });
 export const communityPhotoUrl = (id) => `${API}/api/community/photos/${id}`;

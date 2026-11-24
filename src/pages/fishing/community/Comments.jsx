@@ -1,7 +1,7 @@
 // 글 창 아래 댓글: 읽기는 누구나, 쓰기는 로그인. 글쓴이는 마음에 드는 남의 댓글에 하트를 누를 수 있어요.
 import { useEffect, useState } from 'react';
-import { FiHeart, FiTrash2 } from 'react-icons/fi';
-import { addComment, deleteComment, fetchComments, heartComment } from '../communityApi';
+import { FiFlag, FiHeart, FiTrash2 } from 'react-icons/fi';
+import { addComment, deleteComment, fetchComments, heartComment, reportComment } from '../communityApi';
 import { timeAgo } from '../lib/communityRules';
 
 const MAX = 500;
@@ -27,6 +27,11 @@ export default function Comments({ postId, token, now, isPostAuthor, onCountChan
     if (!text.trim()) return;
     if (await run(() => addComment(token, postId, text))) setText('');
   };
+  const report = async (c) => {
+    const reason = window.prompt('댓글 신고 사유를 적어 주세요. (예: 광고, 욕설, 도배)');
+    if (reason === null) return;
+    try { showToast?.((await reportComment(token, c.id, reason)).message); } catch (e) { showToast?.(e.message); }
+  };
   const loading = state.key !== key;
 
   return <section className="fish-comments" aria-label="댓글">
@@ -34,17 +39,20 @@ export default function Comments({ postId, token, now, isPostAuthor, onCountChan
     {loading ? <p className="fish-comments-empty">댓글을 불러오고 있어요…</p>
       : state.error ? <p className="fish-comments-empty">{state.error}</p>
         : state.comments.length === 0 ? <p className="fish-comments-empty">아직 댓글이 없어요. 첫 댓글을 남겨 보세요.</p>
-          : <ul>{state.comments.map((c) => <li key={c.id} className={c.hearted ? 'hearted' : ''}>
+          : <ul>{state.comments.map((c) => <li key={c.id} className={`${c.hearted ? 'hearted' : ''} ${c.hidden ? 'hidden' : ''}`}>
             <div className="fish-comment-head">
               <b>{c.author}</b>{c.by_post_author && <span className="badge">글쓴이</span>}
               <small>{timeAgo(c.created_at, now)}</small>
+              {'report_count' in c && c.report_count > 0 && <span className="report-badge">신고 {c.report_count}</span>}
               {c.hearted && <span className="heart-badge"><FiHeart aria-hidden="true" /> 글쓴이가 좋아해요</span>}
             </div>
+            {c.hidden && <p className="fish-comment-hidden">{c.mine ? '신고가 많아 숨겨진 댓글이에요. 나와 관리자에게만 보여요.' : '신고로 숨겨진 댓글 (관리자에게만 보임)'}</p>}
             <p>{c.body}</p>
             <div className="fish-comment-actions">
-              {c.can_heart && <button type="button" className={c.hearted ? 'on' : ''} aria-pressed={c.hearted} disabled={busy}
+              {c.can_heart && !c.hidden && <button type="button" className={c.hearted ? 'on' : ''} aria-pressed={c.hearted} disabled={busy}
                 onClick={() => run(() => heartComment(token, c.id))} title={c.hearted ? '하트 취소' : '이 댓글이 마음에 들어요'}>
                 <FiHeart aria-hidden="true" /> {c.hearted ? '하트 취소' : '하트'}</button>}
+              {c.can_report && !c.hidden && <button type="button" onClick={() => report(c)} aria-label="댓글 신고"><FiFlag aria-hidden="true" /> 신고</button>}
               {c.can_delete && <button type="button" disabled={busy} onClick={() => window.confirm('댓글을 지울까요?') && run(() => deleteComment(token, c.id))}>
                 <FiTrash2 aria-hidden="true" /> 삭제</button>}
             </div>

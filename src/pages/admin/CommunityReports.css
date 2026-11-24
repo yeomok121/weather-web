@@ -40,3 +40,9 @@
 .acr-actions .danger { border-color:#fecaca; background:#fef2f2; color:#b91c1c; font-weight:700; }
 .acr-actions a { margin-left:auto; color:#1f6f5c; font-size:13px; font-weight:700; }
 @media (max-width:720px) { .admin-community-reports { padding:18px 14px; } .admin-community-reports > header { flex-direction:column; } .acr-reasons li { flex-direction:column; gap:2px; } .acr-reasons small { margin-left:0; } .acr-actions a { margin-left:0; } }
+.acr-kinds { display:flex; gap:0; margin-bottom:12px; border-bottom:2px solid #e2e8f0; }
+.admin-community-reports .acr-kinds button { border:0; border-bottom:3px solid transparent; border-radius:0; margin-bottom:-2px; padding:9px 16px; background:none; color:#64748b; font-size:14px; font-weight:700; }
+.admin-community-reports .acr-kinds button.on { border-bottom-color:#1f6f5c; color:#1f6f5c; }
+.acr-comment-cell { max-width:320px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.acr-post-cell { max-width:200px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:#475569 !important; }
+.acr-on-post { margin:0 0 6px; color:#475569; font-size:13px; }

@@ -533,3 +533,6 @@ button.fish-area-picker em { font-style:normal; font-size:12px; font-weight:700;
 .fish-comment-form button, .fish-comment-login { padding:7px 16px; border:0; border-radius:999px; background:#0f7f86; color:#fff; font:inherit; font-size:13px; font-weight:800; cursor:pointer; }
 .fish-comment-form button:disabled { opacity:.5; cursor:default; }
 .fish-modal.fish-post > * { flex-shrink:0; } /* 댓글이 많아 창보다 길어져도 사진이 눌리지 않고 창 안에서 스크롤 */
+.fish-comments li.hidden { opacity:.75; border-style:dashed; }
+.fish-comment-hidden { margin:4px 0 0 !important; color:#a3241a !important; font-size:12px !important; }
+.fish-comment-head .report-badge { padding:0 6px; border-radius:6px; background:#fee2e2; color:#b91c1c; font-size:10.5px; font-weight:800; }

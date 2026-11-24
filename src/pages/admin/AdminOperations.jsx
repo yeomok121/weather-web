@@ -105,6 +105,7 @@ export function OperationsStatus({ adminToken, adminPassword }) {
 const activityLabels = {
   create: '회원 추가', update: '회원 수정', update_password: '비밀번호 변경', delete: '회원 삭제',
   community_restore: '커뮤니티 신고 초기화', community_delete: '커뮤니티 글 삭제',
+  community_comment_restore: '커뮤니티 댓글 신고 초기화', community_comment_delete: '커뮤니티 댓글 삭제',
   suspend: '회원 정지', restore: '회원 복구', notice_create: '공지 등록', notice_update: '공지 수정', notice_delete: '공지 삭제',
 };
 
