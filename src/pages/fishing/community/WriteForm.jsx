@@ -1,7 +1,7 @@
 // 커뮤니티 글쓰기·고치기: 조과 자랑(사진 필수)·낚시 팁, 관리자는 공지도
 // 사진은 브라우저에서 줄여(lib/photoResize.js) 보내고, 금지체장·금어기 어종은 자랑 글로 올릴 수 없게 막습니다.
 // initial(내 글)을 주면 고치기: 기존 사진은 남기거나 빼고, 새 사진을 더할 수 있습니다.
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { FiCamera, FiX } from 'react-icons/fi';
 import { communityPhotoUrl, createCommunityPost, editCommunityPost } from '../communityApi';
 import { CATEGORIES, LIMITS, draftProblem } from '../lib/communityRules';
@@ -19,6 +19,8 @@ export default function WriteForm({ token, isAdmin, onCreated, onCancel, initial
   const [draft, setDraft] = useState(() => (initial ? fromPost(initial) : { category: '자랑', title: '', body: '', species: '', length_cm: '', point_name: '', photos: [] }));
   const [busy, setBusy] = useState('');
   const [error, setError] = useState('');
+  const submission = useRef(null);
+  const submitting = useRef(false);
   const [pointNames] = useState(() => (readCachedPoints() || []).map((p) => p.name || p.id).filter(Boolean));
   const set = (field) => (event) => { setError(''); setDraft((d) => ({ ...d, [field]: event.target.value })); };
   const categories = isAdmin || initial?.category === '공지' ? [...CATEGORIES, { id: '공지', label: '공지', hint: '커뮤니티 맨 위에 고정돼요 (관리자)' }] : CATEGORIES;
@@ -37,8 +39,11 @@ export default function WriteForm({ token, isAdmin, onCreated, onCancel, initial
 
   const submit = async (event) => {
     event.preventDefault();
+    if (busy || submitting.current) return;
     const problem = draftProblem(draft, { isAdmin });
     if (problem) { setError(problem); return; }
+    if (!initial && submission.current?.draft !== draft) submission.current = { draft, key: crypto.randomUUID() };
+    submitting.current = true;
     setBusy(initial ? '고치는 중…' : '올리는 중…'); setError('');
     try {
       const payload = {
@@ -49,9 +54,9 @@ export default function WriteForm({ token, isAdmin, onCreated, onCancel, initial
       };
       const post = initial
         ? await editCommunityPost(token, initial.id, { ...payload, keep_photo_ids: draft.photos.filter((p) => p.id).map((p) => p.id) })
-        : await createCommunityPost(token, payload);
+        : await createCommunityPost(token, payload, submission.current.key);
       onCreated(post);
-    } catch (e) { setError(e.message || '글을 올리지 못했어요. 잠시 후 다시 시도해 주세요.'); } finally { setBusy(''); }
+    } catch (e) { setError(e.message || '글을 올리지 못했어요. 잠시 후 다시 시도해 주세요.'); } finally { submitting.current = false; setBusy(''); }
   };
 
   const brag = draft.category === '자랑';

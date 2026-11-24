@@ -4,7 +4,7 @@ import { requestJson } from '../lib/apiClient';
 
 // onLocationReady(location): 관심 지역 목록을 처음 보여줄 때 첫 번째 지역으로 호출됩니다.
 // (App.jsx가 이 지역 또는 주소의 산으로 날씨를 불러옵니다.)
-export function useFavorites({ loggedInUser, setLoggedInUser, showToast, onLocationReady }) {
+export function useFavorites({ loggedInUser, showToast, onLocationReady }) {
   const [favorites, setFavorites] = useState([]);
 
   const initializeFavorites = useEffectEvent((isCancelled) => {
@@ -61,14 +61,7 @@ export function useFavorites({ loggedInUser, setLoggedInUser, showToast, onLocat
           else if (guestFavorites.length) showToast('이 기기의 관심 지역을 계정에 저장했어요.');
         } catch (error) {
           if (isCancelled()) return;
-          if (error.status === 401) {
-            const recoverable = hasPendingSync ? pendingFavorites : (localAccountFavorites.length ? localAccountFavorites : guestFavorites);
-            if (recoverable.length && !guestFavorites.length) localStorage.setItem('guestFavorites', JSON.stringify(recoverable));
-            localStorage.removeItem('loggedInUser');
-            setLoggedInUser(null);
-            showToast('로그인 정보가 만료되어 관심 지역을 이 브라우저에 보관했어요. 다시 로그인해주세요.');
-            return;
-          }
+          if (error.status === 401) return;
           showToast('계정 동기화에 실패해 이 브라우저의 관심 지역을 표시합니다.');
         }
       };
@@ -99,13 +92,8 @@ export function useFavorites({ loggedInUser, setLoggedInUser, showToast, onLocat
       });
       localStorage.removeItem(pendingKey);
       return true;
-    } catch (error) {
+    } catch {
       localStorage.setItem(pendingKey, JSON.stringify(newFavs));
-      if (error.status === 401) {
-        localStorage.setItem('guestFavorites', JSON.stringify(newFavs));
-        localStorage.removeItem('loggedInUser'); setLoggedInUser(null);
-        showToast('로그인 정보가 만료되었습니다. 변경 내용은 이 브라우저에 보관했어요.');
-      }
       return false;
     }
   };

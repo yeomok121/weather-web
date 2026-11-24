@@ -25,6 +25,7 @@ import { useAuth } from './shared/auth/useAuth';
 import { useFavorites } from './shared/auth/useFavorites';
 import SignUpModal from './shared/auth/SignUpModal';
 import FindPasswordModal from './shared/auth/FindPasswordModal';
+import RecoveryDialog from './shared/auth/RecoveryDialog';
 import { useForecast } from './shared/forecast/useForecast';
 import { buildActiveWeather } from './shared/forecast/activeWeather';
 import WeatherConnectionStatus from './shared/forecast/WeatherConnectionStatus';
@@ -74,6 +75,7 @@ function App() {
   const [isNoticeOpen, setIsNoticeOpen] = useState(false);
   const [isSignUpOpen, setIsSignUpOpen] = useState(false);
   const [isFindPasswordOpen, setIsFindPasswordOpen] = useState(false);
+  const [isCurrentPasswordOpen, setIsCurrentPasswordOpen] = useState(false);
   const [isAddRegionOpen, setIsAddRegionOpen] = useState(false);
 
   // 첫 화면이 산악 페이지 주소면 그 산을 먼저 불러옵니다. (사용자가 다른 곳을 고르면 비워집니다)
@@ -92,10 +94,10 @@ function App() {
 
   const search = useSearch({ isMountainMode, mountainsList, loadWeather, loadMountainWeather, setIsAiLoading, showToast });
   const auth = useAuth(showToast);
-  const { loggedInUser, setLoggedInUser } = auth;
+  const { loggedInUser } = auth;
   const { manualCourse, effectiveMountainInfo, saveManualCourse } = useManualCourse({ loggedInUser, mountainInfo });
   const { favorites, saveFavorites } = useFavorites({
-    loggedInUser, setLoggedInUser, showToast,
+    loggedInUser, showToast,
     onLocationReady: (initialLocation) => {
       if (initialMountainRef.current) loadMountainWeather(initialMountainRef.current, { initial: true });
       else if (!isMountainMode) loadWeather(initialLocation.lat, initialLocation.lon, initialLocation.name);
@@ -281,7 +283,10 @@ function App() {
 
         {isNoticeOpen && <NoticeModal onClose={() => setIsNoticeOpen(false)} />}
         {isSignUpOpen && <SignUpModal onClose={() => setIsSignUpOpen(false)} onLogin={auth.handleLogin} />}
-        {isFindPasswordOpen && <FindPasswordModal onClose={() => setIsFindPasswordOpen(false)} />}
+        {isFindPasswordOpen && <RecoveryDialog key={loggedInUser?.accessToken || 'guest'} account={loggedInUser}
+          onClose={() => setIsFindPasswordOpen(false)} onRecovered={showToast}
+          onUseCurrentPassword={() => { setIsFindPasswordOpen(false); setIsCurrentPasswordOpen(true); }} />}
+        {isCurrentPasswordOpen && <FindPasswordModal onClose={() => setIsCurrentPasswordOpen(false)} />}
         {isAddRegionOpen && <AddRegionModal onClose={() => setIsAddRegionOpen(false)} onAddRegion={handleAddFavorite} isAiLoading={forecast.isAiLoading} isLoggedIn={!!loggedInUser} />}
       </div>
     </AppContext.Provider>

@@ -11,21 +11,27 @@ import { openFishingLogin } from '../lib/loginPrompt';
 
 const STORAGE_KEY = 'fishing:gear-checked:v1';
 
-export default function GearChecklist({ area, indexDays, forecastRows, warnings }) {
-  const { loggedInUser, showToast, promptLogin } = useApp();
+export default function GearChecklist(props) {
+  const account = useApp();
+  const owner = account.loggedInUser?.memberId ?? account.loggedInUser?.id;
+  const key = owner == null ? STORAGE_KEY : `${STORAGE_KEY}:member:${owner}`;
+  return <AccountGearChecklist key={key} storageKey={key} {...account} {...props} />;
+}
+
+function AccountGearChecklist({ area, indexDays, forecastRows, warnings, loggedInUser, showToast, promptLogin, storageKey }) {
   const { setup, save, isLoggedIn } = useGearSetup({ loggedInUser, showToast });
   const [editing, setEditing] = useState(false);
   const [today] = useState(() => Date.now());
   const conditions = todayConditions({ indexDays, forecastRows, warnings, tideLabel: tideCalendar(new Date(today), area.tide_system === 7 ? 7 : 8).label });
-  const [checked, setChecked] = useState(() => new Set(readStoredJson(STORAGE_KEY, []).filter((id) => typeof id === 'string')));
+  const [checked, setChecked] = useState(() => new Set(readStoredJson(storageKey, []).filter((id) => typeof id === 'string')));
   const extra = conditionalGear(conditions);
   const toggle = (id) => setChecked((previous) => {
     const next = new Set(previous);
     if (next.has(id)) next.delete(id); else next.add(id);
-    writeStoredJson(STORAGE_KEY, [...next]);
+    writeStoredJson(storageKey, [...next]);
     return next;
   });
-  const reset = () => { setChecked(new Set()); writeStoredJson(STORAGE_KEY, []); };
+  const reset = () => { setChecked(new Set()); writeStoredJson(storageKey, []); };
   const items = gearListFor(setup, extra);
   const done = items.filter((item) => checked.has(item.id)).length;
 

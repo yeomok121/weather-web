@@ -1,5 +1,7 @@
 import { API } from './config.js';
 
+export const MEMBER_SESSION_EXPIRED = 'weather:member-session-expired';
+
 export class ApiError extends Error {
   constructor(message, { status = 0, requestId = '', timeout = false, code = '' } = {}) {
     super(message);
@@ -24,6 +26,10 @@ export async function requestJson(path, { timeoutMs = 15000, signal, ...options 
     });
     const data = await response.json().catch(() => null);
     if (!response.ok) {
+      const authorization = new Headers(options.headers).get('Authorization');
+      if (response.status === 401 && authorization?.startsWith('Bearer ') && !controller.signal.aborted) {
+        globalThis.dispatchEvent?.(new CustomEvent(MEMBER_SESSION_EXPIRED, { detail: authorization.slice(7) }));
+      }
       throw new ApiError(typeof data?.detail === 'string' ? data.detail : '요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.', {
         status: response.status, requestId: response.headers.get('x-request-id') || '', code: data?.error_code || '',
       });

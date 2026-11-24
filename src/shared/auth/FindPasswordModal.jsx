@@ -58,7 +58,7 @@ function FindPasswordModal({ onClose }) {
         </div>
 
         <p style={{ fontSize: '14px', color: '#666', marginBottom: '20px', lineHeight: '1.5' }}>
-          현재 비밀번호를 확인한 뒤 새 비밀번호로 변경합니다. 분실한 비밀번호의 복구는 본인 확인 기능이 준비되면 지원됩니다.
+          현재 비밀번호를 확인한 뒤 새 비밀번호로 변경합니다.
         </p>
 
         <input type="text" placeholder="아이디" value={id} onChange={(e) => setId(e.target.value)} style={inputStyle} />

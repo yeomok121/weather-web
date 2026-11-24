@@ -24,3 +24,13 @@
   .hiking-planner .party-item-controls { grid-template-columns:60px minmax(0,1fr) auto; }
   .hiking-planner .party-item-filters button { flex:1; padding:8px; white-space:nowrap; }
 }
+
+
+.party-gear-create,
+.party-gear-allocation { flex-wrap: wrap; align-items: end; }
+.party-gear-create label,
+.party-gear-allocation label { display: grid; gap: 4px; }
+.party-gear-create input[type="number"],
+.party-gear-allocation input[type="number"] { width: 84px; }
+.party-item > div:first-child { min-width: 0; overflow-wrap: anywhere; }
+.party-item ul { margin: 8px 0 0; padding-inline-start: 20px; }

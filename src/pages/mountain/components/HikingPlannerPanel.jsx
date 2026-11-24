@@ -1,3 +1,5 @@
+import PartyGearList from './PartyGearList';
+import { shareGear } from '../lib/partyGear';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { FiBell, FiCheck, FiSave, FiTrash2, FiUserPlus, FiUsers, FiRefreshCw, FiShare2 } from 'react-icons/fi';
 import { requestJson } from '../../../shared/lib/apiClient';
@@ -25,14 +27,13 @@ export default function HikingPlannerPanel({
   const [inviteUsername, setInviteUsername] = useState('');
   const [schedulePlanId, setSchedulePlanId] = useState('');
   const [transferUsername, setTransferUsername] = useState('');
-  const [newItemName, setNewItemName] = useState('');
+
   const [tab, setTab] = useState(focusSection);
   const [isBusy, setIsBusy] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [savedPlan, setSavedPlan] = useState(null);
-  const [itemFilter, setItemFilter] = useState('all');
   const [createOpen, setCreateOpen] = useState(false);
   const [savedOpen, setSavedOpen] = useState(false);
   const token = user?.accessToken;
@@ -132,7 +133,7 @@ export default function HikingPlannerPanel({
     if (!token || busyRef.current) return;
     busyRef.current = true; setIsBusy(true); setError(''); setSuccess('');
     const accessToken = token;
-    try { await action(accessToken); }
+    try { return await action(accessToken); }
     catch (err) { if (activeToken.current === accessToken) setError(err.message); }
     finally { busyRef.current = false; if (activeToken.current === accessToken) setIsBusy(false); }
   };
@@ -206,32 +207,23 @@ export default function HikingPlannerPanel({
       selectedRef.current = ''; setSelectedPartyId(''); setParty(null); await refresh(accessToken); notify('파티에서 나왔어요.');
     });
   };
-  const addItem = event => {
-    event.preventDefault(); if (!party || !newItemName.trim()) return;
-    run(async accessToken => {
-      await request(`/api/hiking/parties/${party.id}/items`, accessToken, { method: 'POST', body: JSON.stringify({ name: newItemName.trim(), quantity: 1 }) });
-      if (activeToken.current !== accessToken) return;
-      setNewItemName(''); setItemFilter('all'); await loadParty(party.id, accessToken);
+  const addItem = item => {
+    if (!party) return;
+    return run(async accessToken => {
+      await request(`/api/hiking/parties/${party.id}/items`, accessToken, { method: 'POST', body: JSON.stringify(item) });
+      await loadParty(party.id, accessToken);
+      return true;
     });
   };
-  const updateItem = (item, updates) => {
-    if (busyRef.current || !party) return;
-    const before = party;
-    const assigned = party.members?.find(member => member.username === updates.assigned_to_username);
-    setParty(previous => ({ ...previous, items: previous.items.map(row => row.id === item.id
-      ? { ...row, ...updates, ...('assigned_to_username' in updates ? { assigned_to_name: assigned?.name || null } : {}) } : row) }));
-    run(async accessToken => {
-      try {
-        await request(`/api/hiking/parties/${before.id}/items/${item.id}`, accessToken, { method: 'PATCH', body: JSON.stringify(updates) });
-        await loadParty(before.id, accessToken);
-      } catch (err) {
-        if (activeToken.current === accessToken && selectedRef.current === String(before.id)) setParty(before);
-        throw err;
-      }
+  const saveGear = (item, suffix, method, body) => {
+    if (!party || busyRef.current) return;
+    return run(async accessToken => {
+      await request(`/api/hiking/parties/${party.id}/items/${item.id}${suffix}`, accessToken, { method, body: JSON.stringify(body) });
+      await loadParty(party.id, accessToken);
     });
   };
   const removeItem = item => {
-    if (!window.confirm(`공동 준비물 ‘${item.name}’을 삭제할까요? 일행의 목록에서도 삭제됩니다.`)) return;
+    if (!window.confirm(`준비물 ‘${item.name}’을 삭제할까요? 일행의 목록에서도 삭제됩니다.`)) return;
     run(async accessToken => {
       await request(`/api/hiking/parties/${party.id}/items/${item.id}`, accessToken, { method: 'DELETE' });
       await loadParty(party.id, accessToken);
@@ -251,17 +243,12 @@ export default function HikingPlannerPanel({
     if (!party) return;
     const url = new URL(window.location.origin);
     url.searchParams.set('mountain', party.mountain_name); url.searchParams.set('party', party.id);
-    const text = `${party.name}\n${party.mountain_name} · ${party.course_name}\n출발: ${displayDeparture(party.departure_at)}\n${(party.items || []).map(item => `${item.is_packed ? '☑' : '□'} ${item.name} ×${item.quantity} — ${item.assigned_to_name || '담당 미정'}`).join('\n')}\n파티 구성원은 로그인한 뒤 준비 상태를 확인할 수 있어요.`;
+    const text = `${party.name}\n${party.mountain_name} · ${party.course_name}\n출발: ${displayDeparture(party.departure_at)}\n${(party.items || []).map(item => shareGear(item, party.members.length)).join('\n')}\n파티 구성원은 로그인한 뒤 준비 상태를 확인할 수 있어요.`;
     try {
       if (navigator.share) await navigator.share({ title: party.name, text, url: url.href });
       else { await navigator.clipboard.writeText(`${text}\n${url.href}`); notify('파티 일정과 준비물 링크를 복사했어요.'); }
     } catch (err) { if (err.name !== 'AbortError') setError('공유하지 못했습니다. 브라우저의 공유 권한을 확인해 주세요.'); }
   };
-  const packed = party?.items?.filter(item => item.is_packed).length || 0;
-  const unassigned = party?.items?.filter(item => !item.assigned_to_username).length || 0;
-  const myItems = (party?.items || []).filter(item => item.assigned_to_username === user?.id);
-  const myPending = myItems.filter(item => !item.is_packed).length;
-  const visibleItems = (party?.items || []).filter(item => itemFilter === 'mine' ? item.assigned_to_username === user?.id : itemFilter === 'unassigned' ? !item.assigned_to_username : true);
   const handleTabKey = event => {
     if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
     event.preventDefault();
@@ -296,12 +283,8 @@ export default function HikingPlannerPanel({
           {party.role === 'owner' && <><form onSubmit={inviteMember} className="planner-inline-form"><label className="planner-label">초대할 회원 아이디<input ref={inviteInput} value={inviteUsername} onChange={event => setInviteUsername(event.target.value)} placeholder="회원 아이디 입력" minLength={4} maxLength={80} required /></label><button type="submit" disabled={isBusy || !inviteUsername.trim()}><FiUserPlus /> 초대 보내기</button></form><p className="muted">초대받은 회원은 로그인 후 ‘내 산행’에서 초대를 확인할 수 있어요.</p>{!!party.pending_invites?.length && <div className="pending-invites">수락 대기: {party.pending_invites.map(invite => <span key={invite.id}> @{invite.username} <button type="button" disabled={isBusy} onClick={() => cancelInvite(invite)}>초대 취소</button> </span>)}</div>}</>}
           {party.role === 'owner' && <details className="create-party"><summary>파티 일정 변경</summary><p className="muted">저장한 계획을 선택해 적용합니다. 개인 계획을 수정해도 파티 일정은 자동으로 변경되지 않습니다.</p><label className="planner-label">적용할 저장 계획<select value={schedulePlanId} onChange={event => setSchedulePlanId(event.target.value)}><option value="">계획 선택</option>{plans.map(plan => <option value={plan.id} key={plan.id}>{plan.name} · {plan.mountain_name} · {displayDeparture(plan.departure_at)}</option>)}</select></label><button type="button" disabled={isBusy || !schedulePlanId} onClick={applyPartySchedule}>선택한 계획을 파티 일정으로 적용</button></details>}
           {!!party.schedule_history?.length && <details className="create-party"><summary>일정 변경 내역</summary>{party.schedule_history.map((entry, index) => <p key={index} className="muted">{entry.actor_name} · {entry.created_at}<br />이전: {entry.old_schedule}<br />변경: {entry.new_schedule}</p>)}</details>}
-          <div className="party-progress"><strong>준비 완료 {packed}/{party.items?.length || 0}</strong><span>담당 미정 {unassigned}개</span><progress value={packed} max={party.items?.length || 1} aria-label="공동 준비물 준비 완료" /></div>
-          <div className="party-item-filters" role="group" aria-label="준비물 보기">{[{ key: 'all', label: `전체 ${party.items?.length || 0}` }, { key: 'mine', label: `내 담당 ${myItems.length}` }, { key: 'unassigned', label: `담당 미정 ${unassigned}` }].map(filter => <button type="button" key={filter.key} aria-pressed={itemFilter === filter.key} onClick={() => setItemFilter(filter.key)}>{filter.label}</button>)}</div>
-          {itemFilter === 'mine' && <p className="muted" role="status">내 담당 {myItems.length}개 중 {myPending}개를 더 챙기면 됩니다.</p>}
-          <form onSubmit={addItem} className="planner-inline-form"><label className="planner-label">공동 준비물<input value={newItemName} onChange={event => setNewItemName(event.target.value)} placeholder="함께 챙길 물품" maxLength={120} required /></label><button type="submit" disabled={isBusy || !newItemName.trim()}>추가</button></form>
-          <div className="party-items">{visibleItems.map(item => <div key={item.id} className={`party-item ${item.is_packed ? 'is-packed' : ''}`}><label className="party-item-check"><input type="checkbox" checked={item.is_packed} disabled={isBusy} onChange={event => updateItem(item, { is_packed: event.target.checked })} /><span>{item.name}</span></label><div className="party-item-controls"><label>수량<select aria-label={`${item.name} 수량`} value={item.quantity} disabled={isBusy} onChange={event => updateItem(item, { quantity: Number(event.target.value) })}>{Array.from({ length: Math.max(10, item.quantity) }, (_, index) => <option key={index + 1} value={index + 1}>{index + 1}</option>)}</select></label><label>담당자<select aria-label={`${item.name} 담당자`} value={item.assigned_to_username || ''} disabled={isBusy} onChange={event => updateItem(item, { assigned_to_username: event.target.value || null })}><option value="">담당 미정</option>{(party.members || []).map(member => <option key={member.username} value={member.username}>{member.name}{member.username === user.id ? ' (나)' : ''}</option>)}</select></label>{(party.role === 'owner' || item.created_by_username === user.id) && <button type="button" disabled={isBusy} aria-label={`${item.name} 삭제`} onClick={() => removeItem(item)}><FiTrash2 /></button>}</div></div>)}</div>
-          {!visibleItems.length && <p className="planner-empty" role="status">{itemFilter === 'mine' ? '아직 내 담당 물품이 없어요. 전체 목록에서 담당자를 지정해 주세요.' : itemFilter === 'unassigned' ? '모든 물품의 담당자가 정해졌어요.' : '공동 준비물을 추가해 함께 챙겨 보세요.'}</p>}
+          <PartyGearList key={`${party.id}:${user.id}`} party={party} username={user.id} busy={isBusy}
+            onAdd={addItem} onSave={saveGear} onRemove={removeItem} />
           <p className="muted"><FiCheck /> 변경 내용은 서버에 저장되며, 다른 일행의 화면은 30초마다 갱신됩니다. 지금 확인하려면 새로고침을 누르세요.</p>
           {party.role === 'owner' && party.members?.length > 1 && <details className="create-party"><summary>파티장 권한 넘기기</summary><p className="muted">새 파티장은 이후 일정과 초대를 관리합니다. 개인 저장 계획은 이전되지 않습니다.</p><label className="planner-label">새 파티장<select value={transferUsername} onChange={event => setTransferUsername(event.target.value)}><option value="">구성원 선택</option>{party.members.filter(member => member.role !== 'owner').map(member => <option key={member.username} value={member.username}>{member.name} (@{member.username})</option>)}</select></label><button type="button" disabled={isBusy || !transferUsername} onClick={transferParty}>파티장 권한 넘기기</button></details>}
           {party.role !== 'owner' && <button type="button" className="danger-button" disabled={isBusy} onClick={leaveParty}>파티 나가기</button>}

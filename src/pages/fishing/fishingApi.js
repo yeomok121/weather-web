@@ -45,8 +45,8 @@ export function fetchMyFishingPoints(token, { signal } = {}) {
   return getJson('/api/users/me/fishing-points', { signal, timeoutMs: 20000, headers: authHeaders(token) });
 }
 
-export function saveMyFishingPoints(token, points) {
-  return requestJson('/api/users/me/fishing-points', { method: 'PUT', timeoutMs: 20000, headers: authHeaders(token), body: JSON.stringify({ points }) });
+export function changeMyFishingPoints(token, changes, { signal } = {}) {
+  return requestJson('/api/users/me/fishing-points', { method: 'PATCH', signal, timeoutMs: 20000, headers: authHeaders(token), body: JSON.stringify(changes) });
 }
 
 // 내 준비물 세팅 (계정 저장)

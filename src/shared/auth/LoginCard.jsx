@@ -21,6 +21,7 @@ function LoginCard({ loginPrompt = 0, guestIntro = DEFAULT_GUEST_INTRO, onSignUp
   const [deleteAccepted, setDeleteAccepted] = useState(false);
   const [deleteBusy, setDeleteBusy] = useState(false);
   const [deleteError, setDeleteError] = useState('');
+  const [deleteParties, setDeleteParties] = useState(null);
   
   const [editName, setEditName] = useState('');
   const [editCurrentPassword, setEditCurrentPassword] = useState('');
@@ -54,6 +55,17 @@ function LoginCard({ loginPrompt = 0, guestIntro = DEFAULT_GUEST_INTRO, onSignUp
     return () => { active = false; controller?.abort(); window.removeEventListener('focus', refreshRole); };
   }, [loggedInUser?.accessToken]);
 
+  useEffect(() => {
+    const token = loggedInUser?.accessToken;
+    if (!isDeleteMode || !token) return undefined;
+    const controller = new AbortController();
+    const { signal } = controller;
+    requestJson('/api/hiking/parties', { signal, headers: { Authorization: `Bearer ${token}` } })
+      .then(parties => { if (!signal.aborted && Array.isArray(parties)) setDeleteParties(parties); })
+      .catch(() => { /* 탈퇴 API에서 참여 상태를 다시 확인합니다. */ });
+    return () => controller.abort();
+  }, [isDeleteMode, loggedInUser?.accessToken]);
+
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
     if (!username.trim() || !password.trim()) {
@@ -69,7 +81,7 @@ function LoginCard({ loginPrompt = 0, guestIntro = DEFAULT_GUEST_INTRO, onSignUp
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: username.trim(), password }),
       });
-      await onLogin({ id: data.username, name: data.name, accessToken: data.access_token });
+      await onLogin({ id: data.username, memberId: data.user_id, name: data.name, accessToken: data.access_token });
       setUsername(''); setPassword('');
     } catch (error) {
       setLoginError(error.message);
@@ -108,7 +120,7 @@ function LoginCard({ loginPrompt = 0, guestIntro = DEFAULT_GUEST_INTRO, onSignUp
 
   const handleDeleteSubmit = async event => {
     event.preventDefault();
-    if (deleteBusy || !deletePassword || !deleteAccepted) return;
+    if (deleteBusy || !deletePassword || !deleteAccepted || deleteParties?.length) return;
     setDeleteBusy(true); setDeleteError('');
     try {
       await onDeleteAccount(deletePassword);
@@ -125,7 +137,11 @@ function LoginCard({ loginPrompt = 0, guestIntro = DEFAULT_GUEST_INTRO, onSignUp
         {isDeleteMode ? (
           <form onSubmit={handleDeleteSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <h3 style={{ margin: 0, color: '#9b1c1c', fontSize: '17px' }}>회원 탈퇴</h3>
-            <p style={{ margin: 0, fontSize: '13px', color: '#475569', lineHeight: 1.6 }}>탈퇴하면 계정과 관심 지역, 저장한 산행 계획이 삭제됩니다. 직접 만든 파티와 공동 준비물도 삭제되며 복구할 수 없습니다.</p>
+            <p style={{ margin: 0, fontSize: '13px', color: '#475569', lineHeight: 1.6 }}>참여 중인 산행 파티에서 먼저 나가 주세요. 파티장은 권한을 넘긴 뒤 탈퇴할 수 있습니다. 탈퇴하면 관심 지역, 저장한 산행 계획, 낚시 설정과 직접 작성한 커뮤니티 글이 삭제됩니다.</p>
+            {!!deleteParties?.length && <div>
+              <strong>먼저 정리할 산행 파티</strong>
+              <ul>{deleteParties.map(party => <li key={party.id}>{party.name} · {party.mountain_name}</li>)}</ul>
+            </div>}
             <label style={{ color: '#334155', fontSize: '13px', fontWeight: 700 }}>현재 비밀번호
               <input type="password" autoComplete="current-password" required value={deletePassword} onChange={event => setDeletePassword(event.target.value)} style={{ display: 'block', width: '100%', boxSizing: 'border-box', padding: '11px', marginTop: '6px', border: '1px solid #cbd5e1', borderRadius: '8px' }} />
             </label>
@@ -133,7 +149,7 @@ function LoginCard({ loginPrompt = 0, guestIntro = DEFAULT_GUEST_INTRO, onSignUp
             {deleteError && <p role="alert" style={{ margin: 0, color: '#b91c1c', fontSize: '13px', lineHeight: 1.5 }}>{deleteError}</p>}
             <div style={{ display: 'flex', gap: '8px' }}>
               <button type="button" disabled={deleteBusy} onClick={() => { setIsDeleteMode(false); setDeletePassword(''); setDeleteAccepted(false); setDeleteError(''); }} style={{ flex: 1, padding: '10px', border: '1px solid #cbd5e1', borderRadius: '8px', background: '#fff', cursor: 'pointer' }}>취소</button>
-              <button type="submit" disabled={deleteBusy || !deletePassword || !deleteAccepted} style={{ flex: 1, padding: '10px', border: 0, borderRadius: '8px', background: '#b91c1c', color: '#fff', cursor: 'pointer' }}>{deleteBusy ? '처리 중...' : '탈퇴하기'}</button>
+              <button type="submit" disabled={deleteBusy || !deletePassword || !deleteAccepted || Boolean(deleteParties?.length)} style={{ flex: 1, padding: '10px', border: 0, borderRadius: '8px', background: '#b91c1c', color: '#fff', cursor: 'pointer' }}>{deleteBusy ? '처리 중...' : '탈퇴하기'}</button>
             </div>
           </form>
         ) : !isEditMode ? (
@@ -153,6 +169,7 @@ function LoginCard({ loginPrompt = 0, guestIntro = DEFAULT_GUEST_INTRO, onSignUp
               <button onClick={handleEditOpen} style={{ width: '100%', padding: '10px', backgroundColor: 'rgba(255,255,255,0.7)', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '8px', color: '#334155', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '13px' }}>
                 <FiSettings size={14} /> 정보 수정
               </button>
+              <button type="button" onClick={onFindPasswordClick}>복구 이메일 관리</button>
               <button onClick={onLogout} style={{ width: '100%', padding: '10px', backgroundColor: 'rgba(229,62,62,0.1)', border: '1px solid rgba(229,62,62,0.2)', borderRadius: '8px', color: '#e53e3e', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '13px' }}>
                 <FiLogOut size={14} /> 로그아웃
               </button>
@@ -171,7 +188,7 @@ function LoginCard({ loginPrompt = 0, guestIntro = DEFAULT_GUEST_INTRO, onSignUp
               <button type="button" onClick={() => setIsEditMode(false)} style={{ flex: 1, padding: '10px', backgroundColor: 'rgba(0,0,0,0.05)', color: '#475569', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px' }}>취소</button>
               <button type="submit" disabled={loginBusy} style={{ flex: 1, padding: '10px', backgroundColor: '#3182ce', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px' }}>저장</button>
             </div>
-            <button type="button" onClick={() => { setDeletePassword(''); setDeleteAccepted(false); setDeleteError(''); setIsDeleteMode(true); }} style={{ marginTop: '12px', background: 'none', border: 'none', color: '#e53e3e', fontSize: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+            <button type="button" onClick={() => { setDeletePassword(''); setDeleteAccepted(false); setDeleteError(''); setDeleteParties(null); setIsDeleteMode(true); }} style={{ marginTop: '12px', background: 'none', border: 'none', color: '#e53e3e', fontSize: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
               <FiTrash2 size={12} /> 회원 탈퇴
             </button>
           </form>
@@ -233,7 +250,7 @@ function LoginCard({ loginPrompt = 0, guestIntro = DEFAULT_GUEST_INTRO, onSignUp
         </button>
       </form>
       <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', marginTop: '16px', fontSize: '12px', color: '#64748b' }}>
-        <span onClick={onFindPasswordClick} style={{ cursor: 'pointer', hover: { color: '#3182ce' } }}>비밀번호 변경</span>
+        <button type="button" onClick={onFindPasswordClick}>비밀번호 찾기</button>
         <span>|</span>
         <span onClick={onSignUpClick} style={{ cursor: 'pointer', color: '#3182ce', fontWeight: 'bold' }}>무료 회원가입</span>
       </div>

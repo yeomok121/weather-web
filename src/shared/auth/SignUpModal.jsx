@@ -93,7 +93,7 @@ function SignUpModal({ onClose, onLogin }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password: pw }),
       });
-      onLogin({ id: loginData.username, name: loginData.name, accessToken: loginData.access_token });
+      onLogin({ id: loginData.username, memberId: loginData.user_id, name: loginData.name, accessToken: loginData.access_token });
       onClose();
     } catch (e) {
       if (!accountCreated && e.status === 409) setIdCheck({ status: 'taken', username });
