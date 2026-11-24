@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FiUser, FiLock, FiLogOut, FiSettings, FiTrash2 } from 'react-icons/fi';
 import { requestJson } from '../lib/apiClient';
+import { newPasswordError, newPasswordHint } from './passwordPolicy';
 
 const roleLabels = { member: '일반 회원', superadmin: '최고 관리자', member_manager: '회원 관리자', notice_manager: '공지 관리자' };
 
@@ -81,6 +82,11 @@ function LoginCard({ loginPrompt = 0, guestIntro = DEFAULT_GUEST_INTRO, onSignUp
       alert('현재 비밀번호를 입력해주세요.');
       return;
     }
+    const passwordError = editNewPassword && newPasswordError(loggedInUser.id, editNewPassword);
+    if (passwordError) {
+      alert(passwordError);
+      return;
+    }
     const success = await onUpdateUser({
       name: editName,
       currentPassword: editCurrentPassword,
@@ -158,7 +164,8 @@ function LoginCard({ loginPrompt = 0, guestIntro = DEFAULT_GUEST_INTRO, onSignUp
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '16px' }}>
               <input type="text" placeholder="이름 변경" value={editName} onChange={(e) => setEditName(e.target.value)} required style={{ width: '100%', padding: '10px', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '8px', boxSizing: 'border-box', fontSize: '13px', backgroundColor: 'rgba(255,255,255,0.7)' }} />
               <input type="password" placeholder="현재 비밀번호 (필수)" value={editCurrentPassword} onChange={(e) => setEditCurrentPassword(e.target.value)} required style={{ width: '100%', padding: '10px', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '8px', boxSizing: 'border-box', fontSize: '13px', backgroundColor: 'rgba(255,255,255,0.7)' }} />
-              <input type="password" placeholder="새 비밀번호 (선택)" value={editNewPassword} onChange={(e) => setEditNewPassword(e.target.value)} style={{ width: '100%', padding: '10px', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '8px', boxSizing: 'border-box', fontSize: '13px', backgroundColor: 'rgba(255,255,255,0.7)' }} />
+              <input type="password" autoComplete="new-password" aria-describedby="profile-password-hint" placeholder="새 비밀번호 (선택)" value={editNewPassword} onChange={(e) => setEditNewPassword(e.target.value)} style={{ width: '100%', padding: '10px', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '8px', boxSizing: 'border-box', fontSize: '13px', backgroundColor: 'rgba(255,255,255,0.7)' }} />
+              <small id="profile-password-hint">{newPasswordHint}</small>
             </div>
             <div style={{ display: 'flex', gap: '8px', marginTop: 'auto' }}>
               <button type="button" onClick={() => setIsEditMode(false)} style={{ flex: 1, padding: '10px', backgroundColor: 'rgba(0,0,0,0.05)', color: '#475569', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px' }}>취소</button>

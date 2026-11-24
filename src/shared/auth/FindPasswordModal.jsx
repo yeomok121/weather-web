@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { requestJson } from '../lib/apiClient';
+import { newPasswordError, newPasswordHint } from './passwordPolicy';
 
 function FindPasswordModal({ onClose }) {
   const [id, setId] = useState('');
@@ -10,16 +11,19 @@ function FindPasswordModal({ onClose }) {
   const [loading, setLoading] = useState(false);
 
   const handleReset = async () => {
+    if (loading) return;
+    setError('');
     if (!id.trim() || !currentPw || !newPw || !newPwConfirm) {
-      alert('모든 정보를 입력해 주세요.');
+      setError('모든 정보를 입력해 주세요.');
       return;
     }
-    if (newPw.length < 4) {
-      alert('새 비밀번호는 4자 이상 입력해 주세요.');
+    const passwordError = newPasswordError(id.trim(), newPw);
+    if (passwordError) {
+      setError(passwordError);
       return;
     }
     if (newPw !== newPwConfirm) {
-      alert('새 비밀번호가 일치하지 않습니다.');
+      setError('새 비밀번호가 일치하지 않습니다.');
       return;
     }
 
@@ -59,8 +63,7 @@ function FindPasswordModal({ onClose }) {
 
         <input type="text" placeholder="아이디" value={id} onChange={(e) => setId(e.target.value)} style={inputStyle} />
         <input type="password" autoComplete="current-password" placeholder="현재 비밀번호" value={currentPw} onChange={(e) => setCurrentPw(e.target.value)} style={inputStyle} />
-        {error && <p role="alert" className="planner-error">{error}</p>}
-        <input type="password" placeholder="새 비밀번호 (4자 이상)" value={newPw} onChange={(e) => setNewPw(e.target.value)} style={inputStyle} />
+        <input type="password" autoComplete="new-password" aria-describedby="new-password-hint" placeholder="새 비밀번호" value={newPw} onChange={(e) => setNewPw(e.target.value)} style={inputStyle} />
         <input
           type="password" placeholder="새 비밀번호 확인" value={newPwConfirm}
           onChange={(e) => setNewPwConfirm(e.target.value)}
@@ -68,6 +71,8 @@ function FindPasswordModal({ onClose }) {
           style={inputStyle}
         />
 
+        <p id="new-password-hint" style={{ fontSize: 13 }}>{newPasswordHint}</p>
+        {error && <p role="alert" className="planner-error">{error}</p>}
         <button
           onClick={handleReset}
           disabled={loading}

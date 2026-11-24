@@ -3,6 +3,7 @@ import { requestJson } from '../lib/apiClient';
 import { writeStoredJson } from '../lib/browserStorage';
 import { FiUserPlus, FiX, FiEye, FiEyeOff } from 'react-icons/fi';
 import './SignUpModal.css';
+import { newPasswordError, newPasswordHint } from './passwordPolicy';
 
 const usernameHint = '영문과 숫자를 모두 포함한 4~20자 (예: weather25)';
 const validUsername = value => /^[A-Za-z0-9]{4,20}$/.test(value) && /[A-Za-z]/.test(value) && /[0-9]/.test(value);
@@ -58,15 +59,13 @@ function SignUpModal({ onClose, onLogin }) {
       setError(usernameHint);
       return;
     }
-    if (pw.length < 4 || new TextEncoder().encode(pw).length > 72) {
-      setError('비밀번호는 4자 이상, UTF-8 기준 72바이트 이하로 입력해 주세요.');
+    const passwordError = newPasswordError(username, pw);
+    if (passwordError) {
+      setError(passwordError);
       return;
     }
     if (idCheck.status !== 'available' || idCheck.username !== username) {
       setError('아이디 중복 확인을 먼저 진행해 주세요.'); return;
-    }
-    if (pw.normalize('NFKC').toLowerCase().includes(username.normalize('NFKC').toLowerCase())) {
-      setError('비밀번호에 아이디를 포함할 수 없습니다.'); return;
     }
     if (pw !== pwConfirm) {
       setError('비밀번호가 일치하지 않습니다.');
@@ -139,7 +138,7 @@ function SignUpModal({ onClose, onLogin }) {
                 {showPasswords ? <FiEyeOff aria-hidden="true" /> : <FiEye aria-hidden="true" />}
               </button>
             </div>
-            <p id="signup-password-hint">4자 이상 입력하고 아이디를 포함하지 마세요.</p>
+            <p id="signup-password-hint">{newPasswordHint}</p>
           </div>
           <label className="signup-field">비밀번호 확인
             <input type={showPasswords ? 'text' : 'password'} autoComplete="new-password" value={pwConfirm} onChange={event => setPwConfirm(event.target.value)} />

@@ -1,3 +1,4 @@
+import { newPasswordError } from '../../shared/auth/passwordPolicy';
 import React, { useState, useEffect, useEffectEvent } from 'react';
 import { FiTrash2, FiEdit, FiCheck, FiX, FiSearch, FiUserPlus } from 'react-icons/fi';
 import { OperationsStatus, AdminActivity } from './AdminOperations';
@@ -162,15 +163,16 @@ function AdminPage({ onClose, adminPassword, adminToken, adminRole }) {
   // 1) 관리자 직접 회원 추가
   const handleAddUser = async () => {
     const id = newUserForm.id.trim();
-    const pw = newUserForm.pw.trim();
+    const pw = newUserForm.pw;
     const name = newUserForm.name.trim();
 
     if (!id || !pw || !name) {
       alert('아이디, 비밀번호, 이름을 모두 입력해 주세요.');
       return;
     }
-    if (id.length < 4 || pw.length < 4) {
-      alert('아이디와 비밀번호는 4자 이상 입력해 주세요.');
+    const passwordError = newPasswordError(id, pw);
+    if (passwordError) {
+      alert(passwordError);
       return;
     }
 
@@ -209,15 +211,16 @@ function AdminPage({ onClose, adminPassword, adminToken, adminRole }) {
   // 3) 회원 정보 수정 저장
   const handleSaveUserEdit = async (originalId) => {
     const newId = editUserForm.id.trim();
-    const newPw = editUserForm.pw.trim();
+    const newPw = editUserForm.pw;
     const newName = editUserForm.name.trim();
 
     if (!newId || !newName) {
       alert('아이디와 이름을 비워둘 수 없습니다.');
       return;
     }
-    if (newPw && newPw.length < 4) {
-      alert('새 비밀번호는 4자 이상 입력해 주세요.');
+    const passwordError = newPw && newPasswordError(newId, newPw);
+    if (passwordError) {
+      alert(passwordError);
       return;
     }
 
@@ -368,7 +371,7 @@ function AdminPage({ onClose, adminPassword, adminToken, adminRole }) {
                   style={{ flex: 1, minWidth: '140px', padding: '10px 12px', borderRadius: '6px', border: '1px solid #cbd5e1' }} 
                 />
                 <input 
-                  type="password" placeholder="비밀번호" value={newUserForm.pw} 
+                  type="password" autoComplete="new-password" placeholder="비밀번호 (15자 이상)" value={newUserForm.pw}
                   onChange={e => setNewUserForm({...newUserForm, pw: e.target.value})} 
                   style={{ flex: 1, minWidth: '140px', padding: '10px 12px', borderRadius: '6px', border: '1px solid #cbd5e1' }} 
                 />
@@ -449,7 +452,7 @@ function AdminPage({ onClose, adminPassword, adminToken, adminRole }) {
                                 style={{ width: '90%', padding: '6px 8px', borderRadius: '4px', border: '1px solid #3182ce' }}
                               />
                             ) : user.name}
-                            {isEditing && <input aria-label="새 비밀번호" type="password" placeholder="비밀번호 변경 시 입력" value={editUserForm.pw} onChange={e => setEditUserForm({...editUserForm, pw: e.target.value})} style={{ width: '90%', marginTop: '8px', padding: '6px 8px', borderRadius: '4px', border: '1px solid #3182ce' }} />}
+                            {isEditing && <input aria-label="새 비밀번호" type="password" autoComplete="new-password" placeholder="새 비밀번호 (15자 이상)" value={editUserForm.pw} onChange={e => setEditUserForm({...editUserForm, pw: e.target.value})} style={{ width: '90%', marginTop: '8px', padding: '6px 8px', borderRadius: '4px', border: '1px solid #3182ce' }} />}
                           </td>
                           <td style={{ padding: '14px 10px', color: '#475569' }}>{user.createdAt ? String(user.createdAt).slice(0, 10) : '확인 불가'}</td>
                           <td>{user.suspended ? '정지' : '정상'}</td>
