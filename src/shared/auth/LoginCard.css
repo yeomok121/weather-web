@@ -1,0 +1,130 @@
+/* Account controls shared across weather, mountain, and fishing pages. */
+.account-summary {
+  display: grid;
+  gap: 16px;
+}
+
+.account-summary h3 {
+  margin: 0;
+  color: #1e293b;
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.account-summary__profile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, .8);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, .5);
+}
+
+.account-summary__avatar {
+  flex: 0 0 44px;
+  display: grid;
+  place-items: center;
+  height: 44px;
+  border-radius: 50%;
+  background: #2674b8;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 750;
+}
+
+.account-summary__identity {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.account-summary__identity p {
+  margin: 0 0 4px;
+  color: #0f172a;
+  font-size: 15px;
+  font-weight: 750;
+}
+
+.account-summary__identity span {
+  color: #315b76;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.account-summary__actions {
+  display: grid;
+  gap: 8px;
+}
+
+.account-summary .account-action {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid #c6d4df;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, .64);
+  color: #23374f;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.account-summary .account-action:hover {
+  background: #ecf5fa;
+  border-color: #8aa8bf;
+}
+
+.account-summary .account-action svg {
+  flex: none;
+  width: 16px;
+  height: 16px;
+}
+
+.account-summary .account-action--logout {
+  border-color: #ecc7c7;
+  background: #fdf1f1;
+  color: #9b2828;
+}
+
+.account-summary .account-action--logout:hover {
+  border-color: #db9b9b;
+  background: #fbe5e5;
+}
+
+.login-help {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px 8px;
+  margin-block-start: 12px;
+}
+
+.login-help button {
+  min-height: 44px;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #245681;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.login-help button:hover {
+  background: #edf4f9;
+  text-decoration: underline;
+}
+
+.account-action:focus-visible,
+.login-help button:focus-visible {
+  outline: 2px solid #25659b;
+  outline-offset: 2px;
+}

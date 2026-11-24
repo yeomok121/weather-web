@@ -88,18 +88,18 @@ export default function RecoveryDialog({ account, onClose, onUseCurrentPassword,
   };
 
   return (
-    <dialog ref={dialog} className="signup-dialog" aria-labelledby="recovery-title"
+    <dialog ref={dialog} className="signup-dialog recovery-dialog" aria-labelledby="recovery-title"
       onCancel={event => { event.preventDefault(); if (!busy) onClose(); }}>
       <header className="signup-heading">
         <span className="signup-symbol"><FiLock aria-hidden="true" /></span>
-        <div><h2 id="recovery-title">{token ? '복구 이메일' : '비밀번호 찾기'}</h2></div>
+        <div><h2 id="recovery-title">{token ? '복구 이메일 관리' : '비밀번호 찾기'}</h2></div>
         <button className="signup-close" type="button" aria-label="닫기" disabled={busy} onClick={onClose}><FiX aria-hidden="true" /></button>
       </header>
-      {available === null && <p role="status">복구 기능을 확인하고 있어요.</p>}
-      {available === false && !error && <p>이메일 계정 복구를 준비 중입니다.</p>}
+      {available === null && <p className="recovery-message" role="status">복구 기능을 확인하고 있어요.</p>}
+      {available === false && !error && <p className="recovery-message" role="status">이메일 계정 복구를 준비 중입니다.</p>}
       {available && <form onSubmit={submit} aria-busy={busy}>
         <fieldset disabled={busy}>
-          {token && registeredEmail && <p>확인된 이메일 · {registeredEmail}</p>}
+          {token && registeredEmail && <p className="recovery-message"><strong>확인된 이메일</strong><span>{registeredEmail}</span></p>}
           <label className="signup-field">{token ? '복구 이메일 주소' : '아이디'}
             <input required readOnly={codeSent} type={token ? 'email' : 'text'}
               autoComplete={token ? 'email' : 'username'} value={identity} onChange={event => setIdentity(event.target.value)} />
@@ -123,9 +123,9 @@ export default function RecoveryDialog({ account, onClose, onUseCurrentPassword,
           {codeSent && <button type="button" onClick={() => { setCodeSent(false); setCode(''); setNotice(''); setError(''); }}>다시 요청하기</button>}
         </fieldset>
       </form>}
-      {notice && <p role="status">{notice}</p>}
+      {notice && <p className="recovery-message" role="status">{notice}</p>}
       {error && <p role="alert" className="signup-error">{error}</p>}
-      {!token && <button type="button" disabled={busy} onClick={onUseCurrentPassword}>현재 비밀번호로 변경하기</button>}
+      {!token && <button className="recovery-password-option" type="button" disabled={busy} onClick={onUseCurrentPassword}>현재 비밀번호로 변경하기</button>}
     </dialog>
   );
 }

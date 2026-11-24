@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { FiUser, FiLock, FiLogOut, FiSettings, FiTrash2 } from 'react-icons/fi';
+import { FiUser, FiLock, FiLogOut, FiMail, FiSettings, FiTrash2 } from 'react-icons/fi';
 import { requestJson } from '../lib/apiClient';
 import { newPasswordError, newPasswordHint } from './passwordPolicy';
+import './LoginCard.css';
 
 const roleLabels = { member: '일반 회원', superadmin: '최고 관리자', member_manager: '회원 관리자', notice_manager: '공지 관리자' };
 
@@ -153,28 +154,28 @@ function LoginCard({ loginPrompt = 0, guestIntro = DEFAULT_GUEST_INTRO, onSignUp
             </div>
           </form>
         ) : !isEditMode ? (
-          <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-            <h3 style={{ margin: '0 0 16px 0', fontSize: '17px', fontWeight: '800', color: '#1e293b' }}>내 정보</h3>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px', padding: '16px', backgroundColor: 'rgba(255,255,255,0.5)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.6)' }}>
-              <div style={{ width: '48px', height: '48px', borderRadius: '50%', backgroundColor: '#3182ce', color: 'white', display: 'flex', justifyContent: 'center', alignItems: 'center', fontSize: '20px', fontWeight: 'bold' }}>
-                {loggedInUser.name.charAt(0)}
-              </div>
-              <div>
-                <p style={{ margin: '0 0 4px 0', fontWeight: 'bold', fontSize: '15px', color: '#0f172a' }}>{loggedInUser.name} 님</p>
-                <p role="status" style={{ margin: 0, fontSize: '12.5px', color: '#315b76', fontWeight: 700 }}>{roleState.token === loggedInUser.accessToken ? roleState.label : '권한 확인 중'}</p>
+          <section className="account-summary" aria-labelledby="account-summary-title">
+            <h3 id="account-summary-title">내 정보</h3>
+            <div className="account-summary__profile">
+              <span className="account-summary__avatar" aria-hidden="true">{loggedInUser.name.charAt(0)}</span>
+              <div className="account-summary__identity">
+                <p>{loggedInUser.name} 님</p>
+                <span role="status">{roleState.token === loggedInUser.accessToken ? roleState.label : '권한 확인 중'}</span>
               </div>
             </div>
-            
-            <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <button onClick={handleEditOpen} style={{ width: '100%', padding: '10px', backgroundColor: 'rgba(255,255,255,0.7)', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '8px', color: '#334155', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '13px' }}>
-                <FiSettings size={14} /> 정보 수정
+
+            <div className="account-summary__actions">
+              <button type="button" className="account-action" onClick={handleEditOpen}>
+                <FiSettings aria-hidden="true" /> 정보 수정
               </button>
-              <button type="button" onClick={onFindPasswordClick}>복구 이메일 관리</button>
-              <button onClick={onLogout} style={{ width: '100%', padding: '10px', backgroundColor: 'rgba(229,62,62,0.1)', border: '1px solid rgba(229,62,62,0.2)', borderRadius: '8px', color: '#e53e3e', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '13px' }}>
-                <FiLogOut size={14} /> 로그아웃
+              <button type="button" className="account-action" onClick={onFindPasswordClick}>
+                <FiMail aria-hidden="true" /> 복구 이메일 관리
+              </button>
+              <button type="button" className="account-action account-action--logout" onClick={onLogout}>
+                <FiLogOut aria-hidden="true" /> 로그아웃
               </button>
             </div>
-          </div>
+          </section>
         ) : (
           <form onSubmit={handleUpdateSubmit} style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
             <h3 style={{ margin: '0 0 16px 0', fontSize: '16px', fontWeight: 'bold', color: '#1e293b' }}>정보 수정</h3>
@@ -249,10 +250,9 @@ function LoginCard({ loginPrompt = 0, guestIntro = DEFAULT_GUEST_INTRO, onSignUp
           로그인
         </button>
       </form>
-      <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', marginTop: '16px', fontSize: '12px', color: '#64748b' }}>
+      <div className="login-help">
         <button type="button" onClick={onFindPasswordClick}>비밀번호 찾기</button>
-        <span>|</span>
-        <span onClick={onSignUpClick} style={{ cursor: 'pointer', color: '#3182ce', fontWeight: 'bold' }}>무료 회원가입</span>
+        <button type="button" onClick={onSignUpClick}>무료 회원가입</button>
       </div>
     </div>
   );
