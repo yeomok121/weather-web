@@ -4,7 +4,7 @@ import { FiEdit2, FiFlag, FiHeart, FiMapPin, FiTrash2, FiX } from 'react-icons/f
 import { communityPhotoUrl } from '../communityApi';
 import { KIND_LABEL, timeAgo } from '../lib/communityRules';
 
-export default function PostDetail({ post, now, onClose, onLike, onReport, onDelete, onEdit, onOpenPhoto, children }) {
+export default function PostDetail({ post, now, onClose, onLike, onReport, onDelete, onEdit, onOpenPhoto, comments = null, children }) {
   useEffect(() => {
     const onKey = (event) => { if (event.key === 'Escape') onClose(); };
     window.addEventListener('keydown', onKey);
@@ -36,6 +36,7 @@ export default function PostDetail({ post, now, onClose, onLike, onReport, onDel
             {post.mine && <button type="button" onClick={() => onEdit(post)}><FiEdit2 aria-hidden="true" /> 고치기</button>}
             {canDelete && <button type="button" onClick={() => onDelete(post)}><FiTrash2 aria-hidden="true" /> 삭제</button>}
           </footer>
+          {comments}
         </>}
       </article>
     </div>

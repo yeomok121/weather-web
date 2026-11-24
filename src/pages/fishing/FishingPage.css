@@ -511,3 +511,25 @@ button.fish-area-picker em { font-style:normal; font-size:12px; font-weight:700;
 .fish-post-who { margin:-2px 0 10px; color:#71849a; font-size:12.5px; }
 .fish-modal.fish-post .fish-write { margin:0; }
 @media (max-width:720px) { .fish-row-thumb, .fish-row-thumb > img { width:48px; height:48px; } .fish-modal.fish-post { width:94vw; } }
+/* 댓글 · 글쓴이 하트 */
+.fish-comments { margin-top:6px; padding-top:12px; border-top:1px solid rgba(119,153,178,.25); }
+.fish-comments h4 { margin:0 0 8px; color:#173a5c; font-size:14px; }
+.fish-comments ul { display:flex; flex-direction:column; gap:6px; margin:0 0 10px; padding:0; list-style:none; }
+.fish-comments li { padding:9px 12px; border-radius:12px; background:rgba(255,255,255,.85); border:1px solid rgba(119,153,178,.18); }
+.fish-comments li.hearted { border-color:#f2b8b5; background:#fff7f6; }
+.fish-comment-head { display:flex; flex-wrap:wrap; align-items:center; gap:6px; }
+.fish-comment-head b { color:#173a5c; font-size:13px; } .fish-comment-head small { color:#8a9aab; font-size:11.5px; }
+.fish-comment-head .badge { padding:0 6px; border-radius:6px; background:rgba(15,127,134,.12); color:#0f6f76; font-size:10.5px; font-weight:800; }
+.fish-comment-head .heart-badge { margin-left:auto; display:inline-flex; align-items:center; gap:3px; color:#c0392b; font-size:11.5px; font-weight:800; }
+.fish-comment-head .heart-badge svg { fill:#c0392b; }
+.fish-comments li p { margin:4px 0 0; color:#253f57; font-size:13.5px; line-height:1.5; white-space:pre-wrap; overflow-wrap:anywhere; }
+.fish-comment-actions { display:flex; gap:6px; margin-top:6px; } .fish-comment-actions:empty { display:none; }
+.fish-comment-actions button { display:inline-flex; align-items:center; gap:4px; padding:3px 9px; border:1px solid rgba(119,153,178,.3); border-radius:999px; background:#fff; color:#5f7790; font:inherit; font-size:11.5px; cursor:pointer; }
+.fish-comment-actions button.on { border-color:#f2b8b5; background:#fdeceb; color:#c0392b; } .fish-comment-actions button.on svg { fill:#c0392b; }
+.fish-comments-empty, .fish-comments-hint { margin:0 0 10px; color:#71849a; font-size:12.5px; }
+.fish-comment-form textarea { width:100%; box-sizing:border-box; padding:9px 12px; border:1px solid rgba(119,153,178,.4); border-radius:10px; background:#fff; color:#173a5c; font:inherit; font-size:13.5px; resize:vertical; }
+.fish-comment-form > div { display:flex; justify-content:flex-end; align-items:center; gap:8px; margin-top:6px; }
+.fish-comment-form small { color:#8a9aab; font-size:11.5px; }
+.fish-comment-form button, .fish-comment-login { padding:7px 16px; border:0; border-radius:999px; background:#0f7f86; color:#fff; font:inherit; font-size:13px; font-weight:800; cursor:pointer; }
+.fish-comment-form button:disabled { opacity:.5; cursor:default; }
+.fish-modal.fish-post > * { flex-shrink:0; } /* 댓글이 많아 창보다 길어져도 사진이 눌리지 않고 창 안에서 스크롤 */

@@ -22,4 +22,9 @@ export const deleteCommunityPost = (token, id) => requestJson(`/api/community/po
 export const likeCommunityPost = (token, id) => requestJson(`/api/community/posts/${id}/like`, { method: 'POST', timeoutMs: 20000, headers: auth(token) });
 export const reportCommunityPost = (token, id, reason) => requestJson(`/api/community/posts/${id}/report`, { method: 'POST', timeoutMs: 20000, headers: json(token), body: JSON.stringify({ reason }) });
 export const fetchMyRole = (token, { signal } = {}) => requestJson('/api/users/me/role', { signal, timeoutMs: 20000, headers: auth(token) });
+// 댓글 (글쓴이 하트)
+export const fetchComments = (postId, { token = '', signal } = {}) => requestJson(`/api/community/posts/${postId}/comments`, { signal, timeoutMs: 20000, headers: auth(token) });
+export const addComment = (token, postId, body) => requestJson(`/api/community/posts/${postId}/comments`, { method: 'POST', timeoutMs: 20000, headers: json(token), body: JSON.stringify({ body }) });
+export const deleteComment = (token, commentId) => requestJson(`/api/community/comments/${commentId}`, { method: 'DELETE', timeoutMs: 20000, headers: auth(token) });
+export const heartComment = (token, commentId) => requestJson(`/api/community/comments/${commentId}/heart`, { method: 'POST', timeoutMs: 20000, headers: auth(token) });
 export const communityPhotoUrl = (id) => `${API}/api/community/photos/${id}`;

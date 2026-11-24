@@ -15,6 +15,7 @@ import { useCommunityPosts } from './community/useCommunityPosts';
 import PostRow from './community/PostRow';
 import PostDetail from './community/PostDetail';
 import WriteForm from './community/WriteForm';
+import Comments from './community/Comments';
 import PhotoViewer from './community/PhotoViewer';
 
 const FILTERS = [{ id: '', label: '전체' }, { id: '자랑', label: '조과 자랑' }, { id: '팁', label: '낚시 팁' }];
@@ -107,7 +108,10 @@ export default function CommunityPage() {
         </section>
       </div>
     </div>
-    {opened && <PostDetail post={opened} onClose={closePost} {...handlers}>
+    {opened && <PostDetail post={opened} onClose={closePost} {...handlers}
+      comments={<Comments postId={opened.id} token={token} now={now} isPostAuthor={opened.mine} showToast={showToast}
+        onRequireLogin={() => { closePost(); needLogin('로그인하면 댓글을 쓸 수 있어요.'); }}
+        onCountChange={(count) => { list.update(opened.id, { comment_count: count }); if (fetched?.id === opened.id) setFetched({ ...fetched, comment_count: count }); }} />}>
       {editing && <WriteForm token={token} isAdmin={isAdmin} initial={opened} onCancel={() => setEditing(false)}
         onCreated={(post) => { list.update(post.id, post); if (fetched?.id === post.id) setFetched(post); setEditing(false); showToast?.('고친 내용을 저장했어요.'); }} />}
     </PostDetail>}
