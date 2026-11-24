@@ -54,11 +54,20 @@
   .mountain-results > :is(.mtn-score-altitude-box, .mountain-route-result) { flex: initial !important; }
   .mountain-altitude { order: -1; display: grid !important; grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .mountain-altitude > :is(strong, details) { grid-column: 1 / -1; }
-  .mountain-altitude > div { flex-wrap: wrap; gap: 4px 8px; padding: 8px !important; border: 0 !important; border-radius: 8px; background: #f1f5f9; }
+  .mountain-altitude .mountain-altitude__heading { margin-bottom: 2px; font-size: 14px !important; }
+  .mountain-altitude > div { display: grid !important; align-content: start; justify-content: start !important; gap: 4px; padding: 12px !important; border: 1px solid #d5e3e1 !important; border-radius: 10px; background: #fff; font-size: 13px; }
+  .mountain-altitude > div:first-of-type { background: #e9f4fc; }
+  .mountain-altitude .mountain-altitude__value { display: grid; gap: 3px; color: #215077 !important; font-size: 28px; line-height: 1.15; font-weight: 750 !important; font-variant-numeric: tabular-nums; }
+  .mountain-altitude .mountain-altitude__value span { font-size: 12px !important; line-height: 1.4; }
   .mountain-journey .mountain-shortcuts button:focus-visible { outline: 2px solid #315b73 !important; outline-offset: 1px; }
-  .mountain-score-stack .mountain-score-chips { display: flex; flex-wrap: wrap; gap: 8px; }
-  .mountain-score-chips span { padding: 5px 9px; border: 1px solid #d8e0e9; border-radius: 999px; background: #f1f5f9; color: #334155; font-size: 12px; }
-  .mountain-score-chips strong { margin-left: 4px; font-size: 13px; font-variant-numeric: tabular-nums; }
+  .mountain-score-stack .mountain-score-comparison { display: grid; gap: 8px; }
+  .mountain-score-comparison h3 { margin: 0; color: #334155; font-size: 14px; }
+  .mountain-score-meter { display: grid; gap: 8px; padding: 10px 12px; border: 1px solid #d5e3e1; border-radius: 10px; background: #fff; }
+  .mountain-score-meter__heading { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; color: #253a48; font-size: 14px; font-weight: 650; }
+  .mountain-score-meter__heading strong { font-size: 28px; line-height: 1.1; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .mountain-score-meter__heading small, .mountain-score-meter__missing { color: #526577; font-size: 13px; font-weight: 500; }
+  .mountain-score-meter__track { height: 6px; overflow: hidden; border-radius: 999px; background: #e7edf3; }
+  .mountain-score-meter__track span { display: block; height: 100%; border-radius: inherit; background: #61788c; }
   .hourly-precip-value[data-zero="true"] { opacity: .65; font-weight: 400; }
   .hourly-precip-value[data-has-precip="true"] strong { color: #155799; font-weight: 800; }
 }

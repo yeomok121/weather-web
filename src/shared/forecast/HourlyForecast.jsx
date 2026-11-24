@@ -697,10 +697,22 @@ function HourlyForecast({
             <div className="mtn-score-altitude-box" style={{ flex: '1 1 250px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
 
               <div className="mountain-score-stack">
-                <div className="desktop-weather-label mountain-score-chips">
-                  <span>기상 <strong>{weatherScore ?? '자료 없음'}</strong>{weatherScore != null && '/100 · 참고'}</span>
-                  <span>조망 <strong>{viewEstimate.score ?? '자료 없음'}</strong>{viewEstimate.score != null && '/100 · 참고'}</span>
-                </div>
+                <section className="desktop-weather-label mountain-score-comparison" aria-labelledby="mountain-score-heading">
+                  <h3 id="mountain-score-heading">선택 일정의 참고 점수</h3>
+                  {[['기상 조건', weatherScore], ['조망 환경', viewEstimate.score]].map(([label, score]) => (
+                    <div className="mountain-score-meter" key={label}>
+                      <div className="mountain-score-meter__heading">
+                        <span>{label}</span>
+                        {Number.isFinite(score)
+                          ? <strong>{score}<small> / 100</small></strong>
+                          : <span className="mountain-score-meter__missing">자료 없음</span>}
+                      </div>
+                      {Number.isFinite(score) && <div className="mountain-score-meter__track" aria-hidden="true">
+                        <span style={{ width: `${score}%` }} />
+                      </div>}
+                    </div>
+                  ))}
+                </section>
                 <div className="mountain-score-card desktop-previous">
                   <span className="mountain-score-card__label">기상 조건 점수 · 참고</span>
                   <strong className="mountain-score-card__value" style={{ color: scoreDisplayColor(weatherScore) }}>{weatherScore ?? '—'}</strong>
@@ -733,18 +745,18 @@ function HourlyForecast({
               </MountainInfo>
 
               <div className="mountain-altitude" style={{ backgroundColor: 'rgba(255,255,255,0.55)', borderRadius: '12px', padding: '12px', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '6px', fontSize: '11.5px' }}>
-                <strong style={{ fontSize: '12px', color: '#334155' }}>{isFuture ? '선택일 고도별 기온' : '현재 고도별 기온'} <span className="mountain-reference-label">참고 추정</span></strong>
+                <strong className="mountain-altitude__heading" style={{ fontSize: '12px', color: '#334155' }}>{isFuture ? '선택일 고도별 기온' : '현재 고도별 기온'} <span className="mountain-reference-label"><span className="desktop-weather-label">고도 보정 추정값</span><span className="desktop-previous">참고 추정</span></span></strong>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '4px', borderBottom: '1px dashed rgba(0,0,0,0.1)' }}>
                   <span style={{ fontWeight: '800', color: '#1e293b' }}><span className="desktop-previous">⛰️ </span><FiFlag className="desktop-weather-label inline-weather-icon" aria-hidden="true" />정상 <span style={{fontSize:'10px', color:'#475569', fontWeight:'normal'}}>({mountainInfo?.elevation}m)</span></span>
-                  <span style={{ color: '#0f172a', fontWeight: '800' }}>{currentTemp}°C <span style={{fontSize:'10px', color:'#475569', fontWeight:'normal'}}>(체감 {summitFeelsLike}°C)</span></span>
+                  <span className="mountain-altitude__value" style={{ color: '#0f172a', fontWeight: '800' }}>{currentTemp}°C <span style={{fontSize:'10px', color:'#475569', fontWeight:'normal'}}>(체감 {summitFeelsLike}°C)</span></span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '2px 0', borderBottom: '1px dashed rgba(0,0,0,0.1)' }}>
                   <span style={{ color: '#475569', fontWeight: 'bold' }}><span className="desktop-previous">🌲 </span>중턱 <span style={{fontSize:'10px', color:'#64748b', fontWeight:'normal'}}>({Math.round((mountainInfo?.elevation || 800) / 2)}m)</span></span>
-                  <span style={{ color: '#334155', fontWeight: '600' }}>{Math.round((currentTemp + baseTemp) / 2)}°C</span>
+                  <span className="mountain-altitude__value" style={{ color: '#334155', fontWeight: '600' }}>{Math.round((currentTemp + baseTemp) / 2)}°C</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '2px' }}>
                   <span style={{ color: '#475569', fontWeight: 'bold' }}><span className="desktop-previous">👟 </span><FiNavigation className="desktop-weather-label inline-weather-icon" aria-hidden="true" />들머리 <span style={{fontSize:'10px', color:'#64748b', fontWeight:'normal'}}>(입구)</span></span>
-                  <span style={{ color: '#334155', fontWeight: '600' }}>{baseTemp}°C</span>
+                  <span className="mountain-altitude__value" style={{ color: '#334155', fontWeight: '600' }}>{baseTemp}°C</span>
                 </div>
                 <MountainInfo label="출처·고도 보정 방식">
                   <div>기온은 고도 100m당 약 0.65°C 하강하는 기준을 반영하고, 정상 풍속은 {desktopFlow && (plannedWinds.length ? '선택 일정 중 최대 ' : isFuture ? '선택일 요약 예보 기준 ' : '현재 기준 ')}{desktopFlow && !plannedWinds.length && toNumber(weatherData?.wind_speed) === null ? '자료 없음' : `${wind} m/s`}입니다.</div>
