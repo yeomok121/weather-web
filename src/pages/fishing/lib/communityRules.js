@@ -5,6 +5,7 @@ export const CATEGORIES = [
   { id: '자랑', label: '조과 자랑', hint: '잡은 물고기 사진을 자랑해요 (사진 필수)' },
   { id: '팁', label: '낚시 팁', hint: '채비·포인트 공략·안전 팁을 나눠요' },
 ];
+export const KIND_LABEL = { 자랑: '조과 자랑', 팁: '낚시 팁', 공지: '공지' };
 export const LIMITS = { title: 60, body: 2000, photos: 3 };
 
 // 받침에 맞춘 '은/는' (감성돔은 · 볼락은 · 농어는)

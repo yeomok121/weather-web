@@ -24,7 +24,7 @@ export default function CommunityPreview() {
       : state.status === 'failed' ? <p className="fish-community-empty">글을 불러오지 못했어요.</p>
         : state.items.length === 0 ? <p className="fish-community-empty">아직 글이 없어요. 첫 조과를 자랑해 보세요!</p>
           : <ul>{state.items.map((post) => <li key={post.id}>
-            <Link to={COMMUNITY_PATH}>
+            <Link to={`${COMMUNITY_PATH}?post=${post.id}`}>
               {post.photos[0] && <img src={communityPhotoUrl(post.photos[0].id)} alt="" loading="lazy" />}
               <span>
                 <p><em className={`kind k-${post.category}`}>{LABEL[post.category]}</em> {post.title}</p>

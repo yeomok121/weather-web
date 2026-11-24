@@ -16,6 +16,8 @@ export function fetchCommunityPosts({ category = '', before = null, limit = 20, 
 }
 
 export const createCommunityPost = (token, post) => requestJson('/api/community/posts', { method: 'POST', timeoutMs: 60000, headers: json(token), body: JSON.stringify(post) });
+export const fetchCommunityPost = (id, { token = '', signal } = {}) => requestJson(`/api/community/posts/${id}`, { signal, timeoutMs: 20000, headers: auth(token) });
+export const editCommunityPost = (token, id, post) => requestJson(`/api/community/posts/${id}`, { method: 'PUT', timeoutMs: 60000, headers: json(token), body: JSON.stringify(post) });
 export const deleteCommunityPost = (token, id) => requestJson(`/api/community/posts/${id}`, { method: 'DELETE', timeoutMs: 20000, headers: auth(token) });
 export const likeCommunityPost = (token, id) => requestJson(`/api/community/posts/${id}/like`, { method: 'POST', timeoutMs: 20000, headers: auth(token) });
 export const reportCommunityPost = (token, id, reason) => requestJson(`/api/community/posts/${id}/report`, { method: 'POST', timeoutMs: 20000, headers: json(token), body: JSON.stringify({ reason }) });

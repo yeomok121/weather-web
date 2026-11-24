@@ -431,11 +431,9 @@ button.fish-area-picker em { font-style:normal; font-size:12px; font-weight:700;
 .fish-community-back { align-self:flex-start; display:inline-flex; align-items:center; gap:6px; padding:7px 12px; border-radius:999px; background:rgba(255,255,255,.75); color:#173a5c; font-size:13px; font-weight:700; text-decoration:none; }
 .fish-board-title { align-items:flex-start; } .fish-board-title > div { flex:1; min-width:0; }
 .fish-board-write { display:inline-flex; align-items:center; gap:6px; flex:none; padding:9px 16px; border:0; border-radius:999px; background:#0f7f86; color:#fff; font:inherit; font-size:14px; font-weight:800; cursor:pointer; }
-.fish-board-notices { display:flex; flex-direction:column; gap:8px; margin-bottom:14px; }
 .fish-board-filters { display:flex; gap:6px; margin:0 0 12px; }
 .fish-board-filters button { padding:7px 14px; border:1px solid rgba(119,153,178,.35); border-radius:999px; background:rgba(255,255,255,.7); color:#36536e; font:inherit; font-size:13px; font-weight:700; cursor:pointer; }
 .fish-board-filters button.on { background:#173a5c; border-color:#173a5c; color:#fff; }
-.fish-board-list { display:flex; flex-direction:column; gap:12px; }
 .fish-board-status { display:flex; align-items:center; gap:8px; margin:6px 0; color:#5f7790; font-size:13.5px; }
 .fish-board-status.error { color:#a3241a; } .fish-board-status button { margin-left:6px; padding:4px 10px; border:1px solid currentColor; border-radius:999px; background:none; color:inherit; font:inherit; cursor:pointer; }
 .fish-board-more { display:block; margin:14px auto 0; padding:9px 18px; border:1px solid rgba(119,153,178,.4); border-radius:999px; background:#fff; color:#36536e; font:inherit; font-weight:700; cursor:pointer; }
@@ -451,7 +449,7 @@ button.fish-area-picker em { font-style:normal; font-size:12px; font-weight:700;
 .fish-post-photos.n1 { grid-template-columns:1fr; } .fish-post-photos.n2 { grid-template-columns:1fr 1fr; } .fish-post-photos.n3 { grid-template-columns:2fr 1fr; grid-template-rows:1fr 1fr; }
 .fish-post-photos.n3 button:first-child { grid-row:1 / 3; }
 .fish-post-photos button { padding:0; border:0; background:#dde6ee; cursor:zoom-in; }
-.fish-post-photos img { display:block; width:100%; height:100%; max-height:420px; object-fit:cover; aspect-ratio:auto; }
+.fish-post-photos img { display:block; width:100%; height:100%; max-height:300px; object-fit:cover; aspect-ratio:auto; }
 .fish-post-photos.n2 img, .fish-post-photos.n3 img { aspect-ratio:4/3; }
 .fish-post-facts { display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin:0 0 6px; font-size:13px; color:#36536e; }
 .fish-post-facts b { padding:2px 8px; border-radius:7px; background:#eef4f8; color:#173a5c; }
@@ -488,3 +486,28 @@ button.fish-area-picker em { font-style:normal; font-size:12px; font-weight:700;
 .fish-photo-viewer button { position:absolute; display:inline-flex; align-items:center; justify-content:center; width:40px; height:40px; border:0; border-radius:999px; background:#fff; color:#173a5c; font-size:20px; cursor:pointer; box-shadow:0 6px 18px rgba(10,25,40,.3); }
 .fish-photo-viewer .close { top:-14px; right:-14px; } .fish-photo-viewer .prev { left:8px; top:45%; } .fish-photo-viewer .next { right:8px; top:45%; }
 @media (max-width:720px) { .fish-write-facts { grid-template-columns:1fr; } .fish-post { padding:12px; } .fish-post footer { flex-wrap:wrap; } .fish-post footer .who { flex-basis:100%; } .fish-photo-viewer .close { top:-10px; right:-6px; } }
+
+/* 커뮤니티 목록: 제목만 한 줄씩 + 오른쪽 작은 사진 (마우스를 올리면 크게) */
+.fish-board-rows { display:flex; flex-direction:column; gap:6px; margin:0 0 12px; padding:0; list-style:none; }
+.fish-board-rows.notices { margin-bottom:14px; }
+.fish-row-main { display:flex; align-items:center; gap:12px; width:100%; padding:10px 12px; border:1px solid rgba(119,153,178,.2); border-radius:13px; background:rgba(255,255,255,.72); color:inherit; font:inherit; text-align:left; cursor:pointer; }
+.fish-row-main:hover { border-color:rgba(15,127,134,.45); background:#fff; }
+.fish-row.notice .fish-row-main { background:#fffaf0; border-color:#f0d9a8; }
+.fish-row-text { display:flex; flex-direction:column; gap:3px; flex:1; min-width:0; }
+.fish-row-title { display:flex; align-items:center; gap:7px; min-width:0; }
+.fish-row-title b { color:#173a5c; font-size:14.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.fish-row-text small { color:#71849a; font-size:12px; } .fish-row-text small svg { vertical-align:-1px; }
+.fish-row-thumb { position:relative; flex:none; width:56px; height:56px; }
+.fish-row-thumb > img { width:56px; height:56px; border-radius:10px; object-fit:cover; background:#dde6ee; display:block; }
+.fish-row-peek { display:none; }
+@media (hover:hover) and (pointer:fine) {
+  .fish-row-peek { position:absolute; z-index:30; right:calc(100% + 10px); top:50%; transform:translateY(-50%); padding:5px; border-radius:14px; background:#fff; box-shadow:0 14px 36px rgba(10,25,40,.28); pointer-events:none; }
+  .fish-row-peek img { display:block; width:300px; max-height:240px; border-radius:10px; object-fit:cover; }
+  .fish-row-thumb:hover .fish-row-peek { display:block; }
+}
+/* 글 전체 창 */
+.fish-modal.fish-post { width:min(720px, 92vw); max-height:calc(100vh - 80px); overflow-y:auto; box-sizing:border-box; background:#f7fbfd; }
+.fish-modal.fish-post.notice { background:#fffdf7; }
+.fish-post-who { margin:-2px 0 10px; color:#71849a; font-size:12.5px; }
+.fish-modal.fish-post .fish-write { margin:0; }
+@media (max-width:720px) { .fish-row-thumb, .fish-row-thumb > img { width:48px; height:48px; } .fish-modal.fish-post { width:94vw; } }
