@@ -128,3 +128,43 @@
   outline: 2px solid #25659b;
   outline-offset: 2px;
 }
+
+
+.account-password-notice {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid #e4c58c;
+  border-radius: 10px;
+  background: #fff7e8;
+  color: #634018;
+  font-size: 14px;
+}
+
+.account-password-notice p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.account-password-notice button {
+  justify-self: start;
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid #d0a55b;
+  border-radius: 8px;
+  background: #fffdf7;
+  color: inherit;
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.account-password-notice button:hover {
+  background: #fcf0d4;
+}
+
+.account-password-notice button:focus-visible {
+  outline: 2px solid #82571c;
+  outline-offset: 2px;
+}

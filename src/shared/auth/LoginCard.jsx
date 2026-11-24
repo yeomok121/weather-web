@@ -82,7 +82,7 @@ function LoginCard({ loginPrompt = 0, guestIntro = DEFAULT_GUEST_INTRO, onSignUp
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: username.trim(), password }),
       });
-      await onLogin({ id: data.username, memberId: data.user_id, name: data.name, accessToken: data.access_token });
+      await onLogin({ id: data.username, memberId: data.user_id, passwordNeedsUpdate: data.password_needs_update === true, name: data.name, accessToken: data.access_token });
       setUsername(''); setPassword('');
     } catch (error) {
       setLoginError(error.message);
@@ -163,6 +163,12 @@ function LoginCard({ loginPrompt = 0, guestIntro = DEFAULT_GUEST_INTRO, onSignUp
                 <span role="status">{roleState.token === loggedInUser.accessToken ? roleState.label : '권한 확인 중'}</span>
               </div>
             </div>
+
+            {loggedInUser.passwordNeedsUpdate && <div className="account-password-notice" role="status">
+              <strong>비밀번호를 변경해 주세요</strong>
+              <p>현재 비밀번호가 새 기준에 맞지 않습니다. {newPasswordHint}</p>
+              <button type="button" onClick={handleEditOpen}>비밀번호 변경하기</button>
+            </div>}
 
             <div className="account-summary__actions">
               <button type="button" className="account-action" onClick={handleEditOpen}>

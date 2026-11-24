@@ -371,7 +371,7 @@ function AdminPage({ onClose, adminPassword, adminToken, adminRole }) {
                   style={{ flex: 1, minWidth: '140px', padding: '10px 12px', borderRadius: '6px', border: '1px solid #cbd5e1' }} 
                 />
                 <input 
-                  type="password" autoComplete="new-password" placeholder="비밀번호 (15자 이상)" value={newUserForm.pw}
+                  type="password" autoComplete="new-password" placeholder="비밀번호 (8자 이상, 특수기호 포함)" value={newUserForm.pw}
                   onChange={e => setNewUserForm({...newUserForm, pw: e.target.value})} 
                   style={{ flex: 1, minWidth: '140px', padding: '10px 12px', borderRadius: '6px', border: '1px solid #cbd5e1' }} 
                 />
@@ -452,7 +452,7 @@ function AdminPage({ onClose, adminPassword, adminToken, adminRole }) {
                                 style={{ width: '90%', padding: '6px 8px', borderRadius: '4px', border: '1px solid #3182ce' }}
                               />
                             ) : user.name}
-                            {isEditing && <input aria-label="새 비밀번호" type="password" autoComplete="new-password" placeholder="새 비밀번호 (15자 이상)" value={editUserForm.pw} onChange={e => setEditUserForm({...editUserForm, pw: e.target.value})} style={{ width: '90%', marginTop: '8px', padding: '6px 8px', borderRadius: '4px', border: '1px solid #3182ce' }} />}
+                            {isEditing && <input aria-label="새 비밀번호" type="password" autoComplete="new-password" placeholder="새 비밀번호 (8자 이상, 특수기호 포함)" value={editUserForm.pw} onChange={e => setEditUserForm({...editUserForm, pw: e.target.value})} style={{ width: '90%', marginTop: '8px', padding: '6px 8px', borderRadius: '4px', border: '1px solid #3182ce' }} />}
                           </td>
                           <td style={{ padding: '14px 10px', color: '#475569' }}>{user.createdAt ? String(user.createdAt).slice(0, 10) : '확인 불가'}</td>
                           <td>{user.suspended ? '정지' : '정상'}</td>
