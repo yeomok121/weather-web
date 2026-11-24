@@ -10,7 +10,7 @@ function WeatherMain({
   const [hoveredIndex, setHoveredIndex] = useState(null);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [desktopList, setDesktopList] = useState(() => window.matchMedia('(min-width: 901px)').matches);
-  const [showAllMountains, setShowAllMountains] = useState(false);
+  const mountainListRef = useRef(null);
   useEffect(() => {
     const query = window.matchMedia('(min-width: 901px)');
     const sync = () => setDesktopList(query.matches);
@@ -22,8 +22,11 @@ function WeatherMain({
   const selectedMountain = sortedMountains.find(mountain => mountain.name === weatherData.region);
   const orderedMountains = desktopList && selectedMountain
     ? [selectedMountain, ...sortedMountains.filter(mountain => mountain !== selectedMountain)] : sortedMountains;
-  const visibleMountains = desktopList && !showAllMountains ? orderedMountains.slice(0, 5) : orderedMountains;
 
+  const selectedMountainName = selectedMountain?.name;
+  useEffect(() => {
+    if (desktopList && selectedMountainName && mountainListRef.current) mountainListRef.current.scrollTop = 0;
+  }, [desktopList, selectedMountainName]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -171,7 +174,7 @@ function WeatherMain({
       </div>
 
       {/* 💡 우측 명산 목록 패딩 및 아이템 크기 최적화 */}
-      <div id="mountain-picker" className="weather-main-right" style={{ flex: 1, padding: '16px', borderLeft: '1px solid rgba(255,255,255,0.4)', color: '#333', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', backgroundColor: 'rgba(255,255,255,0.15)', minWidth: 0 }}>
+      <div id="mountain-picker" tabIndex={isMountainMode ? -1 : undefined} className="weather-main-right" style={{ flex: 1, padding: '16px', borderLeft: '1px solid rgba(255,255,255,0.4)', color: '#333', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', backgroundColor: 'rgba(255,255,255,0.15)', minWidth: 0 }}>
         {isMountainMode ? (
           <div className="mountain-picker-content">
             <h4 style={{ fontSize: '11.5px', color: '#166534', fontWeight: 'bold', margin: '0 0 6px 0' }}><span className="desktop-previous">📌 </span><FiInfo className="desktop-weather-label inline-weather-icon" aria-hidden="true" />핵심 산행 팁</h4>
@@ -179,21 +182,23 @@ function WeatherMain({
               {mountainInfo?.course_tip || '정상 부근 기온 하강과 강풍에 대비해 방풍 의류와 스틱을 준비하세요.'}
             </div>
 
-            <h4 style={{ fontSize: '11.5px', color: '#475569', margin: '0 0 6px 0', fontWeight: 'bold' }}>국내 산 리스트</h4>
-
-            <ul id="weather-mountain-list" className="mountain-picker-list" aria-label={desktopList ? "국내 산 목록" : "가나다순 산 리스트"}>
-              {visibleMountains.map((m, idx) => {
+            <div className="mountain-picker-heading">
+              <h4 id="weather-mountain-heading">국내 산 리스트</h4>
+              {desktopList && orderedMountains.length > 0 && <span>{orderedMountains.length}곳</span>}
+            </div>
+            <ul ref={mountainListRef} className="mountain-picker-list" aria-labelledby="weather-mountain-heading">
+              {orderedMountains.map((m, idx) => {
                 const isSelected = weatherData.region === m.name;
                 return (
-                  <li key={m.name} role="button" aria-pressed={isSelected} tabIndex={0} onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onSelectMountain?.(m.name); } }} onClick={() => onSelectMountain && onSelectMountain(m.name)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 8px', cursor: 'pointer', borderRadius: '6px', backgroundColor: isSelected ? 'rgba(22,163,74,0.1)' : 'transparent', color: isSelected ? '#16a34a' : '#475569', fontWeight: isSelected ? 'bold' : '500', marginBottom: '2px' }}>
-                    <span>{desktopList ? (isSelected ? "선택 · " : "") : `${idx + 1}. `}{m.name}</span><span style={{ fontSize: '10.5px', color: isSelected ? '#16a34a' : '#94a3b8' }}>{m.elevation}m</span>
+                  <li key={m.name}>
+                    <button type="button" aria-pressed={isSelected} onClick={() => onSelectMountain?.(m.name)}>
+                      <span>{desktopList ? (isSelected ? '선택 · ' : '') : `${idx + 1}. `}{m.name}</span>
+                      <span className="mountain-picker-elevation">{m.elevation}m</span>
+                    </button>
                   </li>
                 );
               })}
             </ul>
-            {desktopList && orderedMountains.length > 5 && <button type="button" className="mountain-list-toggle"
-              aria-controls="weather-mountain-list" aria-expanded={showAllMountains}
-              onClick={() => setShowAllMountains(open => !open)}>{showAllMountains ? '산 목록 접기' : `산 목록 더보기 (${orderedMountains.length}곳)`}</button>}
 
           </div>
         ) : (

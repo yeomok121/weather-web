@@ -83,6 +83,13 @@
 
 .mountain-picker-content{min-width:0;min-height:0;display:flex;flex-direction:column;flex:1}
 .mountain-picker-list{list-style:none;padding:0 4px 0 0;margin:0;min-height:160px;height:clamp(160px,20vh,240px);overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#9cbeb0 transparent;font-size:13px}
-.mountain-picker-list>li{min-height:32px;box-sizing:border-box;gap:8px}
-.mountain-picker-list>li:focus-visible{outline:2px solid var(--primary);outline-offset:-2px}
-@media(max-width:900px){.mountain-picker-list{height:clamp(160px,25vh,224px)}.mountain-picker-list>li{min-height:44px}}
+.mountain-picker-heading{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:6px;color:#475569}
+.mountain-picker-heading h4{margin:0;font-size:11.5px}
+.mountain-picker-heading>span{font-size:11.5px}
+.mountain-picker-list>li{margin-bottom:2px}
+.mountain-picker-list button{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;min-height:32px;padding:6px 8px;border:0;border-radius:6px;background:transparent;color:#475569;font:inherit;font-weight:500;text-align:left;cursor:pointer}
+.mountain-picker-list button:hover{background:#e8f4ef;color:#166534}
+.mountain-picker-list button[aria-pressed=true]{background:#dff2e8;color:#166534;font-weight:700}
+.mountain-picker-list button:focus-visible{outline:2px solid var(--primary);outline-offset:-2px}
+.mountain-picker-elevation{flex:none;font-size:11px}
+@media(max-width:900px){.mountain-picker-list{height:clamp(160px,25vh,224px)}.mountain-picker-list button{min-height:44px}}

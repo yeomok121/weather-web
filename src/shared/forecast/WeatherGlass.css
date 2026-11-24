@@ -65,8 +65,6 @@
   .weather-main-card > div:first-child { align-self: center; }
   .weather-main-card .weather-main-right { align-self: start; }
   .weather-main-card .mountain-picker-content { flex: initial; }
-  .weather-main-card .mountain-picker-list { height: auto; min-height: 0; overflow: visible; }
-  .mountain-list-toggle { min-height: 36px; margin-top: 6px; border: 1px solid #c9ddd3; border-radius: 8px; background: #f5faf7; color: #245a4a; font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
-  .mountain-list-toggle:hover { background: #e9f4ed; }
+  .weather-main-card .mountain-picker-list { height: auto; min-height: 0; max-height: clamp(160px, 20vh, 204px); scrollbar-gutter: stable; }
   .detail-info-card .weather-reading-source:not(:empty) { display: block; margin-top: 4px; color: #526475; font-weight: 500; }
 }
