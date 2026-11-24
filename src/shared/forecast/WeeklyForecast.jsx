@@ -18,7 +18,7 @@ function WeeklyForecast({ weeklyData = [], isLoading = false }) {
         <p style={{ fontSize: '14px', color: '#475569', fontWeight: '500' }}>주간 날씨를 불러오는 중...</p>
       ) : weeklyData.length === 0 ? <p className="muted">주간 예보 자료가 없습니다. 최신 자료를 받은 뒤 표시합니다.</p> : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-          <p className="muted" style={{ margin: 0, fontSize: '12px' }}><span className="desktop-weather-label">기온 범위는 날짜별 제공 예보 기준입니다. </span>강수확률은 날짜별 예보 중 최댓값입니다.</p>
+          <p className="muted" style={{ margin: 0, fontSize: '12px' }}><span className="desktop-weather-label">기온은 OpenWeather의 날짜별 제공 시간대 예보 범위입니다. </span>강수확률은 날짜별 예보 중 최댓값입니다.</p>
           {weeklyData.map((day, idx) => {
             const minVal = Number(day.temp_min);
             const maxVal = Number(day.temp_max);

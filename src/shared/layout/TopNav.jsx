@@ -2,8 +2,9 @@
 import { useRef, useState } from 'react';
 import { FiSearch, FiBell, FiClock, FiMap, FiAnchor, FiSun, FiX } from 'react-icons/fi';
 
-export default function TopNav({ search, isMountainMode, isFishingPage, isNoticeOpen, mountainsList, onToggleMountainMode, onGoHome, onToggleFishing, onOpenNotices }) {
+export default function TopNav({ search, isMountainMode, isWeatherPage, isMountainPage, isFishingPage, isNoticeOpen, mountainsList, onGoMountain, onGoHome, onToggleFishing, onOpenNotices }) {
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const activePage = isNoticeOpen ? null : isFishingPage ? 'fishing' : isWeatherPage ? 'weather' : isMountainPage ? 'mountain' : null;
   const inputRef = useRef(null);
   const toggleRef = useRef(null);
   const isRecent = !search.searchInput.trim() && !isMountainMode;
@@ -47,11 +48,15 @@ export default function TopNav({ search, isMountainMode, isFishingPage, isNotice
         </>}
       </div>
       <nav className="header-navigation" aria-label="주요 서비스">
-        {!isFishingPage && !isNoticeOpen && <span className="header-nav-item header-nav-current desktop-weather-label" aria-current="page">
-          {isMountainMode ? <><FiMap aria-hidden="true" />산행 날씨</> : <><FiSun aria-hidden="true" />일반 날씨</>}
-        </span>}
-        <button type="button" className="header-nav-item" onClick={() => { closeSearch(); if (isFishingPage) onGoHome(); else onToggleMountainMode(); }}>{isMountainMode || isFishingPage ? <FiSun aria-hidden="true" size={16} /> : <FiMap aria-hidden="true" size={16} />}{isMountainMode || isFishingPage ? '일반 날씨' : '산행 날씨'}</button>
-        <button type="button" className="header-nav-item" aria-pressed={isFishingPage && !isNoticeOpen} onClick={() => { closeSearch(); if (!isFishingPage) onToggleFishing(); }}><FiAnchor aria-hidden="true" size={16} />바다 낚시</button>
+        <button type="button" className={`header-nav-item${!isFishingPage && !isMountainMode ? ' header-nav-desktop' : ''}`}
+          aria-current={activePage === 'weather' ? 'page' : undefined} onClick={() => { closeSearch(); if (!isWeatherPage) onGoHome(); }}>
+          <FiSun aria-hidden="true" size={16} />일반 날씨
+        </button>
+        <button type="button" className={`header-nav-item${isFishingPage || isMountainMode ? ' header-nav-desktop' : ''}`}
+          aria-current={activePage === 'mountain' ? 'page' : undefined} onClick={() => { closeSearch(); if (!isMountainPage) onGoMountain(); }}>
+          <FiMap aria-hidden="true" size={16} />산행 날씨
+        </button>
+        <button type="button" className="header-nav-item" aria-current={activePage === 'fishing' ? 'page' : undefined} onClick={() => { closeSearch(); if (!isFishingPage) onToggleFishing(); }}><FiAnchor aria-hidden="true" size={16} />바다 낚시</button>
         <button type="button" className="header-nav-item" aria-pressed={!!isNoticeOpen} onClick={() => { closeSearch(); onOpenNotices(); }}><FiBell aria-hidden="true" size={16} />공지사항</button>
       </nav>
     </div>

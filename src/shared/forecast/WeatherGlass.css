@@ -34,19 +34,29 @@
 @media (min-width: 901px) {
   .mountain-top-safety {
     display: grid;
-    grid-template-columns: minmax(180px, 1fr) 1.7fr;
-    align-items: center;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    align-items: stretch;
     gap: 16px;
     padding: 16px;
-    border-inline-start: 4px solid var(--safety-color);
+    border-inline-start: 4px solid var(--safety-color) !important;
   }
+  .mountain-top-safety.glass-card[data-danger="true"] {
+    --safety-color: #991b1b !important;
+    background: #fef2f2 !important;
+    border-color: #e6a4a4 !important;
+    border-inline-start-color: #b91c1c !important;
+  }
+  .mountain-top-safety__schedule { display: grid; gap: 12px; }
   .mountain-top-safety__status { display: flex; align-items: center; gap: 8px; color: var(--safety-color); }
   .mountain-top-safety__status svg { flex: none; width: 20px; height: 20px; }
   .mountain-top-safety__status span, .mountain-top-safety dt { color: #526475; font-size: 12px; }
   .mountain-top-safety__status strong { display: block; margin-block-start: 4px; font-size: 16px; }
-  .mountain-top-safety dl { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 0; }
-  .mountain-top-safety dl > div { padding-inline-start: 12px; border-inline-start: 1px solid #dbe4e8; }
-  .mountain-top-safety dd { margin: 4px 0 0; color: #22364a; font-weight: 750; font-variant-numeric: tabular-nums; }
+  .mountain-top-safety dl { margin: 0; }
+  .mountain-top-safety__schedule dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .mountain-top-safety__sunset { padding-inline-start: 16px; border-inline-start: 1px solid #dbe4e8; align-content: center; }
+  .mountain-top-safety dd { margin: 4px 0 0; color: #22364a; font-size: 14px; font-weight: 750; font-variant-numeric: tabular-nums; }
+  .mountain-top-safety dd.mountain-top-safety__basis { color: #526475; font-size: 12px; font-weight: 500; line-height: 1.5; }
+  .mountain-top-safety[data-danger="true"] .mountain-top-safety__sunset { border-color: #e6a4a4 !important; }
 }
 
 

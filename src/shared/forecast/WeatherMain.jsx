@@ -156,7 +156,7 @@ function WeatherMain({
         <p style={{ margin: '4px 0 2px 0', fontWeight: 'bold', fontSize: '13px', color: '#1e293b' }}>
           {hasData ? (isMountainMode ? `정상 ${weatherData.condition}` : weatherData.condition) : (isAiLoading ? '날씨 확인 중' : '기상 자료 없음')}
         </p>
-        <p style={{ margin: '0 0 8px 0', color: '#475569', fontSize: '12px', fontWeight: '500' }}>{hasData ? <>{isMountainMode && !weatherData.isFuture && <span className="desktop-weather-label">현재 날씨 자료 기준 · </span>}{weatherData.highLow}</> : '기온 · 습도 · 바람 자료를 확인해 주세요.'}</p>
+        <p style={{ margin: '0 0 8px 0', color: '#475569', fontSize: '12px', fontWeight: '500' }}>{hasData ? <><span className="desktop-weather-label">{weatherData.isFuture ? '선택일 주간 예보 기준' : '현재 날씨 자료 기준'} · </span>{weatherData.highLow}</> : '기온 · 습도 · 바람 자료를 확인해 주세요.'}</p>
 
         {diffBadge && <div style={{ display: 'flex', justifyContent: 'center' }}>
           <span style={{ display: 'inline-block', backgroundColor: diffBadge.bg, color: diffBadge.color, borderRadius: '6px', padding: '4px 10px', fontSize: '11px', fontWeight: 'bold' }}>

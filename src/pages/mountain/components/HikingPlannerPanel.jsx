@@ -91,7 +91,7 @@ export default function HikingPlannerPanel({
     if (cancelled) return;
     setPlans([]); setParties([]); setInvitations([]); setParty(null);
     setError(''); setSuccess(''); setSavedPlan(null);
-    setItemFilter('all'); setCreateOpen(false); setSavedOpen(false);
+    setCreateOpen(false); setSavedOpen(false);
     const deepLink = new URLSearchParams(window.location.search).get('party');
     let remembered = '';
     try { remembered = localStorage.getItem(partyStorageKey) || ''; } catch { /* private storage */ }
@@ -115,7 +115,6 @@ export default function HikingPlannerPanel({
   const selectParty = async id => {
     const normalized = String(id || '');
     selectedRef.current = normalized; setSelectedPartyId(normalized); setParty(null);
-    setItemFilter('all');
     try { localStorage.setItem(partyStorageKey, normalized); } catch { /* optional */ }
     if (normalized) await loadParty(normalized);
   };

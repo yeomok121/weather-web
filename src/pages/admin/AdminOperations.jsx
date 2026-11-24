@@ -6,7 +6,7 @@ import './MountainSearchStats.css';
 import { adminHeaders } from './adminHeaders';
 
 const statusLabels = {
-  available: '연결 정상', unavailable: '연결 오류', checking: '확인 중', ok: '자료 확인',
+  available: '연결 정상', unavailable: '연결 오류', checking: '확인 중', ok: '공급 자료 수신 정상',
   not_checked: '확인 전', not_configured: '설정 필요', empty: '자료 없음',
   http_error: 'HTTP 오류', provider_error: '공급기관 오류',
 };
@@ -43,7 +43,7 @@ export function OperationsStatus({ adminToken, adminPassword }) {
     const checks = await Promise.all(probes.map(async ([name, path, hasData]) => {
       try {
         const data = await requestJson(path, { timeoutMs: 25000 });
-        return { name, message: hasData(data) ? '자료 확인' : '응답에 표시할 자료 없음', checkedAt: Date.now() };
+        return { name, message: hasData(data) ? '표본 자료 수신 정상' : '점검 필요 · 응답에 표시할 자료 없음', checkedAt: Date.now() };
       } catch (error) {
         return { name, message: error.status ? `HTTP ${error.status} · 조회 실패` : '연결 실패', checkedAt: Date.now() };
       }
@@ -74,14 +74,14 @@ export function OperationsStatus({ adminToken, adminPassword }) {
     {!status ? <p role="status">상태 확인 중…</p> : <dl className="mountain-search-totals">
       <div><dt>회원 DB</dt><dd className="admin-state" data-tone={status.db?.status === 'available' ? 'ok' : undefined}>{statusLabels[status.db?.status] || '조회 실패'}</dd><small>{timeLabel(status.db?.checked_at)}</small></div>
       <div><dt>산 목록 공급원</dt><dd className="admin-state" data-tone={status.mountains?.source_check?.status === 'ok' ? 'ok' : undefined}>{statusLabels[status.mountains?.source_check?.status] || status.mountains?.source_check?.status || '조회 실패'}</dd>
-        {status.mountains && <small>제공 목록 {status.mountains.catalog_count}개 · 공급원 확인 {status.mountains.source_check?.valid_rows ?? 0}건</small>}
+        {status.mountains && <small>사이트 제공 산 {status.mountains.catalog_count}곳{status.mountains.source_check?.status === 'ok' && <> · 공급 API 유효 레코드 {status.mountains.source_check.valid_rows}건</>}</small>}
       </div>
     </dl>}
     <div className="admin-check-panels">
       <section className="admin-check-panel">
         <div className="admin-section-heading">
           <h4>예보·레이더 표본 점검</h4>
-          <button type="button" className="admin-operation-action" disabled={checkingWeather} onClick={checkWeather}>{checkingWeather ? '점검 중…' : '예보·레이더 점검'}</button>
+          <button type="button" className="admin-operation-action" disabled={checkingWeather} onClick={checkWeather}>{checkingWeather ? '점검 중…' : '표본 조회 실행'}</button>
         </div>
         {checkingWeather ? <p role="status">일반·산악 예보와 최근 레이더 영상 목록을 확인 중입니다.</p>
           : weatherChecks ? <ul>{weatherChecks.map(check => <li key={check.name}>{check.name} · {check.message} · {timeLabel(check.checkedAt)}</li>)}</ul>
@@ -90,7 +90,7 @@ export function OperationsStatus({ adminToken, adminPassword }) {
       <section className="admin-check-panel">
         <div className="admin-section-heading">
           <h4>해양 API 점검</h4>
-          <button type="button" className="admin-operation-action" disabled={checking} onClick={checkMarine}>{checking ? '점검 중…' : '해양 API 점검'}</button>
+          <button type="button" className="admin-operation-action" disabled={checking} onClick={checkMarine}>{checking ? '점검 중…' : '연결 점검 실행'}</button>
         </div>
         {checking && <p role="status">해양 자료 공급기관을 확인 중입니다.</p>}
         {!checking && !marine && <p>점검 전</p>}

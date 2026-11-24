@@ -328,7 +328,7 @@ function AdminPage({ onClose, adminPassword, adminToken, adminRole }) {
           <h1><span>Weather+</span> 관리자</h1>
           <div className="admin-header-actions">
             <span>{roleLabel}</span>
-            <button type="button" onClick={onClose}>나가기</button>
+            <button type="button" onClick={onClose}>관리 화면 닫기</button>
           </div>
         </div>
       </header>

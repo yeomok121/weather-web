@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FiFileText, FiMap, FiClock, FiBriefcase, FiInfo, FiFlag } from 'react-icons/fi';
+import { FiFileText, FiClock, FiBriefcase, FiInfo, FiFlag } from 'react-icons/fi';
 
 function WeatherOutlook({
   weeklyData = [],
@@ -40,7 +40,7 @@ function WeatherOutlook({
   return (
     <div className="glass-card" style={{ borderRadius: '16px', padding: '24px', color: '#1e293b', width: '100%', boxSizing: 'border-box', height: 'fit-content', display: 'flex', flexDirection: 'column' }}>
       <h3 style={{ margin: '0 0 16px 0', fontSize: '17px', fontWeight: '800', color: isMountainMode ? '#166534' : '#1e293b' }}>
-        {isMountainMode ? <><span className="desktop-previous">⛰️ </span><FiMap className="desktop-weather-label inline-weather-icon" aria-hidden="true" />산악 기상 전망 & AI 의사결정 가이드</> : '날씨 전망'}
+        {isMountainMode ? <><span className="desktop-previous">⛰️ </span>산악 기상 전망 & AI 의사결정 가이드</> : '날씨 전망'}
       </h3>
       
       <div style={{ display: 'flex', borderRadius: '8px', overflow: 'hidden', marginBottom: '16px', border: '1px solid rgba(0,0,0,0.08)', backgroundColor: 'rgba(255,255,255,0.4)' }}>
@@ -120,7 +120,7 @@ function WeatherOutlook({
                   ? '선택한 날짜의 일몰 정보가 없어 날짜별 일몰 시각과 탐방로 운영시간을 확인해야 합니다.'
                   : <>정상에서 {hikingPlanSummary.safeDescentStartTime} 이전 하산을 시작하도록 늦어도 <strong>{hikingPlanSummary.recommendedDepDeadlineStr}</strong> 출발 권장. 예상 하산 완료는 {hikingPlanSummary.descentFinishTimeStr}입니다.</>}</span>
                 <span className="desktop-weather-label"><strong>권장 하산 시작 시각</strong>{' · '}{hikingPlanSummary.solar
-                  ? hikingPlanSummary.safeDescentStartTime : '날짜별 일몰 확인 필요'}
+                  ? `${hikingPlanSummary.safeDescentStartTime} (출발일 일몰 ${hikingPlanSummary.solar.sunset} 기준)` : '날짜별 일몰 확인 필요'}
                   {' · '}예상 하산 완료 시각 {hikingPlanSummary.descentFinishTimeStr}
                 </span>
               </div>

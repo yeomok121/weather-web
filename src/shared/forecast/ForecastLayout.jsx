@@ -15,6 +15,7 @@ import { preferredWeatherLayer } from '../../pages/weather/weatherMap';
 import './WeatherGlass.css';
 
 const RadarCard = lazy(() => import('../../pages/weather/RadarCard'));
+const koreanDay = new Intl.DateTimeFormat('ko-KR', { timeZone: 'Asia/Seoul', month: 'long', day: 'numeric' });
 
 export default function ForecastLayout({ extras = null }) {
   const {
@@ -28,21 +29,35 @@ export default function ForecastLayout({ extras = null }) {
     showToast, weatherData, weatherFetchedAt, weeklyData, favorites,
   } = useApp();
 
+  const plan = hikingPlanSummary;
+  const departureDate = plan ? koreanDay.format(new Date(plan.departureAt)) : null;
+  const descentDate = plan ? koreanDay.format(new Date(Date.parse(plan.departureAt) + plan.totalMins * 60000)) : null;
+  const sunsetBasis = plan?.solar ? `${departureDate} 일몰 ${plan.solar.sunset} 기준` : null;
+
   return (
     <main className={`main-container ${isMountainMode ? 'is-mountain-mode' : 'weather-glass-home'}`} style={{ flexGrow: 1, maxWidth: '1320px', margin: '0 auto', width: '100%', zIndex: 1, padding: '28px 24px' }}>
       <div className="main-primary-column" style={{ display: 'flex', flexDirection: 'column', gap: '16px', minWidth: 0 }}>
 
-        {isMountainMode && hikingPlanSummary && activeWeather.hasData && (
-          <section className="glass-card mountain-top-safety" aria-label="선택 일정 시간 안전" aria-live="polite"
-            style={{ '--safety-color': hikingPlanSummary.timeSafetyColor }}>
-            <div className="mountain-top-safety__status">
-              {hikingPlanSummary.timeSafetyColor === '#166534' ? <FiClock aria-hidden="true" /> : <FiAlertTriangle aria-hidden="true" />}
-              <div><span>선택 일정 기준 · 한국 시간</span><strong>{hikingPlanSummary.timeSafetyStatus}</strong></div>
+        {isMountainMode && plan && activeWeather.hasData && (
+          <section className="glass-card mountain-top-safety" aria-label="산행 시간 안전" aria-live="polite"
+            data-danger={plan.timeSafetyColor === '#dc2626'}
+            style={{ '--safety-color': plan.timeSafetyColor }}>
+            <div className="mountain-top-safety__schedule">
+              <div className="mountain-top-safety__status">
+                {plan.timeSafetyColor === '#166534' ? <FiClock aria-hidden="true" /> : <FiAlertTriangle aria-hidden="true" />}
+                <div><span>선택 일정 기준 · 한국 시간</span><strong>{plan.timeSafetyStatus}</strong></div>
+              </div>
+              <dl>
+                <div><dt>출발 시각</dt><dd>{departureDate} {plan.departureTimeStr}</dd></div>
+                <div><dt>예상 하산 완료 시각</dt><dd>{descentDate} {plan.descentFinishTimeStr}</dd></div>
+              </dl>
             </div>
-            <dl>
-              <div><dt>출발 시각</dt><dd>{hikingPlanSummary.departureTimeStr}</dd></div>
-              <div><dt>예상 하산 완료 시각</dt><dd>{hikingPlanSummary.descentFinishTimeStr}</dd></div>
-              <div><dt>권장 하산 시작 시각</dt><dd>{hikingPlanSummary.safeDescentStartTime}</dd></div>
+            <dl className="mountain-top-safety__sunset">
+              <div>
+                <dt>권장 하산 시작 시각</dt>
+                <dd>{plan.safeDescentStartTime}</dd>
+                <dd className="mountain-top-safety__basis">{sunsetBasis ? `${sunsetBasis} · 2시간 전` : `${departureDate} 출발 일정 · 일몰 정보 확인 필요`}</dd>
+              </div>
             </dl>
           </section>
         )}
@@ -133,7 +148,8 @@ export default function ForecastLayout({ extras = null }) {
             sunrise: activeWeather.sunrise,
             sunset: activeWeather.sunset,
             safeDescentTime: activeWeather.safeDescentTime,
-            plannedDescentStart: hikingPlanSummary?.safeDescentStartTime,
+            plannedDescentStart: plan?.safeDescentStartTime,
+            plannedDescentBasis: sunsetBasis,
             elevation: activeWeather.elevation,
             targetPop: activeWeather.targetPop,
             isFuture: activeWeather.isFuture,

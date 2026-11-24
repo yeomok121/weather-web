@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useEffectEvent, useRef } from 'react';
-import { FiChevronLeft, FiChevronRight, FiShare2, FiPlus, FiX, FiRotateCcw, FiMapPin, FiInfo, FiMap, FiClock, FiBriefcase, FiFlag, FiNavigation } from 'react-icons/fi';
+import { FiChevronLeft, FiChevronRight, FiShare2, FiPlus, FiX, FiRotateCcw, FiMapPin, FiInfo, FiClock, FiBriefcase, FiFlag, FiNavigation } from 'react-icons/fi';
 import { LineChart, Line, YAxis, ResponsiveContainer } from 'recharts';
 import { PACE_OPTIONS } from '../../pages/mountain/paceOptions.js';
 import { getEmojiIcon } from './weatherIcons';
@@ -646,7 +646,7 @@ function HourlyForecast({
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '12px' }}>
         <div>
           <h4 style={{ margin: 0, fontSize: '16px', fontWeight: '800', color: isMountainMode ? '#166534' : '#1e293b' }}>
-            {isMountainMode ? <><span className="desktop-previous">⛰️ </span><FiMap className="desktop-weather-label inline-weather-icon" aria-hidden="true" />산악 기상 & 등산 환경 대시보드</> : mountainInfo?.course_available === false ? '시간별 산 정상 기온 · 강수확률' : '시간별 날씨 · 기온과 강수확률'}
+            {isMountainMode ? <><span className="desktop-previous">⛰️ </span>산악 기상 & 등산 환경 대시보드</> : mountainInfo?.course_available === false ? '시간별 산 정상 기온 · 강수확률' : '시간별 날씨 · 기온과 강수확률'}
           </h4>
           <div style={{ marginTop: '3px', fontSize: '10.5px', color: '#64748b' }}>
             {isMountainMode || mountainInfo?.course_available === false ? '기상청 시간별 예보를 고도 보정한 산악 참고 추정값' : '기상청 동네예보 기준 · 강수확률은 해당 시간에 비나 눈이 내릴 가능성입니다'}
@@ -698,8 +698,8 @@ function HourlyForecast({
 
               <div className="mountain-score-stack">
                 <div className="desktop-weather-label mountain-score-chips">
-                  <span>기상 <strong style={{ color: scoreDisplayColor(weatherScore) }}>{weatherScore ?? '자료 없음'}</strong></span>
-                  <span>조망 <strong style={{ color: scoreDisplayColor(viewEstimate.score) }}>{viewEstimate.score ?? '자료 없음'}</strong></span>
+                  <span>기상 <strong>{weatherScore ?? '자료 없음'}</strong>{weatherScore != null && '/100 · 참고'}</span>
+                  <span>조망 <strong>{viewEstimate.score ?? '자료 없음'}</strong>{viewEstimate.score != null && '/100 · 참고'}</span>
                 </div>
                 <div className="mountain-score-card desktop-previous">
                   <span className="mountain-score-card__label">기상 조건 점수 · 참고</span>
@@ -732,14 +732,14 @@ function HourlyForecast({
                 <div>두 점수는 기상 요소를 바탕으로 한 참고 지표입니다. 산행 허가나 안전을 보증하지 않으며, 조망 점수도 실제 조망 확률이 아닙니다. 운고·실측 시정·노면 상태는 반영되지 않을 수 있습니다.</div>
               </MountainInfo>
 
-              <div style={{ backgroundColor: 'rgba(255,255,255,0.55)', borderRadius: '12px', padding: '12px', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '6px', fontSize: '11.5px' }}>
+              <div className="mountain-altitude" style={{ backgroundColor: 'rgba(255,255,255,0.55)', borderRadius: '12px', padding: '12px', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '6px', fontSize: '11.5px' }}>
                 <strong style={{ fontSize: '12px', color: '#334155' }}>{isFuture ? '선택일 고도별 기온' : '현재 고도별 기온'} <span className="mountain-reference-label">참고 추정</span></strong>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '4px', borderBottom: '1px dashed rgba(0,0,0,0.1)' }}>
                   <span style={{ fontWeight: '800', color: '#1e293b' }}><span className="desktop-previous">⛰️ </span><FiFlag className="desktop-weather-label inline-weather-icon" aria-hidden="true" />정상 <span style={{fontSize:'10px', color:'#475569', fontWeight:'normal'}}>({mountainInfo?.elevation}m)</span></span>
                   <span style={{ color: '#0f172a', fontWeight: '800' }}>{currentTemp}°C <span style={{fontSize:'10px', color:'#475569', fontWeight:'normal'}}>(체감 {summitFeelsLike}°C)</span></span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '2px 0', borderBottom: '1px dashed rgba(0,0,0,0.1)' }}>
-                  <span style={{ color: '#475569', fontWeight: 'bold' }}><span className="desktop-previous">🌲 </span><FiMap className="desktop-weather-label inline-weather-icon" aria-hidden="true" />중턱 <span style={{fontSize:'10px', color:'#64748b', fontWeight:'normal'}}>({Math.round((mountainInfo?.elevation || 800) / 2)}m)</span></span>
+                  <span style={{ color: '#475569', fontWeight: 'bold' }}><span className="desktop-previous">🌲 </span>중턱 <span style={{fontSize:'10px', color:'#64748b', fontWeight:'normal'}}>({Math.round((mountainInfo?.elevation || 800) / 2)}m)</span></span>
                   <span style={{ color: '#334155', fontWeight: '600' }}>{Math.round((currentTemp + baseTemp) / 2)}°C</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '2px' }}>

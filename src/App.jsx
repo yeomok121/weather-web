@@ -251,9 +251,11 @@ function App() {
         <Toast toast={toast} />
 
         <TopNav
-          search={search} isMountainMode={isMountainMode} isFishingPage={isFishingPage} isNoticeOpen={isNoticeOpen}
+          search={search} isMountainMode={isMountainMode} isWeatherPage={routeMode === false} isMountainPage={routeMode === true} isFishingPage={isFishingPage} isNoticeOpen={isNoticeOpen}
           mountainsList={mountainsList}
-          onToggleMountainMode={handleToggleMountainMode} onGoHome={() => { if (isMountainMode) handleToggleMountainMode(); else navigate('/'); }} onToggleFishing={handleToggleFishing} onOpenNotices={() => setIsNoticeOpen(true)}
+          onGoMountain={() => { if (isMountainMode) navigate(mountainPath(mountainInfo?.name || DEFAULT_MOUNTAIN)); else handleToggleMountainMode(); }}
+          onGoHome={() => { if (isMountainMode) handleToggleMountainMode(); else navigate('/'); }}
+          onToggleFishing={handleToggleFishing} onOpenNotices={() => setIsNoticeOpen(true)}
         />
 
         {routeMode !== null && <div className={`weather-status-shell ${isMountainMode ? "is-mountain-mode" : ""}`}><WeatherConnectionStatus state={forecast.connectionState} hasData={forecast.weatherData.hasData} fetchedAt={forecast.weatherFetchedAt} onRetry={forecast.retryForecast} /></div>}

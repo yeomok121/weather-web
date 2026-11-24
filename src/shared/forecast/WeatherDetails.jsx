@@ -1,4 +1,4 @@
-import { FiMap, FiBriefcase, FiSunrise, FiSunset, FiWind, FiInfo } from 'react-icons/fi';
+import { FiBriefcase, FiSunrise, FiSunset, FiWind, FiInfo } from 'react-icons/fi';
 import React, { useState, useEffect } from 'react';
 import { isWeatherNumber } from '../lib/forecastCache';
 
@@ -153,7 +153,7 @@ function WeatherDetails({ airQuality = {}, current = {}, isMountainMode = false,
   return (
     <div className="glass-card detail-info-card" style={{ borderRadius: '16px', padding: '20px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', height: 'fit-content', boxSizing: 'border-box' }}>
       <h3 style={{ margin: '0 0 12px 0', fontSize: '15px', fontWeight: '800', color: isMountainMode ? '#166534' : '#1e293b' }}>
-        {isMountainMode ? <><span className="desktop-previous">⛰️ </span><FiMap className="desktop-weather-label inline-weather-icon" aria-hidden="true" />4대 산행 환경 지수</> : '상세 날씨 정보'}
+        {isMountainMode ? <><span className="desktop-previous">⛰️ </span>4대 산행 환경 지수</> : '상세 날씨 정보'}
       </h3>
 
       <details style={{ margin: '0 0 12px', padding: '9px 10px', background: 'rgba(255,255,255,0.45)', borderRadius: '8px', color: '#475569', fontSize: '12px', lineHeight: 1.6 }}>
@@ -203,8 +203,9 @@ function WeatherDetails({ airQuality = {}, current = {}, isMountainMode = false,
           <div style={{ marginTop: '4px', backgroundColor: 'rgba(255,247,237,0.7)', border: '1px solid rgba(254,215,170,0.5)', color: '#c2410c', borderRadius: '8px', padding: '4px 8px', fontSize: '11.5px', fontWeight: 'bold', textAlign: 'center' }}>
             <span className="desktop-previous">🚨 권장 하산 시작: {current.safeDescentTime || '일몰 자료 확인 필요'}</span>
             <span className="desktop-weather-label">
-              {current.plannedDescentStart ? '선택 일정 기준 · ' : '현재 표시일 기준 · '}
               권장 하산 시작 시각 {current.plannedDescentStart || current.safeDescentTime || '일몰 자료 확인 필요'}
+              {current.plannedDescentBasis ? <span className="weather-reading-source">{current.plannedDescentBasis}</span>
+                : !current.plannedDescentStart && current.safeDescentTime && <span className="weather-reading-source">표시 중인 날짜의 일몰 기준</span>}
             </span>
           </div>
         )}
