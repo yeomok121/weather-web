@@ -36,3 +36,27 @@
 .mountain-gear-suggestions__grid button{width:100%;min-width:0;min-height:44px;padding:8px 12px;text-align:left;white-space:normal;overflow-wrap:anywhere;font:inherit;font-size:14px;line-height:1.5;color:#245b4b;background:#fff;border:1px solid #bfd8cd;border-radius:10px;cursor:pointer}
 .mountain-gear-suggestions__grid button:hover{background:#e4f3ec;border-color:#248267}
 .mountain-gear-suggestions__grid button:focus-visible{outline:2px solid #176c58;outline-offset:2px}
+
+
+@media (min-width: 901px) {
+  .mountain-journey[data-desktop-step]:not([data-desktop-step="hike-schedule"]) #hike-schedule,
+  .mountain-journey[data-desktop-step]:not([data-desktop-step="mountain-conditions"]) :is(.mountain-results, .mountain-review-next, .mountain-chart-heading),
+  .mountain-journey[data-desktop-step]:not([data-desktop-step="hiking-preparation"]) .mountain-preparation {
+    display: none !important;
+  }
+  .mountain-input-grid { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); }
+  .mountain-course-input { grid-column: 1 / -1; }
+  .mountain-date-input { grid-column: 1; grid-row: 3; }
+  .mountain-pace-input { grid-column: 1 / -1; }
+  .mountain-quick-times { grid-column: 2; grid-row: 3; display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); align-self: end; }
+  .mountain-quick-times button { font-size: 12px; word-break: keep-all; }
+  .mountain-score-stack .mountain-score-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .mountain-score-chips span { padding: 5px 9px; border: 1px solid #d3e6de; border-radius: 999px; background: #f0f8f4; color: #416254; font-size: 12px; }
+  .mountain-score-chips strong { margin-left: 4px; font-size: 13px; font-variant-numeric: tabular-nums; }
+  .hourly-precip-value[data-zero="true"] { opacity: .65; font-weight: 400; }
+  .hourly-precip-value[data-has-precip="true"] strong { color: #155799; font-weight: 800; }
+}
+@media (min-width: 901px) and (hover: hover) {
+  .mountain-checklist-remove { opacity: 0; }
+  .mountain-gear-grid > div:is(:hover,:focus-within) .mountain-checklist-remove { opacity: 1; }
+}

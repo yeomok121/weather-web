@@ -25,7 +25,7 @@ export default function FavoriteCompare({ favorites, currentPoint, onSelectPoint
   if (!favorites.length) {
     return <section className="fish-panel fish-compare empty">
       <div className="fish-panel-title"><FiBarChart2 /><div><h2>내 포인트 한눈에 비교</h2>
-        <p>포인트 이름 옆 <FiStar aria-label="별" /> 을 눌러 자주 가는 곳을 저장하면, 여기서 오늘·내일 지수를 한 번에 비교할 수 있어요.</p></div></div>
+        <p><span className="desktop-weather-label">즐겨찾기에 포인트를 추가해 오늘·내일 지수를 비교하세요.</span><span className="desktop-previous">포인트 이름 옆 <FiStar aria-label="별" /> 을 눌러 자주 가는 곳을 저장하면, 여기서 오늘·내일 지수를 한 번에 비교할 수 있어요.</span></p></div></div>
     </section>;
   }
   const { rows, bestToday, bestTomorrow } = compareRows(favorites, indexes, now);

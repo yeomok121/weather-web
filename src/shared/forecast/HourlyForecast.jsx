@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useEffectEvent, useRef } from 'react';
-import { FiChevronLeft, FiChevronRight, FiShare2, FiPlus, FiX, FiRotateCcw, FiMapPin, FiInfo } from 'react-icons/fi';
+import { FiChevronLeft, FiChevronRight, FiShare2, FiPlus, FiX, FiRotateCcw, FiMapPin, FiInfo, FiMap, FiClock, FiBriefcase, FiFlag, FiNavigation } from 'react-icons/fi';
 import { LineChart, Line, YAxis, ResponsiveContainer } from 'recharts';
 import { PACE_OPTIONS } from '../../pages/mountain/paceOptions.js';
 import { getEmojiIcon } from './weatherIcons';
@@ -89,7 +89,16 @@ function HourlyForecast({
   const [departureError, setDepartureError] = useState('');
   const [compareOpen, setCompareOpen] = useState(false);
   const [invitationCount, setInvitationCount] = useState(0);
+  const sharedParty = new URLSearchParams(window.location.search).has('party');
   const [visibleStep, setVisibleStep] = useState('hike-schedule');
+  const [desktopStep, setDesktopStep] = useState(() => sharedParty ? 'hiking-preparation' : 'hike-schedule');
+  const [desktopFlow, setDesktopFlow] = useState(() => window.matchMedia('(min-width: 901px)').matches);
+  useEffect(() => {
+    const query = window.matchMedia('(min-width: 901px)');
+    const sync = () => setDesktopFlow(query.matches);
+    query.addEventListener('change', sync);
+    return () => query.removeEventListener('change', sync);
+  }, []);
   const previousDraftOwner = useRef(null);
   const hasWeatherData = weatherData.hasData === true;
   const [previousDepartureAt, setPreviousDepartureAt] = useState(null);
@@ -574,17 +583,28 @@ function HourlyForecast({
     node.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
     node.focus({ preventScroll: true });
   };
+  const switchStep = (id, focusPanel = false) => {
+    if (desktopFlow) {
+      setDesktopStep(id);
+      if (focusPanel) requestAnimationFrame(() => document.getElementById(id)?.focus({ preventScroll: true }));
+    } else requestAnimationFrame(() => jumpTo(id));
+  };
   const jumpPlanner = section => {
     setPlannerSection(section); setPreparationTab('account');
+    if (desktopFlow) { setDesktopStep('hiking-preparation'); return; }
     requestAnimationFrame(() => jumpTo(document.getElementById('hiking-preparation') ? 'hiking-preparation' : 'hiking-planner'));
   };
   useEffect(() => {
-    const open = () => { setPreparationTab('account'); requestAnimationFrame(() => jumpTo(document.getElementById('hiking-preparation') ? 'hiking-preparation' : 'hiking-planner')); };
+    const open = () => {
+      setPreparationTab('account');
+      if (desktopFlow) setDesktopStep('hiking-preparation');
+      else requestAnimationFrame(() => jumpTo(document.getElementById('hiking-preparation') ? 'hiking-preparation' : 'hiking-planner'));
+    };
     window.addEventListener('weather:open-hiking-planner', open);
     return () => window.removeEventListener('weather:open-hiking-planner', open);
-  }, []);
+  }, [desktopFlow]);
   useEffect(() => {
-    if (!isMountainMode || !hasWeatherData) return;
+    if (desktopFlow || !isMountainMode || !hasWeatherData) return;
     const ids = ['hike-schedule', 'mountain-conditions', 'hiking-preparation'];
     const observer = new IntersectionObserver(entries => {
       const visible = entries.filter(entry => entry.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
@@ -592,7 +612,7 @@ function HourlyForecast({
     }, { rootMargin: '-100px 0px -45% 0px', threshold: 0 });
     ids.forEach(id => { const node = document.getElementById(id); if (node) observer.observe(node); });
     return () => observer.disconnect();
-  }, [isMountainMode, hasWeatherData, isLoading]);
+  }, [desktopFlow, isMountainMode, hasWeatherData, isLoading]);
   const changeDeparture = value => {
     setDepartureDraft(departureInputValue(value)); setDepartureError(''); onRestoreDeparture?.(value);
   };
@@ -614,7 +634,7 @@ function HourlyForecast({
   };
 
   return (
-    <div className={`glass-card hourly-forecast-card ${isMountainMode ? 'mountain-journey' : ''}`} style={{ borderRadius: '16px', padding: '20px', display: 'flex', flexDirection: 'column', color: '#1e293b', width: '100%', boxSizing: 'border-box' }}>
+    <div className={`glass-card hourly-forecast-card ${isMountainMode ? 'mountain-journey' : ''}`} data-desktop-step={isMountainMode && hasWeatherData ? desktopStep : undefined} style={{ borderRadius: '16px', padding: '20px', display: 'flex', flexDirection: 'column', color: '#1e293b', width: '100%', boxSizing: 'border-box' }}>
       <style>{`
         .hourly-chart-wrapper .recharts-surface { overflow: visible !important; }
         @media (max-width: 640px) {
@@ -626,7 +646,7 @@ function HourlyForecast({
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '12px' }}>
         <div>
           <h4 style={{ margin: 0, fontSize: '16px', fontWeight: '800', color: isMountainMode ? '#166534' : '#1e293b' }}>
-            {isMountainMode ? '⛰️ 산악 기상 & 등산 환경 대시보드' : mountainInfo?.course_available === false ? '시간별 산 정상 기온 · 강수확률' : '시간별 날씨 · 기온과 강수확률'}
+            {isMountainMode ? <><span className="desktop-previous">⛰️ </span><FiMap className="desktop-weather-label inline-weather-icon" aria-hidden="true" />산악 기상 & 등산 환경 대시보드</> : mountainInfo?.course_available === false ? '시간별 산 정상 기온 · 강수확률' : '시간별 날씨 · 기온과 강수확률'}
           </h4>
           <div style={{ marginTop: '3px', fontSize: '10.5px', color: '#64748b' }}>
             {isMountainMode || mountainInfo?.course_available === false ? '기상청 시간별 예보를 고도 보정한 산악 참고 추정값' : '기상청 동네예보 기준 · 강수확률은 해당 시간에 비나 눈이 내릴 가능성입니다'}
@@ -641,16 +661,16 @@ function HourlyForecast({
       </div>
 
       {isMountainMode && mountainInfo?.manual_course && <p role="note" style={{ color: '#92400e', fontSize: '13px' }}>직접 입력한 코스 기준입니다. 거리·시간·경로와 통제 여부는 공식 안내에서 확인하세요.</p>}
-      {isMountainMode && <MountainQuickGuide />}
+      {isMountainMode && <MountainQuickGuide desktop={desktopFlow} />}
       {isMountainMode && <nav className="hike-flowbar mountain-shortcuts" aria-label="산행 준비 바로가기">
         <button type="button" onClick={() => jumpTo('mountain-picker')}>산 바꾸기</button>
-        <button type="button" aria-current={visibleStep === 'hike-schedule' ? 'step' : undefined} disabled={!hasWeatherData} onClick={() => jumpTo('hike-schedule')}>① 일정</button>
-        <button type="button" aria-current={visibleStep === 'mountain-conditions' ? 'step' : undefined} disabled={!hasWeatherData} onClick={() => jumpTo('mountain-conditions')}>② 조건</button>
-        <button type="button" onClick={() => { setPreparationTab('gear'); requestAnimationFrame(() => jumpTo('hiking-preparation')); }} aria-current={visibleStep === 'hiking-preparation' ? 'step' : undefined} disabled={!hasWeatherData}>③ 준비</button>
+        <button type="button" aria-current={(desktopFlow ? desktopStep : visibleStep) === 'hike-schedule' ? 'step' : undefined} disabled={!hasWeatherData} onClick={() => switchStep('hike-schedule')}>① 일정</button>
+        <button type="button" aria-current={(desktopFlow ? desktopStep : visibleStep) === 'mountain-conditions' ? 'step' : undefined} disabled={!hasWeatherData} onClick={() => switchStep('mountain-conditions')}>② 조건</button>
+        <button type="button" onClick={() => { setPreparationTab('gear'); switchStep('hiking-preparation'); }} aria-current={(desktopFlow ? desktopStep : visibleStep) === 'hiking-preparation' ? 'step' : undefined} disabled={!hasWeatherData}>③ 준비</button>
 
       </nav>}
       {isMountainMode && hikingPlanSummary && <MountainPlanControls
-        mountainName={mountainInfo?.name} onReview={() => jumpTo('mountain-conditions')}
+        mountainName={mountainInfo?.name} onReview={() => switchStep('mountain-conditions', true)}
         courses={courses} courseIndex={activeCourseIdx} onCourse={setCourseIdx} paces={PACE_OPTIONS} pace={activePace} onPace={setPace}
         departureDraft={departureDraft} departureError={departureError} onDepartureDraft={editDeparture} onDeparture={changeDeparture}
         onOffset={changeOffset} activeOffset={activeDepOffset} restoredDepartureAt={restoredDepartureAt} offsets={DEPARTURE_OFFSETS} getOffsetLabel={getDepartureOptionLabel}
@@ -659,7 +679,7 @@ function HourlyForecast({
       {isMountainMode && (!hasWeatherData || isLoading) && <HikingPlannerPanel user={loggedInUser} mountainInfo={mountainInfo} selectedCourse={selectedCourse} courseIndex={activeCourseIdx} weatherDate={weatherData} selectedDateIdx={selectedDateIdx} pace={activePace} departureOffsetHours={activeDepOffset} departureTime="" gearList={[]} checklist={{}} canSave={false} onApplyPlan={handleApplySavedPlan} onRequireLogin={onRequireLogin} onShowToast={onShowToast} focusSection={plannerSection} />}
 
       {isMountainMode && hasWeatherData && !isLoading && (
-        <div id="mountain-conditions" tabIndex={-1} className="mountain-safety" role={timeline.status === 'danger' ? 'alert' : 'status'} aria-live="polite" style={{
+        <div id={!desktopFlow ? "mountain-conditions" : undefined} tabIndex={-1} className="mountain-safety desktop-previous" role={timeline.status === 'danger' ? 'alert' : 'status'} aria-live="polite" style={{
           display: 'flex', alignItems: 'flex-start', gap: '8px', padding: '10px 12px', marginBottom: '12px',
           borderRadius: '10px', border: `1px solid ${timeline.safetyColor}55`,
           backgroundColor: timeline.safetyBg, color: timeline.safetyColor,
@@ -672,17 +692,21 @@ function HourlyForecast({
       {isMountainMode && hasWeatherData && !isLoading && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '20px' }}>
 
-          <div className="mountain-results" style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'stretch' }}>
+          <div id={desktopFlow ? "mountain-conditions" : undefined} tabIndex={-1} className="mountain-results" style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'stretch' }}>
 
             <div className="mtn-score-altitude-box" style={{ flex: '1 1 250px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
 
               <div className="mountain-score-stack">
-                <div className="mountain-score-card">
+                <div className="desktop-weather-label mountain-score-chips">
+                  <span>기상 <strong style={{ color: scoreDisplayColor(weatherScore) }}>{weatherScore ?? '자료 없음'}</strong></span>
+                  <span>조망 <strong style={{ color: scoreDisplayColor(viewEstimate.score) }}>{viewEstimate.score ?? '자료 없음'}</strong></span>
+                </div>
+                <div className="mountain-score-card desktop-previous">
                   <span className="mountain-score-card__label">기상 조건 점수 · 참고</span>
                   <strong className="mountain-score-card__value" style={{ color: scoreDisplayColor(weatherScore) }}>{weatherScore ?? '—'}</strong>
                   <span className="mountain-score-card__status">{weatherAssessment.status}</span>
                 </div>
-                <div className="mountain-score-card">
+                <div className="mountain-score-card desktop-previous">
                   <span className="mountain-score-card__label">조망 환경 참고 점수</span>
                   <strong className="mountain-score-card__value" style={{ color: scoreDisplayColor(viewEstimate.score) }}>{viewEstimate.score ?? '—'}</strong>
                   <span className="mountain-score-card__status">{viewEstimate.gradeText}</span>
@@ -690,8 +714,8 @@ function HourlyForecast({
               </div>
 
               {hikingPlanSummary?.scoreBasisLabel && (
-                <div className="mountain-score-basis" style={{ width: '100%', color: '#64748b', fontSize: '10.5px', lineHeight: 1.45, textAlign: 'center', padding: '0 4px' }}>
-                  ⏱️ {hikingPlanSummary.scoreBasisLabel}
+                <div className="mountain-score-basis desktop-previous" style={{ width: '100%', color: '#64748b', fontSize: '10.5px', lineHeight: 1.45, textAlign: 'center', padding: '0 4px' }}>
+                  <FiClock aria-hidden="true" /> {hikingPlanSummary.scoreBasisLabel}
                   {(hikingPlanSummary.weatherWorstTime || hikingPlanSummary.viewWorstTime) && (
                     <span> · 기상 최저 {hikingPlanSummary.weatherWorstTime || '—'} / 조망 최저 {hikingPlanSummary.viewWorstTime || '—'}</span>
                   )}
@@ -699,7 +723,8 @@ function HourlyForecast({
               )}
 
               {viewEstimate.seaOfCloudsHint && <div style={{ color: '#0369a1', fontSize: '12px', fontWeight: '700', textAlign: 'center' }}>{viewEstimate.seaOfCloudsHint}</div>}
-              <MountainInfo label="점수 판단 근거와 한계">
+              <MountainInfo label={desktopFlow ? "점수 자세히 보기" : "점수 판단 근거와 한계"}>
+                {desktopFlow && <div>{weatherAssessment.status} · {viewEstimate.gradeText}</div>}
                 {hikingPlanSummary?.scoreBasisLabel && <div><strong>선택 일정 반영:</strong> {hikingPlanSummary.scoreBasisLabel}</div>}
                 <div><strong>기상 조건:</strong> {weatherAssessment.reasons.join(' · ') || weatherAssessment.status}</div>
                 <div><strong>조망 참고:</strong> {viewEstimate.summaryReason}</div>
@@ -710,19 +735,19 @@ function HourlyForecast({
               <div style={{ backgroundColor: 'rgba(255,255,255,0.55)', borderRadius: '12px', padding: '12px', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '6px', fontSize: '11.5px' }}>
                 <strong style={{ fontSize: '12px', color: '#334155' }}>{isFuture ? '선택일 고도별 기온' : '현재 고도별 기온'} <span className="mountain-reference-label">참고 추정</span></strong>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '4px', borderBottom: '1px dashed rgba(0,0,0,0.1)' }}>
-                  <span style={{ fontWeight: '800', color: '#1e293b' }}>⛰️ 정상 <span style={{fontSize:'10px', color:'#475569', fontWeight:'normal'}}>({mountainInfo?.elevation}m)</span></span>
+                  <span style={{ fontWeight: '800', color: '#1e293b' }}><span className="desktop-previous">⛰️ </span><FiFlag className="desktop-weather-label inline-weather-icon" aria-hidden="true" />정상 <span style={{fontSize:'10px', color:'#475569', fontWeight:'normal'}}>({mountainInfo?.elevation}m)</span></span>
                   <span style={{ color: '#0f172a', fontWeight: '800' }}>{currentTemp}°C <span style={{fontSize:'10px', color:'#475569', fontWeight:'normal'}}>(체감 {summitFeelsLike}°C)</span></span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '2px 0', borderBottom: '1px dashed rgba(0,0,0,0.1)' }}>
-                  <span style={{ color: '#475569', fontWeight: 'bold' }}>🌲 중턱 <span style={{fontSize:'10px', color:'#64748b', fontWeight:'normal'}}>({Math.round((mountainInfo?.elevation || 800) / 2)}m)</span></span>
+                  <span style={{ color: '#475569', fontWeight: 'bold' }}><span className="desktop-previous">🌲 </span><FiMap className="desktop-weather-label inline-weather-icon" aria-hidden="true" />중턱 <span style={{fontSize:'10px', color:'#64748b', fontWeight:'normal'}}>({Math.round((mountainInfo?.elevation || 800) / 2)}m)</span></span>
                   <span style={{ color: '#334155', fontWeight: '600' }}>{Math.round((currentTemp + baseTemp) / 2)}°C</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '2px' }}>
-                  <span style={{ color: '#475569', fontWeight: 'bold' }}>👟 들머리 <span style={{fontSize:'10px', color:'#64748b', fontWeight:'normal'}}>(입구)</span></span>
+                  <span style={{ color: '#475569', fontWeight: 'bold' }}><span className="desktop-previous">👟 </span><FiNavigation className="desktop-weather-label inline-weather-icon" aria-hidden="true" />들머리 <span style={{fontSize:'10px', color:'#64748b', fontWeight:'normal'}}>(입구)</span></span>
                   <span style={{ color: '#334155', fontWeight: '600' }}>{baseTemp}°C</span>
                 </div>
                 <MountainInfo label="출처·고도 보정 방식">
-                  <div>기온은 고도 100m당 약 0.65°C 하강하는 기준을 반영하고, 정상 풍속은 {wind}m/s입니다.</div>
+                  <div>기온은 고도 100m당 약 0.65°C 하강하는 기준을 반영하고, 정상 풍속은 {desktopFlow && (plannedWinds.length ? '선택 일정 중 최대 ' : isFuture ? '선택일 요약 예보 기준 ' : '현재 기준 ')}{desktopFlow && !plannedWinds.length && toNumber(weatherData?.wind_speed) === null ? '자료 없음' : `${wind} m/s`}입니다.</div>
                   <div>기온: {weatherData?.weatherSources?.temperature || '고도 보정 추정값'} · 바람: {weatherData?.weatherSources?.wind || '고도 보정 추정값'} · 습도: {weatherData?.weatherSources?.humidity || '고도 보정 추정값'}</div>
                   {weatherData?.dataAsOf && <div>자료 응답 시각: {weatherData.dataAsOf.replace('T', ' ')}</div>}
                   <div>{weatherData?.dataNote || '정상 실측값이 없는 항목은 고도 보정 추정값일 수 있습니다.'}</div>
@@ -745,7 +770,7 @@ function HourlyForecast({
               </dl>
 
               <section className="mountain-arrival-weather" aria-label="정상 도착 무렵 예보">
-                <h4>⛰️ 정상 도착 무렵 예보</h4>
+                <h4><span className="desktop-previous">⛰️ </span><FiFlag className="desktop-weather-label inline-weather-icon" aria-hidden="true" />정상 도착 무렵 예보</h4>
                 <p className="mountain-arrival-weather__caption">선택한 일정의 정상 도착 시간에 가까운 예보입니다.</p>
                 {timeline.arrivalWeather.available ? (
                   <div className="mountain-arrival-weather__conditions">
@@ -755,10 +780,12 @@ function HourlyForecast({
                     <span>{timeline.arrivalWeather.description} · 강수확률 {timeline.arrivalWeather.pop === null ? '자료 없음' : `${timeline.arrivalWeather.pop}%`}</span>
                   </div>
                 ) : (
-                  <p className="mountain-arrival-weather__caption">ℹ️ {timeline.arrivalWeather.reason}</p>
+                  <p className="mountain-arrival-weather__caption"><span className="desktop-previous">ℹ️ </span><FiInfo className="desktop-weather-label inline-weather-icon" aria-hidden="true" />{timeline.arrivalWeather.reason}</p>
                 )}
                 <p className="mountain-arrival-weather__caption">
-                  {timeline.status !== 'planning' && safeDescentTime ? `하산 시작 권장 ${safeDescentTime}` : '날짜별 일몰 확인 필요'}
+                  {desktopFlow
+                    ? `권장 하산 시작 시각 · ${hikingPlanSummary?.safeDescentStartTime || '날짜별 일몰 확인 필요'}`
+                    : timeline.status !== 'planning' && safeDescentTime ? `하산 시작 권장 ${safeDescentTime}` : '날짜별 일몰 확인 필요'}
                 </p>
               </section>
 
@@ -825,7 +852,7 @@ function HourlyForecast({
             </div>
           </div>
 
-          <div className="mountain-review-next"><span>점수는 참고값입니다. 시간 주의사항과 탐방로 통제도 확인하세요.</span><button type="button" onClick={() => { setPreparationTab('gear'); requestAnimationFrame(() => jumpTo('hiking-preparation')); }}>준비물 확인하기 ↓</button></div>
+          <div className="mountain-review-next"><span>점수는 참고값입니다. 시간 주의사항과 탐방로 통제도 확인하세요.</span><button type="button" onClick={() => { setPreparationTab('gear'); switchStep('hiking-preparation'); }}>준비물 확인하기 ↓</button></div>
           <section id="hiking-preparation" className="mountain-preparation" tabIndex={-1} aria-label="산행 준비물과 일행 관리">
             <div className="mountain-preparation-tabs" role="tablist" aria-label="준비 방법" onKeyDown={event => { if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return; event.preventDefault(); const next = event.key === 'Home' ? 'gear' : event.key === 'End' ? 'account' : preparationTab === 'gear' ? 'account' : 'gear'; setPreparationTab(next); document.getElementById(`${next}-tab`)?.focus(); }}>
               <button id="gear-tab" tabIndex={preparationTab === 'gear' ? 0 : -1} type="button" role="tab" aria-selected={preparationTab === 'gear'} aria-controls="gear-panel" onClick={() => setPreparationTab('gear')}>내 준비물 <span>{packedGearCount}/{gearList.length}</span></button>
@@ -836,7 +863,7 @@ function HourlyForecast({
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '12px' }}>
               <div>
                 <h4 style={{ margin: '0 0 4px 0', fontSize: '14.5px', color: '#1e293b', fontWeight: '800' }}>
-                  🎒 내 배낭 체크리스트
+                  <span className="desktop-previous">🎒 </span><FiBriefcase className="desktop-weather-label inline-weather-icon" aria-hidden="true" />내 배낭 체크리스트
                 </h4>
                 <span style={{ fontSize: '10.5px', color: '#475569', fontWeight: '500' }}>
                   준비한 물품을 체크하세요. 수정한 목록은 이 브라우저에 보관됩니다. 추천은 제공된 산행 시간대 예보를 참고합니다.
@@ -847,7 +874,7 @@ function HourlyForecast({
                   <FiRotateCcw size={12} /> 복원
                 </button>
                 <button onClick={handleSharePlan} style={{ padding: '6px 12px', borderRadius: '6px', border: 'none', backgroundColor: '#166534', color: '#ffffff', fontSize: '11.5px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', boxShadow: '0 2px 4px rgba(22,101,52,0.3)' }}>
-                  <FiShare2 size={12} /> 공유하기
+                  <FiShare2 size={12} /> {desktopFlow ? '일정·체크리스트 복사' : '공유하기'}
                 </button>
               </div>
             </div>
@@ -873,7 +900,7 @@ function HourlyForecast({
                       <input type="checkbox" checked={!!checklist[item]} onChange={() => toggleCheck(item)} style={{ cursor: 'pointer', accentColor: '#16a34a', width: '14px', height: '14px', flexShrink: 0 }} />
                       <span className="mountain-gear-name">{item}</span>
                     </label>
-                    <button type="button" aria-label={`${item} 목록에서 삭제`} onClick={() => handleRemoveGear(item)} style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '2px', marginLeft: '4px', flexShrink: 0 }}>
+                    <button type="button" className="mountain-checklist-remove" aria-label={`${item} 목록에서 삭제`} onClick={() => handleRemoveGear(item)} style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '2px', marginLeft: '4px', flexShrink: 0 }}>
                       <FiX size={14} />
                     </button>
                   </div>
@@ -910,7 +937,7 @@ function HourlyForecast({
             </div>
           </section>
           {!isFuture && (
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', borderTop: '2px dashed rgba(0,0,0,0.1)', paddingTop: '16px' }}>
+            <div className="mountain-chart-heading" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', borderTop: '2px dashed rgba(0,0,0,0.1)', paddingTop: '16px' }}>
               <h4 style={{ margin: 0, fontSize: '14px', fontWeight: '800', color: '#1e293b' }}>시간대별 산 정상 기온 변화</h4>
               <div style={{ display: 'flex', gap: '6px' }}>
                 <button type="button" aria-label="이전 시간대" onClick={handlePrev} disabled={prevDisabled} style={{ ...buttonStyle, opacity: prevDisabled ? 0.3 : 1, cursor: prevDisabled ? 'default' : 'pointer' }}><FiChevronLeft size={16} /></button>
@@ -921,7 +948,7 @@ function HourlyForecast({
         </div>
       )}
 
-      {isMountainMode && isFuture ? (
+      {(!isMountainMode || !desktopFlow || desktopStep === 'mountain-conditions' || !hasWeatherData) && (isMountainMode && isFuture ? (
          <div style={{ textAlign: 'center', padding: '12px 0', color: '#475569', fontSize: '12.5px', fontWeight: '600' }}>
             미래 예보일은 시간대별 상세 기온 변화 차트가 제공되지 않습니다.
          </div>
@@ -966,7 +993,7 @@ function HourlyForecast({
                     {item.description && <span className="hourly-weather-description">{cloudOnly ? '비 가능성' : item.description}</span>}
                   </div>
                   <div style={{ height: '100px', marginBottom: '6px' }} />
-                  <span className="hourly-precip-value" data-emphasis={item.pop >= 50} aria-label={item.pop === null ? '강수확률 자료 없음' : `강수확률 ${item.pop}%`}>
+                  <span className="hourly-precip-value" data-emphasis={item.pop >= 50} data-zero={item.pop === 0} data-has-precip={item.pop > 0} aria-label={item.pop === null ? '강수확률 자료 없음' : `강수확률 ${item.pop}%`}>
                     <span>강수</span> <strong>{item.pop === null ? '—' : `${item.pop}%`}</strong>
                   </span>
                 </div>
@@ -975,7 +1002,7 @@ function HourlyForecast({
           </div>
         </div>
         </div>
-      )}
+      ))}
     </div>
   );
 }

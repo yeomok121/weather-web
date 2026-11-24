@@ -126,3 +126,18 @@ summary:focus-visible {
     padding: 12px 10px;
   }
 }
+
+
+.desktop-weather-label, .mountain-top-safety { display: none; }
+
+@media (min-width: 901px) {
+  .desktop-previous { display: none !important; }
+  .desktop-weather-label { display: inline; }
+  .header-navigation .header-nav-current {
+    display: inline-flex;
+    background: var(--primary);
+    color: var(--surface);
+    cursor: default;
+  }
+  .inline-weather-icon { margin-inline-end: 4px; vertical-align: -2px; }
+}

@@ -13,7 +13,7 @@ export default function MountainPlanControls({ courses, courseIndex, onCourse, p
   return <section id="hike-schedule" className="mountain-plan-controls" tabIndex={-1} aria-labelledby="mountain-plan-heading">
     <div className="mountain-section-heading"><h3 id="mountain-plan-heading">{mountainName || '산행'} 일정 선택</h3><span>변경 즉시 아래 결과에 반영 · 한국 시간</span></div>
     <div className="mountain-input-grid">
-      <label className="mountain-course-input">코스<select value={courseIndex} onChange={event => onCourse(Number(event.target.value))}>
+      <label className="mountain-course-input">코스<select title={courses[courseIndex]?.name} value={courseIndex} onChange={event => onCourse(Number(event.target.value))}>
         {courses.map((course, index) => <option key={index} value={index}>{course.name} · {course.distance} · 난이도 {course.diff}</option>)}
       </select></label>
       <fieldset className="mountain-pace-input"><legend>산행 속도</legend><div>

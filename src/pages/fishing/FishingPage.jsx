@@ -119,7 +119,7 @@ export default function FishingPage() {
         {data && <WarningBanner warnings={sources.warnings} error={errors.warnings} />}
 
       {pointMode && pickerOpen && (status === 'ready'
-        ? <PointPicker points={points} selectedId={pointId} favorites={favorites} onSelect={id => {
+        ? <PointPicker points={points} selectedId={pointId} referencePoint={myLocation.coords || area} nearMyLocation={Boolean(myLocation.coords)} favorites={favorites} onSelect={id => {
             const point = points.find(item => item.id === id);
             if (point) recordSearch('fishing', point.name, 'found');
             selectPoint(id);

@@ -10,6 +10,7 @@ import WeatherOutlook from './WeatherOutlook';
 import WeatherDetails from './WeatherDetails';
 import WeeklyForecast from './WeeklyForecast';
 import { lazy, Suspense } from 'react';
+import { FiAlertTriangle, FiClock } from 'react-icons/fi';
 import { preferredWeatherLayer } from '../../pages/weather/weatherMap';
 import './WeatherGlass.css';
 
@@ -30,6 +31,21 @@ export default function ForecastLayout({ extras = null }) {
   return (
     <main className={`main-container ${isMountainMode ? 'is-mountain-mode' : 'weather-glass-home'}`} style={{ flexGrow: 1, maxWidth: '1320px', margin: '0 auto', width: '100%', zIndex: 1, padding: '28px 24px' }}>
       <div className="main-primary-column" style={{ display: 'flex', flexDirection: 'column', gap: '16px', minWidth: 0 }}>
+
+        {isMountainMode && hikingPlanSummary && activeWeather.hasData && (
+          <section className="glass-card mountain-top-safety" aria-label="선택 일정 시간 안전" aria-live="polite"
+            style={{ '--safety-color': hikingPlanSummary.timeSafetyColor }}>
+            <div className="mountain-top-safety__status">
+              {hikingPlanSummary.timeSafetyColor === '#166534' ? <FiClock aria-hidden="true" /> : <FiAlertTriangle aria-hidden="true" />}
+              <div><span>선택 일정 기준 · 한국 시간</span><strong>{hikingPlanSummary.timeSafetyStatus}</strong></div>
+            </div>
+            <dl>
+              <div><dt>출발 시각</dt><dd>{hikingPlanSummary.departureTimeStr}</dd></div>
+              <div><dt>예상 하산 완료 시각</dt><dd>{hikingPlanSummary.descentFinishTimeStr}</dd></div>
+              <div><dt>권장 하산 시작 시각</dt><dd>{hikingPlanSummary.safeDescentStartTime}</dd></div>
+            </dl>
+          </section>
+        )}
 
         <WeatherMain
           weatherData={activeWeather}
@@ -111,10 +127,13 @@ export default function ForecastLayout({ extras = null }) {
             baseTemp: activeWeather.baseTemp,
             humidity: activeWeather.humidity,
             wind_speed: activeWeather.wind_speed,
+            windUsesCurrentFallback: activeWeather.isFuture && !weeklyData[selectedDateIdx]?.wind_speed,
+            fallbackWindSource: weatherData.weatherSources?.wind,
             description: activeWeather.condition,
             sunrise: activeWeather.sunrise,
             sunset: activeWeather.sunset,
             safeDescentTime: activeWeather.safeDescentTime,
+            plannedDescentStart: hikingPlanSummary?.safeDescentStartTime,
             elevation: activeWeather.elevation,
             targetPop: activeWeather.targetPop,
             isFuture: activeWeather.isFuture,

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { FiFileText, FiMap, FiClock, FiBriefcase, FiInfo, FiFlag } from 'react-icons/fi';
 
 function WeatherOutlook({
   weeklyData = [],
@@ -39,7 +40,7 @@ function WeatherOutlook({
   return (
     <div className="glass-card" style={{ borderRadius: '16px', padding: '24px', color: '#1e293b', width: '100%', boxSizing: 'border-box', height: 'fit-content', display: 'flex', flexDirection: 'column' }}>
       <h3 style={{ margin: '0 0 16px 0', fontSize: '17px', fontWeight: '800', color: isMountainMode ? '#166534' : '#1e293b' }}>
-        {isMountainMode ? '⛰️ 산악 기상 전망 & AI 의사결정 가이드' : '날씨 전망'}
+        {isMountainMode ? <><span className="desktop-previous">⛰️ </span><FiMap className="desktop-weather-label inline-weather-icon" aria-hidden="true" />산악 기상 전망 & AI 의사결정 가이드</> : '날씨 전망'}
       </h3>
       
       <div style={{ display: 'flex', borderRadius: '8px', overflow: 'hidden', marginBottom: '16px', border: '1px solid rgba(0,0,0,0.08)', backgroundColor: 'rgba(255,255,255,0.4)' }}>
@@ -47,7 +48,7 @@ function WeatherOutlook({
           {isMountainMode ? '산간 종합 전망' : '주간 종합 전망'}
         </button>
         <button onClick={() => setActiveTab('ai')} style={{ flex: 1, minWidth: 0, padding: '10px 8px', fontFamily: 'inherit', fontSize: '14px', lineHeight: 1.5, wordBreak: 'keep-all', background: activeTab === 'ai' ? 'rgba(255,255,255,0.8)' : 'transparent', border: 'none', fontWeight: activeTab === 'ai' ? 'bold' : '600', cursor: 'pointer', color: activeTab === 'ai' ? (isMountainMode ? '#15803d' : '#0f172a') : '#64748b', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px', transition: 'all 0.2s ease' }}>
-          <span aria-hidden="true">{isMountainMode ? '🧗' : '🤖'}</span><span>{isMountainMode ? 'AI 산행 리포트' : 'AI 브리핑'}</span>
+          <span className="desktop-previous" aria-hidden="true">{isMountainMode ? '🧗' : '🤖'}</span><FiFileText className="desktop-weather-label" aria-hidden="true" /><span>{isMountainMode ? 'AI 산행 리포트' : 'AI 브리핑'}</span>
         </button>
       </div>
 
@@ -74,7 +75,7 @@ function WeatherOutlook({
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '13px', color: '#1e293b' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '6px' }}>
               <span style={{ border: '1px solid rgba(5,150,105,0.4)', color: '#059669', padding: '4px 12px', borderRadius: '16px', fontSize: '12px', fontWeight: 'bold', backgroundColor: 'rgba(209,250,229,0.6)' }}>
-                ✨ {weatherData?.region} ({mountainInfo?.peak}) 맞춤 의사결정 리포트
+                <span className="desktop-previous">✨ </span><FiFileText className="desktop-weather-label inline-weather-icon" aria-hidden="true" />{weatherData?.region} ({mountainInfo?.peak}) 맞춤 의사결정 리포트
               </span>
               <span style={{ fontSize: '11.5px', color: '#64748b', fontWeight: '600' }}>
                 {weatherData?.date} 기준
@@ -109,27 +110,31 @@ function WeatherOutlook({
             </div>
 
             <div style={{ backgroundColor: 'rgba(255,255,255,0.55)', padding: '10px 12px', borderRadius: '8px', fontSize: '12.5px', lineHeight: '1.5' }}>
-              <div><strong>⛰️ 정상 도착 시점({hikingPlanSummary.summitArrivalTimeStr}) 예보:</strong>{' '}
+              <div><strong><span className="desktop-previous">⛰️ </span><FiFlag className="desktop-weather-label inline-weather-icon" aria-hidden="true" />정상 도착 시점({hikingPlanSummary.summitArrivalTimeStr}) 예보:</strong>{' '}
                 {hikingPlanSummary.summitForecast?.available
                   ? `${hikingPlanSummary.summitForecast.targetHourLabel} 기준 기온 ${hikingPlanSummary.summitForecast.temp}°C (체감 ${hikingPlanSummary.summitForecast.feelsLike}°C), ${hikingPlanSummary.summitForecast.description}, 강수확률 ${hikingPlanSummary.summitForecast.pop}%`
                   : hikingPlanSummary.summitForecast?.reason}
               </div>
               <div style={{ marginTop: '4px' }}>
-                <strong>🚨 권장 하산 시작:</strong> {weatherData?.isFuture
+                <span className="desktop-previous"><strong>🚨 권장 하산 시작:</strong> {weatherData?.isFuture
                   ? '선택한 날짜의 일몰 정보가 없어 날짜별 일몰 시각과 탐방로 운영시간을 확인해야 합니다.'
-                  : <>정상에서 {hikingPlanSummary.safeDescentStartTime} 이전 하산을 시작하도록 늦어도 <strong>{hikingPlanSummary.recommendedDepDeadlineStr}</strong> 출발 권장. 예상 하산 완료는 {hikingPlanSummary.descentFinishTimeStr}입니다.</>}
+                  : <>정상에서 {hikingPlanSummary.safeDescentStartTime} 이전 하산을 시작하도록 늦어도 <strong>{hikingPlanSummary.recommendedDepDeadlineStr}</strong> 출발 권장. 예상 하산 완료는 {hikingPlanSummary.descentFinishTimeStr}입니다.</>}</span>
+                <span className="desktop-weather-label"><strong>권장 하산 시작 시각</strong>{' · '}{hikingPlanSummary.solar
+                  ? hikingPlanSummary.safeDescentStartTime : '날짜별 일몰 확인 필요'}
+                  {' · '}예상 하산 완료 시각 {hikingPlanSummary.descentFinishTimeStr}
+                </span>
               </div>
               <div style={{ marginTop: '4px', color: hikingPlanSummary.timeSafetyColor }}>
-                <strong>⏱️ 일정 판단:</strong> {hikingPlanSummary.timeSafetyStatus} (정상 도착 예상 {hikingPlanSummary.descentStartTimeStr})
+                <strong><span className="desktop-previous">⏱️ </span><FiClock className="desktop-weather-label inline-weather-icon" aria-hidden="true" />일정 판단:</strong> {hikingPlanSummary.timeSafetyStatus} (정상 도착 예상 {hikingPlanSummary.descentStartTimeStr})
               </div>
               {hikingPlanSummary.weatherAssessmentReasons?.length > 0 && (
                 <div style={{ marginTop: '4px' }}>
-                  <strong>🌦️ 기상 판단 근거:</strong> {hikingPlanSummary.weatherAssessmentReasons.join(' · ')}
+                  <strong><span className="desktop-previous">🌦️ </span><FiInfo className="desktop-weather-label inline-weather-icon" aria-hidden="true" />기상 판단 근거:</strong> {hikingPlanSummary.weatherAssessmentReasons.join(' · ')}
                 </div>
               )}
               {hikingPlanSummary.gearList?.length > 0 && (
                 <div style={{ marginTop: '4px' }}>
-                  <strong>🎒 핵심 준비물:</strong> {hikingPlanSummary.gearList.slice(0, 5).join(', ')}
+                  <strong><span className="desktop-previous">🎒 </span><FiBriefcase className="desktop-weather-label inline-weather-icon" aria-hidden="true" />핵심 준비물:</strong> {hikingPlanSummary.gearList.slice(0, 5).join(', ')}
                 </div>
               )}
             </div>
@@ -145,7 +150,7 @@ function WeatherOutlook({
           <div style={{ padding: '2px 0', color: '#334155', fontSize: '13.5px', lineHeight: '1.65', wordBreak: 'keep-all', fontWeight: '500' }}>
             <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
               <span style={{ border: isMountainMode ? '1px solid rgba(5,150,105,0.4)' : '1px solid rgba(139,92,246,0.4)', color: isMountainMode ? '#059669' : '#7c3aed', padding: '4px 12px', borderRadius: '16px', fontSize: '12px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px', backgroundColor: isMountainMode ? 'rgba(209,250,229,0.6)' : 'rgba(237,233,254,0.6)' }}>
-                ✨ Gemini AI {isMountainMode ? '산악 분석' : ''}
+                <span className="desktop-previous">✨ </span><FiFileText className="desktop-weather-label inline-weather-icon" aria-hidden="true" />Gemini AI {isMountainMode ? '산악 분석' : ''}
               </span>
             </div>
             <p style={{ margin: 0 }}>

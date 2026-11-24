@@ -69,3 +69,7 @@
 @media (pointer: coarse) {
   .radar-card__move { display: inline-flex; }
 }
+
+@media (min-width: 901px) {
+  .radar-card .radar-card__status-inline { display: block; margin: 0 0 10px; font-size: 13px; color: #41566b; }
+}

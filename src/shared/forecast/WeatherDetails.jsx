@@ -1,3 +1,4 @@
+import { FiMap, FiBriefcase, FiSunrise, FiSunset, FiWind, FiInfo } from 'react-icons/fi';
 import React, { useState, useEffect } from 'react';
 import { isWeatherNumber } from '../lib/forecastCache';
 
@@ -147,10 +148,12 @@ function WeatherDetails({ airQuality = {}, current = {}, isMountainMode = false,
   })();
 
   if (!hasData) return <section className="glass-card detail-info-card weather-empty"><h3>상세 날씨 정보</h3><p>기상 자료를 받지 못했습니다.</p><dl className="empty-weather-values"><div><dt>습도</dt><dd>자료 없음</dd></div><div><dt>풍속</dt><dd>자료 없음</dd></div><div><dt>대기질</dt><dd>자료 없음</dd></div></dl><p>자료가 확인되면 옷차림과 활동 안내를 제공합니다.</p></section>;
+  const plainLabel = text => text.replace(/\p{Extended_Pictographic}\uFE0F?\s*/gu, '').trim();
+
   return (
     <div className="glass-card detail-info-card" style={{ borderRadius: '16px', padding: '20px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', height: 'fit-content', boxSizing: 'border-box' }}>
       <h3 style={{ margin: '0 0 12px 0', fontSize: '15px', fontWeight: '800', color: isMountainMode ? '#166534' : '#1e293b' }}>
-        {isMountainMode ? '⛰️ 4대 산행 환경 지수' : '상세 날씨 정보'}
+        {isMountainMode ? <><span className="desktop-previous">⛰️ </span><FiMap className="desktop-weather-label inline-weather-icon" aria-hidden="true" />4대 산행 환경 지수</> : '상세 날씨 정보'}
       </h3>
 
       <details style={{ margin: '0 0 12px', padding: '9px 10px', background: 'rgba(255,255,255,0.45)', borderRadius: '8px', color: '#475569', fontSize: '12px', lineHeight: 1.6 }}>
@@ -177,13 +180,13 @@ function WeatherDetails({ airQuality = {}, current = {}, isMountainMode = false,
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#475569', fontWeight: 'bold' }}>
           {celestial.isNight ? (
             <>
-              <span>🌇 오늘 일몰 {sunset}</span>
-              <span>🌅 내일 일출 {sunrise}</span>
+              <span><span className="desktop-previous">🌇 </span><FiSunset className="desktop-weather-label inline-weather-icon" aria-hidden="true" />오늘 일몰 {sunset}</span>
+              <span><span className="desktop-previous">🌅 </span><FiSunrise className="desktop-weather-label inline-weather-icon" aria-hidden="true" />내일 일출 {sunrise}</span>
             </>
           ) : (
             <>
-              <span>🌅 오늘 일출 {sunrise}</span>
-              <span>🌇 오늘 일몰 {sunset}</span>
+              <span><span className="desktop-previous">🌅 </span><FiSunrise className="desktop-weather-label inline-weather-icon" aria-hidden="true" />오늘 일출 {sunrise}</span>
+              <span><span className="desktop-previous">🌇 </span><FiSunset className="desktop-weather-label inline-weather-icon" aria-hidden="true" />오늘 일몰 {sunset}</span>
             </>
           )}
         </div>
@@ -198,7 +201,11 @@ function WeatherDetails({ airQuality = {}, current = {}, isMountainMode = false,
 
         {isMountainMode && (
           <div style={{ marginTop: '4px', backgroundColor: 'rgba(255,247,237,0.7)', border: '1px solid rgba(254,215,170,0.5)', color: '#c2410c', borderRadius: '8px', padding: '4px 8px', fontSize: '11.5px', fontWeight: 'bold', textAlign: 'center' }}>
-            🚨 권장 하산 시작: {current.safeDescentTime || '일몰 자료 확인 필요'}
+            <span className="desktop-previous">🚨 권장 하산 시작: {current.safeDescentTime || '일몰 자료 확인 필요'}</span>
+            <span className="desktop-weather-label">
+              {current.plannedDescentStart ? '선택 일정 기준 · ' : '현재 표시일 기준 · '}
+              권장 하산 시작 시각 {current.plannedDescentStart || current.safeDescentTime || '일몰 자료 확인 필요'}
+            </span>
           </div>
         )}
       </div>
@@ -206,16 +213,22 @@ function WeatherDetails({ airQuality = {}, current = {}, isMountainMode = false,
       : <p className="muted">일출·일몰 자료 없음 · 날짜별 공식 정보를 확인하세요.</p>}
       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#1e293b', marginTop: '10px', paddingTop: '10px', borderTop: '1px solid rgba(0,0,0,0.1)' }}>
         <span style={{ fontWeight: '600' }}>{isMountainMode ? '정상 습도:' : '습도:'} <strong>{humidity === null ? '자료 없음' : `${humidity}%`}</strong></span>
-        <span style={{ fontWeight: '600' }}>{isMountainMode ? '능선 풍속:' : '풍속:'} <strong>{wind === null ? '자료 없음' : `${wind} m/s`}</strong></span>
+        <span style={{ fontWeight: '600' }}>
+          {isMountainMode ? <><span className="desktop-previous">능선 풍속: </span><span className="desktop-weather-label">{current.isFuture && !current.windUsesCurrentFallback ? '선택일 풍속 ' : '현재 정상 풍속 '}</span></> : '풍속: '}
+          <strong>{wind === null ? '자료 없음' : `${wind} m/s`}</strong>
+          {isMountainMode && wind !== null && <small className="desktop-weather-label weather-reading-source">
+            {current.windUsesCurrentFallback ? <>선택일 자료 없음 · {current.fallbackWindSource}</> : current.weatherSources?.wind}
+          </small>}
+        </span>
       </div>
 
       <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px solid rgba(0,0,0,0.1)', display: 'flex', flexDirection: 'column', gap: '6px' }}>
         <h4 style={{ margin: '0 0 4px 0', fontSize: '12px', color: isMountainMode ? '#166534' : '#475569', fontWeight: 'bold' }}>
-          {isMountainMode ? '🎒 기온 기반 레이어링' : '생활 지수 추천'}
+          {isMountainMode ? <><span className="desktop-previous">🎒 </span><FiBriefcase className="desktop-weather-label inline-weather-icon" aria-hidden="true" />기온 기반 레이어링</> : '생활 지수 추천'}
         </h4>
         
         <div style={{ background: isMountainMode ? 'rgba(240,253,244,0.7)' : 'rgba(255,255,255,0.5)', padding: '8px 10px', borderRadius: '8px', fontSize: '11px', color: '#1e293b', display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center', lineHeight: '1.4', wordBreak: 'keep-all' }}>
-          <span style={{ fontWeight: 'bold' }}>{mainRecommendation}</span>
+          <span style={{ fontWeight: 'bold' }}><span className="desktop-previous">{mainRecommendation}</span><span className="desktop-weather-label"><FiBriefcase className="inline-weather-icon" aria-hidden="true" />{plainLabel(mainRecommendation)}</span></span>
         </div>
         {!isMountainMode && <details style={{ fontSize: '12px', color: '#475569', lineHeight: 1.6 }}>
           <summary style={{ cursor: 'pointer', minHeight: '24px' }}>추천 판단 기준</summary>
@@ -232,7 +245,7 @@ function WeatherDetails({ airQuality = {}, current = {}, isMountainMode = false,
 
              return (
               <div key={idx} style={{ background: bgAlpha, border: `1px solid ${badge.color}40`, color: badge.color, padding: '6px 4px', borderRadius: '6px', fontSize: '11px', fontWeight: '800', textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', wordBreak: 'keep-all' }}>
-                {badge.text}
+                <span className="desktop-previous">{badge.text}</span><span className="desktop-weather-label">{isMountainMode && idx === 2 ? <FiWind className="inline-weather-icon" aria-hidden="true" /> : <FiInfo className="inline-weather-icon" aria-hidden="true" />}{plainLabel(badge.text)}</span>
               </div>
             );
           })}

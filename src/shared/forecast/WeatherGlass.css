@@ -29,3 +29,34 @@
     backdrop-filter: none;
   }
 }
+
+
+@media (min-width: 901px) {
+  .mountain-top-safety {
+    display: grid;
+    grid-template-columns: minmax(180px, 1fr) 1.7fr;
+    align-items: center;
+    gap: 16px;
+    padding: 16px;
+    border-inline-start: 4px solid var(--safety-color);
+  }
+  .mountain-top-safety__status { display: flex; align-items: center; gap: 8px; color: var(--safety-color); }
+  .mountain-top-safety__status svg { flex: none; width: 20px; height: 20px; }
+  .mountain-top-safety__status span, .mountain-top-safety dt { color: #526475; font-size: 12px; }
+  .mountain-top-safety__status strong { display: block; margin-block-start: 4px; font-size: 16px; }
+  .mountain-top-safety dl { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 0; }
+  .mountain-top-safety dl > div { padding-inline-start: 12px; border-inline-start: 1px solid #dbe4e8; }
+  .mountain-top-safety dd { margin: 4px 0 0; color: #22364a; font-weight: 750; font-variant-numeric: tabular-nums; }
+}
+
+
+@media (min-width: 901px) {
+  .weather-main-card { align-items: start; }
+  .weather-main-card > div:first-child { align-self: center; }
+  .weather-main-card .weather-main-right { align-self: start; }
+  .weather-main-card .mountain-picker-content { flex: initial; }
+  .weather-main-card .mountain-picker-list { height: auto; min-height: 0; overflow: visible; }
+  .mountain-list-toggle { min-height: 36px; margin-top: 6px; border: 1px solid #c9ddd3; border-radius: 8px; background: #f5faf7; color: #245a4a; font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
+  .mountain-list-toggle:hover { background: #e9f4ed; }
+  .detail-info-card .weather-reading-source:not(:empty) { display: block; margin-top: 4px; color: #526475; font-weight: 500; }
+}

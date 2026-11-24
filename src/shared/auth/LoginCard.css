@@ -168,3 +168,37 @@
   outline: 2px solid #82571c;
   outline-offset: 2px;
 }
+
+
+.account-summary__controls { display: grid; gap: 16px; }
+
+@media (min-width: 901px) {
+  .guest-account-intro { padding: 14px !important; }
+  .guest-account-intro .guest-account-intro__icon { display: none !important; }
+  .guest-account-intro .guest-account-intro__perks { display: none !important; }
+  .guest-account-intro > p { margin-block-end: 10px !important; }
+  .member-account-card { padding: 10px 12px !important; }
+  .account-summary .account-compact-toggle {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 8px;
+    min-height: 36px;
+    padding: 6px 8px;
+    text-align: left;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: #25425a;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .account-compact-toggle span { overflow-wrap: anywhere; }
+  .account-compact-toggle:hover { background: #edf5f8; }
+  .account-compact-toggle:focus-visible { outline: 2px solid #25659b; outline-offset: 2px; }
+  .account-compact-toggle[aria-expanded=true] svg:last-child { transform: rotate(180deg); }
+  .account-summary__controls:not(.is-open) { display: none; }
+  .account-summary__controls .account-summary__profile { display: none; }
+}

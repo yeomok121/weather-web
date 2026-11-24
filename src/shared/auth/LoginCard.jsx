@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FiUser, FiLock, FiLogOut, FiMail, FiSettings, FiTrash2 } from 'react-icons/fi';
+import { FiUser, FiLock, FiLogOut, FiMail, FiSettings, FiChevronDown, FiMap, FiTrash2 } from 'react-icons/fi';
 import { requestJson } from '../lib/apiClient';
 import { newPasswordError, newPasswordHint } from './passwordPolicy';
 import './LoginCard.css';
@@ -14,6 +14,9 @@ const DEFAULT_GUEST_INTRO = {
 };
 
 function LoginCard({ loginPrompt = 0, guestIntro = DEFAULT_GUEST_INTRO, onSignUpClick, onFindPasswordClick, loggedInUser, onLogin, onLogout, onUpdateUser, onDeleteAccount }) {
+  const [expandedAccount, setExpandedAccount] = useState(null);
+  const accountOpen = expandedAccount?.token === loggedInUser?.accessToken
+    ? expandedAccount?.open === true : Boolean(loggedInUser?.passwordNeedsUpdate);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isEditMode, setIsEditMode] = useState(false);
@@ -134,7 +137,7 @@ function LoginCard({ loginPrompt = 0, guestIntro = DEFAULT_GUEST_INTRO, onSignUp
   // 💡 기존의 background: '#ffffff' 제거, transparent 적용
   if (loggedInUser) {
     return (
-      <div style={{ padding: '24px', boxSizing: 'border-box', height: '100%', background: 'transparent' }}>
+      <div className="member-account-card" style={{ padding: '24px', boxSizing: 'border-box', height: '100%', background: 'transparent' }}>
         {isDeleteMode ? (
           <form onSubmit={handleDeleteSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <h3 style={{ margin: 0, color: '#9b1c1c', fontSize: '17px' }}>회원 탈퇴</h3>
@@ -154,8 +157,13 @@ function LoginCard({ loginPrompt = 0, guestIntro = DEFAULT_GUEST_INTRO, onSignUp
             </div>
           </form>
         ) : !isEditMode ? (
-          <section className="account-summary" aria-labelledby="account-summary-title">
-            <h3 id="account-summary-title">내 정보</h3>
+          <section className="account-summary" aria-label="내 정보">
+            <button type="button" className="account-compact-toggle desktop-weather-label" aria-expanded={accountOpen}
+              aria-controls="account-summary-controls" onClick={() => setExpandedAccount({ token: loggedInUser.accessToken, open: !accountOpen })}>
+              <FiUser aria-hidden="true" /><span>{loggedInUser.name} 님 · 내 계정</span><FiChevronDown aria-hidden="true" />
+            </button>
+            <div id="account-summary-controls" className={`account-summary__controls ${accountOpen ? 'is-open' : ''}`}>
+            <h3 id="account-summary-title" className="desktop-previous">내 정보</h3>
             <div className="account-summary__profile">
               <span className="account-summary__avatar" aria-hidden="true">{loggedInUser.name.charAt(0)}</span>
               <div className="account-summary__identity">
@@ -180,6 +188,7 @@ function LoginCard({ loginPrompt = 0, guestIntro = DEFAULT_GUEST_INTRO, onSignUp
               <button type="button" className="account-action account-action--logout" onClick={onLogout}>
                 <FiLogOut aria-hidden="true" /> 로그아웃
               </button>
+            </div>
             </div>
           </section>
         ) : (
@@ -206,13 +215,13 @@ function LoginCard({ loginPrompt = 0, guestIntro = DEFAULT_GUEST_INTRO, onSignUp
 
   if (!showLoginForm) {
     return (
-      <div style={{ padding: '24px', boxSizing: 'border-box', background: 'transparent' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '42px', height: '42px', margin: '0 auto 12px', borderRadius: '14px', color: '#176b63', background: 'rgba(23,107,99,0.1)', fontSize: '20px' }}>{guestIntro.icon}</div>
+      <div className="guest-account-intro" style={{ padding: '24px', boxSizing: 'border-box', background: 'transparent' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '42px', height: '42px', margin: '0 auto 12px', borderRadius: '14px', color: '#176b63', background: 'rgba(23,107,99,0.1)', fontSize: '20px' }} className="guest-account-intro__icon"><span className="desktop-previous">{guestIntro.icon}</span><span className="desktop-weather-label">{guestIntro.desktopIcon || <FiMap aria-hidden="true" />}</span></div>
         <h3 style={{ margin: '0 0 8px', fontSize: '17px', fontWeight: '800', color: '#1e293b', textAlign: 'center' }}>{guestIntro.title}</h3>
         <p style={{ margin: '0 auto 16px', maxWidth: '250px', fontSize: '13px', lineHeight: '1.55', color: '#526176', textAlign: 'center' }}>
           {guestIntro.text}
         </p>
-        <div style={{ display: 'grid', gap: '8px', marginBottom: '16px' }}>
+        <div className="guest-account-intro__perks" style={{ display: 'grid', gap: '8px', marginBottom: '16px' }}>
           {guestIntro.perks.map(perk => <div key={perk} style={{ padding: '9px 11px', borderRadius: '10px', background: 'rgba(255,255,255,0.48)', color: '#334155', fontSize: '12px' }}>{perk}</div>)}
         </div>
         <button type="button" onClick={onSignUpClick} style={{ width: '100%', padding: '11px', border: '0', borderRadius: '9px', color: '#fff', background: '#176b63', fontWeight: '750', fontSize: '13px', cursor: 'pointer' }}>무료 계정 만들기</button>

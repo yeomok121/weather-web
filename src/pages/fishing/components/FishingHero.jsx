@@ -46,7 +46,7 @@ export default function FishingHero({ areas, area, onAreaChange, loading, onRelo
       <div className="fish-weather-sky"><span aria-hidden="true">{weather.icon}</span><b>{weather.sky || '해상 날씨'}</b></div>
       {[['기온', weather.airTemp], ['바람', weather.wind], ['파고', weather.wave], ['수온', weather.waterTemp]].filter(([, value]) => value).map(([label, value]) => <div key={label}><small>{label}</small><b>{value}</b></div>)}
     </div> : <p className="fish-weather-strip loading">{loading ? '바다 날씨를 확인하고 있어요…' : '바다 날씨 자료가 없습니다.'}</p>}
-    {weather?.buoy && <p className="fish-hero-source">기온·바람·파고·수온: 가장 가까운 부이 {weather.buoy.name} · 약 {weather.buoy.distance} km{weather.buoy.hour ? ` · ${weather.buoy.hour}시 관측` : ''} / 하늘: 해상예보</p>}
+    {weather?.buoy && <p className="fish-hero-source">기온·바람·파고·수온: 가장 가까운 부이 {weather.buoy.name} · <span className="desktop-weather-label">{pointMode ? '선택 포인트에서 부이까지 ' : '기준 해역에서 부이까지 '}</span>약 {weather.buoy.distance} km{weather.buoy.hour ? ` · ${weather.buoy.hour}시 관측` : ''} / 하늘: 해상예보</p>}
 
     {verdict && <div className={`fish-verdict ${verdict.tone}`} role="status">
       {verdict.tone === 'go' || verdict.tone === 'okay' ? <FiCheckCircle /> : <FiAlertTriangle />}
@@ -69,8 +69,8 @@ function TimingLine({ timing, now, onClick }) {
   const day = next && kstDay(next.start) !== kstDay(now) ? '내일 ' : '오늘 ';
   return <button type="button" className="fish-timing-line" onClick={onClick}>
     <FiClock aria-hidden="true" />
-    <span>{next ? <><b>{next.score === 2 ? '골든타임' : '다음 좋은 때'}</b> {day}{clock(next.start)}–{clock(next.end)} · {windowReason(next)}</> : <><b>출조 시간</b> {timing.blockedBy ? '특보 중이라 추천 없음' : '추천할 때 없음'}</>}
-      {urgent && <em className={urgent.level}> · ⚠ {urgent.title}</em>}</span>
+    <span className="fish-timing-forecast">{next ? <><b><span className="desktop-weather-label">시간대별 예보 참고 · </span><span className="desktop-previous">{next.score === 2 ? '골든타임' : '다음 좋은 때'}</span></b> {day}{clock(next.start)}–{clock(next.end)} · {windowReason(next)}</> : <><b>출조 시간</b> {timing.blockedBy ? '특보 중이라 추천 없음' : '추천할 때 없음'}</>}
+      {urgent && <em className={`fish-timing-caution ${urgent.level}`}><span className="desktop-previous"> · ⚠ </span><span className="desktop-weather-label">안전 참고 · </span>{urgent.title}</em>}</span>
     <FiChevronRight aria-hidden="true" />
   </button>;
 }

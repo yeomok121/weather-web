@@ -564,3 +564,16 @@ button.fish-area-picker em { font-style:normal; font-size:12px; font-weight:700;
 .fish-gear-mini-more { display:flex; align-items:center; justify-content:center; gap:5px; width:100%; padding:7px 10px; border:1px solid rgba(15,127,134,.35); border-radius:10px; background:rgba(15,127,134,.06); color:#0f6f76; font:inherit; font-size:12.5px; font-weight:800; cursor:pointer; }
 /* 예전 위쪽 2단(커뮤니티 페이지에서 계속 씀)의 모바일 순서 규칙이 오른쪽 칸에는 적용되지 않게: 로그인 → 커뮤니티 → 준비물 */
 .fish-side-col > .fish-login-card, .fish-side-col > .fish-community-card, .fish-side-col > .fish-gear-mini { order:0; }
+
+@media (min-width: 901px) {
+  .fish-timing-line { flex-wrap: wrap; }
+  .fish-timing-line .fish-timing-forecast { display: block; }
+  .fish-timing-line .fish-timing-caution { display: block; margin-top: 5px; font-style: normal; }
+  .fish-point-list .fish-point-extra { display: none; }
+  .fish-point-quick-label { display: block; margin: 0 0 8px; font-size: 12px; color: #4b637a; }
+  .fish-point-results { min-width: 0; }
+  .fish-point-results .fish-point-more { margin-top: 8px; min-height: 36px; padding: 6px 10px; border: 1px solid #abc4d5; border-radius: 8px; background: #f4f9fd; color: #244c67; font: inherit; font-size: 13px; cursor: pointer; }
+  .fish-point-list .fish-grade-repeat { background: transparent; border: 1px solid #dabdbc; color: #813d39; padding-block: 2px; font-size: 11px; }
+  .fish-compare.empty { padding-block: 14px; min-height: 0; }
+  .fish-compare.empty .fish-panel-title { margin-bottom: 0; }
+}

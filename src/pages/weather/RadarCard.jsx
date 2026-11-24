@@ -240,6 +240,9 @@ export default function RadarCard({ latitude, longitude, region, preferredLayer 
       </div>
       {!manualLayer && automaticLayer === 'wind' && <p className="radar-card__note">현재 풍속을 참고해 바람 지도를 먼저 열었어요. 강수 탭도 선택할 수 있습니다.</p>}
       {isRain && display && observation && <p className="radar-card__local"><strong>{region || '조회 지역'} · {timeLabel(displayedAt)}</strong> {observation}</p>}
+      {isRain && (loading || imageLoading) && <p className="radar-card__status-inline desktop-weather-label" role="status">
+        {loading ? '최근 관측 시각 목록을 확인하고 있어요.' : `${timeLabel(selectedFrame.observed_at)} 영상을 준비하고 있어요.`}
+      </p>}
       <div className="radar-card__map-wrap">
         <div ref={container} className="radar-card__map" aria-label={isRain ? '기상청 강수 관측 지도' : '기상청 바람 관측 지도'} />
         {hasLocation && <button type="button" className="radar-button radar-card__recenter" aria-label="조회 지역으로 돌아가기" title="조회 지역으로 돌아가기"
@@ -253,7 +256,7 @@ export default function RadarCard({ latitude, longitude, region, preferredLayer 
             });
             setMapMoving(value => !value);
           }}>{mapMoving ? '지도 이동 끄기' : '지도 이동 켜기'}</button>
-        {isRain && (loading || imageLoading) && <div className="radar-card__status" role="status">
+        {isRain && (loading || imageLoading) && <div className="radar-card__status desktop-previous" role="status">
           {loading ? '최근 관측 시각 목록을 확인하고 있어요.' : `${timeLabel(selectedFrame.observed_at)} 영상을 준비하고 있어요.`}
         </div>}
         {isRain && !loading && !imageLoading && !displayedAt && <div className="radar-card__status">레이더 관측 영상 없음</div>}

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { FiTrash2, FiCalendar, FiChevronDown } from 'react-icons/fi';
+import { FiTrash2, FiCalendar, FiChevronDown, FiMapPin, FiInfo, FiPlus } from 'react-icons/fi';
 
 function WeatherMain({
   weatherData, weeklyData = [],
@@ -9,8 +9,21 @@ function WeatherMain({
 }) {
   const [hoveredIndex, setHoveredIndex] = useState(null);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
+  const [desktopList, setDesktopList] = useState(() => window.matchMedia('(min-width: 901px)').matches);
+  const [showAllMountains, setShowAllMountains] = useState(false);
+  useEffect(() => {
+    const query = window.matchMedia('(min-width: 901px)');
+    const sync = () => setDesktopList(query.matches);
+    query.addEventListener('change', sync);
+    return () => query.removeEventListener('change', sync);
+  }, []);
   const dropdownRef = useRef(null);
   const sortedMountains = [...mountainsList].sort((a, b) => a.name.localeCompare(b.name, 'ko'));
+  const selectedMountain = sortedMountains.find(mountain => mountain.name === weatherData.region);
+  const orderedMountains = desktopList && selectedMountain
+    ? [selectedMountain, ...sortedMountains.filter(mountain => mountain !== selectedMountain)] : sortedMountains;
+  const visibleMountains = desktopList && !showAllMountains ? orderedMountains.slice(0, 5) : orderedMountains;
+
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -143,7 +156,7 @@ function WeatherMain({
         <p style={{ margin: '4px 0 2px 0', fontWeight: 'bold', fontSize: '13px', color: '#1e293b' }}>
           {hasData ? (isMountainMode ? `정상 ${weatherData.condition}` : weatherData.condition) : (isAiLoading ? '날씨 확인 중' : '기상 자료 없음')}
         </p>
-        <p style={{ margin: '0 0 8px 0', color: '#475569', fontSize: '12px', fontWeight: '500' }}>{hasData ? weatherData.highLow : '기온 · 습도 · 바람 자료를 확인해 주세요.'}</p>
+        <p style={{ margin: '0 0 8px 0', color: '#475569', fontSize: '12px', fontWeight: '500' }}>{hasData ? <>{isMountainMode && !weatherData.isFuture && <span className="desktop-weather-label">현재 날씨 자료 기준 · </span>}{weatherData.highLow}</> : '기온 · 습도 · 바람 자료를 확인해 주세요.'}</p>
 
         {diffBadge && <div style={{ display: 'flex', justifyContent: 'center' }}>
           <span style={{ display: 'inline-block', backgroundColor: diffBadge.bg, color: diffBadge.color, borderRadius: '6px', padding: '4px 10px', fontSize: '11px', fontWeight: 'bold' }}>
@@ -161,23 +174,27 @@ function WeatherMain({
       <div id="mountain-picker" className="weather-main-right" style={{ flex: 1, padding: '16px', borderLeft: '1px solid rgba(255,255,255,0.4)', color: '#333', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', backgroundColor: 'rgba(255,255,255,0.15)', minWidth: 0 }}>
         {isMountainMode ? (
           <div className="mountain-picker-content">
-            <h4 style={{ fontSize: '11.5px', color: '#166534', fontWeight: 'bold', margin: '0 0 6px 0' }}>📌 핵심 산행 팁</h4>
+            <h4 style={{ fontSize: '11.5px', color: '#166534', fontWeight: 'bold', margin: '0 0 6px 0' }}><span className="desktop-previous">📌 </span><FiInfo className="desktop-weather-label inline-weather-icon" aria-hidden="true" />핵심 산행 팁</h4>
             <div style={{ backgroundColor: 'rgba(255,255,255,0.6)', borderRadius: '6px', padding: '8px 10px', fontSize: '11px', color: '#1e293b', lineHeight: '1.45', margin: '0 0 12px 0', wordBreak: 'keep-all' }}>
               {mountainInfo?.course_tip || '정상 부근 기온 하강과 강풍에 대비해 방풍 의류와 스틱을 준비하세요.'}
             </div>
 
             <h4 style={{ fontSize: '11.5px', color: '#475569', margin: '0 0 6px 0', fontWeight: 'bold' }}>국내 산 리스트</h4>
 
-            <ul className="mountain-picker-list" aria-label="가나다순 산 리스트">
-              {sortedMountains.map((m, idx) => {
+            <ul id="weather-mountain-list" className="mountain-picker-list" aria-label={desktopList ? "국내 산 목록" : "가나다순 산 리스트"}>
+              {visibleMountains.map((m, idx) => {
                 const isSelected = weatherData.region === m.name;
                 return (
                   <li key={m.name} role="button" aria-pressed={isSelected} tabIndex={0} onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onSelectMountain?.(m.name); } }} onClick={() => onSelectMountain && onSelectMountain(m.name)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 8px', cursor: 'pointer', borderRadius: '6px', backgroundColor: isSelected ? 'rgba(22,163,74,0.1)' : 'transparent', color: isSelected ? '#16a34a' : '#475569', fontWeight: isSelected ? 'bold' : '500', marginBottom: '2px' }}>
-                    <span>{idx + 1}. {m.name}</span><span style={{ fontSize: '10.5px', color: isSelected ? '#16a34a' : '#94a3b8' }}>{m.elevation}m</span>
+                    <span>{desktopList ? (isSelected ? "선택 · " : "") : `${idx + 1}. `}{m.name}</span><span style={{ fontSize: '10.5px', color: isSelected ? '#16a34a' : '#94a3b8' }}>{m.elevation}m</span>
                   </li>
                 );
               })}
             </ul>
+            {desktopList && orderedMountains.length > 5 && <button type="button" className="mountain-list-toggle"
+              aria-controls="weather-mountain-list" aria-expanded={showAllMountains}
+              onClick={() => setShowAllMountains(open => !open)}>{showAllMountains ? '산 목록 접기' : `산 목록 더보기 (${orderedMountains.length}곳)`}</button>}
+
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -188,8 +205,8 @@ function WeatherMain({
               </div>
               <span style={{ fontSize: '10.5px', color: '#64748b' }}>{favorites.length}/5</span>
             </div>
-            <button type="button" onClick={onCurrentLocationClick} style={{ cursor: 'pointer', color: '#1d4ed8', fontWeight: '700', textAlign: 'left', padding: '8px 10px', borderRadius: '8px', border: '1px solid rgba(37,99,235,0.2)', background: 'rgba(255,255,255,0.55)', fontSize: '11.5px' }}>📍 현재 위치 날씨 보기</button>
-            {favorites.length < 5 && <button type="button" onClick={onAddClick} style={{ cursor: 'pointer', color: '#166534', fontWeight: '700', textAlign: 'left', padding: '8px 10px', borderRadius: '8px', border: '1px dashed rgba(22,101,52,0.35)', background: 'rgba(240,253,244,0.45)', fontSize: '11.5px' }}>＋ 지역 추가 · 최대 5곳 비교</button>}
+            <button type="button" onClick={onCurrentLocationClick} style={{ cursor: 'pointer', color: '#1d4ed8', fontWeight: '700', textAlign: 'left', padding: '8px 10px', borderRadius: '8px', border: '1px solid rgba(37,99,235,0.2)', background: 'rgba(255,255,255,0.55)', fontSize: '11.5px' }}><span className="desktop-previous">📍 </span><FiMapPin className="desktop-weather-label inline-weather-icon" aria-hidden="true" />현재 위치 날씨 보기</button>
+            {favorites.length < 5 && <button type="button" onClick={onAddClick} style={{ cursor: 'pointer', color: '#166534', fontWeight: '700', textAlign: 'left', padding: '8px 10px', borderRadius: '8px', border: '1px dashed rgba(22,101,52,0.35)', background: 'rgba(240,253,244,0.45)', fontSize: '11.5px' }}><span className="desktop-previous">＋ </span><FiPlus className="desktop-weather-label inline-weather-icon" aria-hidden="true" />지역 추가 · 최대 5곳 비교</button>}
             {favorites.length === 0 && <p style={{ margin: 0, color: '#526176', fontSize: '12px', lineHeight: 1.5 }}>자주 보는 지역을 추가하면 이 브라우저에서 다음 방문에도 빠르게 확인할 수 있어요.</p>}
             <ul style={{ listStyle: 'none', padding: '0', margin: '0', fontSize: '12px', lineHeight: '1.5' }}>
               {favorites.map((fav, index) => (
