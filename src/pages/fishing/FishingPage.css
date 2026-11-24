@@ -536,3 +536,31 @@ button.fish-area-picker em { font-style:normal; font-size:12px; font-weight:700;
 .fish-comments li.hidden { opacity:.75; border-style:dashed; }
 .fish-comment-hidden { margin:4px 0 0 !important; color:#a3241a !important; font-size:12px !important; }
 .fish-comment-head .report-badge { padding:0 6px; border-radius:6px; background:#fee2e2; color:#b91c1c; font-size:10.5px; font-weight:800; }
+/* 낚시 페이지 2단 (날씨·산악 페이지와 같은 비율): 왼쪽 본문 / 오른쪽 칸(로그인·커뮤니티·준비물 체크) */
+.fish-layout { display:grid; grid-template-columns:minmax(0,1.9fr) minmax(320px,.9fr); gap:24px; align-items:start; }
+.fish-main-col { display:flex; flex-direction:column; gap:18px; min-width:0; }
+.fish-side-col { display:flex; flex-direction:column; gap:18px; min-width:0; position:sticky; top:calc(var(--header-height, 64px) + 16px);
+  max-height:calc(100vh - var(--header-height, 64px) - 32px); overflow-y:auto; overscroll-behavior:contain; scrollbar-width:thin; padding-bottom:2px; }
+.fish-side-col > * { flex-shrink:0; }
+@media (max-width:900px) {
+  .fish-layout { display:flex; flex-direction:column; gap:18px; }
+  .fish-side-col { position:static; max-height:none; overflow:visible; }
+}
+@media (max-width:720px) { .fish-layout, .fish-main-col, .fish-side-col { gap:12px; } }
+/* 오른쪽 아래 작은 준비물 체크리스트 */
+.fish-gear-mini { padding:14px 16px; border-radius:20px; color:#172b43; }
+.fish-gear-mini header { display:flex; align-items:center; gap:7px; }
+.fish-gear-mini header svg { color:#0f7f86; font-size:17px; } .fish-gear-mini header b { font-size:15px; color:#173a5c; }
+.fish-gear-mini header span { margin-left:auto; color:#0f6f76; font-size:13px; font-weight:800; }
+.fish-gear-mini-bar { height:6px; margin:8px 0 8px; border-radius:999px; background:#e3ecf2; overflow:hidden; }
+.fish-gear-mini-bar i { display:block; height:100%; border-radius:999px; background:#0f7f86; transition:width .2s; }
+.fish-gear-mini ul { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:2px 8px; margin:0 0 8px; padding:0; list-style:none; }
+.fish-gear-mini label { display:flex; align-items:center; gap:6px; padding:4px 2px; font-size:12.5px; color:#253f57; cursor:pointer; min-width:0; }
+.fish-gear-mini input { flex:none; width:14px; height:14px; accent-color:#0f7f86; }
+.fish-gear-mini label span { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.fish-gear-mini li.done span { color:#9aa7b4; text-decoration:line-through; }
+.fish-gear-mini em { flex:none; padding:0 5px; border-radius:5px; background:rgba(15,127,134,.12); color:#0f6f76; font-style:normal; font-size:10px; font-weight:800; }
+.fish-gear-mini em.mine { background:#eef2f6; color:#5f7790; }
+.fish-gear-mini-more { display:flex; align-items:center; justify-content:center; gap:5px; width:100%; padding:7px 10px; border:1px solid rgba(15,127,134,.35); border-radius:10px; background:rgba(15,127,134,.06); color:#0f6f76; font:inherit; font-size:12.5px; font-weight:800; cursor:pointer; }
+/* 예전 위쪽 2단(커뮤니티 페이지에서 계속 씀)의 모바일 순서 규칙이 오른쪽 칸에는 적용되지 않게: 로그인 → 커뮤니티 → 준비물 */
+.fish-side-col > .fish-login-card, .fish-side-col > .fish-community-card, .fish-side-col > .fish-gear-mini { order:0; }

@@ -3,36 +3,19 @@
 import { useState } from 'react';
 import { FiCheckSquare, FiEdit2, FiEye, FiEyeOff, FiPlus, FiX } from 'react-icons/fi';
 import { useApp } from '../../../shared/AppContext';
-import { readStoredJson, writeStoredJson } from '../../../shared/lib/browserStorage';
-import { BASE_GEAR, GEAR_LIMITS, REQUIRED_GEAR, addGearItem, conditionalGear, gearListFor, todayConditions } from '../lib/gear';
-import { tideCalendar } from '../lib/tideCalendar';
-import { useGearSetup } from '../useGearSetup';
+import { BASE_GEAR, GEAR_LIMITS, REQUIRED_GEAR, addGearItem, todayGearItems } from '../lib/gear';
+import { gearCheckedKey } from '../lib/gearChecked';
+import { useGearChecked } from '../useGearChecked';
 import { openFishingLogin } from '../lib/loginPrompt';
 
-const STORAGE_KEY = 'fishing:gear-checked:v1';
-
-export default function GearChecklist(props) {
-  const account = useApp();
-  const owner = account.loggedInUser?.memberId ?? account.loggedInUser?.id;
-  const key = owner == null ? STORAGE_KEY : `${STORAGE_KEY}:member:${owner}`;
-  return <AccountGearChecklist key={key} storageKey={key} {...account} {...props} />;
-}
-
-function AccountGearChecklist({ area, indexDays, forecastRows, warnings, loggedInUser, showToast, promptLogin, storageKey }) {
-  const { setup, save, isLoggedIn } = useGearSetup({ loggedInUser, showToast });
+// gear = FishingPage에서 한 번 받은 '내 준비물' 세팅 { setup, save, isLoggedIn } (오른쪽 작은 체크리스트와 함께 씀)
+export default function GearChecklist({ area, indexDays, forecastRows, warnings, gear }) {
+  const { loggedInUser, promptLogin } = useApp();
+  const { setup, save, isLoggedIn } = gear;
   const [editing, setEditing] = useState(false);
   const [today] = useState(() => Date.now());
-  const conditions = todayConditions({ indexDays, forecastRows, warnings, tideLabel: tideCalendar(new Date(today), area.tide_system === 7 ? 7 : 8).label });
-  const [checked, setChecked] = useState(() => new Set(readStoredJson(storageKey, []).filter((id) => typeof id === 'string')));
-  const extra = conditionalGear(conditions);
-  const toggle = (id) => setChecked((previous) => {
-    const next = new Set(previous);
-    if (next.has(id)) next.delete(id); else next.add(id);
-    writeStoredJson(storageKey, [...next]);
-    return next;
-  });
-  const reset = () => { setChecked(new Set()); writeStoredJson(storageKey, []); };
-  const items = gearListFor(setup, extra);
+  const { checked, toggle, reset } = useGearChecked(gearCheckedKey(loggedInUser));
+  const { items, tips } = todayGearItems({ area, indexDays, forecastRows, warnings, setup, now: today });
   const done = items.filter((item) => checked.has(item.id)).length;
 
   return <article className="fish-panel fish-gear-panel">
@@ -41,7 +24,7 @@ function AccountGearChecklist({ area, indexDays, forecastRows, warnings, loggedI
     </div>
     {!isLoggedIn && <p className="fish-gear-login">로그인하면 나만의 준비물 목록을 만들 수 있어요. 계정에 저장돼서 어느 기기에서 로그인해도 그대로 보여요.<button type="button" onClick={() => openFishingLogin(promptLogin)}>로그인하기</button></p>}
     {editing && <GearEditor setup={setup} onCancel={() => setEditing(false)} onSave={async (next) => { if (await save(next)) setEditing(false); }} />}
-    {extra.filter((item) => item.tip).map((item) => <p className="fish-gear-tip" key={item.id}>⚠ {item.name} · {item.reason}</p>)}
+    {tips.map((item) => <p className="fish-gear-tip" key={item.id}>⚠ {item.name} · {item.reason}</p>)}
     <ul className="fish-gear-list">{items.map((item) => <li key={item.id} className={`${checked.has(item.id) ? 'done' : ''} ${item.mine ? 'mine' : ''}`}>
       <label>
         <input type="checkbox" checked={checked.has(item.id)} onChange={() => toggle(item.id)} />

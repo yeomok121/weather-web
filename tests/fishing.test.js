@@ -501,3 +501,23 @@ test('community draft checks, including closed season and minimum size', () => {
   assert.deepEqual(['2026-11-20T11:59:40Z', '2026-11-20T11:05:00Z', '2026-11-20T09:00:00Z', '2026-11-19T10:00:00Z', '2026-11-15T03:00:00Z'].map((t) => timeAgo(t, now)),
     ['방금', '55분 전', '3시간 전', '어제', '11/15']);
 });
+
+import { gearCheckedKey, readChecked, toggleChecked, writeChecked } from '../src/pages/fishing/lib/gearChecked.js';
+import { todayGearItems } from '../src/pages/fishing/lib/gear.js';
+
+test('gear checks are shared per account and the item list is the same for tab and side list', () => {
+  assert.equal(gearCheckedKey(null), 'fishing:gear-checked:v1');
+  assert.equal(gearCheckedKey({ id: 'angler1234' }), 'fishing:gear-checked:v1:member:angler1234');
+  assert.equal(gearCheckedKey({ id: 'x', memberId: 7 }), 'fishing:gear-checked:v1:member:7');
+  const map = new Map(); const storage = { getItem: (k) => map.get(k) ?? null, setItem: (k, v) => map.set(k, v) };
+  writeChecked('k', toggleChecked(readChecked('k', storage), 'lifejacket'), storage);
+  writeChecked('k', toggleChecked(readChecked('k', storage), 'rod'), storage);
+  writeChecked('k', toggleChecked(readChecked('k', storage), 'lifejacket'), storage);
+  assert.deepEqual(readChecked('k', storage), ['rod']);
+  assert.deepEqual(readChecked('broken', { getItem: () => '{oops' }), []);
+  const { items, tips } = todayGearItems({ area: { tide_system: 8 }, setup: { items: [{ id: 'my-a', name: '루어 박스', note: '' }], hidden: ['bait'] },
+    forecastRows: [{ TM_EF: '202611201200', WH1: '1.0', WH2: '2.0', WS1: '5', WS2: '9' }], now: Date.parse('2026-11-20T12:00:00+09:00') });
+  assert.ok(items.some((i) => i.id === 'my-a' && i.mine) && !items.some((i) => i.id === 'bait'));
+  assert.ok(items.some((i) => i.id === 'windbreaker')); // 바람 9 m/s → 방풍 재킷
+  assert.equal(tips[0]?.id, 'wave'); // 파고 2.0 m → 높은 파도 안내
+});

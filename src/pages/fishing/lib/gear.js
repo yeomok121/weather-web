@@ -1,4 +1,5 @@
 // 낚시 페이지: 바다낚시 준비물 목록. 기본 준비물 + 오늘 바다 조건에 따라 더할 것.
+import { tideCalendar } from './tideCalendar.js';
 export const BASE_GEAR = [
   { id: 'lifejacket', name: '구명조끼', note: '갯바위·방파제·선상 모두 필수' },
   { id: 'shoes', name: '미끄럼 방지 신발', note: '갯바위는 스파이크·펠트 바닥' },
@@ -86,4 +87,11 @@ export function addGearItem(setup, { name, note } = {}, id = newGearId()) {
   if (setup.items.length >= GEAR_LIMITS.items) return { error: `내 준비물은 최대 ${GEAR_LIMITS.items}개까지 만들 수 있어요.` };
   if (setup.items.some((item) => item.name === cleanName) || BASE_GEAR.some((item) => item.name === cleanName)) return { error: '이미 목록에 있는 준비물이에요.' };
   return { setup: { ...setup, items: [...setup.items, { id, name: cleanName, note: cleanNote }] } };
+}
+
+// 화면(준비물 탭·오른쪽 작은 체크리스트)이 함께 쓰는 오늘 목록: { items, tips }
+export function todayGearItems({ area, indexDays = [], forecastRows = [], warnings = [], setup, now = Date.now() }) {
+  const conditions = todayConditions({ indexDays, forecastRows, warnings, tideLabel: tideCalendar(new Date(now), area?.tide_system === 7 ? 7 : 8).label });
+  const extra = conditionalGear(conditions);
+  return { items: gearListFor(setup, extra), tips: extra.filter((item) => item.tip) };
 }
