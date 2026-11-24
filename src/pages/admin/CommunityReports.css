@@ -1,0 +1,42 @@
+/* 관리자: 커뮤니티 신고 게시판 */
+.admin-community-reports { background:white; padding:25px 30px; border-radius:12px; }
+.admin-community-reports > header { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; margin-bottom:14px; }
+.admin-community-reports h2 { margin:0 0 4px; font-size:20px; color:#0f172a; }
+.admin-community-reports > header p { margin:0; color:#64748b; font-size:13.5px; }
+.admin-community-reports button { padding:7px 14px; border:1px solid #cbd5e1; border-radius:8px; background:white; color:#334155; font:inherit; font-size:13px; cursor:pointer; }
+.acr-filters { display:flex; align-items:center; gap:6px; margin-bottom:12px; }
+.acr-filters button.on { background:#1f6f5c; border-color:#1f6f5c; color:white; font-weight:700; }
+.acr-filters span { margin-left:auto; color:#64748b; font-size:13px; }
+.acr-message { margin:0 0 10px; padding:9px 12px; border-radius:8px; background:#ecfdf5; color:#065f46; font-size:13.5px; }
+.acr-empty { padding:30px 0; color:#64748b; text-align:center; }
+.acr-table { width:100%; border-collapse:collapse; font-size:14px; }
+.acr-table th { padding:10px 8px; border-bottom:2px solid #e2e8f0; color:#475569; font-size:12.5px; text-align:left; white-space:nowrap; }
+.acr-table td { padding:10px 8px; border-bottom:1px solid #eef2f6; vertical-align:middle; color:#1e293b; }
+.acr-table tbody tr { cursor:pointer; } .acr-table tbody tr:hover { background:#f8fafc; } .acr-table tbody tr.on { background:#ecfdf5; }
+.acr-table tbody tr.hidden-post td { color:#64748b; }
+.acr-table td small { display:block; color:#94a3b8; font-size:11.5px; }
+.acr-title { display:flex; align-items:center; gap:8px; min-width:220px; }
+.acr-title img { flex:none; width:36px; height:36px; border-radius:6px; object-fit:cover; background:#e2e8f0; }
+.acr-title b { font-weight:600; } .acr-title small { display:inline !important; margin-left:4px; }
+.acr-kind { padding:2px 7px; border-radius:6px; background:#e6f4f1; color:#1f6f5c; font-size:11.5px; font-weight:700; white-space:nowrap; }
+.acr-kind.k-팁 { background:#eaf0fb; color:#2f4f8f; } .acr-kind.k-공지 { background:#fff1d6; color:#8a5300; }
+.acr-count { display:inline-block; min-width:26px; padding:2px 8px; border-radius:999px; background:#fef3c7; color:#92400e; text-align:center; }
+.acr-count.high { background:#fee2e2; color:#b91c1c; }
+.acr-state { padding:2px 8px; border-radius:999px; background:#e2e8f0; color:#334155; font-size:12px; font-weight:700; }
+.acr-state.hidden { background:#fee2e2; color:#b91c1c; }
+.acr-pages { display:flex; justify-content:center; align-items:center; gap:10px; margin-top:12px; color:#475569; font-size:13px; }
+.acr-detail { margin-top:18px; padding:18px 20px; border:1px solid #d1fae5; border-radius:12px; background:#f8fffc; }
+.acr-detail-head h3 { margin:0 0 4px; font-size:17px; } .acr-detail-head p { margin:0 0 12px; color:#64748b; font-size:13px; }
+.acr-photos { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px; }
+.acr-photos img { width:120px; height:90px; border-radius:8px; object-fit:cover; }
+.acr-facts { margin:0 0 6px; color:#334155; font-size:13.5px; font-weight:600; }
+.acr-body { margin:0 0 6px; white-space:pre-wrap; color:#1e293b; line-height:1.55; } .acr-body.muted { color:#94a3b8; }
+.acr-meta { margin:0 0 12px; color:#64748b; font-size:12.5px; }
+.acr-detail h4 { margin:8px 0 6px; font-size:14px; }
+.acr-reasons { margin:0 0 14px; padding:0; list-style:none; display:flex; flex-direction:column; gap:4px; }
+.acr-reasons li { display:flex; gap:10px; align-items:baseline; padding:7px 10px; border-radius:8px; background:white; border:1px solid #eef2f6; }
+.acr-reasons small { margin-left:auto; color:#94a3b8; font-size:12px; white-space:nowrap; }
+.acr-actions { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+.acr-actions .danger { border-color:#fecaca; background:#fef2f2; color:#b91c1c; font-weight:700; }
+.acr-actions a { margin-left:auto; color:#1f6f5c; font-size:13px; font-weight:700; }
+@media (max-width:720px) { .admin-community-reports { padding:18px 14px; } .admin-community-reports > header { flex-direction:column; } .acr-reasons li { flex-direction:column; gap:2px; } .acr-reasons small { margin-left:0; } .acr-actions a { margin-left:0; } }

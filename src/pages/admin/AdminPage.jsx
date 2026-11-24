@@ -3,6 +3,7 @@ import React, { useState, useEffect, useEffectEvent } from 'react';
 import { FiTrash2, FiEdit, FiCheck, FiX, FiSearch, FiUserPlus } from 'react-icons/fi';
 import { OperationsStatus, AdminActivity } from './AdminOperations';
 import MountainCandidates from './MountainCandidates';
+import CommunityReports from './CommunityReports';
 import './AdminDashboard.css';
 import MountainSearchStats from './MountainSearchStats';
 import { API } from '../../shared/lib/config';
@@ -307,6 +308,7 @@ function AdminPage({ onClose, adminPassword, adminToken, adminRole }) {
     { title: '관리', items: [
       ...(canMembers ? [['users', '회원 관리']] : []),
       ...(canNotices ? [['notices', '공지사항']] : []),
+      ['community', '커뮤니티 신고'],
       ...(isSuperadmin ? [['activity', '작업 기록']] : []),
     ] },
   ].filter(group => group.items.length);
@@ -357,6 +359,8 @@ function AdminPage({ onClose, adminPassword, adminToken, adminRole }) {
         ) : activeTab === 'searches' && adminRole === 'superadmin' ? (
           <MountainSearchStats adminToken={adminToken} adminPassword={adminPassword}
             onCandidate={(name, kind) => { setSelectedCandidate({ name, kind, status: 'pending', note: '' }); setActiveTab('candidates'); }} />
+        ) : activeTab === 'community' ? (
+          <CommunityReports adminToken={adminToken} adminPassword={adminPassword} />
         ) : activeTab === 'users' ? (
           <>
             {/* 신규 회원 직접 추가 폼 */}
