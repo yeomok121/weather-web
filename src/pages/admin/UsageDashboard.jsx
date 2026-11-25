@@ -52,8 +52,8 @@ function Ranking({ title, rows, label }) {
   </section>;
 }
 
-export default function UsageDashboard({ adminToken, adminPassword, onCandidate, initialView = 'overview' }) {
-  const [view, setView] = useState(initialView);
+export default function UsageDashboard({ adminToken, adminPassword }) {
+  const [view, setView] = useState('overview');
   const [days, setDays] = useState(7);
   const [revision, setRevision] = useState(0);
   const [result, setResult] = useState(null);
@@ -82,7 +82,7 @@ export default function UsageDashboard({ adminToken, adminPassword, onCandidate,
     <nav className="usage-dashboard__views" aria-label="이용 현황 메뉴">
       {Object.entries(views).map(([id, title]) => <button key={id} type="button" aria-pressed={view === id} onClick={() => setView(id)}>{title}</button>)}
     </nav>
-    {view === 'search' ? <MountainSearchStats adminToken={adminToken} adminPassword={adminPassword} onCandidate={onCandidate} days={days} />
+    {view === 'search' ? <MountainSearchStats adminToken={adminToken} adminPassword={adminPassword} days={days} />
       : !current ? <p role="status">이용 통계를 불러오는 중입니다.</p>
       : current.error ? <div className="usage-panel" role="alert"><p>이용 통계를 불러오지 못했습니다.</p><button type="button" onClick={() => setRevision(value => value + 1)}>다시 시도</button></div>
       : <>

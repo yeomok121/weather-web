@@ -2,7 +2,7 @@ import React, { useState, useEffect, useEffectEvent } from 'react';
 import { FiTrash2, FiEdit } from 'react-icons/fi';
 import AdminMembers from './AdminMembers';
 import { OperationsStatus, AdminActivity } from './AdminOperations';
-import MountainCandidates from './MountainCandidates';
+import AdminMountainCourses from './AdminMountainCourses';
 import CommunityReports from './CommunityReports';
 import './AdminDashboard.css';
 import UsageDashboard from './UsageDashboard';
@@ -17,7 +17,6 @@ function AdminPage({ onClose, adminPassword, adminToken, adminRole }) {
   const [activeTab, setActiveTab] = useState(adminRole === 'superadmin' ? 'operations' : adminRole === 'notice_manager' ? 'notices' : 'users');
   const canMembers = adminRole === 'superadmin' || adminRole === 'member_manager';
   const canNotices = adminRole === 'superadmin' || adminRole === 'notice_manager';
-  const [selectedCandidate, setSelectedCandidate] = useState(null);
   // ================= 1. 공지사항 관리 상태 =================
   const [notices, setNotices] = useState([]);
   const [editId, setEditId] = useState(null);
@@ -103,7 +102,7 @@ function AdminPage({ onClose, adminPassword, adminToken, adminRole }) {
 
   const isSuperadmin = adminRole === 'superadmin';
   const groups = [
-    { title: '운영', items: isSuperadmin ? [['operations', '운영 상태'], ['searches', '이용 현황'], ['candidates', '산·코스 조사 후보']] : [] },
+    { title: '운영', items: isSuperadmin ? [['operations', '운영 상태'], ['searches', '이용 현황'], ['courses', '산·코스 등록 현황']] : [] },
     { title: '관리', items: [
       ...(canMembers ? [['users', '회원 관리']] : []),
       ...(canNotices ? [['notices', '공지사항']] : []),
@@ -116,7 +115,6 @@ function AdminPage({ onClose, adminPassword, adminToken, adminRole }) {
 
   function selectMenu(id) {
     if (id === activeTab) return;
-    setSelectedCandidate(null);
     setActiveTab(id);
   }
 
@@ -152,12 +150,10 @@ function AdminPage({ onClose, adminPassword, adminToken, adminRole }) {
           <OperationsStatus adminToken={adminToken} adminPassword={adminPassword} />
         ) : activeTab === 'activity' && adminRole === 'superadmin' ? (
           <AdminActivity adminToken={adminToken} adminPassword={adminPassword} />
-        ) : activeTab === 'candidates' && adminRole === 'superadmin' ? (
-          <MountainCandidates adminToken={adminToken} adminPassword={adminPassword} selected={selectedCandidate}
-            onClose={selectedCandidate ? () => setActiveTab('searches') : undefined} />
+        ) : activeTab === 'courses' && adminRole === 'superadmin' ? (
+          <AdminMountainCourses />
         ) : activeTab === 'searches' && adminRole === 'superadmin' ? (
-          <UsageDashboard adminToken={adminToken} adminPassword={adminPassword} initialView={selectedCandidate ? 'search' : 'overview'}
-            onCandidate={(name, kind) => { setSelectedCandidate({ name, kind, status: 'pending', note: '' }); setActiveTab('candidates'); }} />
+          <UsageDashboard adminToken={adminToken} adminPassword={adminPassword} />
         ) : activeTab === 'community' ? (
           <CommunityReports adminToken={adminToken} adminPassword={adminPassword} />
         ) : activeTab === 'users' && canMembers ? (

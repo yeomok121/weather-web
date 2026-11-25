@@ -5,12 +5,12 @@ import './MountainSearchStats.css';
 const labels = { course: '코스 선택 가능', no_course: '코스 미제공', not_found: '결과 없음', error: '조회 오류', found: '검색 성공' };
 const timeFormat = new Intl.DateTimeFormat('ko-KR', { timeZone: 'Asia/Seoul', dateStyle: 'short', timeStyle: 'short' });
 
-export default function MountainSearchStats({ adminToken, adminPassword, onCandidate, days }) {
+export default function MountainSearchStats({ adminToken, adminPassword, days }) {
   const [service, setService] = useState('mountain');
   const outcomes = service === 'mountain' ? ['course', 'no_course', 'not_found', 'error']
     : service === 'weather' ? ['found', 'not_found', 'error'] : ['found'];
   const rankingGroups = service === 'mountain'
-    ? [['not_found', '추가 후보 · 결과 없음 TOP 10'], ['no_course', '코스 보강 후보 TOP 10']]
+    ? [['not_found', '결과 없는 산 검색 TOP 10'], ['no_course', '등록 코스가 없는 산 검색 TOP 10']]
     : service === 'weather' ? [['found', '많이 검색한 지역 TOP 10'], ['not_found', '결과 없는 지역 TOP 10']]
     : [['found', '많이 선택한 포인트 TOP 10']];
   const [termDraft, setTermDraft] = useState('');
@@ -53,8 +53,7 @@ export default function MountainSearchStats({ adminToken, adminPassword, onCandi
       <div className="mountain-search-rankings">
         {rankingGroups.map(([key, title]) => (
           <section key={key}><h4>{title}</h4>
-            {data.rankings[key].length ? <ol>{data.rankings[key].map(row => <li key={row.term}>{row.term} <strong>{row.count}건</strong>
-              {service === 'mountain' && onCandidate && <button type="button" onClick={() => onCandidate(row.term, key === 'not_found' ? 'new' : 'course')}>후보 검토</button>}</li>)}</ol> : <p>해당 기록이 없습니다.</p>}
+            {data.rankings[key].length ? <ol>{data.rankings[key].map(row => <li key={row.term}>{row.term} <strong>{row.count}건</strong></li>)}</ol> : <p>해당 기록이 없습니다.</p>}
           </section>
         ))}
       </div>

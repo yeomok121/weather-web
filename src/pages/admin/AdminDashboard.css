@@ -94,6 +94,59 @@
 .admin-section-heading { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; }
 .admin-section-heading h3, .admin-section-heading h4 { margin: 0; }
 .admin-section-heading p { margin: 6px 0 0; color: #475569; }
+.admin-mountain-courses {
+  padding: clamp(14px, 3vw, 24px);
+  border: 1px solid var(--admin-line);
+  border-radius: 16px;
+  background: #fff;
+}
+.admin-mountain-courses h2 { margin: 0; font-size: 20px; }
+.admin-mountain-courses__totals {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(125px, 1fr));
+  gap: 8px;
+  margin-block: 20px;
+}
+.admin-mountain-courses__totals div { padding: 10px 14px; border-radius: 10px; background: #edf6f3; }
+.admin-mountain-courses__totals dt { color: #475569; font-size: 13px; }
+.admin-mountain-courses__totals dd { margin: 3px 0 0; color: var(--admin-green); font-size: 20px; font-weight: 700; }
+.admin-mountain-courses__filters { display: flex; flex-wrap: wrap; gap: 10px; }
+.admin-mountain-courses__filters label { display: grid; gap: 4px; font-size: 13px; font-weight: 700; }
+.admin-mountain-courses__filters label:first-child { flex: 1 1 220px; }
+.admin-mountain-courses__filters input, .admin-mountain-courses__filters select {
+  min-height: 42px;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--admin-line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--admin-ink);
+  font: inherit;
+}
+.admin-mountain-courses__count { margin-block: 12px 8px; color: #475569; font-size: 13px; }
+.admin-mountain-courses__list, .admin-mountain-courses__details ul { list-style: none; margin: 0; padding: 0; }
+.admin-mountain-courses__list > li { border-top: 1px solid var(--admin-line); }
+.admin-mountain-courses__list > li > details > summary {
+  padding: 10px 4px;
+  cursor: pointer;
+}
+.admin-mountain-courses__list > li > details > summary:hover { background: #f4faf7; }
+.admin-mountain-courses__list summary small { margin-inline: 8px; color: #475569; }
+.admin-mountain-courses__badge {
+  display: inline-block;
+  margin-inline-start: 8px;
+  padding: 2px 8px;
+  border-radius: 8px;
+  background: #eef2f6;
+  color: #475569;
+  font-size: 12px;
+}
+.admin-mountain-courses__badge[data-status='registered'] { background: #e4f2ee; color: var(--admin-green); }
+.admin-mountain-courses__details { padding: 0 18px 14px; }
+.admin-mountain-courses__details h3 { font-size: 14px; margin: 10px 0 6px; }
+.admin-mountain-courses__details li { padding: 8px 0; border-bottom: 1px solid var(--admin-line); }
+.admin-mountain-courses__details li > p { margin: 3px 0; color: #475569; font-size: 13px; }
+.admin-mountain-courses__details .course-source { margin-block: 4px 0; }
 .admin-check-panels { display: grid; gap: 12px; }
 .admin-check-panel { padding: 16px; border: 1px solid var(--admin-line); border-radius: 12px; background: #f7fafb; }
 .admin-check-panel ul { margin-bottom: 0; padding-inline-start: 22px; line-height: 1.65; }
