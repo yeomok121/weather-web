@@ -91,6 +91,24 @@ export default function FishingPage() {
     writeStoredJson(LAST_POINT_KEY, id);
     setSearchParams((previous) => { const next = new URLSearchParams(previous); next.set('point', id); return next; }, { replace: true });
   };
+  // 지도·목록에서 포인트를 고르면: 고르기 창이 닫힌 뒤 위쪽 요약(바뀐 바다 정보)으로 화면을 옮기고 잠깐 강조합니다.
+  const selectPointAndShow = (id) => {
+    selectPoint(id);
+    setTimeout(() => {
+      const hero = document.querySelector('.fish-hero-compact');
+      if (!hero) return;
+      const header = document.querySelector('.top-nav')?.getBoundingClientRect().height || 64;
+      const top = hero.getBoundingClientRect().top;
+      if (top < header + 8 || top > window.innerHeight * 0.4) {
+        const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+        window.scrollTo({ top: top + window.scrollY - header - 16, behavior: reduce ? 'auto' : 'smooth' });
+      }
+      hero.classList.remove('fish-hero-flash');
+      void hero.offsetWidth; // 같은 효과를 다시 보여주기 위해 다시 그리기
+      hero.classList.add('fish-hero-flash');
+      setTimeout(() => hero.classList.remove('fish-hero-flash'), 1700);
+    }, 60);
+  };
 
   const sources = data?.sources || {};
   const errors = data?.errors || {};
@@ -122,7 +140,7 @@ export default function FishingPage() {
         ? <PointPicker points={points} selectedId={pointId} referencePoint={myLocation.coords || area} nearMyLocation={Boolean(myLocation.coords)} favorites={favorites} onSelect={id => {
             const point = points.find(item => item.id === id);
             if (point) recordSearch('fishing', point.name, 'found');
-            selectPoint(id);
+            selectPointAndShow(id);
           }} onToggleFavorite={toggle} onClose={() => setPickerOpen(false)} isLoggedIn={Boolean(loggedInUser)}
             onShowIndex={(point) => setIndexModal({ pointId: point.id, pointName: point.name })} />
         : <div className="fish-loading" role="status"><FiRefreshCw className="fish-spin" /><div><b>낚시 포인트 목록을 불러오고 있어요</b></div></div>)}

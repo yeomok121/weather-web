@@ -536,15 +536,13 @@ button.fish-area-picker em { font-style:normal; font-size:12px; font-weight:700;
 .fish-comments li.hidden { opacity:.75; border-style:dashed; }
 .fish-comment-hidden { margin:4px 0 0 !important; color:#a3241a !important; font-size:12px !important; }
 .fish-comment-head .report-badge { padding:0 6px; border-radius:6px; background:#fee2e2; color:#b91c1c; font-size:10.5px; font-weight:800; }
-/* 낚시 페이지 2단 (날씨·산악 페이지와 같은 비율): 왼쪽 본문 / 오른쪽 칸(로그인·커뮤니티·준비물 체크) */
+/* 낚시 페이지 2단 (날씨·산악 페이지와 같은 비율): 왼쪽 본문 / 오른쪽 칸(로그인·커뮤니티·준비물 체크), 두 칸이 함께 스크롤 */
 .fish-layout { display:grid; grid-template-columns:minmax(0,1.9fr) minmax(320px,.9fr); gap:24px; align-items:start; }
 .fish-main-col { display:flex; flex-direction:column; gap:18px; min-width:0; }
-.fish-side-col { display:flex; flex-direction:column; gap:18px; min-width:0; position:sticky; top:calc(var(--header-height, 64px) + 16px);
-  max-height:calc(100vh - var(--header-height, 64px) - 32px); overflow-y:auto; overscroll-behavior:contain; scrollbar-width:thin; padding-bottom:2px; }
+.fish-side-col { display:flex; flex-direction:column; gap:18px; min-width:0; } /* 페이지와 함께 스크롤 (따로 고정하지 않음) */
 .fish-side-col > * { flex-shrink:0; }
 @media (max-width:900px) {
   .fish-layout { display:flex; flex-direction:column; gap:18px; }
-  .fish-side-col { position:static; max-height:none; overflow:visible; }
 }
 @media (max-width:720px) { .fish-layout, .fish-main-col, .fish-side-col { gap:12px; } }
 /* 오른쪽 아래 작은 준비물 체크리스트 */
@@ -577,3 +575,8 @@ button.fish-area-picker em { font-style:normal; font-size:12px; font-weight:700;
   .fish-compare.empty { padding-block: 14px; min-height: 0; }
   .fish-compare.empty .fish-panel-title { margin-bottom: 0; }
 }
+
+/* 포인트를 바꾸면 위쪽 요약을 잠깐 강조 (지도·목록에서 골랐을 때 바뀐 정보가 눈에 들어오게) */
+@keyframes fish-hero-flash { 0% { box-shadow:0 0 0 0 rgba(15,127,134,.55); } 40% { box-shadow:0 0 0 6px rgba(15,127,134,.35); } 100% { box-shadow:0 0 0 0 rgba(15,127,134,0); } }
+.fish-hero-compact.fish-hero-flash { animation:fish-hero-flash 1.6s ease-out 1; outline:2px solid rgba(15,127,134,.65); outline-offset:2px; }
+@media (prefers-reduced-motion: reduce) { .fish-hero-compact.fish-hero-flash { animation:none; } }
