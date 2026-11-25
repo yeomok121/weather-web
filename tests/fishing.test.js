@@ -320,8 +320,9 @@ test('my gear setup: add, validate, hide base items but never the life jacket', 
 import { FISHING_TABS, tabFromQuery } from '../src/pages/fishing/lib/tabs.js';
 
 test('fishing tabs come from the address and fall back to the first tab', () => {
-  assert.deepEqual(FISHING_TABS.map((tab) => tab.id), ['index', 'forecast', 'sea', 'ports', 'gear', 'species']);
-  assert.equal(tabFromQuery('gear'), 'gear');
+  assert.deepEqual(FISHING_TABS.map((tab) => tab.id), ['index', 'forecast', 'sea', 'ports', 'species']);
+  assert.equal(tabFromQuery('ports'), 'ports');
+  assert.equal(tabFromQuery('gear'), 'index'); // 예전 준비물 탭 주소는 첫 탭으로 (준비물은 오른쪽 칸)
   assert.equal(tabFromQuery(null), 'index');
   assert.equal(tabFromQuery('<script>'), 'index');
 });

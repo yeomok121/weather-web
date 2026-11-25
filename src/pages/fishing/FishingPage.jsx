@@ -29,8 +29,6 @@ import TidePanel from './components/TidePanel';
 import MarineForecastPanel from './components/MarineForecastPanel';
 import SunPanel from './components/SunPanel';
 import GearChecklist from './components/GearChecklist';
-import GearMini from './components/GearMini';
-import { useGearSetup } from './useGearSetup';
 import FishingLoginCard from './components/FishingLoginCard';
 import CommunityPreview from './components/CommunityPreview';
 import FavoriteCompare from './components/FavoriteCompare';
@@ -58,7 +56,6 @@ export default function FishingPage() {
   // 포인트 고르기 창은 처음 들어오면 항상 열어 둡니다. 포인트를 고르면 닫히고, '포인트 바꾸기'로 다시 엽니다.
   const [pickerOpen, setPickerOpen] = useState(true);
   const [now] = useState(() => Date.now()); // 출조 시간 계산 기준 (화면을 연 시각)
-  const gear = useGearSetup({ loggedInUser, showToast }); // 내 준비물 세팅: 준비물 탭과 오른쪽 작은 체크리스트가 함께 씀
   const [indexModal, setIndexModal] = useState(null); // { pointId, pointName, index?, guide? }
 
   // 포인트 목록을 못 받으면(예전 서버·키 없음) 예전처럼 해역 3곳으로 동작합니다.
@@ -119,11 +116,10 @@ export default function FishingPage() {
     warnings: sources.warnings?.items || [], tideLabel: tideCalendar(new Date(now), area.tide_system === 7 ? 7 : 8).label, now,
   });
   // 위쪽 요약의 '출조 시간' 줄을 누르면 바다·물때 탭의 출조 시간 칸으로
-  const showGear = () => { selectTab('gear'); setTimeout(() => document.querySelector('.fish-gear-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 120); };
   const showTiming = () => { selectTab('sea'); setTimeout(() => document.getElementById('fish-timing')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 120); }; // 탭이 그려진 뒤 이동
 
   return <main className="fishing-page">
-    {/* 2단: 왼쪽 본문(요약·특보·포인트·탭) / 오른쪽 칸(로그인·커뮤니티·준비물 체크, 스크롤해도 따라옴). 좁은 화면에서는 오른쪽 칸이 맨 아래로 */}
+    {/* 2단: 왼쪽 본문(요약·특보·포인트·탭) / 오른쪽 칸(로그인·커뮤니티·준비물 체크·편집). 좁은 화면에서는 오른쪽 칸이 맨 아래로 */}
     <div className="fish-layout">
       <div className="fish-main-col">
         <FishingHero areas={areas} area={area} onAreaChange={setAreaId} loading={loading} onReload={reload}
@@ -173,10 +169,6 @@ export default function FishingPage() {
         <PortsPanel area={area} active={tab === 'ports' && !waitingForNearby} />
       </TabPanel>
 
-      <TabPanel id="gear" active={tab}>
-        <GearChecklist area={area} indexDays={sources.fishing_index?.days || []} forecastRows={forecastRows} warnings={sources.warnings?.items || []} gear={gear} />
-      </TabPanel>
-
       <TabPanel id="species" active={tab}>
         <SpeciesPanel indexDays={sources.fishing_index?.days || []} />
       </TabPanel>
@@ -187,7 +179,7 @@ export default function FishingPage() {
       <aside className="fish-side-col" aria-label="로그인 · 커뮤니티 · 준비물">
         <FishingLoginCard />
         <CommunityPreview />
-        <GearMini area={area} indexDays={sources.fishing_index?.days || []} forecastRows={forecastRows} warnings={sources.warnings?.items || []} gear={gear} onOpenFull={showGear} />
+        <GearChecklist area={area} indexDays={sources.fishing_index?.days || []} forecastRows={forecastRows} warnings={sources.warnings?.items || []} />
       </aside>
     </div>
     {indexModal && <FishingIndexModal key={indexModal.pointId || 'guide'} pointId={indexModal.pointId} pointName={indexModal.pointName} initialIndex={indexModal.index} openGuide={Boolean(indexModal.guide)} onClose={() => setIndexModal(null)} />}

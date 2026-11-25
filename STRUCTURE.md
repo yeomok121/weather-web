@@ -21,7 +21,7 @@ src/
 │   │   └── lib/         hikingPlan, manualCourse, mountainWindow, solarTimes
 │   ├── fishing/         FishingPage, FishingPage.css(전용 스타일), fishingApi(서버 요청), useFavoritePoints(즐겨찾는 포인트),
 │   │   │                useFishingData(해역 목록·바다 정보 상태), fishingFormat(값 변환)
-│   │   ├── components/  FishingHero, PointPicker·PointMap(포인트 고르기·지도), WarningBanner, FishingIndexPanel(BestDayCard), SunPanel, PortsPanel·PortsMap(근처 낚싯배 출항지·길찾기), GearChecklist, ForecastOutlook, BuoyPanel, TidePanel, TideChart, MarineForecastPanel, DataRows
+│   │   ├── components/  FishingHero, PointPicker·PointMap(포인트 고르기·지도), WarningBanner, FishingIndexPanel(BestDayCard), SunPanel, PortsPanel·PortsMap(근처 낚싯배 출항지·길찾기), GearChecklist·GearEditor(오른쪽 칸 준비물 체크·편집), ForecastOutlook, BuoyPanel, TidePanel, TideChart, MarineForecastPanel, DataRows
 │   │   └── lib/         tideCalendar(음력·물때), bestDay(이번 주 추천), sunTimes(일출·박명), gear(준비물), favorites(즐겨찾기 합치기)
 │   └── admin/           AdminRoute(관리자 권한 확인), AdminPage(대시보드)
 └── shared/              여러 페이지가 함께 쓰는 공통 영역 (고치기 전에 팀에 먼저 공유)

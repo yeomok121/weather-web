@@ -136,17 +136,7 @@
 .fish-sun-item small { color:#71849a; font-size:12px; }
 
 /* 준비물 */
-.fish-gear-tip { margin:0 0 10px; padding:9px 12px; border-radius:11px; background:#fff3e2; color:#7a4310; font-size:13px; font-weight:700; }
-.fish-gear-list { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px; margin:0; padding:0; list-style:none; }
-.fish-gear-list label { display:flex; gap:9px; align-items:flex-start; padding:9px 10px; border-radius:11px; background:rgba(255,255,255,.6); cursor:pointer; }
-.fish-gear-list input { margin-top:3px; width:16px; height:16px; accent-color:#0f7f86; flex:none; }
-.fish-gear-list span { display:flex; flex-direction:column; gap:2px; min-width:0; }
-.fish-gear-list b { color:#193651; font-size:13.5px; }
-.fish-gear-list em { font-style:normal; color:#0f7f86; font-size:11.5px; font-weight:700; }
-.fish-gear-list small { color:#71849a; font-size:11.5px; }
-.fish-gear-list li.done b { color:#8a9aab; text-decoration:line-through; }
-.fish-gear-reset { margin-top:10px; padding:6px 12px; border:1px solid rgba(119,153,178,.35); border-radius:999px; background:transparent; color:#4f6275; font-size:12px; cursor:pointer; }
-@media (max-width:720px) { .fish-gear-list, .fish-sun-grid { grid-template-columns:1fr; } .fish-best { flex-wrap:wrap; } }
+@media (max-width:720px) { .fish-sun-grid { grid-template-columns:1fr; } .fish-best { flex-wrap:wrap; } }
 
 /* 낚시 포인트 고르기 */
 .fish-point-current { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
@@ -252,19 +242,7 @@ button.fish-area-picker em { font-style:normal; font-size:12px; font-weight:700;
 .fish-verdict.caution { background:#fff3e2; border-color:#f6c98f; color:#7a4310; }
 .fish-verdict.stop { background:#fdecea; border-color:#f3b4ae; color:#7a1b12; }
 @media (max-width:720px) { .fish-hero-compact { padding:14px; gap:10px; } .fish-hero-top .fish-area-picker { width:auto; flex:1 1 auto; min-width:0; } .fish-hero-meta { order:3; width:100%; } .fish-weather-strip { display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:6px; } .fish-weather-strip > div { padding:7px 8px; } .fish-weather-strip b { font-size:14.5px; } .fish-weather-strip .fish-weather-sky { grid-column:1 / -1; padding:6px 10px; } .fish-weather-sky span { font-size:22px; } }
-@media (min-width:1000px) { .fish-gear-list { grid-template-columns:repeat(3,minmax(0,1fr)); } }
 /* 내 준비물 (계정 저장) */
-.fish-gear-title { align-items:flex-start; }
-.fish-gear-title > div { flex:1; min-width:0; }
-.fish-gear-edit { display:inline-flex; align-items:center; gap:6px; flex:none; padding:7px 12px; border:1px solid rgba(15,127,134,.35); border-radius:999px; background:rgba(15,127,134,.08); color:#0f6f76; font-size:12.5px; font-weight:800; cursor:pointer; }
-.fish-gear-login { margin:0 0 10px; padding:9px 12px; border-radius:11px; background:rgba(15,127,134,.07); color:#2f5b66; font-size:12.5px; }
-.fish-gear-list li.mine label { background:rgba(234,247,246,.9); }
-.fish-gear-list i { font-style:normal; color:#0f7f86; font-size:11.5px; }
-.fish-gear-editor { margin:0 0 14px; padding:14px; border-radius:14px; background:rgba(255,255,255,.75); border:1px solid rgba(15,127,134,.25); }
-.fish-gear-editor h3 { margin:0 0 8px; color:#193651; font-size:14px; }
-.fish-gear-editor h3 small { margin-left:6px; color:#71849a; font-size:11.5px; font-weight:600; }
-.fish-gear-editor h3 + * { margin-top:0; }
-.fish-gear-editor h3:not(:first-child) { margin-top:16px; }
 .fish-gear-mine { display:flex; flex-wrap:wrap; gap:6px; margin:0 0 10px; padding:0; list-style:none; }
 .fish-gear-mine li { display:flex; align-items:center; gap:6px; padding:6px 6px 6px 11px; border-radius:11px; background:#eaf7f6; }
 .fish-gear-mine span { display:flex; flex-direction:column; }
@@ -284,11 +262,10 @@ button.fish-area-picker em { font-style:normal; font-size:12px; font-weight:700;
 .fish-gear-actions { display:flex; gap:8px; margin-top:16px; }
 .fish-gear-actions button.primary { background:#0f7f86; border-color:#0f7f86; color:#fff; }
 .fish-gear-actions button:disabled { opacity:.6; cursor:default; }
-@media (max-width:720px) { .fish-gear-title { flex-wrap:wrap; } .fish-gear-edit { margin-left:auto; } }
 /* 탭 (낚시지수 · 예보 · 바다·물때 · 준비물) — 스크롤해도 상단 메뉴 바로 아래에 붙어 있음 */
 .fish-tabs-anchor { height:0; margin-bottom:-18px; scroll-margin-top:var(--header-height, 64px); }
 .fish-tabs { position:sticky; top:var(--header-height, 64px); z-index:40; padding:6px; border-radius:16px; background:rgba(240,247,252,.92); border:1px solid rgba(255,255,255,.7); box-shadow:0 8px 24px rgba(32,74,105,.12); backdrop-filter:blur(12px); }
-.fish-tabs [role="tablist"] { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:4px; }
+.fish-tabs [role="tablist"] { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:4px; }
 .fish-tabs button { display:inline-flex; align-items:center; justify-content:center; gap:7px; min-height:42px; padding:8px 10px; border:0; border-radius:11px; background:transparent; color:#4a6680; font:inherit; font-size:14.5px; font-weight:800; cursor:pointer; white-space:nowrap; }
 .fish-tabs button:hover { background:rgba(255,255,255,.7); color:#173a5c; }
 .fish-tabs button.active { background:#0f7f86; color:#fff; box-shadow:0 4px 12px rgba(15,127,134,.3); }
@@ -300,7 +277,6 @@ button.fish-area-picker em { font-style:normal; font-size:12px; font-weight:700;
 .fish-top-row { display:grid; grid-template-columns:minmax(0,1.9fr) minmax(320px,.9fr); gap:24px; align-items:start; } /* 날씨·산악과 같은 비율 */
 .fish-top-main { display:flex; flex-direction:column; gap:18px; min-width:0; }
 .fish-login-card { border-radius:20px; overflow:hidden; }
-.fish-gear-login button { margin-left:6px; padding:0; border:0; background:none; color:#0f6f76; font:inherit; font-weight:800; text-decoration:underline; cursor:pointer; }
 @media (max-width:900px) {
   .fish-top-row { display:contents; }
   .fish-login-card { order:1; }
@@ -546,22 +522,8 @@ button.fish-area-picker em { font-style:normal; font-size:12px; font-weight:700;
 }
 @media (max-width:720px) { .fish-layout, .fish-main-col, .fish-side-col { gap:12px; } }
 /* 오른쪽 아래 작은 준비물 체크리스트 */
-.fish-gear-mini { padding:14px 16px; border-radius:20px; color:#172b43; }
-.fish-gear-mini header { display:flex; align-items:center; gap:7px; }
-.fish-gear-mini header svg { color:#0f7f86; font-size:17px; } .fish-gear-mini header b { font-size:15px; color:#173a5c; }
-.fish-gear-mini header span { margin-left:auto; color:#0f6f76; font-size:13px; font-weight:800; }
-.fish-gear-mini-bar { height:6px; margin:8px 0 8px; border-radius:999px; background:#e3ecf2; overflow:hidden; }
-.fish-gear-mini-bar i { display:block; height:100%; border-radius:999px; background:#0f7f86; transition:width .2s; }
-.fish-gear-mini ul { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:2px 8px; margin:0 0 8px; padding:0; list-style:none; }
-.fish-gear-mini label { display:flex; align-items:center; gap:6px; padding:4px 2px; font-size:12.5px; color:#253f57; cursor:pointer; min-width:0; }
-.fish-gear-mini input { flex:none; width:14px; height:14px; accent-color:#0f7f86; }
-.fish-gear-mini label span { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.fish-gear-mini li.done span { color:#9aa7b4; text-decoration:line-through; }
-.fish-gear-mini em { flex:none; padding:0 5px; border-radius:5px; background:rgba(15,127,134,.12); color:#0f6f76; font-style:normal; font-size:10px; font-weight:800; }
-.fish-gear-mini em.mine { background:#eef2f6; color:#5f7790; }
-.fish-gear-mini-more { display:flex; align-items:center; justify-content:center; gap:5px; width:100%; padding:7px 10px; border:1px solid rgba(15,127,134,.35); border-radius:10px; background:rgba(15,127,134,.06); color:#0f6f76; font:inherit; font-size:12.5px; font-weight:800; cursor:pointer; }
 /* 예전 위쪽 2단(커뮤니티 페이지에서 계속 씀)의 모바일 순서 규칙이 오른쪽 칸에는 적용되지 않게: 로그인 → 커뮤니티 → 준비물 */
-.fish-side-col > .fish-login-card, .fish-side-col > .fish-community-card, .fish-side-col > .fish-gear-mini { order:0; }
+.fish-side-col > .fish-login-card, .fish-side-col > .fish-community-card, .fish-side-col > .fish-gear-card { order:0; }
 
 @media (min-width: 901px) {
   .fish-timing-line { flex-wrap: wrap; }
@@ -609,3 +571,42 @@ button.fish-area-picker em { font-style:normal; font-size:12px; font-weight:700;
 .fish-ports-legend span { display:inline-block; width:10px; height:10px; border-radius:50%; border:2px solid #fff; box-shadow:0 0 0 1px rgba(23,58,92,.2); }
 .fish-ports-legend .point { background:#e0662b; }
 .fish-ports-legend .port { margin-left:8px; background:#0f7f86; }
+/* 오른쪽 칸: 준비물 체크 (체크·내 준비물 편집을 모두 여기서) */
+.fish-gear-card { padding:14px 16px; border-radius:20px; color:#172b43; }
+.fish-gear-card header { display:flex; align-items:center; gap:7px; }
+.fish-gear-card header svg { color:#0f7f86; font-size:17px; } .fish-gear-card header b { font-size:15px; color:#173a5c; }
+.fish-gear-card header span { margin-left:auto; color:#0f6f76; font-size:13px; font-weight:800; }
+.fish-gear-edit { display:inline-flex; align-items:center; gap:4px; flex:none; padding:4px 10px; border:1px solid rgba(15,127,134,.35); border-radius:999px; background:rgba(15,127,134,.08); color:#0f6f76; font:inherit; font-size:12px; font-weight:800; cursor:pointer; }
+.fish-gear-edit svg { font-size:12px !important; }
+.fish-gear-bar { height:6px; margin:9px 0 6px; border-radius:999px; background:#e3ecf2; overflow:hidden; }
+.fish-gear-bar i { display:block; height:100%; border-radius:999px; background:#0f7f86; transition:width .2s; }
+.fish-gear-sub { margin:0 0 10px; color:#7a8ca0; font-size:11.5px; }
+.fish-gear-tip { margin:0 0 8px; padding:7px 10px; border-radius:10px; background:#fff3e2; color:#7a4310; font-size:12px; font-weight:700; line-height:1.5; }
+.fish-gear-list { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:4px 8px; margin:0; padding:0; list-style:none; }
+.fish-gear-list li.today { grid-column:1 / -1; }
+.fish-gear-list label { display:flex; gap:7px; align-items:flex-start; padding:5px 6px; border-radius:9px; cursor:pointer; min-width:0; }
+.fish-gear-list label:hover { background:rgba(15,127,134,.06); }
+.fish-gear-list li.today label { background:rgba(15,127,134,.07); }
+.fish-gear-list li.mine label { background:rgba(234,247,246,.9); }
+.fish-gear-list input { flex:none; width:15px; height:15px; margin:2px 0 0; accent-color:#0f7f86; }
+.fish-gear-list span { display:flex; flex-direction:column; gap:1px; min-width:0; }
+.fish-gear-list b { display:flex; align-items:center; gap:5px; min-width:0; color:#253f57; font-size:12.5px; font-weight:700; }
+.fish-gear-list small { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#7a8ca0; font-size:11px; }
+.fish-gear-list li.today small { color:#0f6f76; font-weight:700; white-space:normal; }
+.fish-gear-list em { flex:none; padding:0 5px; border-radius:5px; background:rgba(15,127,134,.14); color:#0f6f76; font-style:normal; font-size:10px; font-weight:800; }
+.fish-gear-list em.mine { background:#eef2f6; color:#5f7790; }
+.fish-gear-list li.done b { color:#9aa7b4; text-decoration:line-through; }
+.fish-gear-foot { display:flex; flex-direction:column; align-items:flex-start; gap:8px; margin-top:10px; }
+.fish-gear-foot:empty { display:none; }
+.fish-gear-login { margin:0; padding:8px 11px; border-radius:10px; background:rgba(15,127,134,.07); color:#2f5b66; font-size:12px; line-height:1.55; }
+.fish-gear-login button { margin-left:6px; padding:0; border:0; background:none; color:#0f6f76; font:inherit; font-weight:800; text-decoration:underline; cursor:pointer; }
+.fish-gear-reset { padding:5px 11px; border:1px solid rgba(119,153,178,.35); border-radius:999px; background:transparent; color:#4f6275; font:inherit; font-size:11.5px; cursor:pointer; }
+.fish-gear-editor { margin:0 0 12px; padding:12px; border-radius:14px; background:rgba(255,255,255,.8); border:1px solid rgba(15,127,134,.25); }
+.fish-gear-editor h3 { margin:0 0 8px; color:#193651; font-size:13.5px; }
+.fish-gear-editor h3 small { margin-left:6px; color:#71849a; font-size:11px; font-weight:600; }
+.fish-gear-editor h3:not(:first-child) { margin-top:14px; }
+.fish-gear-card .fish-gear-add input { flex-basis:100%; }
+.fish-gear-card .fish-gear-base button { padding:5px 9px; font-size:12px; }
+/* 낚싯배 칸: 본문이 좁으면(PC에서 오른쪽 칸이 있을 때 등) 지도와 목록을 위아래로 */
+.fish-ports-panel { container-type:inline-size; }
+@container (max-width:640px) { .fish-ports-body { grid-template-columns:1fr; } .fish-ports-map { height:260px; } }
