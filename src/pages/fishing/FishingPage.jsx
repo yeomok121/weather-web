@@ -158,11 +158,14 @@ export default function FishingPage() {
 
       <TabPanel id="sea" active={tab}>
         {data && <TimingPanel timing={timing} now={now} />}
+        {/* 왼쪽 바다 실황(부이 목록이 길어 김) | 오른쪽 물때와 조위 아래에 새벽·해질녘을 붙여 빈 곳을 줄임 */}
         <section className="fish-metrics">
           <BuoyPanel area={area} buoyRows={sources.buoy?.records || []} error={errors.buoy} />
-          <TidePanel area={area} tideSource={sources.tide} error={errors.tide} />
+          <div className="fish-metrics-side">
+            <TidePanel area={area} tideSource={sources.tide} error={errors.tide} />
+            <SunPanel area={area} />
+          </div>
         </section>
-        <SunPanel area={area} />
       </TabPanel>
 
       <TabPanel id="ports" active={tab}>
