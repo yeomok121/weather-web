@@ -13,6 +13,7 @@ import { FiSettings } from 'react-icons/fi';
 import './App.css';
 import { AppContext } from './shared/AppContext';
 import { API } from './shared/lib/config';
+import { usePageViews } from './shared/lib/pageViews';
 import AppShellStyles from './shared/layout/AppShellStyles';
 import WeatherBackground from './shared/layout/WeatherBackground';
 import Toast from './shared/layout/Toast';
@@ -56,6 +57,7 @@ const routeMountainOf = (pathname) => {
 function App() {
   const navigate = useNavigate();
   const location = useLocation();
+  usePageViews(location.pathname, DEFAULT_MOUNTAIN);
   const routeMode = routeModeOf(location.pathname);
   const routeMountainName = routeMountainOf(location.pathname);
   const isFishingPage = location.pathname === '/fishing' || location.pathname.startsWith('/fishing/'); // /fishing/community 포함

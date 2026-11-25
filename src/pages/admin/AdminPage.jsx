@@ -5,7 +5,7 @@ import { OperationsStatus, AdminActivity } from './AdminOperations';
 import MountainCandidates from './MountainCandidates';
 import CommunityReports from './CommunityReports';
 import './AdminDashboard.css';
-import MountainSearchStats from './MountainSearchStats';
+import UsageDashboard from './UsageDashboard';
 import { API } from '../../shared/lib/config';
 import { koreanDate } from '../mountain/lib/hikingPlan';
 
@@ -304,7 +304,7 @@ function AdminPage({ onClose, adminPassword, adminToken, adminRole }) {
 
   const isSuperadmin = adminRole === 'superadmin';
   const groups = [
-    { title: '운영', items: isSuperadmin ? [['operations', '운영 상태'], ['searches', '검색 현황'], ['candidates', '산·코스 조사 후보']] : [] },
+    { title: '운영', items: isSuperadmin ? [['operations', '운영 상태'], ['searches', '이용 현황'], ['candidates', '산·코스 조사 후보']] : [] },
     { title: '관리', items: [
       ...(canMembers ? [['users', '회원 관리']] : []),
       ...(canNotices ? [['notices', '공지사항']] : []),
@@ -357,7 +357,7 @@ function AdminPage({ onClose, adminPassword, adminToken, adminRole }) {
           <MountainCandidates adminToken={adminToken} adminPassword={adminPassword} selected={selectedCandidate}
             onClose={selectedCandidate ? () => setActiveTab('searches') : undefined} />
         ) : activeTab === 'searches' && adminRole === 'superadmin' ? (
-          <MountainSearchStats adminToken={adminToken} adminPassword={adminPassword}
+          <UsageDashboard adminToken={adminToken} adminPassword={adminPassword} initialView={selectedCandidate ? 'search' : 'overview'}
             onCandidate={(name, kind) => { setSelectedCandidate({ name, kind, status: 'pending', note: '' }); setActiveTab('candidates'); }} />
         ) : activeTab === 'community' ? (
           <CommunityReports adminToken={adminToken} adminPassword={adminPassword} />

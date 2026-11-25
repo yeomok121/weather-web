@@ -1,0 +1,28 @@
+.usage-dashboard { display: grid; gap: 14px; min-width: 0; color: #18313d; }
+.usage-dashboard :is(h2,h3,p,dl,dd) { margin: 0; }
+.usage-dashboard__header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+.usage-dashboard__header h2 { font-size: 23px; }
+.usage-dashboard__header p,.usage-coverage,.usage-panel p { color: #4c6472; font-size: 13px; line-height: 1.55; }
+.usage-dashboard__header label { display: flex; align-items: center; gap: 8px; }
+.usage-dashboard__views { display: flex; flex-wrap: wrap; gap: 8px; }
+.usage-dashboard :is(.usage-dashboard__views button,.usage-dashboard__header select,.usage-panel button) { min-height: 38px; border: 1px solid #cddde1; border-radius: 9px; padding: 6px 12px; background: #fff; color: #244657; font: inherit; cursor: pointer; }
+.usage-dashboard__views button[aria-pressed=true] { border-color: #166b5b; background: #166b5b; color: #fff; }
+.usage-metrics { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 10px; }
+.usage-metrics > div, .usage-panel { min-width: 0; padding: 14px; border: 1px solid #d6e2e6; border-radius: 12px; background: #fff; }
+.usage-metrics dt { color: #4c6472; font-size: 13px; }
+.usage-metrics dd { margin: 2px 0 0; font-size: 25px; font-weight: 750; font-variant-numeric: tabular-nums; }
+.usage-metrics small { margin-left: 4px; color: #4c6472; font-size: 13px; font-weight: 500; }
+.usage-charts { display: grid; grid-template-columns: minmax(0,1.45fr) minmax(0,1fr); gap: 12px; align-items: start; }
+.usage-panel h3 { margin-bottom: 6px; font-size: 16px; }
+.usage-trend { height: 225px; margin-top: 8px; }
+.usage-chart-table summary { padding: 6px 0; color: #4c6472; cursor: pointer; }
+.usage-ranking { display: grid; gap: 12px; margin: 12px 0 0; padding: 0; list-style: none; }
+.usage-ranking li > div, .usage-search-summary { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.usage-ranking strong { white-space: nowrap; }
+.usage-ranking__track,.usage-ranking__track span { display: block; height: 6px; border-radius: 99px; }
+.usage-ranking__track { margin-top: 5px; background: #e7eff1; }
+.usage-ranking__track span { background: #197562; }
+.usage-search-summary { flex-wrap: wrap; }
+.usage-search-summary strong { color: #934726; }
+@media (max-width: 1000px) { .usage-charts { grid-template-columns: 1fr; } }
+@media (max-width: 650px) { .usage-metrics { grid-template-columns: repeat(2,minmax(0,1fr)); } }

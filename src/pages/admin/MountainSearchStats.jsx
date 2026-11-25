@@ -5,7 +5,7 @@ import './MountainSearchStats.css';
 const labels = { course: '코스 선택 가능', no_course: '코스 미제공', not_found: '결과 없음', error: '조회 오류', found: '검색 성공' };
 const timeFormat = new Intl.DateTimeFormat('ko-KR', { timeZone: 'Asia/Seoul', dateStyle: 'short', timeStyle: 'short' });
 
-export default function MountainSearchStats({ adminToken, adminPassword, onCandidate }) {
+export default function MountainSearchStats({ adminToken, adminPassword, onCandidate, days }) {
   const [service, setService] = useState('mountain');
   const outcomes = service === 'mountain' ? ['course', 'no_course', 'not_found', 'error']
     : service === 'weather' ? ['found', 'not_found', 'error'] : ['found'];
@@ -15,7 +15,6 @@ export default function MountainSearchStats({ adminToken, adminPassword, onCandi
     : [['found', '많이 선택한 포인트 TOP 10']];
   const [termDraft, setTermDraft] = useState('');
   const [term, setTerm] = useState('');
-  const [days, setDays] = useState(7);
   const [outcome, setOutcome] = useState('all');
   const [revision, setRevision] = useState(0);
   const [result, setResult] = useState(null);
@@ -39,9 +38,6 @@ export default function MountainSearchStats({ adminToken, adminPassword, onCandi
     <div className="mountain-search-filters">
       <label>서비스 <select value={service} onChange={event => { setService(event.target.value); setOutcome('all'); setTerm(''); setTermDraft(''); }}>
         <option value="mountain">산행 날씨</option><option value="weather">일반 날씨</option><option value="fishing">바다 낚시</option>
-      </select></label>
-      <label>기간 <select value={days} onChange={event => setDays(Number(event.target.value))}>
-        <option value={7}>최근 7일</option><option value={30}>최근 30일</option>
       </select></label>
       <button type="button" onClick={() => setRevision(value => value + 1)}>새로고침</button>
     </div>

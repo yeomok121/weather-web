@@ -39,7 +39,7 @@ export default function MountainCandidates({ adminToken, adminPassword, selected
   return <section className="mountain-search-stats">
     <h3>산·코스 조사 후보</h3>
     <p>공식 자료 조사 상태와 메모를 관리합니다.</p>
-    {onClose && <button type="button" onClick={onClose}>검색 현황으로 돌아가기</button>}
+    {onClose && <button type="button" onClick={onClose}>검색 기록으로 돌아가기</button>}
     {loadError ? <p role="alert">후보 목록을 불러오지 못했습니다.</p> : !rows ? <p role="status">후보 조회 중…</p> : <>
       <form className="admin-candidate-form" onSubmit={save}>
         <label>산 이름 <input required minLength={2} maxLength={24} pattern="[가-힣 ]+" value={draft.name} onChange={e => setDraft({ ...draft, name: e.target.value })} /></label>
