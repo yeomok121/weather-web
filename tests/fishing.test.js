@@ -320,7 +320,7 @@ test('my gear setup: add, validate, hide base items but never the life jacket', 
 import { FISHING_TABS, tabFromQuery } from '../src/pages/fishing/lib/tabs.js';
 
 test('fishing tabs come from the address and fall back to the first tab', () => {
-  assert.deepEqual(FISHING_TABS.map((tab) => tab.id), ['index', 'forecast', 'sea', 'gear', 'species']);
+  assert.deepEqual(FISHING_TABS.map((tab) => tab.id), ['index', 'forecast', 'sea', 'ports', 'gear', 'species']);
   assert.equal(tabFromQuery('gear'), 'gear');
   assert.equal(tabFromQuery(null), 'index');
   assert.equal(tabFromQuery('<script>'), 'index');
@@ -520,4 +520,14 @@ test('gear checks are shared per account and the item list is the same for tab a
   assert.ok(items.some((i) => i.id === 'my-a' && i.mine) && !items.some((i) => i.id === 'bait'));
   assert.ok(items.some((i) => i.id === 'windbreaker')); // 바람 9 m/s → 방풍 재킷
   assert.equal(tips[0]?.id, 'wave'); // 파고 2.0 m → 높은 파도 안내
+});
+
+import { kakaoDirectionsUrl, naverDirectionsUrl } from '../src/pages/fishing/lib/directions.js';
+
+test('directions links put the port as destination with the right coordinate order', () => {
+  const port = { name: '추자항', lat: 33.96, lon: 126.297 };
+  assert.equal(kakaoDirectionsUrl(port), `https://map.kakao.com/link/to/${encodeURIComponent('추자항')},33.960000,126.297000`);
+  assert.equal(naverDirectionsUrl(port), `https://map.naver.com/p/directions/-/126.297000,33.960000,${encodeURIComponent('추자항')},,/-/car`);
+  // 쉼표·빗금은 주소 구분자라 이름에서 뺍니다
+  assert.ok(kakaoDirectionsUrl({ name: 'A,B/C', lat: 35, lon: 129 }).startsWith('https://map.kakao.com/link/to/A%20B%20C,35.000000,'));
 });

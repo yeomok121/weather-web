@@ -288,7 +288,7 @@ button.fish-area-picker em { font-style:normal; font-size:12px; font-weight:700;
 /* 탭 (낚시지수 · 예보 · 바다·물때 · 준비물) — 스크롤해도 상단 메뉴 바로 아래에 붙어 있음 */
 .fish-tabs-anchor { height:0; margin-bottom:-18px; scroll-margin-top:var(--header-height, 64px); }
 .fish-tabs { position:sticky; top:var(--header-height, 64px); z-index:40; padding:6px; border-radius:16px; background:rgba(240,247,252,.92); border:1px solid rgba(255,255,255,.7); box-shadow:0 8px 24px rgba(32,74,105,.12); backdrop-filter:blur(12px); }
-.fish-tabs [role="tablist"] { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:4px; }
+.fish-tabs [role="tablist"] { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:4px; }
 .fish-tabs button { display:inline-flex; align-items:center; justify-content:center; gap:7px; min-height:42px; padding:8px 10px; border:0; border-radius:11px; background:transparent; color:#4a6680; font:inherit; font-size:14.5px; font-weight:800; cursor:pointer; white-space:nowrap; }
 .fish-tabs button:hover { background:rgba(255,255,255,.7); color:#173a5c; }
 .fish-tabs button.active { background:#0f7f86; color:#fff; box-shadow:0 4px 12px rgba(15,127,134,.3); }
@@ -580,3 +580,32 @@ button.fish-area-picker em { font-style:normal; font-size:12px; font-weight:700;
 @keyframes fish-hero-flash { 0% { box-shadow:0 0 0 0 rgba(15,127,134,.55); } 40% { box-shadow:0 0 0 6px rgba(15,127,134,.35); } 100% { box-shadow:0 0 0 0 rgba(15,127,134,0); } }
 .fish-hero-compact.fish-hero-flash { animation:fish-hero-flash 1.6s ease-out 1; outline:2px solid rgba(15,127,134,.65); outline-offset:2px; }
 @media (prefers-reduced-motion: reduce) { .fish-hero-compact.fish-hero-flash { animation:none; } }
+/* 낚싯배 탭: 근처 출항지 지도 | 목록(거리·배 수·길찾기 버튼) */
+.fish-ports-body { display:grid; grid-template-columns:minmax(0,1.15fr) minmax(0,1fr); gap:16px; align-items:start; }
+.fish-ports-map { position:relative; z-index:0; isolation:isolate; height:340px; border-radius:14px; overflow:hidden; border:1px solid rgba(119,153,178,.25); }
+.fish-ports-list { display:flex; flex-direction:column; gap:8px; margin:0; padding:0; list-style:none; }
+.fish-ports-list li { display:flex; flex-direction:column; gap:8px; padding:10px 12px; border:1px solid rgba(119,153,178,.22); border-radius:13px; background:#fff; }
+.fish-ports-list li.active { border-color:rgba(15,127,134,.55); background:rgba(15,127,134,.06); }
+.fish-port-head { display:flex; align-items:center; gap:10px; width:100%; padding:0; border:0; background:transparent; font:inherit; text-align:left; cursor:pointer; }
+.fish-port-head:focus-visible { outline:2px solid #0f7f86; outline-offset:3px; border-radius:8px; }
+.fish-port-rank { display:inline-grid; place-items:center; flex:none; width:26px; height:26px; border-radius:50%; background:#0f7f86; color:#fff; font-size:13px; font-weight:800; }
+.fish-port-name { display:flex; flex-direction:column; gap:2px; flex:1; min-width:0; }
+.fish-port-name b { color:#193651; font-size:15px; }
+.fish-port-name small, .fish-port-stats small { color:#71849a; font-size:11.5px; }
+.fish-port-stats { display:flex; flex-direction:column; align-items:flex-end; gap:2px; flex:none; }
+.fish-port-stats b { color:#0b5f66; font-size:15px; }
+.fish-port-links { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px; }
+.fish-port-links a { display:inline-flex; align-items:center; justify-content:center; gap:5px; min-height:36px; padding:6px 8px; border-radius:10px; font-size:12.5px; font-weight:800; text-decoration:none; white-space:nowrap; }
+.fish-port-links a:first-child { background:#fee500; color:#191600; }
+.fish-port-links a:last-child { background:#03c75a; color:#fff; }
+.fish-port-links a:hover { filter:brightness(.95); }
+.fish-port-links a:focus-visible { outline:2px solid #173a5c; outline-offset:2px; }
+.fish-ports-empty, .fish-ports-loading { display:flex; align-items:flex-start; gap:8px; margin:0 0 12px; padding:12px 14px; border-radius:12px; background:#f3f7fa; color:#3d566e; font-size:13.5px; line-height:1.6; }
+.fish-ports-empty svg, .fish-ports-loading svg { flex:none; margin-top:3px; color:#0f7f86; }
+.fish-ports-panel .fish-tide-note a { color:#0f7f86; }
+@media (max-width:720px) { .fish-ports-body { grid-template-columns:1fr; } .fish-ports-map { height:240px; } }
+.fish-ports-map-wrap { display:flex; flex-direction:column; gap:6px; min-width:0; }
+.fish-ports-legend { display:flex; flex-wrap:wrap; align-items:center; gap:5px; margin:0; color:#71849a; font-size:11.5px; }
+.fish-ports-legend span { display:inline-block; width:10px; height:10px; border-radius:50%; border:2px solid #fff; box-shadow:0 0 0 1px rgba(23,58,92,.2); }
+.fish-ports-legend .point { background:#e0662b; }
+.fish-ports-legend .port { margin-left:8px; background:#0f7f86; }

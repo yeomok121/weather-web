@@ -1,10 +1,10 @@
 // 낚시 페이지: 아래 내용을 탭으로 나눠 한 번에 하나만 보여줍니다. (브라우저 탭처럼 눌러서 옆으로 이동)
 // 고른 탭은 주소(?tab=gear 등)에 남아 새로고침·공유해도 같은 탭이 열립니다.
 import { useRef } from 'react';
-import { FiActivity, FiAnchor, FiBookOpen, FiCheckSquare, FiDroplet } from 'react-icons/fi';
+import { FiActivity, FiAnchor, FiBookOpen, FiCheckSquare, FiDroplet, FiNavigation } from 'react-icons/fi';
 import { FISHING_TABS, tabButtonId, tabPanelId } from '../lib/tabs';
 
-const ICONS = { index: FiAnchor, forecast: FiActivity, sea: FiDroplet, gear: FiCheckSquare, species: FiBookOpen };
+const ICONS = { index: FiAnchor, forecast: FiActivity, sea: FiDroplet, ports: FiNavigation, gear: FiCheckSquare, species: FiBookOpen };
 
 export default function FishingTabs({ active, onChange }) {
   const anchor = useRef(null);

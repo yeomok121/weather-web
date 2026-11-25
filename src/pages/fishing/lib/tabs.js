@@ -3,6 +3,7 @@ export const FISHING_TABS = [
   { id: 'index', label: '낚시지수' },
   { id: 'forecast', label: '예보' },
   { id: 'sea', label: '바다·물때' },
+  { id: 'ports', label: '낚싯배' },
   { id: 'gear', label: '준비물' },
   { id: 'species', label: '어종' },
 ];

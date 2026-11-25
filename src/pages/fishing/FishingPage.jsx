@@ -39,6 +39,7 @@ import SpeciesPanel from './components/SpeciesPanel';
 import { timingSummary } from './lib/fishingTime';
 import { tideCalendar } from './lib/tideCalendar';
 import FishingTabs, { TabPanel } from './components/FishingTabs';
+import PortsPanel from './components/PortsPanel';
 import { DEFAULT_TAB, tabFromQuery } from './lib/tabs';
 
 const DEFAULT_POINT = '추자도';
@@ -166,6 +167,10 @@ export default function FishingPage() {
           <TidePanel area={area} tideSource={sources.tide} error={errors.tide} />
         </section>
         <SunPanel area={area} />
+      </TabPanel>
+
+      <TabPanel id="ports" active={tab}>
+        <PortsPanel area={area} active={tab === 'ports' && !waitingForNearby} />
       </TabPanel>
 
       <TabPanel id="gear" active={tab}>

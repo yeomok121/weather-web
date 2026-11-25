@@ -62,3 +62,8 @@ export function saveMyFishingGear(token, setup) {
 export function fetchPointIndex(pointId, { signal } = {}) {
   return getJson(`/api/fishing/points/${encodeURIComponent(pointId)}/index`, { signal, timeoutMs: 90000 });
 }
+
+// 선택한 포인트 근처 낚싯배 출항지 (해경 공개자료, 서버 app/fishing/ports.py). 서버에 들어 있는 자료라 빨리 옵니다.
+export function fetchNearbyPorts(lat, lon, { signal } = {}) {
+  return getJson(`/api/fishing/ports/nearby?${new URLSearchParams({ lat: String(lat), lon: String(lon) })}`, { signal, timeoutMs: 30000 });
+}
