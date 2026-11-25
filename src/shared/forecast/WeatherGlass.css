@@ -2,6 +2,40 @@
 .mountain-planner-shortcut:hover { background:#e8f5ef; }
 .mountain-planner-shortcut span { background:#176354; color:white; padding:2px 6px; border-radius:99px; }
 
+.mountain-title-meta { display: contents; }
+.mountain-title-meta__elevation, .mountain-title-meta__difficulty { padding: 2px 6px; border-radius: 6px; font-size: 10.5px; font-weight: 700; }
+.mountain-title-meta__elevation { color: #166534; background: rgba(22, 163, 74, .1); }
+.mountain-title-meta__difficulty { color: #dc2626; background: rgba(220, 38, 38, .1); }
+.mountain-title-meta__separator, .mountain-planner-shortcut--dashboard { display: none; }
+
+@media (min-width: 901px) {
+  .mountain-planner-shortcut--hero { display: none; }
+  .mountain-title-meta {
+    display: flex;
+    flex: 0 0 100%;
+    justify-content: center;
+    align-items: baseline;
+    column-gap: 6px;
+    color: #475569;
+    font-size: 12px;
+  }
+  .mountain-title-meta__separator { display: inline; }
+  .mountain-title-meta__elevation, .mountain-title-meta__difficulty {
+    padding: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+  }
+  .mountain-planner-shortcut--dashboard {
+    display: inline-flex;
+    margin-inline-start: auto;
+    padding: 4px 8px;
+    border: 0;
+    background: transparent;
+    white-space: nowrap;
+  }
+}
+
 .weather-bg:has(~ .weather-glass-home) {
   background-image:
     radial-gradient(ellipse at 14% 16%, rgba(125, 185, 243, .40), transparent 48%),

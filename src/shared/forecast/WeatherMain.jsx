@@ -120,9 +120,12 @@ function WeatherMain({
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', flexWrap: 'wrap', marginBottom: '6px' }}>
           <h3 style={{ margin: '0', fontSize: '18px', fontWeight: '800' }}>{weatherData.region}</h3>
           {isMountainMode && mountainInfo?.peak && <span style={{ fontSize: '13px', color: '#475569', fontWeight: '500' }}>({mountainInfo.peak})</span>}
-          {isMountainMode && weatherData.elevation > 0 && <span style={{ fontSize: '10.5px', color: '#166534', backgroundColor: 'rgba(22,163,74,0.1)', padding: '2px 6px', borderRadius: '6px', fontWeight: 'bold' }}>해발 {weatherData.elevation}m</span>}
-          {isMountainMode && mountainInfo?.difficulty && <span style={{ fontSize: '10.5px', color: '#dc2626', backgroundColor: 'rgba(220,38,38,0.1)', padding: '2px 6px', borderRadius: '6px', fontWeight: 'bold' }}>난이도 {mountainInfo.difficulty}</span>}
-          {isMountainMode && <button type="button" className="mountain-planner-shortcut" onClick={onOpenPlanner}>
+          {isMountainMode && (weatherData.elevation > 0 || mountainInfo?.difficulty) && <div className="mountain-title-meta">
+            {weatherData.elevation > 0 && <span className="mountain-title-meta__elevation">해발 {weatherData.elevation}m</span>}
+            {weatherData.elevation > 0 && mountainInfo?.difficulty && <span className="mountain-title-meta__separator" aria-hidden="true">·</span>}
+            {mountainInfo?.difficulty && <span className="mountain-title-meta__difficulty">난이도 {mountainInfo.difficulty}</span>}
+          </div>}
+          {isMountainMode && <button type="button" className="mountain-planner-shortcut mountain-planner-shortcut--hero" onClick={onOpenPlanner}>
             내 계획·파티 {invitationCount > 0 && <span>초대 {invitationCount}건</span>}
           </button>}
         </div>

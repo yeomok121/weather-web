@@ -32,6 +32,7 @@ export default function ForecastLayout({ extras = null }) {
   const [plannerRequest, setPlannerRequest] = useState(null);
   const [invitations, setInvitations] = useState(null);
   const invitationCount = loggedInUser && invitations?.user === loggedInUser.id ? invitations.count : 0;
+  const openPlanner = () => setPlannerRequest({ target: invitationCount ? 'party' : 'saved' });
   const plan = hikingPlanSummary;
   const departureDate = plan ? koreanDay.format(new Date(plan.departureAt)) : null;
   const descentDate = plan ? koreanDay.format(new Date(Date.parse(plan.departureAt) + plan.totalMins * 60000)) : null;
@@ -84,7 +85,7 @@ export default function ForecastLayout({ extras = null }) {
           mountainsList={mountainsList}
           onSelectMountain={(mName) => loadMountainWeather(mName)}
           invitationCount={invitationCount}
-          onOpenPlanner={() => setPlannerRequest({ target: invitationCount ? 'party' : 'saved' })}
+          onOpenPlanner={openPlanner}
         />
 
         {extras}
@@ -101,6 +102,7 @@ export default function ForecastLayout({ extras = null }) {
           showPlanner={isMountainMode}
           plannerRequest={plannerRequest}
           onPlannerRequest={setPlannerRequest}
+          onOpenPlanner={openPlanner}
           invitationCount={invitationCount}
           onInvitationCountChange={loggedInUser ? setInvitations : undefined}
           mountainInfo={effectiveMountainInfo}

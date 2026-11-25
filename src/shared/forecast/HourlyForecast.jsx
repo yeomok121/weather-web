@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useEffectEvent, useRef } from 'react';
-import { FiChevronLeft, FiChevronRight, FiShare2, FiPlus, FiX, FiRotateCcw, FiMapPin, FiInfo, FiClock, FiBriefcase, FiFlag, FiNavigation } from 'react-icons/fi';
+import { FiChevronLeft, FiChevronRight, FiShare2, FiPlus, FiX, FiRotateCcw, FiMapPin, FiInfo, FiClock, FiBriefcase, FiFlag, FiNavigation, FiArrowRight } from 'react-icons/fi';
 import { LineChart, Line, YAxis, ResponsiveContainer } from 'recharts';
 import { PACE_OPTIONS } from '../../pages/mountain/paceOptions.js';
 import { getEmojiIcon } from './weatherIcons';
@@ -80,6 +80,7 @@ function HourlyForecast({
   showPlanner = isMountainMode,
   plannerRequest,
   onPlannerRequest,
+  onOpenPlanner,
   invitationCount = 0,
   onInvitationCountChange,
 }) {
@@ -664,6 +665,12 @@ function HourlyForecast({
             {isMountainMode || mountainInfo?.course_available === false ? '기상청 시간별 예보를 고도 보정한 산악 참고 추정값' : '기상청 동네예보 기준 · 강수확률은 해당 시간에 비나 눈이 내릴 가능성입니다'}
           </div>
         </div>
+        {showPlanner && onOpenPlanner && (
+          <button type="button" className="mountain-planner-shortcut mountain-planner-shortcut--dashboard" onClick={onOpenPlanner}>
+            내 계획·파티 {invitationCount > 0 && <span>초대 {invitationCount}건</span>}
+            <FiArrowRight size={14} aria-hidden="true" />
+          </button>
+        )}
         {!isMountainMode && (
           <div style={{ display: 'flex', gap: '8px' }}>
             <button type="button" aria-label="이전 시간대" onClick={handlePrev} disabled={prevDisabled} style={{ ...buttonStyle, opacity: prevDisabled ? 0.3 : 1, cursor: prevDisabled ? 'default' : 'pointer' }}><FiChevronLeft size={16} /></button>
