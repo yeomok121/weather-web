@@ -1,5 +1,5 @@
 // 낚시 페이지 오른쪽 칸: 바다낚시 준비물 체크 (예전 '준비물' 탭을 합쳐 여기서 체크·편집을 모두 합니다)
-// 오늘 바다 조건 항목 + 내 준비물(로그인하면 계정에 저장) + 기본 항목. 체크 표시는 이 브라우저에 저장합니다.
+// 추천 항목(오늘 바다 조건) + 내 준비물(로그인하면 계정에 저장) + 기본 항목. 체크 표시는 이 브라우저에 저장합니다.
 import { useState } from 'react';
 import { FiCheckSquare, FiEdit2 } from 'react-icons/fi';
 import { useApp } from '../../../shared/AppContext';
@@ -26,18 +26,18 @@ export default function GearChecklist({ area, indexDays, forecastRows, warnings 
       {isLoggedIn && !editing && <button type="button" className="fish-gear-edit" onClick={() => setEditing(true)}><FiEdit2 aria-hidden="true" /> 편집</button>}
     </header>
     <div className="fish-gear-bar" role="progressbar" aria-valuenow={percent} aria-valuemin={0} aria-valuemax={100} aria-label="준비한 비율"><i style={{ width: `${percent}%` }} /></div>
-    <p className="fish-gear-sub">오늘 바다 조건에 맞춘 항목을 위에 표시해요</p>
+    <p className="fish-gear-sub">추천: 오늘 바다 조건(바람·기온·파고·물때)과 새벽·해질녘 이동을 보고 더한 항목이에요</p>
 
     {editing && <GearEditor setup={setup} onCancel={() => setEditing(false)} onSave={async (next) => { if (await save(next)) setEditing(false); }} />}
     {tips.map((item) => <p className="fish-gear-tip" key={item.id}>⚠ {item.name} · {item.reason}</p>)}
 
     <ul className="fish-gear-list">{items.map((item) => {
-      const detail = item.reason ? `오늘 · ${item.reason}` : item.note || '';
+      const detail = item.reason ? `추천 · ${item.reason}` : item.note || '';
       return <li key={item.id} className={`${checked.has(item.id) ? 'done' : ''} ${item.reason ? 'today' : ''} ${item.mine ? 'mine' : ''}`}>
         <label title={detail ? `${item.name} — ${detail}` : item.name}>
           <input type="checkbox" checked={checked.has(item.id)} onChange={() => toggle(item.id)} />
           <span>
-            <b>{item.name}{item.reason ? <em>오늘</em> : item.mine ? <em className="mine">내 것</em> : null}</b>
+            <b>{item.name}{item.reason ? <em>추천</em> : item.mine ? <em className="mine">내 것</em> : null}</b>
             {(item.reason || item.note) && <small>{item.reason || item.note}</small>}
           </span>
         </label>
