@@ -103,7 +103,7 @@ export function OperationsStatus({ adminToken, adminPassword }) {
 }
 
 const activityLabels = {
-  create: '회원 추가', update: '회원 수정', update_password: '비밀번호 변경', delete: '회원 삭제',
+  create: '회원 추가', update: '회원 수정', rename: '아이디 변경', update_password: '비밀번호 변경', delete: '회원 삭제',
   community_restore: '커뮤니티 신고 초기화', community_delete: '커뮤니티 글 삭제',
   community_comment_restore: '커뮤니티 댓글 신고 초기화', community_comment_delete: '커뮤니티 댓글 삭제',
   suspend: '회원 정지', restore: '회원 복구', notice_create: '공지 등록', notice_update: '공지 수정', notice_delete: '공지 삭제',
@@ -134,7 +134,7 @@ export function AdminActivity({ adminToken, adminPassword }) {
     {!current ? <p role="status">기록 조회 중…</p> : current.error ? <p role="alert">기록 조회에 실패했습니다.</p> :
       current.rows.length ? <div className="mountain-search-table"><table>
         <thead><tr><th>기록 시각</th><th>관리자</th><th>작업</th><th>대상</th></tr></thead>
-        <tbody>{current.rows.map(row => <tr key={row.id}><td>{row.created_at.replace('T', ' ')}</td><td>{row.actor}</td><td>{activityLabels[row.action] || row.action}</td><td>{row.target_username}</td></tr>)}</tbody>
+        <tbody>{current.rows.map(row => <tr key={row.id}><td>{row.created_at.replace('T', ' ')}</td><td>{row.actor}</td><td>{activityLabels[row.action] || (row.action.startsWith('role:') ? '관리 권한 변경' : row.action)}</td><td>{row.target_username}</td></tr>)}</tbody>
       </table></div> : <p>기록이 없습니다.</p>}
   </section>;
 }
