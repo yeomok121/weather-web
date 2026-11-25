@@ -9,7 +9,7 @@ import HourlyForecast from './HourlyForecast';
 import WeatherOutlook from './WeatherOutlook';
 import WeatherDetails from './WeatherDetails';
 import WeeklyForecast from './WeeklyForecast';
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { FiAlertTriangle, FiClock } from 'react-icons/fi';
 import { preferredWeatherLayer } from '../../pages/weather/weatherMap';
 import './WeatherGlass.css';
@@ -29,6 +29,9 @@ export default function ForecastLayout({ extras = null }) {
     showToast, weatherData, weatherFetchedAt, weeklyData, favorites,
   } = useApp();
 
+  const [plannerRequest, setPlannerRequest] = useState(null);
+  const [invitations, setInvitations] = useState(null);
+  const invitationCount = loggedInUser && invitations?.user === loggedInUser.id ? invitations.count : 0;
   const plan = hikingPlanSummary;
   const departureDate = plan ? koreanDay.format(new Date(plan.departureAt)) : null;
   const descentDate = plan ? koreanDay.format(new Date(Date.parse(plan.departureAt) + plan.totalMins * 60000)) : null;
@@ -80,6 +83,8 @@ export default function ForecastLayout({ extras = null }) {
           mountainInfo={mountainInfo}
           mountainsList={mountainsList}
           onSelectMountain={(mName) => loadMountainWeather(mName)}
+          invitationCount={invitationCount}
+          onOpenPlanner={() => setPlannerRequest({ target: invitationCount ? 'party' : 'saved' })}
         />
 
         {extras}
@@ -93,6 +98,11 @@ export default function ForecastLayout({ extras = null }) {
             else loadWeather(request.lat, request.lon, request.regionName);
           }}
           isMountainMode={isMountainMode && effectiveMountainInfo?.course_available !== false}
+          showPlanner={isMountainMode}
+          plannerRequest={plannerRequest}
+          onPlannerRequest={setPlannerRequest}
+          invitationCount={invitationCount}
+          onInvitationCountChange={loggedInUser ? setInvitations : undefined}
           mountainInfo={effectiveMountainInfo}
           weatherData={activeWeather}
           onShowToast={showToast}

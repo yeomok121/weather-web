@@ -76,22 +76,32 @@ function HourlyForecast({
   restoredDepartureAt = null,
   onRestoreDeparture,
   isStale = false,
-  onApplyHikingPlan
+  onApplyHikingPlan,
+  showPlanner = isMountainMode,
+  plannerRequest,
+  onPlannerRequest,
+  invitationCount = 0,
+  onInvitationCountChange,
 }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [localCourseIdx, setLocalCourseIdx] = useState(0);
   const [localPaceType, setLocalPaceType] = useState('normal');
   const [localDepOffset, setLocalDepOffset] = useState(0);
   const [preparationTab, setPreparationTab] = useState(() => new URLSearchParams(window.location.search).has('party') ? 'account' : 'gear');
-  const [plannerSection, setPlannerSection] = useState('plan');
+  const [previousPlannerRequest, setPreviousPlannerRequest] = useState(plannerRequest);
+  const returnAfterLogin = useRef(false);
   const [hydratedDraftKey, setHydratedDraftKey] = useState('');
   const [departureDraft, setDepartureDraft] = useState('');
   const [departureError, setDepartureError] = useState('');
   const [compareOpen, setCompareOpen] = useState(false);
-  const [invitationCount, setInvitationCount] = useState(0);
   const sharedParty = new URLSearchParams(window.location.search).has('party');
   const [visibleStep, setVisibleStep] = useState('hike-schedule');
   const [desktopStep, setDesktopStep] = useState(() => sharedParty ? 'hiking-preparation' : 'hike-schedule');
+  if (previousPlannerRequest !== plannerRequest) {
+    setPreviousPlannerRequest(plannerRequest);
+    setPreparationTab('account');
+    setDesktopStep('hiking-preparation');
+  }
   const [desktopFlow, setDesktopFlow] = useState(() => window.matchMedia('(min-width: 901px)').matches);
   useEffect(() => {
     const query = window.matchMedia('(min-width: 901px)');
@@ -589,20 +599,22 @@ function HourlyForecast({
       if (focusPanel) requestAnimationFrame(() => document.getElementById(id)?.focus({ preventScroll: true }));
     } else requestAnimationFrame(() => jumpTo(id));
   };
-  const jumpPlanner = section => {
-    setPlannerSection(section); setPreparationTab('account');
-    if (desktopFlow) { setDesktopStep('hiking-preparation'); return; }
-    requestAnimationFrame(() => jumpTo(document.getElementById('hiking-preparation') ? 'hiking-preparation' : 'hiking-planner'));
+  const jumpPlanner = target => onPlannerRequest?.({ target });
+  const requirePlannerLogin = () => {
+    returnAfterLogin.current = true;
+    onRequireLogin?.();
   };
   useEffect(() => {
-    const open = () => {
-      setPreparationTab('account');
-      if (desktopFlow) setDesktopStep('hiking-preparation');
-      else requestAnimationFrame(() => jumpTo(document.getElementById('hiking-preparation') ? 'hiking-preparation' : 'hiking-planner'));
-    };
-    window.addEventListener('weather:open-hiking-planner', open);
-    return () => window.removeEventListener('weather:open-hiking-planner', open);
-  }, [desktopFlow]);
+    if (!loggedInUser || !returnAfterLogin.current) return;
+    returnAfterLogin.current = false;
+    const frame = requestAnimationFrame(() => jumpTo('hiking-planner'));
+    return () => cancelAnimationFrame(frame);
+  }, [loggedInUser]);
+  useEffect(() => {
+    if (!plannerRequest || !showPlanner) return undefined;
+    const frame = requestAnimationFrame(() => jumpTo('hiking-planner'));
+    return () => cancelAnimationFrame(frame);
+  }, [plannerRequest, showPlanner]);
   useEffect(() => {
     if (desktopFlow || !isMountainMode || !hasWeatherData) return;
     const ids = ['hike-schedule', 'mountain-conditions', 'hiking-preparation'];
@@ -676,7 +688,7 @@ function HourlyForecast({
         onOffset={changeOffset} activeOffset={activeDepOffset} restoredDepartureAt={restoredDepartureAt} offsets={DEPARTURE_OFFSETS} getOffsetLabel={getDepartureOptionLabel}
         compareOpen={compareOpen} onCompareOpen={setCompareOpen} hourlyData={hourlyData} weatherData={weatherData} durationMinutes={adjustedTimeMins} departureAt={departureAt}
       />}
-      {isMountainMode && (!hasWeatherData || isLoading) && <HikingPlannerPanel user={loggedInUser} mountainInfo={mountainInfo} selectedCourse={selectedCourse} courseIndex={activeCourseIdx} weatherDate={weatherData} selectedDateIdx={selectedDateIdx} pace={activePace} departureOffsetHours={activeDepOffset} departureTime="" gearList={[]} checklist={{}} canSave={false} onApplyPlan={handleApplySavedPlan} onRequireLogin={onRequireLogin} onShowToast={onShowToast} focusSection={plannerSection} />}
+      {showPlanner && (!isMountainMode || !hasWeatherData || isLoading) && <HikingPlannerPanel user={loggedInUser} mountainInfo={mountainInfo} selectedCourse={selectedCourse} courseIndex={activeCourseIdx} weatherDate={weatherData} selectedDateIdx={selectedDateIdx} pace={activePace} departureOffsetHours={activeDepOffset} departureTime="" gearList={[]} checklist={{}} canSave={false} onApplyPlan={handleApplySavedPlan} onRequireLogin={requirePlannerLogin} onShowToast={onShowToast} navigationRequest={plannerRequest} onInvitationCountChange={onInvitationCountChange} />}
 
       {isMountainMode && hasWeatherData && !isLoading && (
         <div id={!desktopFlow ? "mountain-conditions" : undefined} tabIndex={-1} className="mountain-safety desktop-previous" role={timeline.status === 'danger' ? 'alert' : 'status'} aria-live="polite" style={{
@@ -868,7 +880,7 @@ function HourlyForecast({
           <section id="hiking-preparation" className="mountain-preparation" tabIndex={-1} aria-label="산행 준비물과 일행 관리">
             <div className="mountain-preparation-tabs" role="tablist" aria-label="준비 방법" onKeyDown={event => { if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return; event.preventDefault(); const next = event.key === 'Home' ? 'gear' : event.key === 'End' ? 'account' : preparationTab === 'gear' ? 'account' : 'gear'; setPreparationTab(next); document.getElementById(`${next}-tab`)?.focus(); }}>
               <button id="gear-tab" tabIndex={preparationTab === 'gear' ? 0 : -1} type="button" role="tab" aria-selected={preparationTab === 'gear'} aria-controls="gear-panel" onClick={() => setPreparationTab('gear')}>내 준비물 <span>{packedGearCount}/{gearList.length}</span></button>
-              <button id="account-tab" tabIndex={preparationTab === 'account' ? 0 : -1} type="button" role="tab" aria-selected={preparationTab === 'account'} aria-controls="account-panel" onClick={() => setPreparationTab('account')}>계획 저장·일행{invitationCount > 0 && <span>초대 {invitationCount}</span>}</button>
+              <button id="account-tab" tabIndex={preparationTab === 'account' ? 0 : -1} type="button" role="tab" aria-selected={preparationTab === 'account'} aria-controls="account-panel" onClick={() => setPreparationTab('account')}>내 계획·파티{invitationCount > 0 && <span>초대 {invitationCount}</span>}</button>
             </div>
             <div id="gear-panel" className="mountain-gear-panel" role="tabpanel" aria-labelledby="gear-tab" hidden={preparationTab !== 'gear'}>
           <div style={{ backgroundColor: 'rgba(255,255,255,0.6)', borderRadius: '12px', padding: '16px', display: 'flex', flexDirection: 'column' }}>
@@ -921,12 +933,16 @@ function HourlyForecast({
             )}
           </div>
 
-            <div className="mountain-gear-next"><span>준비 완료 {packedGearCount} / {gearList.length}</span><button type="button" onClick={() => jumpPlanner('plan')}>이 일정 저장·일행 초대 →</button></div>
+            <div className="mountain-gear-next"><span>준비 완료 {packedGearCount} / {gearList.length}</span><div className="mountain-gear-actions">
+              <button type="button" onClick={() => jumpPlanner('draft')}>계획 저장</button>
+              <button type="button" onClick={() => jumpPlanner('create')}>이 일정으로 파티 만들기</button>
+            </div></div>
             </div>
             <div id="account-panel" role="tabpanel" aria-labelledby="account-tab" hidden={preparationTab !== 'account'}>
           {isMountainMode && (
             <HikingPlannerPanel
-              onInvitationCountChange={setInvitationCount}
+              onInvitationCountChange={onInvitationCountChange}
+              onReviewSchedule={() => switchStep('hike-schedule', true)}
               user={loggedInUser}
               mountainInfo={mountainInfo}
               selectedCourse={courses[activeCourseIdx]}
@@ -940,9 +956,9 @@ function HourlyForecast({
               checklist={checklist}
               onApplyPlan={handleApplySavedPlan}
               onShowToast={onShowToast}
-              onRequireLogin={onRequireLogin}
+              onRequireLogin={requirePlannerLogin}
               canSave={hasWeatherData && !isStale && !departureError}
-              focusSection={plannerSection}
+              navigationRequest={plannerRequest}
               departureAt={departureAt}
             />
           )}

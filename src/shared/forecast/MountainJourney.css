@@ -36,6 +36,10 @@
 .mountain-gear-suggestions__grid button{width:100%;min-width:0;min-height:44px;padding:8px 12px;text-align:left;white-space:normal;overflow-wrap:anywhere;font:inherit;font-size:14px;line-height:1.5;color:#245b4b;background:#fff;border:1px solid #bfd8cd;border-radius:10px;cursor:pointer}
 .mountain-gear-suggestions__grid button:hover{background:#e4f3ec;border-color:#248267}
 .mountain-gear-suggestions__grid button:focus-visible{outline:2px solid #176c58;outline-offset:2px}
+.mountain-gear-actions{display:flex;flex-wrap:wrap;gap:8px}
+.mountain-gear-next .mountain-gear-actions button + button{background:#fff;color:#176b59}
+#hiking-planner{scroll-margin-top:90px}
+@media(max-width:640px){.mountain-gear-actions{width:100%}.mountain-gear-actions button{flex:1 1 140px}}
 
 
 @media (min-width: 901px) {

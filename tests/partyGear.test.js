@@ -20,3 +20,16 @@ test('shared gear reports the remaining quantity and names the assigned members 
   item.member_items[1].is_packed = true;
   assert.equal(gearSummary(item, 2), '보조배터리 · 함께 2개 · 완료');
 });
+
+test('assigned gear appears only on the named member checklist', () => {
+  const item = { name: '응급키트', kind: 'assigned', quantity: 2,
+    member_items: [{ username: 'one', name: '민수', quantity: 2, is_packed: false }] };
+  assert.equal(myGear(item, 'two'), null);
+  assert.equal(myGear(item, 'one').quantity, 2);
+  assert.equal(shareGear(item, 2), '응급키트 · 2개 · 민수 담당 · 준비 중');
+  item.member_items[0].is_packed = true;
+  assert.equal(gearSummary(item, 2), '응급키트 · 2개 · 민수 담당 · 완료');
+  item.member_items = [];
+  assert.equal(myGear(item, 'one'), null);
+  assert.equal(gearSummary(item, 2), '응급키트 · 2개 · 담당 미지정');
+});

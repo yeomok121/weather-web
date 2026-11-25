@@ -1,6 +1,6 @@
 import PartyGearList from './PartyGearList';
 import { shareGear } from '../lib/partyGear';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useEffectEvent, useRef, useState } from 'react';
 import { FiBell, FiCheck, FiSave, FiTrash2, FiUserPlus, FiUsers, FiRefreshCw, FiShare2 } from 'react-icons/fi';
 import { requestJson } from '../../../shared/lib/apiClient';
 import './HikingPlannerPanel.css';
@@ -15,7 +15,7 @@ const request = (path, token, options = {}) => requestJson(path, {
 export default function HikingPlannerPanel({
   user, mountainInfo, selectedCourse, courseIndex, weatherDate, selectedDateIdx,
   pace, departureOffsetHours, departureTime, departureAt, gearList, checklist, onApplyPlan,
-  onShowToast, onRequireLogin, canSave = true, focusSection = 'plan', onInvitationCountChange,
+  onShowToast, onRequireLogin, canSave = true, navigationRequest, onInvitationCountChange, onReviewSchedule,
 }) {
   const [plans, setPlans] = useState([]);
   const [parties, setParties] = useState([]);
@@ -28,14 +28,16 @@ export default function HikingPlannerPanel({
   const [schedulePlanId, setSchedulePlanId] = useState('');
   const [transferUsername, setTransferUsername] = useState('');
 
-  const [tab, setTab] = useState(focusSection);
+  const target = navigationRequest?.target;
+  const [tab, setTab] = useState(target === 'create' || target === 'party' ? 'party' : 'plan');
+  const [savedFirst, setSavedFirst] = useState(target === 'saved');
   const [isBusy, setIsBusy] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [savedPlan, setSavedPlan] = useState(null);
-  const [createOpen, setCreateOpen] = useState(false);
-  const [savedOpen, setSavedOpen] = useState(false);
+  const [createOpen, setCreateOpen] = useState(target === 'create');
+  const [savedOpen, setSavedOpen] = useState(target === 'saved');
   const token = user?.accessToken;
   const activeToken = useRef(token);
   useEffect(() => { activeToken.current = token; }, [token]);
@@ -46,9 +48,19 @@ export default function HikingPlannerPanel({
   const notify = message => { setSuccess(message); onShowToast?.(message); };
   const partyStorageKey = `hiking:last-party:${user?.id || 'guest'}`;
 
-  const [previousFocusSection, setPreviousFocusSection] = useState(focusSection);
-  if (previousFocusSection !== focusSection) { setPreviousFocusSection(focusSection); setTab(focusSection); }
-  useEffect(() => { onInvitationCountChange?.(invitations.length); }, [invitations.length, onInvitationCountChange]);
+  const [previousNavigation, setPreviousNavigation] = useState(navigationRequest);
+  if (previousNavigation !== navigationRequest) {
+    setPreviousNavigation(navigationRequest);
+    setTab(target === 'create' || target === 'party' ? 'party' : 'plan');
+    setCreateOpen(target === 'create');
+    setSavedOpen(target === 'saved');
+    setSavedFirst(target === 'saved');
+  }
+  const readNavigationTarget = useEffectEvent(() => navigationRequest?.target);
+  const username = user?.id;
+  useEffect(() => {
+    if (username) onInvitationCountChange?.({ user: username, count: invitations.length });
+  }, [username, invitations.length, onInvitationCountChange]);
   const loadParty = useCallback(async (id, accessToken = token) => {
     if (!id || !accessToken) return;
     const data = await request(`/api/hiking/parties/${id}`, accessToken);
@@ -91,13 +103,14 @@ export default function HikingPlannerPanel({
     if (cancelled) return;
     setPlans([]); setParties([]); setInvitations([]); setParty(null);
     setError(''); setSuccess(''); setSavedPlan(null);
-    setCreateOpen(false); setSavedOpen(false);
+    const requested = readNavigationTarget();
+    setCreateOpen(requested === 'create'); setSavedOpen(requested === 'saved');
     const deepLink = new URLSearchParams(window.location.search).get('party');
     let remembered = '';
     try { remembered = localStorage.getItem(partyStorageKey) || ''; } catch { /* private storage */ }
     selectedRef.current = deepLink || remembered;
     setSelectedPartyId(selectedRef.current);
-    if (deepLink || remembered) setTab('party');
+    if (!requested && (deepLink || remembered)) setTab('party');
     if (token) refresh(token);
     });
     return () => { cancelled = true; };
@@ -167,7 +180,7 @@ export default function HikingPlannerPanel({
     if (activeToken.current !== accessToken) return;
     if (decision === 'accept') { await selectParty(invite.party_id); setTab('party'); }
     await refresh(accessToken);
-    notify(decision === 'accept' ? '초대를 수락했어요. 공동 준비물 담당자를 정해 보세요.' : '초대를 거절했어요.');
+    notify(decision === 'accept' ? '초대를 수락했어요. 내 담당 준비물과 출발 일정을 확인하세요.' : '초대를 거절했어요.');
   });
   const inviteMember = event => {
     event.preventDefault();
@@ -256,7 +269,9 @@ export default function HikingPlannerPanel({
     document.getElementById(`planner-tab-${nextTab}`)?.focus();
   };
 
-  return <section id="hiking-planner" className="hiking-planner" aria-label="산행 계획 저장과 일행 초대">
+  const savedPlans = <details className="saved-plans" open={savedOpen} onToggle={event => setSavedOpen(event.currentTarget.open)}><summary>저장한 계획 {plans.length}개</summary>{plans.map(plan => <div key={plan.id} className="saved-plan"><div><strong>{plan.name}</strong><p>{plan.mountain_name} · {plan.course_name}</p><small>{displayDeparture(plan.departure_at) || plan.weather_date} · 준비물 {plan.items?.length || 0}개</small></div><div className="planner-actions"><button type="button" disabled={isBusy} onClick={() => run(async () => { await onApplyPlan?.(plan); setPlanName(plan.name); setSavedPlan({ id: plan.id, signature: '' }); notify('코스와 준비물을 불러왔어요. 출발 날짜와 시간을 확인해 주세요.'); })}>불러오기</button><button type="button" disabled={isBusy} aria-label={`${plan.name} 삭제`} onClick={() => removePlan(plan)}><FiTrash2 /></button></div></div>)}{!plans.length && <p className="muted">저장한 계획이 여기에 표시됩니다.</p>}</details>;
+
+  return <section id="hiking-planner" className="hiking-planner" tabIndex={-1} aria-label="산행 계획 저장과 일행 초대">
     <div className="planner-heading"><div><h3>계획 저장 · 일행과 준비</h3></div>
       {user && <button type="button" className="subtle-button" onClick={() => refresh()} disabled={isSyncing || isBusy} aria-label="산행 계획과 초대 새로고침"><FiRefreshCw className={isSyncing ? 'connection-spinner' : ''} /> 새로고침</button>}
     </div>
@@ -268,26 +283,31 @@ export default function HikingPlannerPanel({
       {!!invitations.length && <section className="planner-invitations" aria-label="받은 파티 초대"><h4><FiBell /> 받은 초대 {invitations.length}건</h4>{invitations.map(invite => <div key={invite.id} className="planner-invite"><div><strong>{invite.party_name}</strong><p>{invite.mountain_name} · {invite.invited_by_name}님의 초대</p></div><div className="planner-actions"><button type="button" disabled={isBusy} onClick={() => respondInvite(invite, 'accept')}>수락</button><button type="button" disabled={isBusy} onClick={() => respondInvite(invite, 'decline')}>거절</button></div></div>)}</section>}
       <div className="planner-tabs" role="tablist" aria-label="산행 준비 단계" onKeyDown={handleTabKey}>{[{ key: 'plan', label: '내 계획', count: plans.length }, { key: 'party', label: '내 파티', count: parties.length }].map(item => <button key={item.key} id={`planner-tab-${item.key}`} type="button" role="tab" aria-selected={tab === item.key} aria-controls={`planner-panel-${item.key}`} tabIndex={tab === item.key ? 0 : -1} onClick={() => setTab(item.key)}>{item.label} <span>{item.count}</span></button>)}</div>
       {tab === 'plan' ? <div id="planner-panel-plan" role="tabpanel" aria-labelledby="planner-tab-plan" className="planner-section">
-        <div className="planner-summary"><strong>{currentPlan.mountain_name || '산을 선택하세요'} · {currentPlan.course_name}</strong><p>{displayDeparture(currentPlan.departure_at)} 출발 · 준비물 {gearList.length}개</p><a href="#hike-schedule">일정 다시 비교하기 ↑</a></div>
+        {savedFirst && savedPlans}
+        <div className="planner-summary"><strong>{currentPlan.mountain_name || '산을 선택하세요'} · {currentPlan.course_name}</strong><p>{displayDeparture(currentPlan.departure_at)} 출발 · 준비물 {gearList.length}개</p>{onReviewSchedule && <button type="button" className="subtle-button" onClick={onReviewSchedule}>일정 다시 보기 ↑</button>}</div>
         <div className="planner-save-row"><label className="planner-label">계획 이름<input value={planName} onChange={event => setPlanName(event.target.value)} maxLength={120} /></label><span className={`planner-save-state ${savedMatches ? 'is-saved' : ''}`}>{savedMatches ? '계정에 저장됨' : savedPlan ? '변경 사항 저장 필요' : '아직 저장하지 않은 계획'}</span></div>
         <div className="planner-actions"><button className="primary-button" type="button" disabled={isBusy || !canSave || savedMatches} onClick={savePlan}><FiSave /> {savedMatches ? '저장 완료' : savedPlan ? '변경 사항 저장' : '계획 저장'}</button><button type="button" disabled={isBusy || !canSave} onClick={() => { setCreateOpen(true); setTab('party'); }}><FiUsers /> 이 일정으로 파티 만들기</button></div>
         {!canSave && <p className="muted">최신 기상 자료를 확인한 뒤 새 계획을 저장할 수 있어요. 기존 계획과 파티는 계속 확인할 수 있습니다.</p>}
-        <details className="saved-plans" open={savedOpen} onToggle={event => setSavedOpen(event.currentTarget.open)}><summary>저장한 계획 {plans.length}개</summary>{plans.map(plan => <div key={plan.id} className="saved-plan"><div><strong>{plan.name}</strong><p>{plan.mountain_name} · {plan.course_name}</p><small>{displayDeparture(plan.departure_at) || plan.weather_date} · 준비물 {plan.items?.length || 0}개</small></div><div className="planner-actions"><button type="button" disabled={isBusy} onClick={() => run(async () => { await onApplyPlan?.(plan); setPlanName(plan.name); setSavedPlan({ id: plan.id, signature: '' }); notify('코스와 준비물을 불러왔어요. 출발 날짜와 시간을 확인해 주세요.'); })}>불러오기</button><button type="button" disabled={isBusy} aria-label={`${plan.name} 삭제`} onClick={() => removePlan(plan)}><FiTrash2 /></button></div></div>)}{!plans.length && <p className="muted">저장한 계획이 여기에 표시됩니다.</p>}</details>
+        {!savedFirst && savedPlans}
       </div> : <div id="planner-panel-party" role="tabpanel" aria-labelledby="planner-tab-party" className="planner-section">
-        <details className="create-party" open={createOpen} onToggle={event => setCreateOpen(event.currentTarget.open)}><summary>현재 일정으로 새 파티 만들기</summary><p className="muted">{currentPlan.mountain_name} · {displayDeparture(currentPlan.departure_at)} 출발</p><label className="planner-label">파티 이름<input value={partyName} onChange={event => setPartyName(event.target.value)} maxLength={120} placeholder={`${currentPlan.mountain_name} 산행 파티`} /></label><button type="button" className="primary-button" disabled={isBusy || !canSave} onClick={createParty}><FiUsers /> {savedMatches ? '저장한 계획으로 파티 만들기' : '계획 저장하고 파티 만들기'}</button><p className="muted">생성 후 회원 아이디로 일행을 초대할 수 있어요.</p></details>
+        <details className="create-party" open={createOpen} onToggle={event => setCreateOpen(event.currentTarget.open)}><summary>현재 일정으로 새 파티 만들기</summary><p className="muted">{currentPlan.mountain_name} · {displayDeparture(currentPlan.departure_at)} 출발</p><label className="planner-label">파티 이름<input value={partyName} onChange={event => setPartyName(event.target.value)} maxLength={120} placeholder={`${currentPlan.mountain_name} 산행 파티`} /></label><div className="party-gear-preview"><strong>파티에 가져갈 준비물 {currentPlan.items.length}개</strong>
+          {currentPlan.items.length > 0 && <ul>{currentPlan.items.map(item => <li key={item.name}>{item.name}</li>)}</ul>}
+          <small>파티가 만들어지면 준비물 유형과 담당자는 파티에서 관리합니다.</small></div><button type="button" className="primary-button" disabled={isBusy || !canSave} onClick={createParty}><FiUsers /> {savedMatches ? '저장한 계획으로 파티 만들기' : '계획 저장하고 파티 만들기'}</button><p className="muted">생성 후 회원 아이디로 일행을 초대할 수 있어요.</p></details>
         {!!parties.length && <label className="planner-label">내 산행 파티<select value={selectedPartyId} onChange={event => run(() => selectParty(event.target.value))}><option value="">파티를 선택하세요</option>{parties.map(item => <option key={item.id} value={item.id}>{item.name} · {item.member_count}명</option>)}</select></label>}
         {!parties.length && !isSyncing && <p className="muted">파티를 만들거나 초대를 수락하면 공동 준비물을 확인할 수 있어요.</p>}
         {party && <div className="party-detail"><div className="planner-heading"><div><h4>{party.name}</h4><p>{party.mountain_name} · {party.course_name}</p><small>출발 {displayDeparture(party.departure_at)}</small></div><button type="button" onClick={shareParty}><FiShare2 /> 일정 공유</button></div>
           <div className="party-members">{(party.members || []).map(member => <span key={member.username}>{member.name} (@{member.username}){member.role === 'owner' ? ' · 파티장' : ''}</span>)}</div>
-          {party.role === 'owner' && <><form onSubmit={inviteMember} className="planner-inline-form"><label className="planner-label">초대할 회원 아이디<input ref={inviteInput} value={inviteUsername} onChange={event => setInviteUsername(event.target.value)} placeholder="회원 아이디 입력" minLength={4} maxLength={80} required /></label><button type="submit" disabled={isBusy || !inviteUsername.trim()}><FiUserPlus /> 초대 보내기</button></form><p className="muted">초대받은 회원은 로그인 후 ‘내 산행’에서 초대를 확인할 수 있어요.</p>{!!party.pending_invites?.length && <div className="pending-invites">수락 대기: {party.pending_invites.map(invite => <span key={invite.id}> @{invite.username} <button type="button" disabled={isBusy} onClick={() => cancelInvite(invite)}>초대 취소</button> </span>)}</div>}</>}
-          {party.role === 'owner' && <details className="create-party"><summary>파티 일정 변경</summary><p className="muted">저장한 계획을 선택해 적용합니다. 개인 계획을 수정해도 파티 일정은 자동으로 변경되지 않습니다.</p><label className="planner-label">적용할 저장 계획<select value={schedulePlanId} onChange={event => setSchedulePlanId(event.target.value)}><option value="">계획 선택</option>{plans.map(plan => <option value={plan.id} key={plan.id}>{plan.name} · {plan.mountain_name} · {displayDeparture(plan.departure_at)}</option>)}</select></label><button type="button" disabled={isBusy || !schedulePlanId} onClick={applyPartySchedule}>선택한 계획을 파티 일정으로 적용</button></details>}
-          {!!party.schedule_history?.length && <details className="create-party"><summary>일정 변경 내역</summary>{party.schedule_history.map((entry, index) => <p key={index} className="muted">{entry.actor_name} · {entry.created_at}<br />이전: {entry.old_schedule}<br />변경: {entry.new_schedule}</p>)}</details>}
+          {party.role === 'owner' && <><form onSubmit={inviteMember} className="planner-inline-form"><label className="planner-label">초대할 회원 아이디<input ref={inviteInput} value={inviteUsername} onChange={event => setInviteUsername(event.target.value)} placeholder="회원 아이디 입력" minLength={4} maxLength={80} required /></label><button type="submit" disabled={isBusy || !inviteUsername.trim()}><FiUserPlus /> 초대 보내기</button></form><p className="muted">초대받은 회원은 로그인 후 산행 화면 상단 ‘내 계획·파티’에서 초대를 확인할 수 있어요.</p>{!!party.pending_invites?.length && <div className="pending-invites">수락 대기: {party.pending_invites.map(invite => <span key={invite.id}> @{invite.username} <button type="button" disabled={isBusy} onClick={() => cancelInvite(invite)}>초대 취소</button> </span>)}</div>}</>}
           <PartyGearList key={`${party.id}:${user.id}`} party={party} username={user.id} busy={isBusy}
             onAdd={addItem} onSave={saveGear} onRemove={removeItem} />
           <p className="muted"><FiCheck /> 변경 내용은 서버에 저장되며, 다른 일행의 화면은 30초마다 갱신됩니다. 지금 확인하려면 새로고침을 누르세요.</p>
+          <details className="create-party party-management"><summary>파티 관리</summary>
+          {party.role === 'owner' && <details className="create-party"><summary>파티 일정 변경</summary><p className="muted">저장한 계획을 선택해 적용합니다. 개인 계획을 수정해도 파티 일정은 자동으로 변경되지 않습니다.</p><label className="planner-label">적용할 저장 계획<select value={schedulePlanId} onChange={event => setSchedulePlanId(event.target.value)}><option value="">계획 선택</option>{plans.map(plan => <option value={plan.id} key={plan.id}>{plan.name} · {plan.mountain_name} · {displayDeparture(plan.departure_at)}</option>)}</select></label><button type="button" disabled={isBusy || !schedulePlanId} onClick={applyPartySchedule}>선택한 계획을 파티 일정으로 적용</button></details>}
+          {!!party.schedule_history?.length && <details className="create-party"><summary>일정 변경 내역</summary>{party.schedule_history.map((entry, index) => <p key={index} className="muted">{entry.actor_name} · {entry.created_at}<br />이전: {entry.old_schedule}<br />변경: {entry.new_schedule}</p>)}</details>}
           {party.role === 'owner' && party.members?.length > 1 && <details className="create-party"><summary>파티장 권한 넘기기</summary><p className="muted">새 파티장은 이후 일정과 초대를 관리합니다. 개인 저장 계획은 이전되지 않습니다.</p><label className="planner-label">새 파티장<select value={transferUsername} onChange={event => setTransferUsername(event.target.value)}><option value="">구성원 선택</option>{party.members.filter(member => member.role !== 'owner').map(member => <option key={member.username} value={member.username}>{member.name} (@{member.username})</option>)}</select></label><button type="button" disabled={isBusy || !transferUsername} onClick={transferParty}>파티장 권한 넘기기</button></details>}
           {party.role !== 'owner' && <button type="button" className="danger-button" disabled={isBusy} onClick={leaveParty}>파티 나가기</button>}
           {party.role === 'owner' && <button type="button" className="danger-button" disabled={isBusy} onClick={() => { if (window.confirm('이 파티와 공동 준비물을 삭제할까요?')) run(async accessToken => { await request(`/api/hiking/parties/${party.id}`, accessToken, { method: 'DELETE' }); selectedRef.current = ''; setSelectedPartyId(''); setParty(null); await refresh(accessToken); }); }}>파티 삭제</button>}
+          </details>
         </div>}
       </div>}
     </>}

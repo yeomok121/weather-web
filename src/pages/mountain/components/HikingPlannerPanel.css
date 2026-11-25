@@ -34,3 +34,7 @@
 .party-gear-allocation input[type="number"] { width: 84px; }
 .party-item > div:first-child { min-width: 0; overflow-wrap: anywhere; }
 .party-item ul { margin: 8px 0 0; padding-inline-start: 20px; }
+.party-gear-preview { margin-block:10px; padding:10px 12px; border:1px solid #d5e7de; border-radius:9px; background:#f1f8f4; }
+.party-gear-preview ul { display:flex; flex-wrap:wrap; gap:6px 18px; margin:6px 0; padding-inline-start:18px; }
+.party-gear-preview small { color:#47655a; }
+.party-management { margin-top:12px; }

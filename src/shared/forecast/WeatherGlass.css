@@ -1,3 +1,7 @@
+.mountain-planner-shortcut { display:inline-flex; align-items:center; gap:6px; min-height:36px; padding:4px 10px; border:1px solid #bfd8ce; border-radius:9px; background:#f7fcfa; color:#176354; font:inherit; font-size:13px; font-weight:700; cursor:pointer; }
+.mountain-planner-shortcut:hover { background:#e8f5ef; }
+.mountain-planner-shortcut span { background:#176354; color:white; padding:2px 6px; border-radius:99px; }
+
 .weather-bg:has(~ .weather-glass-home) {
   background-image:
     radial-gradient(ellipse at 14% 16%, rgba(125, 185, 243, .40), transparent 48%),
